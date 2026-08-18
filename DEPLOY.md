@@ -26,7 +26,98 @@ R2 bucket, setting secrets, and the deploy itself.
 
 ---
 
+## Deploying from GitHub (recommended)
+
+Cloudflare Workers Builds watches a GitHub repository and redeploys on every push.
+That is better than deploying from a laptop: the deploy is reproducible, there is a
+record of what shipped, and it does not depend on one person's machine.
+
+The code is already committed on the `main` branch. What is left needs your GitHub
+and Cloudflare accounts.
+
+### Make the repository private
+
+**Recommended: private.** Two reasons, both concrete:
+
+1. `public/resources/` holds ten third-party academic PDFs — ISHLT consensus
+   documents, SAMJ papers, the SATCS reference file. Save7 was given them for the
+   course; a public repository republishes them, which is a different thing from
+   citing them.
+2. Module 9's legal content and Module 10's clinical criteria have not been
+   reviewed yet. A public repository is a public claim.
+
+Nothing about the build requires a public repository, so private costs you nothing.
+
+### Push it
+
+The `gh` CLI is not installed on this machine, so create the repository through
+github.com — **New repository**, name it `transplant-alchemy`, set it **Private**,
+and do **not** add a README, licence or `.gitignore` (the repo already has them).
+
+Then:
+
+```bash
+git remote add origin https://github.com/<your-org>/transplant-alchemy.git
+```
+
+```bash
+git push -u origin main
+```
+
+GitHub will ask for a username and password; the "password" is a **personal access
+token**, not your account password (github.com → Settings → Developer settings →
+Personal access tokens → Fine-grained tokens, with Contents: read and write). macOS
+will store it in your keychain, so this is once-only.
+
+### Connect Cloudflare to the repository
+
+Cloudflare dashboard → **Workers & Pages** → **Create** → **Workers** → **Import a
+repository**. Authorise GitHub, pick `transplant-alchemy`, then set:
+
+| Setting | Value |
+|---|---|
+| Build command | `npx opennextjs-cloudflare build` |
+| Deploy command | `npx wrangler deploy` |
+| Branch | `main` |
+
+Leave the build output directory empty — `wrangler.jsonc` already points at
+`.open-next/worker.js`.
+
+**Finish steps 2 to 7 below before the first build**, or the deploy will fail on the
+placeholder database id. Cloudflare reads `wrangler.jsonc` from the repository, so
+the D1 id and the URLs must be committed:
+
+```bash
+git commit -am "Point wrangler at the real D1 database and domain"
+```
+
+```bash
+git push
+```
+
+`AUTH_SECRET` is the exception — it is a Worker secret, set once with
+`wrangler secret put` (step 6), and it is never committed.
+
+### After that
+
+Every push to `main` builds and deploys. Content changes become: edit
+`prisma/content/`, check locally, push, then apply with the reseed endpoint (see
+[Updating content](#updating-content-after-launch)).
+
+> **If the build fails on `better-sqlite3`:** that package is only used for local
+> development, but `npm ci` still installs it, and it compiles from source if no
+> prebuilt binary matches Cloudflare's build image. It is not needed to build the
+> Worker, so the fix is to skip it — set the build command to
+> `npm ci --omit=optional && npx opennextjs-cloudflare build`, or move
+> `better-sqlite3` into `devDependencies` and use `npm ci --omit=dev` for the
+> install. Nothing in the deployed Worker touches it: on Workers the D1 binding is
+> always present, so that code path is unreachable.
+
+---
+
 ## One-time setup
+
+Do these regardless of whether you deploy from GitHub or from your laptop.
 
 ### 1. Sign in
 
@@ -104,6 +195,14 @@ origin, e.g. `https://learn.save7.org`. Certificate verification links are built
 from this, so a wrong value produces certificates pointing at the wrong host.
 
 ### 8. Deploy
+
+If you connected GitHub, push instead — Cloudflare builds and deploys:
+
+```bash
+git push
+```
+
+Or deploy straight from this machine:
 
 ```bash
 npm run cf:deploy

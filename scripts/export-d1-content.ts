@@ -37,7 +37,12 @@ const OUT = "prisma/d1-bootstrap/0001_content.sql";
 function quote(value: unknown): string {
   if (value === null) return "NULL";
   if (typeof value === "number") return String(value);
-  if (value instanceof Buffer) return `X'${value.toString("hex")}'`;
+  // Blobs are handled for completeness. No column in this schema is a BLOB —
+  // everything is TEXT or INTEGER — so in practice this branch never fires.
+  if (value instanceof Uint8Array) {
+    const hex = [...value].map((b) => b.toString(16).padStart(2, "0")).join("");
+    return `X'${hex}'`;
+  }
   return `'${String(value).replace(/'/g, "''")}'`;
 }
 
