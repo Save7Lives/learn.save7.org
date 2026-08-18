@@ -43,17 +43,20 @@
   ],
 
   "vars": {
-    // The public origin. Certificate verification links are built from this, so a
-    // wrong value produces certificates pointing at a host that does not serve
-    // them. SITE_URL is the one that takes effect: NEXT_PUBLIC_ variables are
-    // inlined at build time, and on Cloudflare the build happens before these
-    // vars are applied. Both are set so local .env files keep working.
+    // The public origin, used to build certificate verification links.
     //
-    // learn.save7.org is not attached yet — see DEPLOY.md step 9. Until it is,
-    // the site answers on transplant-alchemy.zubayyrparak.workers.dev, and a
-    // certificate issued in the meantime would print a link that does not resolve.
-    "SITE_URL": "https://learn.save7.org",
-    "NEXT_PUBLIC_SITE_URL": "https://learn.save7.org"
+    // Currently the workers.dev hostname, because that is what actually resolves.
+    // The intended final home is https://learn.save7.org, which cannot be
+    // attached until save7.org DNS moves to Cloudflare (see DEPLOY.md step 9).
+    // Pointing this at a domain that does not resolve yet would print dead links
+    // on real certificates, so it tracks reality rather than intent.
+    //
+    // Switching later is this one line plus `npx wrangler deploy` — no rebuild.
+    // SITE_URL is read at runtime, whereas NEXT_PUBLIC_ variables are inlined
+    // when Next builds, which on Cloudflare happens before deploy vars apply.
+    // Both are set so a local .env keeps working; SITE_URL is the one that wins.
+    "SITE_URL": "https://transplant-alchemy.zubayyrparak.workers.dev",
+    "NEXT_PUBLIC_SITE_URL": "https://transplant-alchemy.zubayyrparak.workers.dev"
 
     // MEDIA_BASE_URL is deliberately absent until Save7 enables R2.
     //

@@ -22,9 +22,9 @@ The Worker is deployed and serving:
 | `AUTH_SECRET` | Set as a Worker secret |
 | Registration on production | Tested end to end, then the test account was deleted |
 | Learners in production | 0 — metrics start clean, and there is no default admin |
-| Site URL | `https://learn.save7.org` — set, but the domain is **not attached yet**. See step 9. |
+| Site URL | `https://transplant-alchemy.zubayyrparak.workers.dev` — the URL that actually resolves. Certificates verified on production. |
 | **Video** | **Not hosted. R2 is deferred until Save7's own bank details are used. See step 5.** |
-| **Custom domain** | **Blocked: `save7.org` DNS is not on Cloudflare. See step 9.** |
+| Custom domain | Not attached. `learn.save7.org` needs a DNS move first — see step 9. The site runs fine without it. |
 
 ---
 
@@ -225,7 +225,13 @@ Paste the generated value when prompted. It is a secret, so it is **not** in
 ### 7. Set the public URL
 
 Done — `wrangler.jsonc` sets both `SITE_URL` and `NEXT_PUBLIC_SITE_URL` to
-`https://learn.save7.org`.
+`https://transplant-alchemy.zubayyrparak.workers.dev`.
+
+That is the workers.dev hostname rather than `learn.save7.org`, deliberately: it
+is the one that resolves today, so a certificate issued now carries a link that
+works. Pointing it at the intended domain before that domain exists would print
+dead links onto real certificates, which cannot be corrected after the fact
+without reissuing them.
 
 `SITE_URL` is the one that takes effect. Next inlines `NEXT_PUBLIC_` variables
 into the bundle when it builds, and on Cloudflare the build happens before deploy
@@ -233,10 +239,15 @@ variables are applied, so a public variable would freeze whatever the build
 machine had. `SITE_URL` is read at runtime, which means changing the domain is a
 config change and a redeploy, not a rebuild.
 
-Certificate verification links are built from this. **Until `learn.save7.org` is
-actually attached (step 9), a certificate would print a link that does not
-resolve** — so attach the domain before anyone completes a level, or before you
-share the course link at all.
+**Changing the domain later is this one line and a deploy, with no rebuild:**
+
+```bash
+npx wrangler deploy
+```
+
+`SITE_URL` is read at runtime, so the built bundle does not depend on it. Verified
+by doing exactly that: the variable was changed and deployed without rebuilding,
+and a certificate on production then printed the new host.
 
 ### 8. Deploy
 
@@ -276,10 +287,17 @@ domain → `learn.save7.org`.
 **B. Use a domain you already have on Cloudflare**, if there is one. Same last
 step, no migration.
 
-**C. Stay on `transplant-alchemy.zubayyrparak.workers.dev`** for now. It works, it
-has HTTPS, and it can be swapped later — but it does not look like Save7, and
-`SITE_URL` currently promises `learn.save7.org`, so set `SITE_URL` to the
-workers.dev origin if you intend to issue certificates before the move.
+**C. Stay on `transplant-alchemy.zubayyrparak.workers.dev`** — this is the current
+setup. It works, it has HTTPS, certificates verify against it, and it costs
+nothing. The only thing wrong with it is that it reads like a personal project
+rather than Save7.
+
+There is a free half-measure: the `zubayyrparak` part is the **account's**
+workers.dev subdomain, and it can be renamed in the dashboard (Workers & Pages →
+Overview → the subdomain shown in the sidebar). Renaming it to `save7` would give
+`transplant-alchemy.save7.workers.dev`. Note that this **breaks the existing URL**
+for anyone holding it, so do it before sharing the link, not after — and it needs
+`SITE_URL` updated and a deploy afterwards.
 
 Whoever administers `save7.org` DNS has to do A or B; it is registrar access, not
 something in this repository.
