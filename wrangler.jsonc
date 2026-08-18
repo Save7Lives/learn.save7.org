@@ -33,9 +33,11 @@
     {
       "binding": "DB",
       "database_name": "transplant-alchemy",
-      // SAVE7: replace with the id printed by `wrangler d1 create transplant-alchemy`.
-      // The placeholder is fine for `wrangler dev`, which uses a local D1 file.
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      // Created 2026-08-18 in the Cloudflare account zubayyrparak@gmail.com.
+      // Cloudflare Workers Builds reads this file from the repository, so this id
+      // has to be committed. It is an identifier, not a secret — access is
+      // controlled by the account, and the binding only works from this Worker.
+      "database_id": "906e5372-8b73-4073-8e78-c701ac64c07d",
       "migrations_dir": "prisma/d1-migrations"
     }
   ],
