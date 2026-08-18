@@ -217,6 +217,11 @@ export type ChapterVideoPayload = {
   /** Runtime in seconds, for display before metadata loads. */
   durationSeconds?: number;
   awaitingAsset?: boolean;
+  /**
+   * Set by src/lib/media.ts when the file exists but is not hosted anywhere this
+   * runtime can reach — distinct from Save7 never having supplied it.
+   */
+  mediaPending?: boolean;
   /** Chapter markers, in seconds. Drives the jump-to-chapter list. */
   chapters?: Array<{
     id: string;

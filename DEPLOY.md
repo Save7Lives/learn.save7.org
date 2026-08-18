@@ -22,8 +22,9 @@ The Worker is deployed and serving:
 | `AUTH_SECRET` | Set as a Worker secret |
 | Registration on production | Tested end to end, then the test account was deleted |
 | Learners in production | 0 — metrics start clean, and there is no default admin |
-| **Video** | **Not working yet — needs R2 enabled. See step 5.** |
-| **Custom domain** | **Not attached yet. See step 9.** |
+| Site URL | `https://learn.save7.org` — set, but the domain is **not attached yet**. See step 9. |
+| **Video** | **Not hosted. R2 is deferred until Save7's own bank details are used. See step 5.** |
+| **Custom domain** | **Blocked: `save7.org` DNS is not on Cloudflare. See step 9.** |
 
 ---
 
@@ -174,6 +175,16 @@ questions cascades to learner answers. After launch, content updates go through
 
 ### 5. Create the video bucket
 
+**Deferred by Save7** — R2 needs a payment method on the account, and that will be
+added with Save7's bank details rather than a personal card. Nothing else waits on
+it, and the site does not break in the meantime: with no bucket configured,
+`src/lib/media.ts` removes the video path and Module 5 renders the player's "not
+hosted yet" state, listing the chapters and saying plainly that the film is
+finished but not yet uploaded. That is deliberate — a `<video>` pointing at a
+missing file would look like a bug in the site.
+
+When the account is ready:
+
 ```bash
 npx wrangler r2 bucket create save7-media
 ```
@@ -189,9 +200,14 @@ bucket → Settings → Public access; either the r2.dev subdomain or a custom d
 such as `media.save7.org`). Put that hostname in `wrangler.jsonc` as
 `MEDIA_BASE_URL`, with no trailing slash.
 
-**If you skip this, Module 5 has no video.** The 35 MB file is over Cloudflare's
+Then redeploy, so the Worker picks up the new variable. Nothing else changes —
+the video path lives in the lesson payload already.
+
+**Until this is done, Module 5 has no video.** The 35 MB file is over Cloudflare's
 25 MiB limit for Workers assets, so it is deliberately excluded from the deploy
-(see `public/.assetsignore`).
+(see `public/.assetsignore`). R2's free tier covers 10 GB and egress is free, so
+this file will not cost anything to serve — the payment method is only there
+because R2 requires one to be on file.
 
 ### 6. Set the session secret
 
@@ -208,9 +224,19 @@ Paste the generated value when prompted. It is a secret, so it is **not** in
 
 ### 7. Set the public URL
 
-In `wrangler.jsonc`, replace `NEXT_PUBLIC_SITE_URL`'s placeholder with the real
-origin, e.g. `https://learn.save7.org`. Certificate verification links are built
-from this, so a wrong value produces certificates pointing at the wrong host.
+Done — `wrangler.jsonc` sets both `SITE_URL` and `NEXT_PUBLIC_SITE_URL` to
+`https://learn.save7.org`.
+
+`SITE_URL` is the one that takes effect. Next inlines `NEXT_PUBLIC_` variables
+into the bundle when it builds, and on Cloudflare the build happens before deploy
+variables are applied, so a public variable would freeze whatever the build
+machine had. `SITE_URL` is read at runtime, which means changing the domain is a
+config change and a redeploy, not a rebuild.
+
+Certificate verification links are built from this. **Until `learn.save7.org` is
+actually attached (step 9), a certificate would print a link that does not
+resolve** — so attach the domain before anyone completes a level, or before you
+share the course link at all.
 
 ### 8. Deploy
 
@@ -228,9 +254,35 @@ npm run cf:deploy
 
 ### 9. Attach your domain
 
-In the Cloudflare dashboard: Workers & Pages → `transplant-alchemy` → Settings →
-Domains & Routes → Add custom domain. Because your DNS is already on Cloudflare,
-this issues the certificate and routes traffic without a separate DNS record.
+**This needs a DNS decision first.** `save7.org` is not on Cloudflare — its
+nameservers are `ns1.host-h.net` / `ns1.dns-h.com` (Host Africa), and the main
+site resolves to `76.76.21.21`, which is Vercel. A Cloudflare Worker can only
+answer on a hostname whose zone is in your Cloudflare account, so
+`learn.save7.org` cannot be attached as things stand. Pointing a CNAME at
+`transplant-alchemy.zubayyrparak.workers.dev` from Host Africa does **not** work
+either — Cloudflare rejects a Host header it has no zone for.
+
+Three ways forward:
+
+**A. Move `save7.org` DNS to Cloudflare** (free, and what makes the rest simple).
+Add the domain in Cloudflare, let it import the existing records, **check them
+against Host Africa's zone line by line — especially `MX`**, then change the
+nameservers at the registrar. Save7 receives email on this domain, so a missing
+`MX` record means lost mail, not just a broken website. The Vercel site keeps
+working as long as its `A`/`CNAME` records come across. Once the zone is live:
+Workers & Pages → `transplant-alchemy` → Settings → Domains & Routes → Add custom
+domain → `learn.save7.org`.
+
+**B. Use a domain you already have on Cloudflare**, if there is one. Same last
+step, no migration.
+
+**C. Stay on `transplant-alchemy.zubayyrparak.workers.dev`** for now. It works, it
+has HTTPS, and it can be swapped later — but it does not look like Save7, and
+`SITE_URL` currently promises `learn.save7.org`, so set `SITE_URL` to the
+workers.dev origin if you intend to issue certificates before the move.
+
+Whoever administers `save7.org` DNS has to do A or B; it is registrar access, not
+something in this repository.
 
 ### 10. Create your admin account
 

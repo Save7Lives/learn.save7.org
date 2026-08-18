@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { verifyCertificate } from "@/lib/certificates";
+import { siteUrl } from "@/lib/site";
 import { SAVE7_LOGO_HORIZONTAL_DATA_URI } from "@/lib/brand-assets";
 import { CertificateSheet } from "@/components/certificate/CertificateSheet";
 import { CertificateActions } from "@/components/certificate/CertificateActions";
@@ -35,7 +36,7 @@ export default async function CertificatePage(
   const { publicId } = await props.params;
   const cert = await verifyCertificate(publicId);
 
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://save7.org";
+  const base = siteUrl();
   const verifyUrl = `${base.replace(/^https?:\/\//, "")}/certificate/${publicId}`;
 
   if (!cert) {

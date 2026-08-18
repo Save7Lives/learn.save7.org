@@ -43,15 +43,26 @@
   ],
 
   "vars": {
-    // SAVE7: the public origin. Certificate verification links are built from
-    // this, so a wrong value produces certificates pointing at the wrong host.
-    "NEXT_PUBLIC_SITE_URL": "https://REPLACE_WITH_YOUR_DOMAIN",
-    // SAVE7: where the course video is served from — an R2 bucket's public
-    // hostname, with no trailing slash, e.g. "https://media.save7.org".
-    // REQUIRED in production: the 35 MB video exceeds Cloudflare's 25 MiB limit
-    // for Workers static assets, so it is excluded from the deploy (see
-    // public/.assetsignore) and Module 5 has no video until this is set.
-    "MEDIA_BASE_URL": "https://REPLACE_WITH_YOUR_R2_PUBLIC_HOSTNAME"
+    // The public origin. Certificate verification links are built from this, so a
+    // wrong value produces certificates pointing at a host that does not serve
+    // them. SITE_URL is the one that takes effect: NEXT_PUBLIC_ variables are
+    // inlined at build time, and on Cloudflare the build happens before these
+    // vars are applied. Both are set so local .env files keep working.
+    //
+    // learn.save7.org is not attached yet — see DEPLOY.md step 9. Until it is,
+    // the site answers on transplant-alchemy.zubayyrparak.workers.dev, and a
+    // certificate issued in the meantime would print a link that does not resolve.
+    "SITE_URL": "https://learn.save7.org",
+    "NEXT_PUBLIC_SITE_URL": "https://learn.save7.org"
+
+    // MEDIA_BASE_URL is deliberately absent until Save7 enables R2.
+    //
+    // The 35 MB video exceeds Cloudflare's 25 MiB limit for Workers assets, so it
+    // is excluded from the deploy (public/.assetsignore). With no bucket to serve
+    // it from, src/lib/media.ts drops the path and Module 5 shows the player's
+    // "not hosted yet" state rather than a <video> that silently fails. Set this
+    // to the bucket's public hostname, no trailing slash, e.g.
+    //   "MEDIA_BASE_URL": "https://media.save7.org"
   }
 
   // AUTH_SECRET is NOT here. It is a secret, set with:

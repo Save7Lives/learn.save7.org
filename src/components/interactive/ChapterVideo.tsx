@@ -76,9 +76,9 @@ export function ChapterVideo({ payload }: { payload: ChapterVideoPayload }) {
               </svg>
               <p className="mt-4 font-display text-2xl text-cream">{payload.title}</p>
               <p className="mx-auto mt-2 max-w-sm text-sm text-cream/60">
-                Save7&apos;s video has not been supplied yet. The chapter structure
-                beside this player is what the module is built around, and the film
-                drops straight in when it arrives.
+                {payload.mediaPending
+                  ? "The film is finished, but it is not hosted yet — it is too large to ship with the site, so it needs its own storage. The chapters beside this player are what the module is built around, and the film appears here the moment it is uploaded."
+                  : "Save7's video has not been supplied yet. The chapter structure beside this player is what the module is built around, and the film drops straight in when it arrives."}
               </p>
             </div>
           </div>
@@ -87,12 +87,24 @@ export function ChapterVideo({ payload }: { payload: ChapterVideoPayload }) {
         {!hasVideo ? (
           <Card className="mt-4 border-review/30 bg-review-soft p-4">
             <Badge tone="review">Needed before launch</Badge>
-            <ul className="mt-3 space-y-1.5 text-sm text-sand-700">
-              <li>· The video file, or a hosted URL</li>
-              <li>· A WebVTT captions track — required for accessibility</li>
-              <li>· A text transcript, for anyone who cannot use video at all</li>
-              <li>· Chapter timecodes, to make the list beside this player seekable</li>
-            </ul>
+            {payload.mediaPending ? (
+              <ul className="mt-3 space-y-1.5 text-sm text-sand-700">
+                <li>
+                  · Hosting for the film. At 35 MB it is too large to ship with the
+                  site, so it needs its own storage — Save7 is arranging that.
+                </li>
+                <li>· A WebVTT captions track — required for accessibility</li>
+                <li>· A text transcript, for anyone who cannot use video at all</li>
+                <li>· Chapter timecodes, to make the list beside this player seekable</li>
+              </ul>
+            ) : (
+              <ul className="mt-3 space-y-1.5 text-sm text-sand-700">
+                <li>· The video file, or a hosted URL</li>
+                <li>· A WebVTT captions track — required for accessibility</li>
+                <li>· A text transcript, for anyone who cannot use video at all</li>
+                <li>· Chapter timecodes, to make the list beside this player seekable</li>
+              </ul>
+            )}
           </Card>
         ) : null}
 
