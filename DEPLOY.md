@@ -9,7 +9,25 @@ launch-blocking in the content-review register.
 
 ---
 
-## What is already done and verified
+## Live now
+
+The Worker is deployed and serving:
+
+**https://transplant-alchemy.zubayyrparak.workers.dev**
+
+| | Status |
+|---|---|
+| Deployed to Cloudflare Workers | Live, version `b1dc564a` |
+| D1 database | `906e5372-8b73-4073-8e78-c701ac64c07d` — schema applied, 683 content rows loaded |
+| `AUTH_SECRET` | Set as a Worker secret |
+| Registration on production | Tested end to end, then the test account was deleted |
+| Learners in production | 0 — metrics start clean, and there is no default admin |
+| **Video** | **Not working yet — needs R2 enabled. See step 5.** |
+| **Custom domain** | **Not attached yet. See step 9.** |
+
+---
+
+## What was verified before deploying
 
 | | Status |
 |---|---|
@@ -301,11 +319,12 @@ change and is one setting to remove afterwards.
 For an awareness course, expect this to run at no cost, or $5/month if you exceed
 the Workers free tier.
 
-**One caveat on the free tier:** password hashing (bcrypt, cost 12) uses roughly
-200–300 ms of CPU per sign-in. The Workers free tier allows 10 ms of CPU per
-request by default, so **sign-up and sign-in may fail on the free plan**. Everything
-else is well within limits. If registration errors appear under load, that is the
-cause, and the Workers Paid plan ($5/month, 30 s CPU) resolves it.
+**On password hashing:** bcrypt at cost 12 takes roughly 200 ms of CPU per sign-in,
+which is far more than a typical request. Registration was tested on the deployed
+Worker and **worked**, so this is not a blocker — but it is the one operation with
+any real CPU cost, so if sign-ups ever start failing while the rest of the site is
+fine, that is where to look. The Workers Paid plan ($5/month) raises the CPU
+ceiling substantially.
 
 ---
 
