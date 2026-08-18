@@ -1,0 +1,50 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+/**
+ * An optimistic redirect for signed-out visitors.
+ *
+ * This only checks whether a session cookie is *present*. It does not verify the
+ * signature and it does not look at roles — a cookie's existence proves nothing.
+ * Its whole job is to save a signed-out learner from loading a protected page
+ * just to be bounced, which keeps navigation feeling quick on a phone.
+ *
+ * The real authorisation happens server-side in every protected page and route
+ * handler, via `requireUser` / `requireAdmin` in src/lib/authz.ts. Nothing here
+ * is a security boundary, and nothing here should ever become one.
+ */
+
+const COOKIE_NAME = "save7_session";
+
+const PROTECTED_PREFIXES = ["/dashboard", "/levels", "/assessment", "/admin"];
+
+export function proxy(request: NextRequest) {
+  const { pathname, search } = request.nextUrl;
+
+  const isProtected = PROTECTED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+  if (!isProtected) return NextResponse.next();
+
+  if (request.cookies.has(COOKIE_NAME)) return NextResponse.next();
+
+  const login = new URL("/login", request.url);
+  login.searchParams.set("next", pathname + search);
+  return NextResponse.redirect(login);
+}
+
+export const config = {
+  /*
+   * Next 16 runs proxy.ts in the Node runtime by default. Cloudflare Workers
+   * runs it at the edge instead, and OpenNext refuses to build Node middleware.
+   * Nothing here needs Node — it reads a cookie and returns a redirect.
+   */
+  runtime: "edge",
+
+  /*
+   * Everything except Next internals, static assets and the public certificate
+   * verification route — a certificate link must open for anyone, including
+   * someone who has never signed in.
+   */
+  matcher: ["/((?!_next/static|_next/image|certificate|brand|favicon\\.ico|.*\\.(?:png|jpg|jpeg|svg|webp|woff2?|vtt|mp4)$).*)"],
+};

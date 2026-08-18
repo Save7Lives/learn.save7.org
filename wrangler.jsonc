@@ -1,0 +1,57 @@
+/**
+ * Cloudflare Workers configuration for Transplant Alchemy 101.
+ *
+ * Save7 must fill in the two placeholders marked SAVE7 below (the D1 database id
+ * and the public site URL) before the first deploy. See DEPLOY.md.
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "transplant-alchemy",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-08-01",
+
+  // Required by OpenNext: the Next.js server needs Node built-ins (crypto,
+  // buffer, async_hooks) that are only available under nodejs_compat.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  "observability": {
+    "enabled": true
+  },
+
+  // Node-only database drivers, stubbed out of the Worker bundle. Only the D1
+  // branch of src/lib/db.ts can run here. See worker-stubs/empty.js.
+  "alias": {
+    "pg-cloudflare": "./worker-stubs/empty.js"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "transplant-alchemy",
+      // SAVE7: replace with the id printed by `wrangler d1 create transplant-alchemy`.
+      // The placeholder is fine for `wrangler dev`, which uses a local D1 file.
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "prisma/d1-migrations"
+    }
+  ],
+
+  "vars": {
+    // SAVE7: the public origin. Certificate verification links are built from
+    // this, so a wrong value produces certificates pointing at the wrong host.
+    "NEXT_PUBLIC_SITE_URL": "https://REPLACE_WITH_YOUR_DOMAIN",
+    // SAVE7: where the course video is served from — an R2 bucket's public
+    // hostname, with no trailing slash, e.g. "https://media.save7.org".
+    // REQUIRED in production: the 35 MB video exceeds Cloudflare's 25 MiB limit
+    // for Workers static assets, so it is excluded from the deploy (see
+    // public/.assetsignore) and Module 5 has no video until this is set.
+    "MEDIA_BASE_URL": "https://REPLACE_WITH_YOUR_R2_PUBLIC_HOSTNAME"
+  }
+
+  // AUTH_SECRET is NOT here. It is a secret, set with:
+  //   wrangler secret put AUTH_SECRET
+}

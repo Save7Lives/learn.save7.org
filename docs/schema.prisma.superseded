@@ -1,0 +1,549 @@
+// ---------------------------------------------------------------------------
+// Save7 Learning Platform — data model
+//
+// Written Postgres-first but running on SQLite for local development so the
+// project needs no credentials to run. See prisma/README.md for the switch.
+//
+// SQLite does not support Prisma enums or scalar lists. Every enum-like column
+// is therefore a String constrained by a TypeScript union in
+// src/lib/constants.ts, and every list is JSON text. Nothing about the shape of
+// the data changes when the provider becomes postgresql.
+//
+// The model is deliberately multi-course: nothing is hardcoded to Transplant
+// Alchemy 101. A second Save7 course is a row, not a rewrite.
+// ---------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// --- People ----------------------------------------------------------------
+
+model User {
+  id           String @id @default(cuid())
+  email        String @unique
+  name         String
+  passwordHash String
+
+  /// "LEARNER" | "ADMIN" — see UserRole in src/lib/constants.ts
+  role String @default("LEARNER")
+
+  /// POPIA: explicit, timestamped consent captured at registration.
+  popiaConsentAt DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastSeenAt  DateTime?
+
+  attempts        QuizAttempt[]
+  moduleProgress  ModuleProgress[]
+  levelProgress   LevelProgress[]
+  courseProgress  CourseProgress[]
+  certificates    Certificate[]
+  events          EventLog[]
+  reviewedContent ContentReviewItem[] @relation("ContentReviewer")
+
+  @@index([role])
+  @@index([createdAt])
+}
+
+// --- Course structure ------------------------------------------------------
+
+model Course {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  title       String
+  subtitle    String?
+  description String?
+  isPublished Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  levels    Level[]
+  resources Resource[]
+  questions Question[]
+  attempts  QuizAttempt[]
+  progress  CourseProgress[]
+  certs     Certificate[]
+}
+
+/// A self-contained achievement tier. Beginner / Intermediate / Advanced.
+/// Each level issues its own certificate and is completable on its own — a
+/// learner who stops after Beginner has finished something real.
+model Level {
+  id       String @id @default(cuid())
+  courseId String
+  order    Int
+  slug     String
+
+  /// "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
+  tier String
+
+  title     String
+  strapline String
+  goal      String
+
+  estMinMinutes Int
+  estMaxMinutes Int
+
+  /// Design token name for the level accent, e.g. "beginner".
+  accentToken String
+
+  /// Award name, e.g. "Conversation Starter".
+  certificateTitle String
+
+  /// Single letter used inside certificate IDs: B / I / A.
+  certificateCode String
+
+  passMarkPct Int @default(70)
+
+  course        Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  modules       Module[]
+  questions     Question[]
+  attempts      QuizAttempt[]
+  progress      LevelProgress[]
+  certificates  Certificate[]
+
+  @@unique([courseId, slug])
+  @@unique([courseId, order])
+  @@index([courseId])
+}
+
+model Module {
+  id      String @id @default(cuid())
+  levelId String
+  order   Int
+  slug    String
+
+  title String
+
+  /// The single question this module exists to answer. Shown prominently.
+  coreQuestion String
+
+  /// Why this topic matters — the module's opening framing.
+  introMarkdown String
+
+  estMinutes  Int
+  isMandatory Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  level     Level            @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  lessons   Lesson[]
+  resources Resource[]
+  questions Question[]
+  progress  ModuleProgress[]
+  events    EventLog[]
+
+  @@unique([levelId, slug])
+  @@unique([levelId, order])
+  @@index([levelId])
+}
+
+/// One step of a module's seven-part spine. Ordering is explicit rather than
+/// implied by kind, so a module can repeat a kind (e.g. two primary
+/// experiences) without special-casing.
+model Lesson {
+  id       String @id @default(cuid())
+  moduleId String
+  order    Int
+  slug     String
+
+  title String
+
+  /// "INTRO" | "PRIMARY" | "TAKEAWAYS" | "CHECK" | "STUDY_GUIDE"
+  /// | "FURTHER_READING" | "COMPLETE"
+  kind String
+
+  /// Prose for text-bearing lessons. Kept short by design.
+  bodyMarkdown String?
+
+  /// Which interactive component renders this lesson, e.g. "PathwayJourney".
+  /// Null means the lesson is prose//structural only.
+  componentKey String?
+
+  /// The component's entire content, as JSON. Authoring a lesson means writing
+  /// this blob — which is exactly what a future CMS would edit. No lesson
+  /// content is hardcoded in React.
+  payloadJson String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  module   Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress ModuleProgress[] @relation("LastLesson")
+  events   EventLog[]
+
+  @@unique([moduleId, slug])
+  @@unique([moduleId, order])
+  @@index([moduleId])
+}
+
+// --- Resources -------------------------------------------------------------
+
+/// Every piece of source material, with the provenance metadata Save7 needs to
+/// keep the course defensible. Academic PDFs from the original Classroom course
+/// are seeded as stubs — title and type only — until the real reference list
+/// arrives. Citations are never invented.
+model Resource {
+  id String @id @default(cuid())
+
+  /// Stable authoring identifier. Keyed on this rather than on the title so
+  /// that correcting a citation's wording updates the row instead of creating
+  /// a duplicate.
+  authoringKey String @unique
+
+  courseId String
+  moduleId String?
+
+  title       String
+  description String?
+
+  /// "VIDEO" | "AUDIO" | "PDF" | "ARTICLE" | "WEBSITE" | "ACADEMIC_PAPER"
+  /// | "INFOGRAPHIC"
+  type String
+
+  /// Required reading vs optional deeper material. The course must be
+  /// completable without any optional resource.
+  isRequired Boolean @default(false)
+
+  source      String?
+  author      String?
+  publishedOn DateTime?
+  externalUrl String?
+  filePath    String?
+  licenceNote String?
+
+  /// True while the citation is incomplete and awaiting Save7's reference list.
+  isStub Boolean @default(false)
+
+  order Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module Module? @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+
+  @@index([courseId])
+  @@index([moduleId])
+}
+
+// --- Assessment ------------------------------------------------------------
+
+model Question {
+  id String @id @default(cuid())
+
+  /// Stable authoring identifier, e.g. "post-a-07". Lets the seed be re-run
+  /// without duplicating questions or destroying learners' recorded answers.
+  authoringKey String @unique
+
+  courseId String
+  levelId  String?
+  moduleId String?
+
+  /// "PRE" | "POST" | "CHECK"
+  scope String
+
+  /// "SINGLE" | "MULTI" | "TRUE_FALSE" | "SCENARIO"
+  kind String
+
+  prompt String
+
+  /// Optional situational framing shown above the prompt (scenario questions).
+  scenario String?
+
+  /// Shown after answering. This is where the actual teaching happens.
+  explanation String
+
+  /// Subject area, e.g. "brain-death". Drives most-missed-topic analytics.
+  topicTag String
+
+  /// 1 = accessible, 2 = moderate, 3 = advanced.
+  difficulty Int @default(1)
+
+  /// Links a post-course item to its pre-course counterpart. This is what makes
+  /// knowledge improvement honest: we compare matched pairs rather than raw
+  /// totals, so improvement reflects learning rather than remembering wording.
+  pairKey String?
+
+  order Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  level   Level?  @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  module  Module? @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  choices Choice[]
+  answers QuizAnswer[]
+
+  @@index([courseId, scope])
+  @@index([levelId, scope])
+  @@index([moduleId])
+  @@index([pairKey])
+}
+
+model Choice {
+  id         String @id @default(cuid())
+  questionId String
+  order      Int
+
+  text      String
+  isCorrect Boolean @default(false)
+
+  /// Per-choice feedback. Explaining why a specific wrong answer is appealing
+  /// teaches far more than a bare "incorrect".
+  feedback String?
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, order])
+  @@index([questionId])
+}
+
+model QuizAttempt {
+  id       String  @id @default(cuid())
+  userId   String
+  courseId String
+  levelId  String?
+
+  /// "PRE" | "POST" | "CHECK"
+  kind String
+
+  /// 1-based. Only attemptNo 1 counts toward knowledge-impact analytics, so
+  /// retakes cannot inflate Save7's reported learning gains.
+  attemptNo Int @default(1)
+
+  startedAt   DateTime  @default(now())
+  submittedAt DateTime?
+
+  scoreRaw Int?
+  scoreMax Int?
+  scorePct Int?
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  level   Level?  @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  answers QuizAnswer[]
+
+  @@index([userId, kind])
+  @@index([courseId, kind])
+  @@index([levelId, kind])
+  @@index([submittedAt])
+}
+
+model QuizAnswer {
+  id         String @id @default(cuid())
+  attemptId  String
+  questionId String
+
+  /// JSON array of selected Choice ids.
+  choiceIdsJson String @default("[]")
+
+  /// Free-text response, used by reflective scenario questions.
+  freeText String?
+
+  isCorrect  Boolean
+  answeredAt DateTime @default(now())
+
+  attempt  QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+  @@index([questionId, isCorrect])
+}
+
+// --- Progress --------------------------------------------------------------
+
+model ModuleProgress {
+  id       String @id @default(cuid())
+  userId   String
+  moduleId String
+
+  /// "NOT_STARTED" | "IN_PROGRESS" | "COMPLETE"
+  status String @default("IN_PROGRESS")
+
+  /// JSON array of completed Lesson ids within this module.
+  completedLessonsJson String @default("[]")
+
+  secondsSpent Int     @default(0)
+  lastLessonId String?
+
+  startedAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module     Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  lastLesson Lesson? @relation("LastLesson", fields: [lastLessonId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, moduleId])
+  @@index([moduleId, status])
+}
+
+model LevelProgress {
+  id      String @id @default(cuid())
+  userId  String
+  levelId String
+
+  /// "NOT_STARTED" | "IN_PROGRESS" | "COMPLETE"
+  status         String @default("IN_PROGRESS")
+  percentComplete Int   @default(0)
+
+  startedAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  level Level @relation(fields: [levelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, levelId])
+  @@index([levelId, status])
+}
+
+model CourseProgress {
+  id       String @id @default(cuid())
+  userId   String
+  courseId String
+
+  /// "NOT_STARTED" | "IN_PROGRESS" | "COMPLETE"
+  status          String @default("IN_PROGRESS")
+  percentComplete Int    @default(0)
+
+  /// Set once the learner finishes the introduction and baseline quiz.
+  baselineDoneAt DateTime?
+
+  startedAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([courseId, status])
+}
+
+// --- Certificates ----------------------------------------------------------
+
+model Certificate {
+  id       String @id @default(cuid())
+  /// Human-quotable public identifier, e.g. "S7-2026-B-000123". This is the
+  /// only certificate handle exposed publicly; the internal id is never shown.
+  publicId String @unique
+
+  userId   String
+  courseId String
+  levelId  String
+
+  /// The learner's name as it appeared at issue time. Renaming an account must
+  /// never silently rewrite an already-issued certificate.
+  learnerNameSnapshot String
+
+  /// The award earned, snapshotted for the same reason.
+  awardTitleSnapshot String
+
+  scorePct Int
+
+  issuedAt  DateTime  @default(now())
+  revokedAt DateTime?
+  revokedReason String?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  level  Level  @relation(fields: [levelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, levelId])
+  @@index([issuedAt])
+}
+
+// --- Content governance ----------------------------------------------------
+
+/// The content-review register. Any medical, legal or statistical claim in the
+/// course is entered here and stays NEEDS_VERIFICATION until Save7 signs it
+/// off. The learner-facing UI shows a visible "pending review" badge for
+/// anything unapproved, so unverified material can never read as authoritative.
+model ContentReviewItem {
+  id String @id @default(cuid())
+
+  /// Stable authoring identifier so re-seeding updates the register in place
+  /// and preserves any review decisions Save7 has already recorded.
+  authoringKey String @unique
+
+  /// "LESSON" | "QUESTION" | "RESOURCE" | "MODULE"
+  entityType String
+  entityId   String
+
+  /// A human-readable pointer, e.g. "M6 · Determination of death".
+  location String
+
+  /// The specific claim requiring verification.
+  claim String
+
+  /// "MEDICAL" | "LEGAL" | "STATISTIC"
+  category String
+
+  /// "NEEDS_VERIFICATION" | "APPROVED" | "REJECTED"
+  status String @default("NEEDS_VERIFICATION")
+
+  /// Which authoritative source should settle this, if known. Never a
+  /// fabricated citation — an honest "unknown" instead.
+  sourceHint String?
+
+  notes String?
+
+  /// 1 = must be resolved before public launch.
+  severity Int @default(1)
+
+  reviewedById String?
+  reviewedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviewedBy User? @relation("ContentReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status, severity])
+  @@index([entityType, entityId])
+}
+
+// --- Analytics -------------------------------------------------------------
+
+/// Privacy-conscious engagement log. Deliberately stores no IP address and no
+/// user agent: Save7 needs to know whether people are learning, not who they
+/// are or what device they used.
+model EventLog {
+  id     String  @id @default(cuid())
+  userId String?
+
+  /// Opaque per-session key, so anonymous visits can be counted without
+  /// identifying anyone.
+  sessionKey String
+
+  /// e.g. "lesson_view" | "module_complete" | "quiz_submit" | "level_start"
+  type String
+
+  moduleId String?
+  lessonId String?
+
+  /// Small JSON bag of event-specific detail.
+  metaJson String?
+
+  createdAt DateTime @default(now())
+
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  module Module? @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+
+  @@index([type, createdAt])
+  @@index([userId, createdAt])
+  @@index([moduleId])
+}

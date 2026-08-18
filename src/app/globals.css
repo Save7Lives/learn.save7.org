@@ -1,26 +1,294 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   Save7 design system
+   Palette and typography taken from the official brand kit at
+   save7.org/brand-kit. Two rules from that kit are load-bearing here:
+
+   1. Teal is NOT legible on white. It only ever appears on ink surfaces, or as
+      a fill behind ink text. There is a separate darkened teal token for the
+      rare case where teal must carry meaning on a light background.
+   2. Anton is display-only — all-caps headlines, never body copy. Inter carries
+      every word the learner actually reads.
+   --------------------------------------------------------------------------- */
+
+@theme {
+  /* Brand core */
+  --color-pink: #ed0e69;
+  --color-teal: #16b9b4;
+  --color-ink: #111111;
+  --color-cream: #f7f3ee;
+
+  /* Pink, tinted and shaded. Pink is used with restraint: it marks the single
+     most important action on a screen and little else.
+     
+     Two accessibility notes on this ramp:
+     
+     - White text on brand pink measures only 4.31:1, just under the 4.5:1 minimum
+       for button labels. Buttons therefore use --color-pink-button (5.45:1), which
+       is visually still unmistakably Save7 pink. Brand pink stays exactly as the
+       kit specifies wherever it is a *fill* or large display type, which is most
+       of its use.
+     - --color-pink-300 exists for the large decorative numerals in step lists.
+       pink-200 was originally used there and measured 1.50:1, effectively
+       invisible to many readers. */
+  --color-pink-50: #fff1f6;
+  --color-pink-100: #ffe0eb;
+  --color-pink-200: #ffc2d8;
+  --color-pink-300: #e34a86;
+  --color-pink-500: #ed0e69;
+  --color-pink-600: #c80a57;
+  --color-pink-700: #a30846;
+  --color-pink-button: #cf0b5b;
+
+  /* Teal, plus an accessible variant for light surfaces. --color-teal-deep
+     clears 4.5:1 on white, which raw brand teal does not. */
+  --color-teal-50: #eafaf9;
+  --color-teal-100: #cdf3f1;
+  --color-teal-500: #16b9b4;
+  --color-teal-deep: #0b6f6c;
+  --color-teal-900: #04413f;
+
+  /* Neutrals, warmed very slightly so the platform reads human rather than
+     clinical. A pure-grey scale made early drafts feel like hospital software.
+     
+     The scale splits at 300: 50–300 are surfaces and borders only, 400 and above
+     are safe for text. 400 and 500 were originally lighter and measured 2.61:1 and
+     4.04:1 against tinted surfaces — both below the 4.5:1 minimum for body text —
+     so they were darkened. Every value from 400 up now clears 4.5:1 on white,
+     sand-50 and sand-100 alike. */
+  --color-sand-50: #fbfaf8;
+  --color-sand-100: #f4f1ed;
+  --color-sand-200: #e8e3dc;
+  --color-sand-300: #d5cec4;
+  --color-sand-400: #756c61;
+  --color-sand-500: #6b6358;
+  --color-sand-600: #5c554b;
+  --color-sand-700: #3e3832;
+  --color-sand-800: #262320;
+
+  /* Level accents. Each tier gets its own identity so a learner always knows
+     which part of the pathway they are standing in. */
+  --color-level-beginner: #0b6f6c;
+  --color-level-beginner-soft: #eafaf9;
+  --color-level-intermediate: #8f5708;
+  --color-level-intermediate-soft: #fdf5e6;
+  --color-level-advanced: #a30846;
+  --color-level-advanced-soft: #fff1f6;
+
+  /* Semantic */
+  --color-correct: #0b6f6c;
+  --color-correct-soft: #eafaf9;
+  --color-incorrect: #a3341c;
+  --color-incorrect-soft: #fdf1ee;
+  --color-review: #8a5a00;
+  --color-review-soft: #fdf6e3;
+
+  --font-display: var(--font-anton), "Arial Black", sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* A tighter type scale than Tailwind's default, tuned for long-form reading
+     on a phone — the primary device for this audience. */
+  --text-hero: clamp(2.5rem, 8vw, 5.5rem);
+  --text-hero--line-height: 0.92;
+  --text-display: clamp(2rem, 5vw, 3.5rem);
+  --text-display--line-height: 0.96;
+  --text-title: clamp(1.5rem, 3vw, 2.25rem);
+  --text-title--line-height: 1.05;
+  --text-read: 1.0625rem;
+  --text-read--line-height: 1.7;
+
+  --radius-card: 1rem;
+  --radius-pill: 999px;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: var(--color-sand-50);
+  --foreground: var(--color-ink);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* The platform is committed to a single light identity. The brand kit defines
+   ink as a *surface*, not a page mode, so we do not offer a dark theme rather
+   than invent palette values Save7 has not approved. */
+html {
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  font-size: var(--text-read);
+  line-height: var(--text-read--line-height);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* --- Typographic primitives ---------------------------------------------- */
+
+.font-display,
+.display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: -0.015em;
+  font-weight: 400;
+}
+
+/* Long-form lesson prose. Constrained measure because a 90-character line is
+   the fastest way to make an awareness course feel like a textbook. */
+.prose-save7 {
+  max-width: 68ch;
+}
+.prose-save7 > * + * {
+  margin-top: 1.1em;
+}
+.prose-save7 p {
+  color: var(--color-sand-700);
+}
+.prose-save7 strong {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+.prose-save7 h2,
+.prose-save7 h3 {
+  color: var(--color-ink);
+  font-weight: 700;
+  line-height: 1.25;
+  margin-top: 1.8em;
+}
+.prose-save7 h2 {
+  font-size: 1.35rem;
+}
+.prose-save7 h3 {
+  font-size: 1.125rem;
+}
+.prose-save7 ul,
+.prose-save7 ol {
+  padding-left: 1.35em;
+  color: var(--color-sand-700);
+}
+.prose-save7 ul {
+  list-style: disc;
+}
+.prose-save7 ol {
+  list-style: decimal;
+}
+.prose-save7 li + li {
+  margin-top: 0.4em;
+}
+.prose-save7 a {
+  color: var(--color-pink-600);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-save7 blockquote {
+  border-left: 3px solid var(--color-teal-500);
+  padding-left: 1rem;
+  font-size: 1.15rem;
+  line-height: 1.5;
+  color: var(--color-ink);
+}
+
+/* --- Accessibility ------------------------------------------------------- */
+
+/* A single, unmistakable focus treatment everywhere. Keyboard learners must
+   never have to hunt for where they are. */
+*:focus-visible {
+  outline: 3px solid var(--color-pink-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Ink surfaces invert the focus ring so it stays visible on dark backgrounds. */
+.on-ink *:focus-visible {
+  outline-color: var(--color-teal-500);
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+}
+.skip-link:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-ink);
+  color: var(--color-cream);
+  border-radius: 0.5rem;
+}
+
+.sr-only-focusable:not(:focus):not(:focus-within) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- Motion -------------------------------------------------------------- */
+
+@keyframes save7-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-rise {
+  animation: save7-rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes save7-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-pink-500) 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 14px color-mix(in srgb, var(--color-pink-500) 0%, transparent);
+  }
+}
+.animate-pulse-ring {
+  animation: save7-pulse-ring 1.8s ease-out infinite;
+}
+
+/* --- Print: certificates ------------------------------------------------- */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .print-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
 }

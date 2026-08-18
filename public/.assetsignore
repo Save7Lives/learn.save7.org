@@ -1,0 +1,6 @@
+# Excluded from the Cloudflare Workers deploy.
+#
+# journey-of-a-gift.mp4 is 35 MB and Workers static assets are capped at 25 MiB
+# per file. The video is uploaded to R2 instead and served from the hostname in
+# MEDIA_BASE_URL. It stays in /public so local development needs no extra setup.
+media/*
