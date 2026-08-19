@@ -16,19 +16,16 @@ export function SiteFooter() {
             </p>
           </div>
 
-          <nav aria-label="Footer" className="grid grid-cols-2 gap-x-12 text-sm">
-            <div>
-              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-cream/40">
-                Course
-              </p>
+          <nav
+            aria-label="Footer"
+            className="grid grid-cols-1 gap-x-16 gap-y-8 text-sm sm:grid-cols-2"
+          >
+            <FooterColumn title="Course">
               <FooterLink href="/">Choose a level</FooterLink>
               <FooterLink href="/course/introduction">Introduction</FooterLink>
               <FooterLink href="/dashboard">My progress</FooterLink>
-            </div>
-            <div>
-              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-cream/40">
-                Save7
-              </p>
+            </FooterColumn>
+            <FooterColumn title="Save7">
               <FooterLink href="https://save7.org" external>
                 save7.org
               </FooterLink>
@@ -36,7 +33,7 @@ export function SiteFooter() {
                 Register as a donor
               </FooterLink>
               <FooterLink href="/privacy">Privacy &amp; POPIA</FooterLink>
-            </div>
+            </FooterColumn>
           </nav>
         </div>
 
@@ -52,6 +49,27 @@ export function SiteFooter() {
   );
 }
 
+/** A titled group of footer links, as a real list so it announces as one. */
+function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h2 className="mb-2 text-xs font-bold uppercase tracking-widest text-cream/40">
+        {title}
+      </h2>
+      <ul className="flex flex-col">{children}</ul>
+    </div>
+  );
+}
+
+/**
+ * One footer link, on its own line.
+ *
+ * `flex` rather than `inline-flex` is the whole point: as inline elements these
+ * ran together on a single row with no gap between them, so "Choose a level" and
+ * "Introduction" touched and read as one string. Each link now owns its row, and
+ * min-h-11 keeps the 44px tap target the accessibility pass requires — which only
+ * works when the target is a full row rather than a word in a queue.
+ */
 function FooterLink({
   href,
   children,
@@ -61,17 +79,19 @@ function FooterLink({
   children: React.ReactNode;
   external?: boolean;
 }) {
-  const className = "inline-flex min-h-11 items-center text-cream/70 hover:text-teal";
-  if (external) {
-    return (
-      <a href={href} className={className} target="_blank" rel="noreferrer">
-        {children}
-      </a>
-    );
-  }
+  const className =
+    "flex min-h-11 items-center text-cream/70 transition-colors hover:text-teal";
   return (
-    <Link href={href} className={className}>
-      {children}
-    </Link>
+    <li>
+      {external ? (
+        <a href={href} className={className} target="_blank" rel="noreferrer">
+          {children}
+        </a>
+      ) : (
+        <Link href={href} className={className}>
+          {children}
+        </Link>
+      )}
+    </li>
   );
 }
