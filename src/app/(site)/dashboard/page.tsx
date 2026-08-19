@@ -55,6 +55,11 @@ export default async function DashboardPage() {
       <Display as="h1" className="mt-4 text-display text-ink">
         {user.name}
       </Display>
+      <p className="mt-2 text-sm">
+        <Link href="/profile" className="font-semibold text-pink-600 underline">
+          Edit your name
+        </Link>
+      </p>
 
       {/* --- Baseline gate ------------------------------------------------- */}
       {!baseline.completed ? (

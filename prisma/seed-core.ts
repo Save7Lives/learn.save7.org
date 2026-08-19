@@ -566,6 +566,8 @@ export async function seedContent(
       .values({
         email: adminEmail,
         name: "Save7 Admin",
+        firstName: "Save7",
+        lastName: "Admin",
         passwordHash: await bcrypt.hash("save7admin", 12),
         role: "ADMIN",
         popiaConsentAt: new Date(),

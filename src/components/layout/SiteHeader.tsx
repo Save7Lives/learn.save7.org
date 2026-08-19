@@ -48,6 +48,12 @@ export async function SiteHeader({ className }: { className?: string }) {
               >
                 My progress
               </Link>
+              <Link
+                href="/profile"
+                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-pill px-2.5 text-sm font-semibold sm:px-3 text-sand-600 hover:bg-sand-100 hover:text-ink"
+              >
+                Profile
+              </Link>
               <form action={signOutAction}>
                 <button
                   type="submit"

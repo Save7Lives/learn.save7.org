@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
+import { validateName } from "./profile";
 import { users } from "@/db/schema";
 import type { UserRole } from "./constants";
 
@@ -133,15 +134,19 @@ export async function getSession(): Promise<SessionUser | null> {
 export type AuthResult = { ok: true; user: SessionUser } | { ok: false; error: string };
 
 export async function registerUser(input: {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   popiaConsent: boolean;
 }): Promise<AuthResult> {
-  const name = input.name.trim();
+  // Shared with the profile page, so signup and editing cannot drift apart and
+  // start accepting different things.
+  const validated = validateName(input.firstName, input.lastName);
+  if (!validated.ok) return { ok: false, error: validated.error };
+
   const email = input.email.trim().toLowerCase();
 
-  if (name.length < 2) return { ok: false, error: "Please enter your name." };
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
     return { ok: false, error: "Please enter a valid email address." };
   if (input.password.length < 8)
@@ -163,7 +168,9 @@ export async function registerUser(input: {
   const [user] = await db
     .insert(users)
     .values({
-      name,
+      name: validated.name,
+      firstName: validated.firstName,
+      lastName: validated.lastName,
       email,
       passwordHash: await hashPassword(input.password),
       role: "LEARNER",

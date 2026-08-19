@@ -32,7 +32,8 @@ export async function signUpAction(
   formData: FormData,
 ): Promise<FormState> {
   const result = await registerUser({
-    name: String(formData.get("name") ?? ""),
+    firstName: String(formData.get("firstName") ?? ""),
+    lastName: String(formData.get("lastName") ?? ""),
     email: String(formData.get("email") ?? ""),
     password: String(formData.get("password") ?? ""),
     popiaConsent: formData.get("popiaConsent") === "on",

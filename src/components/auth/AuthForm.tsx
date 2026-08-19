@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { Button, Display } from "@/components/ui/primitives";
 import type { FormState } from "@/app/(auth)/actions";
+import { NAME_MAX } from "@/lib/constants";
 
 type Mode = "signin" | "signup";
 
@@ -26,7 +27,7 @@ export function AuthForm({
       </Display>
       <p className="mt-3 text-sand-600">
         {isSignUp
-          ? "You only need a name and an email. Your progress and scores are saved so you can stop and come back."
+          ? "You only need your name and an email. Your progress and scores are saved so you can stop and come back."
           : "Sign in to pick up where you left off."}
       </p>
 
@@ -34,14 +35,28 @@ export function AuthForm({
         {next ? <input type="hidden" name="next" value={next} /> : null}
 
         {isSignUp ? (
-          <Field
-            label="Your name"
-            name="name"
-            type="text"
-            autoComplete="name"
-            required
-            hint="This is the name that will appear on your certificate."
-          />
+          <div className="space-y-5 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0">
+            <Field
+              label="First name"
+              name="firstName"
+              type="text"
+              autoComplete="given-name"
+              required
+              maxLength={NAME_MAX}
+            />
+            <Field
+              label="Surname"
+              name="lastName"
+              type="text"
+              autoComplete="family-name"
+              required
+              maxLength={NAME_MAX}
+            />
+            <p className="text-xs text-sand-500 sm:col-span-2">
+              This is the name that will appear on your certificate. You can change it
+              later in your profile.
+            </p>
+          </div>
         ) : null}
 
         <Field

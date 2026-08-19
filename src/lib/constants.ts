@@ -75,6 +75,15 @@ export type ReviewCategory = (typeof REVIEW_CATEGORIES)[number];
 export const REVIEW_ENTITY_TYPES = ["LESSON", "QUESTION", "RESOURCE", "MODULE"] as const;
 export type ReviewEntityType = (typeof REVIEW_ENTITY_TYPES)[number];
 
+/**
+ * Per-field cap on a learner's first name and surname.
+ *
+ * Lives here rather than in profile.ts because the signup and profile forms are
+ * client components and profile.ts is server-only — but the form's maxLength and
+ * the server's validation must be the same number.
+ */
+export const NAME_MAX = 60;
+
 export const EVENT_TYPES = [
   "level_start",
   "lesson_view",
@@ -83,6 +92,7 @@ export const EVENT_TYPES = [
   "quiz_submit",
   "certificate_issue",
   "video_progress",
+  "profile_update",
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 

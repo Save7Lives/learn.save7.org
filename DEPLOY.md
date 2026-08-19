@@ -316,6 +316,22 @@ can even tell it exists.
 
 ---
 
+## Changing the database schema after launch
+
+Content updates go through the reseed endpoint, but a *schema* change needs a
+migration. Order matters — the migration first, the deploy second, or every query
+touching the new columns fails in between:
+
+1. Add a numbered file to `prisma/d1-migrations/`, ending with a semicolon
+2. `npm run db:push` and check locally
+3. Apply it to production: `npx wrangler d1 migrations apply transplant-alchemy --remote`
+4. Then build and deploy
+
+Migrations are recorded in D1's `d1_migrations` table, so re-running is safe: only
+unapplied files execute.
+
+---
+
 ## Giving someone else control of the domain and deploys
 
 Two ways, and the first is better.

@@ -96,6 +96,11 @@ async function main() {
       .values({
         email,
         name,
+        // Same first-space split as migration 0002, so demo data has the shape
+        // real accounts do — including "Pieter van der Merwe" keeping a
+        // multi-word surname.
+        firstName: name.slice(0, name.indexOf(" ")),
+        lastName: name.slice(name.indexOf(" ") + 1),
         passwordHash,
         role: "LEARNER",
         popiaConsentAt: createdAt,

@@ -10,10 +10,14 @@
  * are skipped.
  */
 import "dotenv/config";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import Database from "better-sqlite3";
 
-const SCHEMA = "prisma/d1-migrations/0001_init.sql";
+/**
+ * Every migration, in filename order — the same files, in the same order, that
+ * `wrangler d1 migrations apply` runs against D1.
+ */
+const MIGRATIONS_DIR = "prisma/d1-migrations";
 
 function main() {
   const url = process.env.DATABASE_URL;
@@ -23,7 +27,10 @@ function main() {
   }
 
   const db = new Database(url.replace(/^file:/, ""));
-  const sql = readFileSync(SCHEMA, "utf8");
+  const files = readdirSync(MIGRATIONS_DIR)
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
+  const sql = files.map((f) => readFileSync(`${MIGRATIONS_DIR}/${f}`, "utf8")).join(";\n");
 
   let created = 0;
   let skipped = 0;
@@ -35,7 +42,10 @@ function main() {
       db.exec(statement);
       created++;
     } catch (error) {
-      if (error instanceof Error && /already exists/.test(error.message)) {
+      if (
+        error instanceof Error &&
+        /already exists|duplicate column name/.test(error.message)
+      ) {
         skipped++;
         continue;
       }
@@ -43,7 +53,10 @@ function main() {
     }
   }
 
-  console.log(`Schema applied: ${created} statements, ${skipped} already present.`);
+  console.log(
+    `Schema applied from ${files.length} migration(s): ` +
+      `${created} statements, ${skipped} already present.`,
+  );
   db.close();
 }
 

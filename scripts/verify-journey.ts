@@ -19,6 +19,7 @@ import { completeModule, isLevelContentComplete, markLessonViewed } from "../src
 import { startAttempt, submitAttempt, gradeCheckAnswer } from "../src/lib/quiz";
 import { getCourseImpact, getKnowledgeImpact } from "../src/lib/impact";
 import { issueCertificateIfEarned, verifyCertificate } from "../src/lib/certificates";
+import { getProfile, updateProfile } from "../src/lib/profile";
 import {
   getCertificates,
   getKnowledgeSummary,
@@ -57,7 +58,8 @@ async function main() {
 
   // --- Register ------------------------------------------------------------
   const reg = await registerUser({
-    name: "Journey Tester",
+    firstName: "Journey",
+    lastName: "Tester",
     email,
     password: "correct horse battery",
     popiaConsent: true,
@@ -67,7 +69,8 @@ async function main() {
   const userId = reg.user.id;
 
   const dup = await registerUser({
-    name: "Journey Tester",
+    firstName: "Journey",
+    lastName: "Tester",
     email,
     password: "correct horse battery",
     popiaConsent: true,
@@ -75,7 +78,8 @@ async function main() {
   check("duplicate email rejected", !dup.ok);
 
   const noConsent = await registerUser({
-    name: "No Consent",
+    firstName: "No",
+    lastName: "Consent",
     email: `nc-${Date.now()}@example.test`,
     password: "correct horse battery",
     popiaConsent: false,
@@ -206,6 +210,40 @@ async function main() {
   check("pathway shows 100%", bLevel?.progress?.percentComplete === 100, bLevel?.progress?.percentComplete);
   check("pathway carries certificate", bLevel?.progress?.certificatePublicId === cert?.publicId);
   check("signed-out pathway has no progress", (await getPathwayForUser(null)).levels.every((l) => l.progress === null));
+
+  // --- Profile editing -----------------------------------------------------
+  check("registration composed the full name", reg.user.name === "Journey Tester", reg.user.name);
+
+  const beforeEdit = await getProfile(userId);
+  check("profile splits into first name and surname",
+    beforeEdit?.firstName === "Journey" && beforeEdit?.lastName === "Tester", beforeEdit);
+
+  const blank = await updateProfile(userId, { firstName: "  ", lastName: "Tester" });
+  check("blank first name rejected", !blank.ok);
+  const noSurname = await updateProfile(userId, { firstName: "Journey", lastName: "" });
+  check("blank surname rejected", !noSurname.ok);
+  const tooLong = await updateProfile(userId, { firstName: "a".repeat(61), lastName: "Tester" });
+  check("over-long name rejected", !tooLong.ok);
+
+  // A multi-word surname must survive a round trip: this is the case the
+  // first-space split exists for.
+  const renamed = await updateProfile(userId, {
+    firstName: "  Journey\u0000 ",
+    lastName: "van  der Tester",
+  });
+  check("name saved", renamed.ok && renamed.name === "Journey van der Tester", renamed);
+  check("control characters and double spaces stripped",
+    renamed.ok && !/[\u0000-\u001F]/.test(renamed.name) && !renamed.name.includes("  "));
+
+  const afterEdit = await getProfile(userId);
+  check("profile reflects the edit",
+    afterEdit?.firstName === "Journey" && afterEdit?.lastName === "van der Tester", afterEdit);
+
+  // The certificate was issued under the old name and must now carry the new one:
+  // a corrected spelling should not leave a wrong certificate behind.
+  const renamedCert = cert ? await verifyCertificate(cert.publicId) : null;
+  check("issued certificate carries the corrected name",
+    renamedCert?.learnerName === "Journey van der Tester", renamedCert?.learnerName);
 
   const [learners, knowledge, missed, engagement, certs, review] = await Promise.all([
     getLearnerSummary(),

@@ -74,7 +74,23 @@ export const users = sqliteTable(
   {
     id: pk(),
     email: text("email").notNull(),
+    /**
+     * The composed full name, e.g. "Zubayr Parak".
+     *
+     * Kept as the single display name because certificates, the admin dashboards
+     * and the session all read it, and a certificate's name has to be one string.
+     * Always derived from firstName + lastName — never set directly.
+     */
     name: text("name").notNull(),
+    /**
+     * The parts the learner actually edits, on /profile.
+     *
+     * Nullable because accounts created before this existed had only `name`;
+     * migration 0002 backfills them by splitting on the first space, which is a
+     * guess the learner can correct.
+     */
+    firstName: text("firstName"),
+    lastName: text("lastName"),
     passwordHash: text("passwordHash").notNull(),
     /** LEARNER | ADMIN — see UserRole in src/lib/constants.ts. */
     role: text("role").notNull().default("LEARNER"),

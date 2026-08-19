@@ -92,6 +92,24 @@ questions cascades to learner answers.
 - **Analytics store no IP and no user agent.** `EventLog` is deliberately thin; the
   privacy notice promises this.
 
+## Changing the schema
+
+The single source of truth is `prisma/d1-migrations/`, applied to local SQLite by
+`npm run db:push` and to D1 by `wrangler d1 migrations apply`. Two rules, both
+learned the hard way:
+
+- **End every migration file with a semicolon.** Wrangler appends its own
+  `INSERT INTO d1_migrations` to the file's contents, so an unterminated last
+  statement runs into it and D1 rejects the whole file with
+  `near "INSERT": syntax error`.
+- **Apply the migration to production _before_ deploying code that reads the new
+  columns.** Deploying first means every query selecting them fails until the
+  migration lands.
+
+`ALTER TABLE ADD COLUMN` is not idempotent the way `CREATE TABLE IF NOT EXISTS` is,
+which `scripts/apply-schema.ts` accounts for by treating `duplicate column name` as
+"already applied".
+
 ## Before you say it works
 
 ```
