@@ -316,6 +316,62 @@ can even tell it exists.
 
 ---
 
+## Giving someone else control of the domain and deploys
+
+Two ways, and the first is better.
+
+### Through the repository (recommended)
+
+Connect Workers Builds to the GitHub repository (see
+[Deploying from GitHub](#deploying-from-github-recommended)). Deploys then run under
+your Cloudflare account, triggered by merges to `main`.
+
+Once that is set up, a collaborator with **Write access on GitHub** can change where
+the course lives without ever holding your Cloudflare credentials:
+
+1. Uncomment the `routes` block in `wrangler.jsonc` and set the hostname
+2. Set `SITE_URL` and `NEXT_PUBLIC_SITE_URL` to the same origin
+3. Open a pull request
+
+You review it, merge it, and the deploy attaches the domain and issues the
+certificate. The change is visible, reversible, and recorded — which clicking in a
+dashboard is not. They cannot see learner data, rotate `AUTH_SECRET`, or touch the
+database.
+
+**This is the whole reason the hostname is configuration rather than a dashboard
+setting.** `SITE_URL` is read at runtime, so no rebuild is involved either.
+
+### Through the Cloudflare account
+
+Only if they genuinely need dashboard access — enabling R2, reading logs, managing
+DNS records directly:
+
+Cloudflare dashboard → **Manage Account** → **Members** → **Invite**. Grant the
+narrowest role that fits, rather than Super Administrator:
+
+| They need to | Role |
+|---|---|
+| Deploy Workers, attach domains | Workers Admin |
+| Manage DNS for save7.org | DNS |
+| Enable and manage R2 | Workers Admin (covers R2) |
+| Everything except billing and member management | Administrator |
+
+Super Administrator can remove you, change billing, and delete the account. There is
+almost never a reason to grant it.
+
+Note that account members can read D1, and D1 holds learner records — names, email
+addresses, assessment answers. Under POPIA that is personal information, so keep the
+list of people with account access short and deliberate.
+
+### The part neither option solves
+
+`learn.save7.org` cannot be attached by anyone — you, a collaborator, or me — until
+`save7.org` DNS is on Cloudflare. That needs the **registrar** login at Host Africa
+to change nameservers, which is a third credential, separate from GitHub and
+Cloudflare. See step 9.
+
+---
+
 ## Updating content after launch
 
 Once people are enrolled, **never** re-run the bootstrap SQL. Instead:

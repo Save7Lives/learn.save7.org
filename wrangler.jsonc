@@ -23,6 +23,19 @@
     "enabled": true
   },
 
+  // The public hostname. Declared here rather than clicked in the dashboard, so
+  // changing where the course lives is a reviewable pull request instead of
+  // something only the account holder can do.
+  //
+  // Uncomment once save7.org DNS is on Cloudflare (DEPLOY.md step 9), set SITE_URL
+  // below to match, and deploy. Cloudflare issues the certificate and routes
+  // traffic; no separate DNS record is needed.
+  //
+  // "routes": [
+  //   { "pattern": "learn.save7.org", "custom_domain": true }
+  // ],
+
+
   // Node-only database drivers, stubbed out of the Worker bundle. Only the D1
   // branch of src/lib/db.ts can run here. See worker-stubs/empty.js.
   "alias": {
