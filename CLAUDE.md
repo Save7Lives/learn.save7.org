@@ -116,7 +116,7 @@ which `scripts/apply-schema.ts` accounts for by treating `duplicate column name`
 npm run verify
 ```
 
-Drives a real learner through the whole journey against the database and asserts 44
+Drives a real learner through the whole journey against the database and asserts 53
 behaviours, including every assessment-integrity guarantee. `npm run cf:preview`
 runs the actual Worker against a local D1 — slower than `npm run dev`, and the only
 thing that catches Workers-specific breakage.

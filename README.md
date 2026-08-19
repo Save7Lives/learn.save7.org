@@ -60,7 +60,7 @@ real deployment would corrupt the one metric Save7 cares about.
 | `npm run db:push` | Apply the schema to the local database |
 | `npm run db:seed` | Re-seed content only (idempotent, never touches learner data) |
 | `npm run db:export` | Regenerate the D1 bootstrap SQL from the local database |
-| `npm run verify` | Drive a learner through the whole journey and assert 44 behaviours |
+| `npm run verify` | Drive a learner through the whole journey and assert 53 behaviours |
 | `npm run cf:preview` | Build and run the real Worker against a local D1 |
 | `npm run cf:deploy` | Build and deploy to Cloudflare |
 | `npm run brand:generate` | Re-embed the Save7 logo used on certificates |

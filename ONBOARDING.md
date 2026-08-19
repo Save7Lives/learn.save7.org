@@ -67,7 +67,7 @@ npm run verify
 ```
 
 Drives a real learner through the entire journey against the database and asserts
-44 behaviours, including every assessment-integrity guarantee. Run it after
+53 behaviours, including every assessment-integrity guarantee. Run it after
 touching anything in `src/lib/`.
 
 ```bash
