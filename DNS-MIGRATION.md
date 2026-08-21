@@ -1,12 +1,78 @@
-# Moving save7.org DNS to Cloudflare
+# DNS for `learn.save7.org`
 
-Needed so that `learn.save7.org` can be attached to the Worker. A Cloudflare Worker
-can only answer on a hostname whose zone is in the Cloudflare account, and a CNAME
-from another DNS host does not work — Cloudflare rejects a Host header for a zone it
-does not have.
+**The nameserver move described below is not needed, and should not be done to get
+the course online.** That plan was written when the course was a Cloudflare
+**Worker**: a Worker can only answer on a hostname whose zone is in the Cloudflare
+account, so the whole zone had to move.
 
-**Moving DNS is not moving hosting.** The main site stays on Vercel and email stays
-on Google Workspace. Only the place the records are served from changes.
+The course is now on Cloudflare **Pages**, which supports a custom domain on a
+subdomain with **external DNS**. Per Cloudflare's documentation, a subdomain needs
+one CNAME at the existing provider and nothing else:
+
+> add a CNAME record for your desired subdomain … This record should point to your
+> custom Pages subdomain, for example, `<YOUR_SITE>.pages.dev`
+
+## What to actually do
+
+DNS for `save7.org` is at **xneelo** (`ns1/ns2.host-h.net`, `ns1/ns2.dns-h.com` —
+earlier drafts of this file called that Host Africa, which was wrong).
+
+**Order matters.** Cloudflare's docs: "Manually adding a custom CNAME record
+pointing to your Cloudflare Pages site — without first associating the domain (or
+subdomains) in the Cloudflare Pages dashboard — will result in your domain failing
+to resolve."
+
+1. **Cloudflare first.** Workers & Pages → `transplant-alchemy` → Custom domains →
+   Set up a custom domain → `learn.save7.org`. It will detect that the zone is
+   elsewhere and show what to create. If it asks for a TXT record for certificate
+   validation, that goes at xneelo too.
+2. **Then xneelo.** konsoleH → DNS zone for `save7.org` → Add DNS record:
+
+   | Field | Value |
+   | --- | --- |
+   | Type | CNAME |
+   | Host | `learn` (xneelo appends `.save7.org`) |
+   | Points to | `transplant-alchemy.pages.dev` |
+   | TTL | 300 while testing, then the default |
+
+   **No A record.** Pages needs the CNAME so it can change its own IPs without
+   breaking the site.
+3. Wait for validation and the certificate — usually minutes.
+   `dig +short learn.save7.org` is the quickest way to watch it.
+
+**Nothing else moves.** MX, SPF, DMARC, the Google Workspace verification records,
+`mail`/`smtp`/`imap`/`pop`, and the apex on Vercel all stay exactly where they are.
+That removes the entire risk this document was written to manage: an import that
+silently misses one record is how email breaks.
+
+Checked on 21 August 2026 before the change: `learn.save7.org` did not exist, so
+there was nothing to overwrite, and `save7.org` carries **no CAA records** — so no
+certificate authority restriction can block issuance. A restrictive CAA record is a
+common silent cause of a certificate stuck on "pending".
+
+## After it resolves
+
+Three things, all of which fail quietly if skipped:
+
+- `SITE_URL` and `NEXT_PUBLIC_SITE_URL` in `wrangler.jsonc` → `https://learn.save7.org`,
+  then redeploy. Certificate verification links are built from it.
+- Supabase → Authentication → URL Configuration → add `https://learn.save7.org/**`
+  to the redirect allow-list and set it as the Site URL.
+- Google Cloud console → the volunteer portal's OAuth client → Authorised JavaScript
+  origins → add `https://learn.save7.org`, **appending**: that client is what
+  `volunteers.save7.org` signs in with.
+
+`register-learner`'s CORS allow-list already names `learn.save7.org`, verified
+against the live endpoint, so there is nothing to redeploy there.
+
+---
+
+# The nameserver move — kept for reference only
+
+**You do not need this for `learn.save7.org`.** It is still the correct procedure if
+Save7 ever wants the **apex** `save7.org` on Cloudflare, which does require a
+nameserver change, and the captured zone below is worth keeping regardless: it is
+what the records were before anybody touched them.
 
 Captured from the authoritative nameservers (`ns1.host-h.net`) on 19 August 2026.
 
@@ -26,7 +92,7 @@ silently misses one record is how email breaks.
 | ----- | ---------------- | ------------------------------ | ---------- |
 | A     | `save7.org` (@)  | `76.76.21.21` (Vercel)         | DNS only   |
 | A     | `www`            | `76.76.21.21`                  | DNS only   |
-| A     | `mail`           | `197.221.2.216` (Host Africa)  | **DNS only** |
+| A     | `mail`           | `197.221.2.216` (xneelo)  | **DNS only** |
 | CNAME | `staging`        | `cname.vercel-dns.com`         | DNS only   |
 | CNAME | `ftp`            | `www.save7.org`                | DNS only   |
 | CNAME | `smtp`           | `mail.save7.org`               | **DNS only** |
@@ -51,7 +117,7 @@ DNS first, confirm nothing broke, then decide about proxying separately.
 ### Email is Google Workspace
 
 Incoming mail routes to `SMTP.GOOGLE.COM`, so **the MX record and the SPF TXT record
-matter more than anything else here**. `mail.save7.org` still points at Host Africa
+matter more than anything else here**. `mail.save7.org` still points at xneelo
 and is presumably used by mail clients or outgoing mail, so keep it.
 
 No DKIM record was found at the common selectors (`google._domainkey`,

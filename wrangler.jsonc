@@ -32,10 +32,15 @@
     // what actually resolves rather than what is intended — a dead link printed
     // on a real certificate is worse than an ugly hostname.
     //
-    // `learn.save7.org` goes here once the domain is attached (DEPLOY.md), which
-    // on Pages is a dashboard action rather than a line in this file.
-    "SITE_URL": "https://transplant-alchemy.pages.dev",
-    "NEXT_PUBLIC_SITE_URL": "https://transplant-alchemy.pages.dev",
+    // `learn.save7.org` is attached as a Pages custom domain with the zone still at
+    // xneelo — a subdomain needs one CNAME there and no nameserver move. See
+    // DNS-MIGRATION.md.
+    //
+    // **Deploy this only once the domain resolves.** Certificate verification links
+    // are built from SITE_URL, so pointing it at a hostname that does not answer
+    // yet prints dead links on real certificates.
+    "SITE_URL": "https://learn.save7.org",
+    "NEXT_PUBLIC_SITE_URL": "https://learn.save7.org",
 
     // ── Supabase ──────────────────────────────────────────────────────────────
     // The backend: the same project os.save7.org and volunteers.save7.org use,
@@ -60,6 +65,9 @@
   "env": {
     "preview": {
       "vars": {
+        // Previews keep the pages.dev alias deliberately: a preview deployment
+        // printing production certificate links would be claiming a hostname it is
+        // not serving, and per-deployment hostnames cannot be known in advance.
         "SITE_URL": "https://transplant-alchemy.pages.dev",
         "NEXT_PUBLIC_SITE_URL": "https://transplant-alchemy.pages.dev",
         "NEXT_PUBLIC_SUPABASE_URL": "https://zbaoziisqroqxfwcnhlb.supabase.co",

@@ -340,56 +340,38 @@ npm run pages:deploy
 
 ### 9. Attach your domain
 
-**This needs a DNS decision first.** `save7.org` is not on Cloudflare — its
-nameservers are `ns1.host-h.net` / `ns1.dns-h.com` (Host Africa), and the main
-site resolves to `76.76.21.21`, which is Vercel. A Cloudflare Worker can only
-answer on a hostname whose zone is in your Cloudflare account, so
-`learn.save7.org` cannot be attached as things stand. Pointing a CNAME at
-the `*.pages.dev` hostname from Host Africa does **not** work
-either — Cloudflare rejects a Host header it has no zone for.
+**No nameserver move is needed.** Earlier versions of this guide said otherwise, and
+that was right at the time: the course was a Cloudflare **Worker**, and a Worker can
+only answer on a hostname whose zone is in the Cloudflare account. On **Pages**, a
+custom domain on a *subdomain* works with external DNS.
 
-Three ways forward:
+DNS for `save7.org` stays at **xneelo**. Nothing about email, the SPF and DMARC
+records, or the apex on Vercel changes — which removes the whole class of risk the
+migration plan was written to manage.
 
-**A. Move `save7.org` DNS to Cloudflare** (free, and what makes the rest simple).
-Add the domain in Cloudflare, let it import the existing records, **check them
-against Host Africa's zone line by line — especially `MX`**, then change the
-nameservers at the registrar. Save7 receives email on this domain, so a missing
-`MX` record means lost mail, not just a broken website. The Vercel site keeps
-working as long as its `A`/`CNAME` records come across. Once the zone is live:
-Workers & Pages → `transplant-alchemy` → Settings → Domains & Routes → Add custom
-domain → `learn.save7.org`.
+**Order matters**, and reversing it breaks resolution:
 
-**B. Use a domain you already have on Cloudflare**, if there is one. Same last
-step, no migration.
+1. **Cloudflare first.** Workers & Pages → `transplant-alchemy` → Custom domains →
+   Set up a custom domain → `learn.save7.org`. Cloudflare's docs: adding the CNAME
+   *before* associating the domain here "will result in your domain failing to
+   resolve".
+2. **Then xneelo.** konsoleH → DNS zone for `save7.org` → Add DNS record: type
+   **CNAME**, host **`learn`** (xneelo appends the domain), points to
+   **`transplant-alchemy.pages.dev`**, TTL 300 while testing. **No A record** —
+   Pages needs the CNAME so it can change its own IPs.
+3. Wait for validation and the certificate. `dig +short learn.save7.org` shows
+   propagation.
 
-**C. Stay on the `*.pages.dev` hostname** — this is the current
-setup. It works, it has HTTPS, certificates verify against it, and it costs
-nothing. The only thing wrong with it is that it reads like a personal project
-rather than Save7.
+`SITE_URL` and `NEXT_PUBLIC_SITE_URL` are already set to `https://learn.save7.org`
+in `wrangler.jsonc`, so **deploy only after the domain resolves** — certificate
+verification links are built from it, and a dead link printed on a real certificate
+is worse than an ugly hostname. Previews deliberately keep the `pages.dev` alias.
 
-There is a free half-measure: the `zubayyrparak` part is the **account's**
-pages.dev subdomain, and it can be renamed in the dashboard (Workers & Pages →
-Overview → the subdomain shown in the sidebar). Renaming it to `save7` would give
-`transplant-alchemy.save7.workers.dev`. Note that this **breaks the existing URL**
-for anyone holding it, so do it before sharing the link, not after — and it needs
-`SITE_URL` updated and a deploy afterwards.
+Then the two allow-lists in step 6b need `https://learn.save7.org` as well.
 
-Whoever administers `save7.org` DNS has to do A or B; it is registrar access, not
-something in this repository.
+The apex `save7.org` would still need a nameserver move, and DNS-MIGRATION.md keeps
+that procedure and the captured zone for that case.
 
-### 10. Create your admin account
-
-Register through the site like any learner, then promote yourself:
-
-```bash
-npx wrangler d1 execute transplant-alchemy --remote --command "UPDATE User SET role='ADMIN' WHERE email='you@save7.org'"
-```
-
-No admin account ships in the content import, deliberately — a default password in
-a public repository is an open door. `/admin` returns 404 to non-admins, so nobody
-can even tell it exists.
-
----
 
 ## Changing the database schema after launch
 
@@ -466,9 +448,10 @@ that the Supabase project also holds the organisation's books.
 ### The part neither option solves
 
 `learn.save7.org` cannot be attached by anyone — you, a collaborator, or me — until
-`save7.org` DNS is on Cloudflare. That needs the **registrar** login at Host Africa
-to change nameservers, which is a third credential, separate from GitHub and
-Cloudflare. See step 9.
+the apex `save7.org` is on Cloudflare, which needs the registrar login at **xneelo**
+to change nameservers. `learn.save7.org` does **not** need it — a Pages custom
+domain on a subdomain works with the zone left at xneelo, which is what step 9 now
+describes.
 
 ---
 
