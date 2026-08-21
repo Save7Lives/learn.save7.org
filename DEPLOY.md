@@ -9,39 +9,47 @@ launch-blocking in the content-review register.
 
 ---
 
-## Live now
+## Where this stands
 
-The Worker is deployed and serving:
-
-**https://transplant-alchemy.zubayyrparak.workers.dev**
+**The previous deploy is superseded.** It ran on Cloudflare Workers against its own
+D1 database with password sign-in. Both are gone: the app is built for Cloudflare
+Pages, and the backend is the Save7 Supabase project. What was deployed at
+the old `workers.dev` hostname no longer matches this repository.
 
 | | Status |
 |---|---|
-| Deployed to Cloudflare Workers | Live, version `b1dc564a` |
-| D1 database | `906e5372-8b73-4073-8e78-c701ac64c07d` — schema applied, 683 content rows loaded |
-| `AUTH_SECRET` | Set as a Worker secret |
-| Registration on production | Tested end to end, then the test account was deleted |
-| Learners in production | 0 — metrics start clean, and there is no default admin |
-| Site URL | `https://transplant-alchemy.zubayyrparak.workers.dev` — the URL that actually resolves. Certificates verified on production. |
+| Build target | Cloudflare Pages, via `@cloudflare/next-on-pages` |
+| Backend | The Save7 Supabase project — the same one the OS and the volunteer portal use |
+| Database migrations | `save7-os/supabase/migrations/0091`–`0098` |
+| Sign-in | Google, verified by Supabase. No passwords, no `AUTH_SECRET` |
+| Registration endpoint | `register-learner`, needs deploying — step 3 |
 | **Video** | **Not hosted. R2 is deferred until Save7's own bank details are used. See step 5.** |
-| Custom domain | Not attached. `learn.save7.org` needs a DNS move first — see step 9. The site runs fine without it. |
+| Custom domain | Not attached. `learn.save7.org` needs a DNS move first — see step 9 |
 
 ---
 
-## What was verified before deploying
+## What has been verified, and what has not
 
 | | Status |
 |---|---|
-| Runs on Cloudflare Workers | Verified locally on `workerd` — the real runtime, not an emulator |
-| Database on Cloudflare D1 | Verified: full journey read and written to D1 |
-| Registration, login, sessions | Verified on Workers (bcrypt included) |
-| Baseline → modules → assessment → impact → certificate | Walked end to end on Workers |
-| Assessment integrity | Answer key never sent to the browser; baseline not retakeable; only attempt 1 counts |
-| Admin access control | Learners get 404; a validly-signed token claiming `role: ADMIN` is rejected |
-| 35 MB video | Excluded from the Worker bundle, served from R2 instead |
+| Builds for Pages | Verified from a clean checkout: `npm ci` then `npm run pages:build`, no `.env` needed |
+| Runs on `workerd` | Verified — the real runtime, not an emulator |
+| Type and lint | `tsc --noEmit` and `eslint` clean |
+| Answer-key isolation | Enforced by the database: `learn_choices` has no policy, and `verify_learn_isolation()` asserts it |
+| Content load | 0094's probe asserts all six counts and the one-correct-answer invariant |
 
-Not yet done, because it needs your account: creating the D1 database, creating the
-R2 bucket, setting secrets, and the deploy itself.
+**Not verified, and you should know it before launch:**
+
+| | |
+|---|---|
+| The end-to-end journey | The 53-assertion suite drove the old SQLite database and was removed with it. Nothing equivalent runs against Supabase yet. |
+| Google sign-in on production | The flow is the volunteer portal's, unchanged, but it has not been walked on this hostname |
+| Marking against real data | The rules moved into SQL functions whose probes are structural, not behavioural |
+
+That first row is the real gap. The rules it used to check — the baseline being
+once-only, unanswered counting as incorrect, only attempt 1 counting — are now
+stated in migrations 0097 and 0098 and enforced there, but nothing exercises them
+end to end.
 
 ---
 
@@ -90,47 +98,39 @@ will store it in your keychain, so this is once-only.
 
 ### Connect Cloudflare to the repository
 
-Cloudflare dashboard → **Workers & Pages** → **Create** → **Workers** → **Import a
-repository**. Authorise GitHub, pick `transplant-alchemy`, then set:
+Cloudflare dashboard → **Workers & Pages** → **Create** → **Pages** → **Connect to
+Git**. Authorise GitHub, pick `transplant-alchemy`, then set:
 
 | Setting | Value |
 |---|---|
-| Build command | `npx opennextjs-cloudflare build` |
-| Deploy command | `npx wrangler deploy` |
+| Build command | `npm run pages:build` |
+| Build output directory | `.vercel/output/static` |
 | Branch | `main` |
+| Compatibility flags | `nodejs_compat` |
 
-Leave the build output directory empty — `wrangler.jsonc` already points at
-`.open-next/worker.js`.
+`nodejs_compat` is not optional: the Next server needs Node built-ins (crypto,
+buffer, async_hooks) even on the edge runtime.
 
-**Finish steps 2 to 7 below before the first build**, or the deploy will fail on the
-placeholder database id. Cloudflare reads `wrangler.jsonc` from the repository, so
-the D1 id and the URLs must be committed:
+**Finish steps 2 to 7 below before the first build**, or the deploy will serve a
+site that cannot reach its database. Cloudflare reads `wrangler.jsonc` from the
+repository, so the Supabase values and the URLs must be committed:
 
 ```bash
-git commit -am "Point wrangler at the real D1 database and domain"
+git commit -am "Point wrangler at the Supabase project and the domain"
 ```
 
 ```bash
 git push
 ```
 
-`AUTH_SECRET` is the exception — it is a Worker secret, set once with
-`wrangler secret put` (step 6), and it is never committed.
+There is no secret to set. Every value the app needs is public by design — see
+step 6 — and the service-role key must never be added.
 
 ### After that
 
 Every push to `main` builds and deploys. Content changes become: edit
-`prisma/content/`, check locally, push, then apply with the reseed endpoint (see
-[Updating content](#updating-content-after-launch)).
-
-> **If the build fails on `better-sqlite3`:** that package is only used for local
-> development, but `npm ci` still installs it, and it compiles from source if no
-> prebuilt binary matches Cloudflare's build image. It is not needed to build the
-> Worker, so the fix is to skip it — set the build command to
-> `npm ci --omit=optional && npx opennextjs-cloudflare build`, or move
-> `better-sqlite3` into `devDependencies` and use `npm ci --omit=dev` for the
-> install. Nothing in the deployed Worker touches it: on Workers the D1 binding is
-> always present, so that code path is unreachable.
+`prisma/content/`, run `npm run content:emit`, and push the regenerated migration
+with `supabase db push` (see [Updating content](#updating-content-after-launch)).
 
 ---
 
@@ -144,34 +144,64 @@ Do these regardless of whether you deploy from GitHub or from your laptop.
 npx wrangler login
 ```
 
-### 2. Create the database
+### 2. Apply the database
+
+**There is no database to create.** The backend is the Save7 Supabase project —
+the same one `os.save7.org` and `volunteers.save7.org` use — and the course's
+schema, content and question bank are migrations in the `save7-os` repository.
 
 ```bash
-npx wrangler d1 create transplant-alchemy
+cd ../save7-os && supabase db push
 ```
 
-Copy the `database_id` it prints into `wrangler.jsonc`, replacing
-`REPLACE_WITH_D1_DATABASE_ID`.
+That applies, in order:
 
-### 3. Create the schema
+| Migration | What it does |
+| --- | --- |
+| `0091_learn_course_bank` | Learners, course structure, the bank, attempts, RLS |
+| `0092_learn_views_and_marking` | The views a browser may read, and the isolation checker |
+| `0093_learn_content_shape` | Corrects 0091's content tables |
+| `0094_learn_content` | The course: 3 levels, 13 modules, 97 lessons, 23 resources, 131 questions, 512 choices, 123 review items |
+| `0095_learner_self_registration` | Who may hold an account, and enrolment |
+| `0096_learn_parity` | Progress, events, and the derived-progress functions |
+| `0097_learn_quiz_marking` | Marking, which needs the answer key |
+| `0098_learn_certificates` | Issuing, public verification, renaming |
+
+Each ends in a probe that raises rather than letting a half-applied migration
+commit — 0094's asserts all six content counts and that every non-MULTI question
+has exactly one correct answer.
+
+The 131 questions include the volunteer portal's **forty gate questions**, so the
+clinical and layman's quizzes and the course now read from one bank.
+
+### 3. Deploy the registration endpoint
+
+Sign-in is refused for an address that is not already on a list, so registration
+has to work before anybody can sign in:
 
 ```bash
-npx wrangler d1 migrations apply transplant-alchemy --remote
+cd ../save7-os && supabase functions deploy register-learner
 ```
 
-### 4. Load the course content
+Set the throttle salt while you are there. Without it the function falls back to
+the service key, which works but is not the intended state:
 
 ```bash
-npx wrangler d1 execute transplant-alchemy --remote --file=prisma/d1-bootstrap/0001_content.sql
+cd ../save7-os && supabase secrets set REGISTRATION_SALT="$(openssl rand -base64 32)"
 ```
 
-683 rows: the course, 3 levels, 13 modules, 97 lessons, 23 resources, 91 questions,
-352 answer choices, and the 103-item content-review register.
+### 4. Check what a browser can reach
 
-This file is **bootstrap only** — it clears the content tables first, and clearing
-questions cascades to learner answers. After launch, content updates go through
-[Updating content](#updating-content-after-launch) instead. Regenerate it with
-`npm run db:export` if you change the content before first deploy.
+Worth running once against the live project, because it is the assertion the whole
+answer-key design rests on:
+
+```sql
+select verify_learn_isolation();
+```
+
+It confirms row level security is on for every `learn_*` table, that
+`learn_choices` has **no policy at all**, that no view names `is_correct`, and that
+`anon` has no direct read of the bank.
 
 ### 5. Create the video bucket
 
@@ -209,25 +239,36 @@ the video path lives in the lesson payload already.
 this file will not cost anything to serve — the payment method is only there
 because R2 requires one to be on file.
 
-### 6. Set the session secret
+### 6. Set the Supabase variables
 
-```bash
-openssl rand -base64 48
-```
+Three values, in `wrangler.jsonc` under `vars`, replacing the `SAVE7_` placeholders:
 
-```bash
-npx wrangler secret put AUTH_SECRET
-```
+| Variable | Where it comes from |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the same page |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | the volunteer portal's Google client id |
 
-Paste the generated value when prompted. It is a secret, so it is **not** in
-`wrangler.jsonc` — and note that changing it later signs everyone out.
+**None of these is a secret, and none of them goes in `wrangler pages secret`.**
+The anon key is public by design and grants nothing on its own; a Google client id
+appears in every page that uses Google sign-in. Row level security is what protects
+the data — see `verify_learn_isolation()` in step 4.
+
+There is **no `AUTH_SECRET` any more.** The app no longer mints its own session
+cookie: the Supabase cookie is the session, and it carries the JWT that row level
+security reads. If you are looking for it because an older copy of this guide
+mentioned it, it is gone along with password sign-in.
+
+⚠️ **Never put the service-role key in this file or in the Pages project.** It
+bypasses every policy, and `wrangler.jsonc` is committed to the repository. The app
+does not need it and must not have it.
 
 ### 7. Set the public URL
 
 Done — `wrangler.jsonc` sets both `SITE_URL` and `NEXT_PUBLIC_SITE_URL` to
 `https://transplant-alchemy.zubayyrparak.workers.dev`.
 
-That is the workers.dev hostname rather than `learn.save7.org`, deliberately: it
+That is the pages.dev hostname rather than `learn.save7.org`, deliberately: it
 is the one that resolves today, so a certificate issued now carries a link that
 works. Pointing it at the intended domain before that domain exists would print
 dead links onto real certificates, which cannot be corrected after the fact
@@ -260,7 +301,7 @@ git push
 Or deploy straight from this machine:
 
 ```bash
-npm run cf:deploy
+npm run pages:deploy
 ```
 
 ### 9. Attach your domain
@@ -270,7 +311,7 @@ nameservers are `ns1.host-h.net` / `ns1.dns-h.com` (Host Africa), and the main
 site resolves to `76.76.21.21`, which is Vercel. A Cloudflare Worker can only
 answer on a hostname whose zone is in your Cloudflare account, so
 `learn.save7.org` cannot be attached as things stand. Pointing a CNAME at
-`transplant-alchemy.zubayyrparak.workers.dev` from Host Africa does **not** work
+the `*.pages.dev` hostname from Host Africa does **not** work
 either — Cloudflare rejects a Host header it has no zone for.
 
 Three ways forward:
@@ -287,13 +328,13 @@ domain → `learn.save7.org`.
 **B. Use a domain you already have on Cloudflare**, if there is one. Same last
 step, no migration.
 
-**C. Stay on `transplant-alchemy.zubayyrparak.workers.dev`** — this is the current
+**C. Stay on the `*.pages.dev` hostname** — this is the current
 setup. It works, it has HTTPS, certificates verify against it, and it costs
 nothing. The only thing wrong with it is that it reads like a personal project
 rather than Save7.
 
 There is a free half-measure: the `zubayyrparak` part is the **account's**
-workers.dev subdomain, and it can be renamed in the dashboard (Workers & Pages →
+pages.dev subdomain, and it can be renamed in the dashboard (Workers & Pages →
 Overview → the subdomain shown in the sidebar). Renaming it to `save7` would give
 `transplant-alchemy.save7.workers.dev`. Note that this **breaks the existing URL**
 for anyone holding it, so do it before sharing the link, not after — and it needs
@@ -318,17 +359,24 @@ can even tell it exists.
 
 ## Changing the database schema after launch
 
-Content updates go through the reseed endpoint, but a *schema* change needs a
-migration. Order matters — the migration first, the deploy second, or every query
-touching the new columns fails in between:
+Both content and schema changes are migrations now, and they live in the
+`save7-os` repository because they belong to the project that serves them. Order
+matters — the migration first, the deploy second, or every query touching the new
+columns fails in between:
 
-1. Add a numbered file to `prisma/d1-migrations/`, ending with a semicolon
-2. `npm run db:push` and check locally
-3. Apply it to production: `npx wrangler d1 migrations apply transplant-alchemy --remote`
-4. Then build and deploy
+1. Add a numbered file to `save7-os/supabase/migrations/`
+2. `cd ../save7-os && supabase db push`
+3. Then build and deploy this app
 
-Migrations are recorded in D1's `d1_migrations` table, so re-running is safe: only
-unapplied files execute.
+Migrations are recorded by the Supabase CLI, so re-running is safe: only unapplied
+files execute. **End any migration that touches a `learn_*` view or table with
+`select verify_learn_isolation();`**, and any that touches a `vol_*` view with
+`select verify_vol_views();` — the second is that repository's standing rule and the
+course now has a view in that family.
+
+There is no local Postgres in this setup, so a migration is verified by the probes
+inside it. Write them: a migration that raises rolls itself back, which is how the
+97-lessons-into-26-rows bug was caught rather than shipped.
 
 ---
 
@@ -351,8 +399,8 @@ the course lives without ever holding your Cloudflare credentials:
 
 You review it, merge it, and the deploy attaches the domain and issues the
 certificate. The change is visible, reversible, and recorded — which clicking in a
-dashboard is not. They cannot see learner data, rotate `AUTH_SECRET`, or touch the
-database.
+dashboard is not. They cannot see learner data or touch the database — that lives on
+the Supabase project, which this repository has no privileged access to.
 
 **This is the whole reason the hostname is configuration rather than a dashboard
 setting.** `SITE_URL` is read at runtime, so no rebuild is involved either.
@@ -375,9 +423,11 @@ narrowest role that fits, rather than Super Administrator:
 Super Administrator can remove you, change billing, and delete the account. There is
 almost never a reason to grant it.
 
-Note that account members can read D1, and D1 holds learner records — names, email
-addresses, assessment answers. Under POPIA that is personal information, so keep the
-list of people with account access short and deliberate.
+Note that learner records — names, email addresses, assessment answers — are in the
+**Supabase** project now, not in the Cloudflare account. So Cloudflare access no
+longer reaches personal information, and Supabase access does. Under POPIA that is
+personal information either way: keep both lists short and deliberate, and remember
+that the Supabase project also holds the organisation's books.
 
 ### The part neither option solves
 
@@ -390,16 +440,19 @@ Cloudflare. See step 9.
 
 ## Updating content after launch
 
-Once people are enrolled, **never** re-run the bootstrap SQL. Instead:
+Content is applied by migration, and the generated migration is an **upsert keyed
+on the authoring identifier** — so a correction updates rows in place rather than
+replacing them. That matters more than idempotence usually does: a question row
+deleted and reinserted would take every answer ever recorded against it, and the
+improvement figures with them.
 
 1. Edit the files in `prisma/content/`
-2. `npm run db:seed` locally, and check the result at `localhost:3000`
-3. `npm run cf:deploy`
-4. Sign in as an admin and apply the content:
+2. `npm run content:emit` — regenerates `save7-os/supabase/migrations/0094_learn_content.sql`
+3. `cd ../save7-os && supabase db push`
 
-```bash
-curl -X POST https://learn.save7.org/api/admin/reseed -H "Cookie: save7_session=<your session cookie>"
-```
+The admin reseed endpoint is gone. It re-seeded the course from the running app,
+which is not possible now that content arrives as SQL — the trade is that a content
+change is slower and is reviewable in a pull request.
 
 That endpoint upserts on stable authoring keys. It never touches learner accounts,
 attempts, progress or certificates, and it never resets a review decision you have
@@ -455,7 +508,7 @@ change and is one setting to remove afterwards.
 | | |
 |---|---|
 | Workers | Free tier covers 100,000 requests/day. Paid is $5/month. |
-| D1 | Free tier covers 5 GB and 5 million row reads/day. This course is far below that. |
+| Supabase | Shared with the OS and the volunteer portal, so the course adds no new bill. |
 | R2 | Free tier covers 10 GB stored and unlimited egress via your domain. The video is 35 MB. |
 
 For an awareness course, expect this to run at no cost, or $5/month if you exceed
@@ -476,29 +529,32 @@ ceiling substantially.
 npm run dev
 ```
 
-Runs against a local SQLite file at `prisma/dev.db`, with fast refresh. This is the
-right loop for content and UI work.
+Runs against the **live Supabase project**, with fast refresh. There is no local
+database: the schema, the content and the policies are on that project, and this is
+the right loop for content and UI work.
+
+That has a consequence worth stating plainly: local development writes to real
+data. Sign in as yourself, and remember that a learner row you create is a row in
+the same project as the organisation's books. There is no seeded admin to hide
+behind.
 
 ```bash
-npm run cf:preview
+npm run pages:dev
 ```
 
-Builds and runs the actual Worker against a local D1, which is what caught the
-problems this port had to solve. Slower, but it is the truth.
+Builds and runs the actual Pages worker against Supabase — the real runtime rather
+than `next dev`. Slower, but it is the truth.
 
 Other useful commands:
 
 ```bash
-npm run verify
+npm run content:emit     # regenerate the migration that loads the course
+npm run typecheck        # tsc --noEmit
+npm run lint             # eslint
 ```
 
-Drives a real learner through the entire journey against the database and asserts
-53 behaviours, including every assessment-integrity guarantee. Run it after
-touching anything in `src/lib/`.
-
-```bash
-npm run db:seed          # apply course content locally
-npm run db:seed:demo     # 18 synthetic learners, to exercise the admin dashboard
-npm run db:export        # regenerate the D1 bootstrap SQL
-npm run cf:types         # regenerate Worker types after editing wrangler.jsonc
-```
+**There is no journey suite any more.** `npm run verify` drove a learner through
+the whole course against the local SQLite file and asserted 53 behaviours; it was
+removed with the database it depended on. Until it is rewritten against Supabase,
+the assessment-integrity rules are covered only by the structural probes inside the
+migrations — so changes to marking deserve manual walking through.

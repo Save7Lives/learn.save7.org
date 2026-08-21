@@ -27,18 +27,6 @@
   // buffer, async_hooks) even on the edge runtime.
   "compatibility_flags": ["nodejs_compat"],
 
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "transplant-alchemy",
-      // Created 2026-08-18 in the Cloudflare account zubayyrparak@gmail.com.
-      // Committed deliberately: it is an identifier, not a secret, and the build
-      // reads this file from the repository. Access is controlled by the account.
-      "database_id": "906e5372-8b73-4073-8e78-c701ac64c07d",
-      "migrations_dir": "prisma/d1-migrations"
-    }
-  ],
-
   "vars": {
     // The public origin, used to build certificate verification links. Tracks
     // what actually resolves rather than what is intended — a dead link printed
@@ -54,21 +42,20 @@
   // block a preview build runs with no vars at all and prints links to nowhere.
   "env": {
     "preview": {
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "transplant-alchemy",
-          "database_id": "906e5372-8b73-4073-8e78-c701ac64c07d",
-          "migrations_dir": "prisma/d1-migrations"
-        }
-      ],
       "vars": {
         "SITE_URL": "https://transplant-alchemy.pages.dev",
-        "NEXT_PUBLIC_SITE_URL": "https://transplant-alchemy.pages.dev"
+        "NEXT_PUBLIC_SITE_URL": "https://transplant-alchemy.pages.dev",
+        "NEXT_PUBLIC_SUPABASE_URL": "https://SAVE7_PROJECT_REF.supabase.co",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY": "SAVE7_REPLACE_WITH_ANON_KEY",
+        "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "SAVE7_REPLACE_WITH_GOOGLE_CLIENT_ID"
       }
     }
   }
 
-  // AUTH_SECRET is NOT here. It is a secret:
-  //   wrangler pages secret put AUTH_SECRET
+  // There is deliberately **no secret for this project.** Sign-in is a Google
+  // account verified by Supabase, so the app mints no session of its own and needs
+  // no signing key. The three values above are all public by design.
+  //
+  // The service-role key must never be added here or as a Pages secret: it bypasses
+  // every row level security policy, and this file is committed.
 }

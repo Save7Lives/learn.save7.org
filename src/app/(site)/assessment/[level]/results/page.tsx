@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/authz";
-import { eq } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { levels as levelsTable } from "@/db/schema";
+import { getLevelBySlug } from "@/lib/course";
 import { getKnowledgeImpact } from "@/lib/impact";
 import { issueCertificateIfEarned } from "@/lib/certificates";
 import {
@@ -42,9 +40,7 @@ export default async function ResultsPage(
   const { level: levelSlug } = await props.params;
   const user = await requireUser(`/assessment/${levelSlug}/results`);
 
-  const level = await db.query.levels.findFirst({
-    where: eq(levelsTable.slug, levelSlug),
-  });
+  const level = await getLevelBySlug(levelSlug);
   if (!level) notFound();
 
   const impact = await getKnowledgeImpact(user.id, level.id);

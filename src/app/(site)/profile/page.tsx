@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, eq, isNull } from "drizzle-orm";
 
 import { requireUser } from "@/lib/authz";
 import { getProfile } from "@/lib/profile";
-import { db } from "@/lib/db";
-import { certificates as certificatesTable } from "@/db/schema";
+import { getLearnerCertificates } from "@/lib/course";
 import { Card, Display, Eyebrow } from "@/components/ui/primitives";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { updateProfileAction } from "./actions";
@@ -37,13 +35,9 @@ export default async function ProfilePage() {
   // Only reachable if the account was deleted mid-session.
   if (!profile) notFound();
 
-  const [liveCertificate] = await db
-    .select({ publicId: certificatesTable.publicId })
-    .from(certificatesTable)
-    .where(
-      and(eq(certificatesTable.userId, user.id), isNull(certificatesTable.revokedAt)),
-    )
-    .limit(1);
+  // The first live certificate, only to decide whether to show the "your name is
+  // printed on a certificate" note beside the name field.
+  const [liveCertificate] = await getLearnerCertificates(user.id);
 
   const joined = profile.createdAt.toLocaleDateString("en-ZA", {
     day: "numeric",

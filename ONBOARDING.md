@@ -1,10 +1,9 @@
 # Transplant Alchemy 101 — start here
 
-Save7's organ-donation course, replacing their Google Classroom. Live at
-**https://transplant-alchemy.zubayyrparak.workers.dev**
+Save7's organ-donation course, replacing their Google Classroom.
 
-Next.js 16 · React 19 · Tailwind v4 · Drizzle · SQLite locally, Cloudflare D1 in
-production, deployed as a Cloudflare Worker.
+Next.js 15.5.2 · React 19 · Tailwind v4 · Supabase (Postgres) · deployed to
+Cloudflare Pages.
 
 ## Get it running
 
@@ -12,18 +11,35 @@ production, deployed as a Cloudflare Worker.
 git clone git@github.com:zzubyr7x/transplant-alchemy.git
 cd transplant-alchemy
 npm install
-cp .env.example .env
-npm run db:seed
 npm run dev
 ```
 
-That is the whole setup — no database server, no API keys, no Cloudflare account.
-The database is a local SQLite file and the course content is seeded into it. Open
-http://localhost:3000 and register an account; it is entirely local.
+**You need credentials for this one**, unlike the old SQLite build. `.env` wants
+three values:
 
-Want the admin dashboards to show something? `npm run db:seed:demo` adds 18
-synthetic learners. The dev seed also creates `admin@save7.org` / `save7admin`,
-**locally only** — that account does not exist in production, by design.
+```
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=<the volunteer portal's Google client id>
+```
+
+All three are safe in client code — the anon key grants nothing on its own, and row
+level security is what protects the data. Ask whoever owns the Supabase project for
+the first two.
+
+**There is no local database.** The backend is the shared Save7 Supabase project —
+the same one `os.save7.org` and `volunteers.save7.org` use. Two consequences worth
+knowing on day one:
+
+- **Local development writes to real data.** There is no seeded admin account and
+  no demo learners; what you see is what is in the project.
+- **Sign-in is a Google account, and registration comes first.** A database trigger
+  refuses an account for an address that is not already on a list, so register at
+  `/register` before your first sign-in. Admin dashboards need staff standing
+  (`app_is_staff()`), not a flag you can set locally.
+
+The schema and the course content are migrations in the `save7-os` repository
+(`0091`–`0098`), applied with `supabase db push`.
 
 ## Read these three files
 
@@ -74,7 +90,7 @@ touching anything in `src/lib/`.
 npm run cf:preview
 ```
 
-Runs the actual Worker against a local D1. Slower than `npm run dev`, and the only
+Runs the actual Pages worker against Supabase. Slower than `npm run dev`, and the only
 thing that catches Cloudflare-specific breakage.
 
 ## How changes ship

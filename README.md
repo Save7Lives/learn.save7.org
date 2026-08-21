@@ -24,29 +24,38 @@ Then:
 
 ```bash
 npm install
-cp .env.example .env
-npm run db:reset          # create the schema + seed the course
 npm run dev
 ```
 
-No credentials or cloud services are needed. `DATABASE_URL` defaults to a local
-SQLite file.
+**The backend is the Save7 Supabase project**, so unlike the previous SQLite
+build, running this needs three values in `.env`:
 
-A development admin account is created by the seed:
-
-| | |
-| --- | --- |
-| Admin | `admin@save7.org` / `save7admin` |
-
-To exercise the admin dashboard with realistic numbers:
-
-```bash
-npm run db:seed:demo        # 18 synthetic learners with a realistic funnel
-npm run db:seed:demo:clear  # remove them again
+```
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=<the volunteer portal's Google client id>
 ```
 
-The demo learners are deliberately **not** part of `db:seed` — fake learners in a
-real deployment would corrupt the one metric Save7 cares about.
+All three are safe in client code — the anon key grants nothing on its own, and
+row level security is what protects the data. Copy the first two from Supabase
+(Project Settings → API); the third is optional, and without it sign-in falls
+back to the shared Google redirect flow and still works.
+
+There is **no local database and no seed**. The schema, the course content and
+the question bank live in the `save7-os` repository as migrations, and are applied
+with `supabase db push` — `save7-os/supabase/migrations/0091` through `0098`. That
+is deliberate: one bank, one set of policies, and content changes that arrive as
+reviewable SQL rather than as whatever a seed script happened to write.
+
+**Sign-in is a Google account**, verified by Supabase, on the same project the OS
+and the volunteer portal use — so a volunteer taking the course is one identity
+across all three sites. There is no password and no development admin account:
+admin access is held by Save7 staff, who are `people` rows with an `app_role`, and
+`app_is_staff()` is what the app asks.
+
+Registration comes first and sign-in second, because a database trigger refuses
+an account for an address that is not already on a list. Register at `/register`,
+which posts to the `register-learner` Edge Function.
 
 ### Scripts
 
@@ -56,13 +65,10 @@ real deployment would corrupt the one metric Save7 cares about.
 | `npm run build` / `start` | Production build and serve |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
-| `npm run db:reset` | Delete the local database, recreate the schema, re-seed |
-| `npm run db:push` | Apply the schema to the local database |
-| `npm run db:seed` | Re-seed content only (idempotent, never touches learner data) |
-| `npm run db:export` | Regenerate the D1 bootstrap SQL from the local database |
-| `npm run verify` | Drive a learner through the whole journey and assert 53 behaviours |
-| `npm run cf:preview` | Build and run the real Worker against a local D1 |
-| `npm run cf:deploy` | Build and deploy to Cloudflare |
+| `npm run content:emit` | Regenerate the Supabase migration that loads the course |
+| `npm run pages:build` | Build for Cloudflare Pages (`.vercel/output/static`) |
+| `npm run pages:dev` | Build and serve the real Pages worker locally |
+| `npm run pages:deploy` | Build and deploy to Cloudflare Pages |
 | `npm run brand:generate` | Re-embed the Save7 logo used on certificates |
 
 ---
@@ -90,18 +96,35 @@ takeaways → check your understanding → study guide → further reading → c
 
 ## Architecture
 
-Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Drizzle ORM ·
-SQLite locally, Cloudflare D1 in production. Deployed to Cloudflare Workers via
-OpenNext — see [DEPLOY.md](DEPLOY.md).
+Next.js 15.5.2 (App Router) · React 19 · TypeScript · Tailwind CSS v4 ·
+Supabase (Postgres) · deployed to Cloudflare Pages via
+`@cloudflare/next-on-pages` — see [DEPLOY.md](DEPLOY.md).
 
-**Why Drizzle and not Prisma.** The project was built on Prisma and moved off it
-when Cloudflare became the deployment target: Prisma 7 compiles queries with
-WebAssembly, and Workers refuses to instantiate WASM from a buffer
-(`Wasm code generation disallowed by embedder`). Drizzle emits SQL directly. The
-database schema did not change — `prisma/d1-migrations/0001_init.sql` is still the
-SQL that Prisma generated, and `src/db/schema.ts` mirrors it column for column, so
-the migration needed no data conversion. The archived Prisma schema is kept in
-`docs/schema.prisma.superseded` for reference.
+**Why Supabase and not its own database.** The course was built on its own
+SQLite/D1 database with its own password login, and the volunteer portal held a
+second, hard-coded copy of forty of its questions. Two stores meant two answers to
+"has this person passed", and a question corrected in one place stayed wrong in the
+other. The backend is now the Save7 Supabase project — the same one the OS and the
+volunteer portal use — so a volunteer has one identity across all three sites and
+their course progress shows up in the portal.
+
+**What that means for how this app reads data.** There is no ORM. The app talks to
+Supabase over HTTPS with the **anon key and the learner's own JWT**, so every read
+is subject to the same row level security a browser would face; `authz.ts` is the
+second layer rather than the only one. A service-role client would have made every
+query trivially allowed and turned an app-level mistake into a data leak.
+
+**Where the rules live.** Anything a client must not be able to assert is a
+security-definer function in the database, not code here:
+
+| Function | Why it is not in this repo |
+| --- | --- |
+| `learn_submit_attempt` | Grading needs the answer key, which has no read path |
+| `learn_grade_check` | Same, for the inline checks |
+| `learn_complete_module` | Level and course percentages are derived, not claimed |
+| `learn_issue_certificate` | Both gates must be checked where they cannot be skipped |
+| `learn_verify_certificate` | A verifier has no account, so RLS cannot serve them |
+| `learn_claim_me` | `learners` has no insert policy, on purpose |
 
 ```
 src/
@@ -117,7 +140,7 @@ src/
     quiz/            assessment runner
     ui/              design system primitives
   lib/
-    auth.ts          sessions, password hashing
+    auth.ts          Google sign-in via Supabase, sessions
     authz.ts         requireUser / requireAdmin
     course.ts        structure + progress reads
     progress.ts      progress writes and events
@@ -125,18 +148,19 @@ src/
     impact.ts        knowledge-improvement calculations
     certificates.ts  issuance and verification
     analytics.ts     admin reporting
+    supabase/        server + browser clients, one project config
   db/
-    schema.ts        the data model
+    rows.ts          the shape of every row this app reads
 prisma/
-  content/           the course, as data
-  seed.ts            CLI wrapper: opens local SQLite
-  seed-core.ts       the seeding logic, driver-agnostic so it also runs on D1
-  d1-migrations/     the schema, applied to both local SQLite and D1
-  d1-bootstrap/      generated content import for a brand-new D1
+  content/           the course, as data — the authoring source of truth
+    review.ts        the content-review register, derived from that content
+scripts/
+  emit-supabase-content.ts   writes the course into a Supabase migration
 ```
 
-The `prisma/` directory name is now historical — it holds the course content and
-the seeder, not an ORM.
+The `prisma/` directory name is historical — it holds the course content and
+nothing else. The schema and the content live as migrations in the `save7-os`
+repository, because they belong to the project that serves them.
 
 ### Content is data, not code
 
@@ -247,13 +271,24 @@ list beside the player labels rather than seeks.
 
 ## Deploying
 
-**[DEPLOY.md](DEPLOY.md) is the guide.** It covers the Cloudflare setup end to end:
-creating the D1 database, loading the course content, putting the video in R2,
-setting secrets, attaching the domain, and how to push content corrections after
-launch without touching learner data.
+**[DEPLOY.md](DEPLOY.md) is the guide.** It covers the setup end to end: applying
+the Supabase migrations, deploying the `register-learner` function, putting the
+video in R2, setting the Pages variables, attaching the domain, and how to push
+content corrections after launch without touching learner data.
 
-The whole journey has been verified running on `workerd` against D1 — the real
-runtime, not an emulator. What is left needs a Cloudflare login, which is yours.
+Two things are worth knowing before the first deploy:
+
+**Content corrections are a migration now, not a button.** The old build had an
+admin route that re-seeded the course from the running app. Content is now applied
+by `supabase db push`, so a correction is `npm run content:emit` followed by a
+push — slower, and reviewable, which is the trade that was wanted.
+
+**The end-to-end journey suite is gone and needs rewriting.** It drove a learner
+through baseline → modules → assessment → certificate → analytics and asserted 53
+behaviours against the local SQLite file. Nothing equivalent runs against Supabase
+yet, and that is the largest gap in this repo's verification. It needs a
+service-role key and a disposable learner; until then the marking rules are
+covered only by the probes inside the migrations.
 
 ---
 

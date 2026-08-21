@@ -20,7 +20,7 @@ import { advancedLevel } from "../prisma/content/level-advanced";
 import { resourceSeeds } from "../prisma/content/resources";
 import { questionSeeds } from "../prisma/content/questions";
 import { gateQuestions } from "../prisma/content/questions-gate";
-import { deriveReviewItems } from "../prisma/seed-core";
+import { deriveReviewItems } from "../prisma/content/review";
 
 const OS = process.argv[2] ?? "../save7-os";
 const OUT = `${OS}/supabase/migrations/0094_learn_content.sql`;
@@ -59,6 +59,40 @@ out.push(`-- The course itself: three levels, their modules and lessons, the rea
 -- resolving against them.
 
 begin;
+
+-- ── correcting 0091's key on learn_lessons ──────────────────────────────────
+-- 0091 made "slug" the primary key. Lesson slugs are not unique across the
+-- course and never were: D1 keys a lesson by (moduleId, slug), and "intro",
+-- "check", "complete", "study-guide" and "further-reading" each occur once per
+-- module — thirteen times over. Under a slug-only key the 97 lessons upserted
+-- into 26 rows, which the count probe at the end of this file caught on the first
+-- push: "expected 97 lessons, found 26".
+--
+-- The table is recreated rather than altered: it is empty either way, nothing
+-- holds a foreign key to a lesson, and a composite primary key cannot be
+-- introduced by ALTER without dropping the old one first anyway.
+drop table if exists learn_lessons;
+
+create table learn_lessons (
+  slug          text not null,
+  module_slug   text not null references learn_modules (slug) on delete cascade,
+  position      int  not null,
+  title         text not null,
+  kind          text not null default 'READING',
+  body_markdown text,
+  component_key text,
+  payload       jsonb,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  /* The key the course actually has. */
+  primary key (module_slug, slug),
+  unique (module_slug, position)
+);
+
+alter table learn_lessons enable row level security;
+
+create policy learn_lessons_read on learn_lessons
+  for select using (auth.uid() is not null);
 `);
 
 // ── levels, modules, lessons ────────────────────────────────────────────────
@@ -106,8 +140,8 @@ for (const [levelIndex, level] of levels.entries()) {
   ${q(lesson.slug)}, ${q(mod.slug)}, ${lessonIndex}, ${q(lesson.title)}, ${q(lesson.kind)},
   ${q(lesson.bodyMarkdown)}, ${q(lesson.componentKey)},
   ${lesson.payload === undefined ? "NULL" : `${q(JSON.stringify(lesson.payload))}::jsonb`}
-) on conflict (slug) do update set
-  module_slug = excluded.module_slug, position = excluded.position,
+) on conflict (module_slug, slug) do update set
+  position = excluded.position,
   title = excluded.title, kind = excluded.kind,
   body_markdown = excluded.body_markdown, component_key = excluded.component_key,
   payload = excluded.payload, updated_at = now();

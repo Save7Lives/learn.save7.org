@@ -1,10 +1,45 @@
 import "server-only";
 
-import { and, asc, eq, isNotNull, sql } from "drizzle-orm";
+import { supabaseServer } from "./supabase/server";
 
-import { db } from "./db";
-import { levels, quizAttempts } from "@/db/schema";
-import { getCourse } from "./course";
+/**
+ * Attempts are read with their answers and each answer's question embedded, which
+ * PostgREST can do because `learn_answers` holds real foreign keys to both. The
+ * rows are then mapped into the shapes this file already worked with, so the
+ * comparison logic below — matched pairs, first attempt only — is unchanged.
+ */
+type EmbeddedAttempt = {
+  id?: string;
+  attempt_no?: number;
+  score_raw: number | null;
+  score_max: number | null;
+  score_pct: number | null;
+  learn_answers: Array<{
+    was_correct: boolean;
+    learn_questions: { pair_key: string | null; topic_tag: string; prompt?: string } | null;
+  }> | null;
+};
+
+const ATTEMPT_WITH_ANSWERS =
+  "id, attempt_no, score_raw, score_max, score_pct, learn_answers(was_correct, learn_questions(pair_key, topic_tag, prompt))";
+
+function mapAttempt(row: EmbeddedAttempt) {
+  return {
+    id: row.id ?? "",
+    attemptNo: row.attempt_no ?? 1,
+    scoreRaw: row.score_raw,
+    scoreMax: row.score_max,
+    scorePct: row.score_pct,
+    answers: (row.learn_answers ?? []).map((a) => ({
+      isCorrect: a.was_correct,
+      question: {
+        pairKey: a.learn_questions?.pair_key ?? null,
+        topicTag: a.learn_questions?.topic_tag ?? "",
+        prompt: a.learn_questions?.prompt ?? "",
+      },
+    })),
+  };
+}
 
 /**
  * Knowledge improvement.
@@ -87,52 +122,37 @@ export async function getKnowledgeImpact(
   userId: string,
   levelId: string,
 ): Promise<KnowledgeImpact> {
-  const course = await getCourse();
+  const supabase = await supabaseServer();
 
-  const [level] = await db
-    .select({ passMarkPct: levels.passMarkPct })
-    .from(levels)
-    .where(eq(levels.id, levelId))
-    .limit(1);
-  const passMarkPct = level?.passMarkPct ?? 70;
+  const { data: levelRow } = await supabase
+    .from("learn_levels")
+    .select("pass_mark_pct")
+    .eq("slug", levelId)
+    .maybeSingle();
+  const passMarkPct = (levelRow as { pass_mark_pct: number } | null)?.pass_mark_pct ?? 70;
 
-  const [preAttempt, postAttempts] = await Promise.all([
-    db.query.quizAttempts.findFirst({
-      where: and(
-        eq(quizAttempts.userId, userId),
-        eq(quizAttempts.courseId, course.id),
-        eq(quizAttempts.kind, "PRE"),
-        isNotNull(quizAttempts.submittedAt),
-      ),
-      orderBy: asc(quizAttempts.attemptNo),
-      columns: { id: true, scoreRaw: true, scoreMax: true, scorePct: true },
-      with: {
-        answers: {
-          columns: { isCorrect: true },
-          with: {
-            question: { columns: { pairKey: true, topicTag: true, prompt: true } },
-          },
-        },
-      },
-    }),
-    db.query.quizAttempts.findMany({
-      where: and(
-        eq(quizAttempts.userId, userId),
-        eq(quizAttempts.courseId, course.id),
-        eq(quizAttempts.levelId, levelId),
-        eq(quizAttempts.kind, "POST"),
-        isNotNull(quizAttempts.submittedAt),
-      ),
-      orderBy: asc(quizAttempts.attemptNo),
-      columns: { attemptNo: true, scoreRaw: true, scoreMax: true, scorePct: true },
-      with: {
-        answers: {
-          columns: { isCorrect: true },
-          with: { question: { columns: { pairKey: true, topicTag: true } } },
-        },
-      },
-    }),
+  const [preResult, postResult] = await Promise.all([
+    supabase
+      .from("learn_attempts")
+      .select(ATTEMPT_WITH_ANSWERS)
+      .eq("learner_id", userId)
+      .eq("scope", "PRE")
+      .not("submitted_at", "is", null)
+      .order("attempt_no")
+      .limit(1),
+
+    supabase
+      .from("learn_attempts")
+      .select(ATTEMPT_WITH_ANSWERS)
+      .eq("learner_id", userId)
+      .eq("scope", "POST")
+      .eq("level_slug", levelId)
+      .not("submitted_at", "is", null)
+      .order("attempt_no"),
   ]);
+
+  const preAttempt = ((preResult.data ?? []) as unknown as EmbeddedAttempt[]).map(mapAttempt)[0] ?? null;
+  const postAttempts = ((postResult.data ?? []) as unknown as EmbeddedAttempt[]).map(mapAttempt);
 
   // attemptNo 1 is the recorded measure: retakes must not inflate reported gains.
   const recorded = postAttempts.find((a) => a.attemptNo === 1) ?? postAttempts[0] ?? null;
@@ -248,45 +268,36 @@ export async function getCourseImpact(userId: string): Promise<{
   levelsAssessed: number;
   levelsTotal: number;
 }> {
-  const course = await getCourse();
+  const supabase = await supabaseServer();
 
-  const [pre, posts, levelsTotal] = await Promise.all([
-    db
-      .select({ scorePct: quizAttempts.scorePct })
-      .from(quizAttempts)
-      .where(
-        and(
-          eq(quizAttempts.userId, userId),
-          eq(quizAttempts.courseId, course.id),
-          eq(quizAttempts.kind, "PRE"),
-          isNotNull(quizAttempts.submittedAt),
-        ),
-      )
-      .limit(1)
-      .then((rows) => rows[0] ?? null),
-    db
-      .select({ scorePct: quizAttempts.scorePct, levelId: quizAttempts.levelId })
-      .from(quizAttempts)
-      .where(
-        and(
-          eq(quizAttempts.userId, userId),
-          eq(quizAttempts.courseId, course.id),
-          eq(quizAttempts.kind, "POST"),
-          // Only the first attempt counts, so retakes cannot inflate the average.
-          eq(quizAttempts.attemptNo, 1),
-          isNotNull(quizAttempts.submittedAt),
-        ),
-      ),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(levels)
-      .where(eq(levels.courseId, course.id))
-      .then((rows) => Number(rows[0]?.count ?? 0)),
+  const [preResult, postResult, levelCount] = await Promise.all([
+    supabase
+      .from("learn_attempts")
+      .select("score_pct")
+      .eq("learner_id", userId)
+      .eq("scope", "PRE")
+      .not("submitted_at", "is", null)
+      .limit(1),
+
+    supabase
+      .from("learn_attempts")
+      .select("score_pct, level_slug")
+      .eq("learner_id", userId)
+      .eq("scope", "POST")
+      // Only the first attempt counts, so retakes cannot inflate the average.
+      .eq("attempt_no", 1)
+      .not("submitted_at", "is", null),
+
+    supabase.from("learn_levels").select("slug", { count: "exact", head: true }),
   ]);
 
-  const beforePct = pre?.scorePct ?? null;
+  const pre = ((preResult.data ?? []) as unknown as Array<{ score_pct: number | null }>)[0] ?? null;
+  const posts = (postResult.data ?? []) as unknown as Array<{ score_pct: number | null }>;
+  const levelsTotal = levelCount.count ?? 0;
 
-  const scores = posts.map((p) => p.scorePct ?? 0);
+  const beforePct = pre?.score_pct ?? null;
+
+  const scores = posts.map((p) => p.score_pct ?? 0);
   const afterPct = scores.length
     ? Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length)
     : null;

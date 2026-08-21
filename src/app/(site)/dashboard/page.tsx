@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/authz";
-import { getBaselineState, getPathwayForUser } from "@/lib/course";
+import { getBaselineState, getPathwayForUser, getLearnerCertificates } from "@/lib/course";
 import { getCourseImpact } from "@/lib/impact";
-import { desc, eq } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { certificates as certificatesTable } from "@/db/schema";
 import {
   Badge,
   ButtonLink,
@@ -37,17 +34,7 @@ export default async function DashboardPage() {
     getPathwayForUser(user.id),
     getBaselineState(user.id),
     getCourseImpact(user.id),
-    db.query.certificates.findMany({
-      where: eq(certificatesTable.userId, user.id),
-      orderBy: desc(certificatesTable.issuedAt),
-      columns: {
-        publicId: true,
-        awardTitleSnapshot: true,
-        issuedAt: true,
-        revokedAt: true,
-      },
-      with: { level: { columns: { title: true, tier: true } } },
-    }),
+    getLearnerCertificates(user.id),
   ]);
 
   const modulesComplete = levels.reduce(
@@ -249,7 +236,7 @@ export default async function DashboardPage() {
                       )}
                     </div>
                     <p className="mt-1 text-sm text-sand-600">
-                      {cert.level.title} · issued{" "}
+                      {cert.levelTitle} · issued{" "}
                       {cert.issuedAt.toLocaleDateString("en-ZA", {
                         day: "numeric",
                         month: "long",

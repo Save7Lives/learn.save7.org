@@ -2,9 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/authz";
-import { eq } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { contentReviewItems } from "@/db/schema";
+import { supabaseServer } from "@/lib/supabase/server";
 import type { ReviewStatus } from "@/lib/constants";
 
 /**
@@ -20,15 +18,16 @@ export async function setReviewStatusAction(
 ): Promise<void> {
   const admin = await requireAdmin();
 
-  await db
-    .update(contentReviewItems)
-    .set({
+  const supabase = await supabaseServer();
+  await supabase
+    .from("learn_review_items")
+    .update({
       status,
-      reviewedById: admin.id,
-      reviewedAt: new Date(),
+      cleared_by: admin.id,
+      cleared_at: new Date().toISOString(),
       ...(notes !== undefined ? { notes: notes.slice(0, 4000) } : {}),
     })
-    .where(eq(contentReviewItems.id, itemId));
+    .eq("id", itemId);
 
   revalidatePath("/admin/content-review");
   revalidatePath("/admin");

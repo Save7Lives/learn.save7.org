@@ -61,7 +61,11 @@ export function ModuleRunner({
   estMinutes: number;
   isComplete: boolean;
   initialLessonIndex: number;
-  onViewLesson: (lessonId: string, secondsOnPreviousStep: number) => Promise<void>;
+  onViewLesson: (
+    moduleSlug: string,
+    lessonSlug: string,
+    secondsOnPreviousStep: number,
+  ) => Promise<void>;
   onComplete: (levelSlug: string, moduleSlug: string) => Promise<void>;
   nextModuleTitle: string | null;
 }) {
@@ -90,8 +94,8 @@ export function ModuleRunner({
         : Math.round((Date.now() - stepEnteredAt.current) / 1000);
     stepEnteredAt.current = Date.now();
     isFirstRender.current = false;
-    void onViewLesson(lesson.id, seconds);
-  }, [lesson, onViewLesson]);
+    void onViewLesson(moduleSlug, lesson.id, seconds);
+  }, [lesson, moduleSlug, onViewLesson]);
 
   function go(nextIndex: number) {
     setIndex(nextIndex);

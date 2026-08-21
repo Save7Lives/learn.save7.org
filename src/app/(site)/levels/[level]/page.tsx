@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/authz";
-import { getBaselineState, getPathwayForUser } from "@/lib/course";
-import { and, eq, inArray } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { levels as levelsTable, moduleProgress as moduleProgressTable } from "@/db/schema";
+import { getBaselineState, getPathwayForUser, getLevelBySlug, getModuleStatuses } from "@/lib/course";
 import {
   Badge,
   ButtonLink,
@@ -32,11 +29,7 @@ export async function generateMetadata(
   props: PageProps<"/levels/[level]">,
 ): Promise<Metadata> {
   const { level } = await props.params;
-  const [row] = await db
-    .select({ title: levelsTable.title, strapline: levelsTable.strapline })
-    .from(levelsTable)
-    .where(eq(levelsTable.slug, level))
-    .limit(1);
+  const row = await getLevelBySlug(level);
   return row
     ? { title: row.title, description: row.strapline }
     : { title: "Level not found" };
@@ -59,22 +52,10 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
   const contentDone = progress.modulesComplete === progress.modulesTotal;
 
   // Which modules this learner has finished.
-  const moduleIds = level.modules.map((m) => m.id);
-  const progressRows = moduleIds.length
-    ? await db
-        .select({
-          moduleId: moduleProgressTable.moduleId,
-          status: moduleProgressTable.status,
-        })
-        .from(moduleProgressTable)
-        .where(
-          and(
-            eq(moduleProgressTable.userId, user.id),
-            inArray(moduleProgressTable.moduleId, moduleIds),
-          ),
-        )
-    : [];
-  const statusByModule = new Map(progressRows.map((m) => [m.moduleId, m.status]));
+  const statusByModule = await getModuleStatuses(
+    user.id,
+    level.modules.map((m) => m.id),
+  );
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-12 sm:px-8">

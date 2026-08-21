@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/authz";
-import { eq } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { levels as levelsTable } from "@/db/schema";
+import { getLevelBySlug } from "@/lib/course";
 import { getPostQuestions, startAttempt } from "@/lib/quiz";
 import { isLevelContentComplete, recordEvent } from "@/lib/progress";
 import { QuizRunner } from "@/components/quiz/QuizRunner";
@@ -23,11 +21,7 @@ export async function generateMetadata(
   props: PageProps<"/assessment/[level]">,
 ): Promise<Metadata> {
   const { level } = await props.params;
-  const [row] = await db
-    .select({ certificateTitle: levelsTable.certificateTitle })
-    .from(levelsTable)
-    .where(eq(levelsTable.slug, level))
-    .limit(1);
+  const row = await getLevelBySlug(level);
   return { title: row ? `${row.certificateTitle} assessment` : "Assessment" };
 }
 
@@ -37,9 +31,7 @@ export default async function PostAssessmentPage(
   const { level: levelSlug } = await props.params;
   const user = await requireUser(`/assessment/${levelSlug}`);
 
-  const level = await db.query.levels.findFirst({
-    where: eq(levelsTable.slug, levelSlug),
-  });
+  const level = await getLevelBySlug(levelSlug);
   if (!level) notFound();
 
   // Gate on the content actually being finished. Checked here rather than only

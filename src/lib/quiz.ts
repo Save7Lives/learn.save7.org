@@ -1,24 +1,35 @@
 import "server-only";
 
-import { and, asc, desc, eq, isNull } from "drizzle-orm";
-
-import { db } from "./db";
-import { choices, questions, quizAnswers, quizAttempts } from "@/db/schema";
-import { getCourse } from "./course";
+import { supabaseServer } from "./supabase/server";
 import type { QuestionKind, QuizScope } from "./constants";
+import type { OptionRow, QuestionRow } from "@/db/rows";
 
 /**
  * The quiz engine, used by all three kinds of assessment: the one-time baseline,
- * the per-level post assessment, and the inline "check your understanding"
- * blocks inside modules.
+ * the per-level post assessment, and the inline "check your understanding" blocks
+ * inside modules.
  *
- * Two invariants hold throughout:
+ * Two invariants hold throughout, and both are now enforced by the database
+ * rather than by this file being careful:
  *
- * 1. **`isCorrect` never reaches the browser before an answer is submitted.**
- *    `toClientQuestion` is the only way a question is serialised for the client,
- *    and it strips the answer key. Anything that bypasses it is a bug.
- * 2. **Grading happens on the server**, including for the formative inline
- *    checks. Grading in the browser would mean shipping the answers.
+ * 1. **The answer key never reaches the browser before an answer is submitted.**
+ *    `learn_choices.is_correct` has no read path for any role; questions are read
+ *    from `learn_options_pub`, which does not carry the column. It is not stripped
+ *    on the way out — it is unreadable, so a forgotten mapping step cannot leak it.
+ * 2. **Grading happens on the server.** It happens in `learn_submit_attempt()` and
+ *    `learn_grade_check()`, which are security definer functions holding the only
+ *    read path to the key. This app cannot grade even if it tried.
+ *
+ * What is left here is the shape the pages expect: `ClientQuestion`, `AttemptRef`,
+ * `AttemptResult`. The functions are thin because the logic they used to hold —
+ * loading the expected questions server-side, treating unanswered as incorrect,
+ * exact set matching, idempotent resubmission, the baseline being once-only — is
+ * in migration 0097, stated there in the same terms.
+ *
+ * ── ON CHOICE IDS ───────────────────────────────────────────────────────────
+ * A choice's `id` is its **option key** — 'a', 'b', 'c', 'd'. It is stable under
+ * shuffling, which a row id is not, and it is what the volunteer portal has
+ * always submitted, so historical gate attempts still resolve against it.
  */
 
 // --- What the client is allowed to see --------------------------------------
@@ -37,58 +48,69 @@ export type ClientQuestion = {
   choices: ClientChoice[];
 };
 
-type QuestionRow = {
-  id: string;
-  kind: string;
-  prompt: string;
-  scenario: string | null;
-  topicTag: string;
-  choices: Array<{ id: string; text: string; order: number }>;
-};
+type QuestionFields = Pick<
+  QuestionRow,
+  "id" | "kind" | "prompt" | "scenario" | "topic_tag" | "position"
+>;
 
-/** Strips the answer key. The only sanctioned path from a question row to the client. */
-function toClientQuestion(q: QuestionRow): ClientQuestion {
-  return {
-    id: q.id,
-    kind: q.kind as QuestionKind,
-    prompt: q.prompt,
-    scenario: q.scenario,
-    topicTag: q.topicTag,
-    choices: [...q.choices]
-      .sort((a, b) => a.order - b.order)
-      .map((c) => ({ id: c.id, text: c.text })),
-  };
+const QUESTION_COLUMNS = "id, kind, prompt, scenario, topic_tag, position";
+
+/**
+ * Read a set of questions with their options, for the client.
+ *
+ * Two reads and a join in memory rather than a PostgREST embed: `learn_options_pub`
+ * is a view, and an embedded resource on a view has no declared relationship to
+ * embed through.
+ */
+async function readQuestions(
+  scope: QuizScope,
+  where: { levelSlug?: string; moduleSlug?: string } = {},
+): Promise<ClientQuestion[]> {
+  const supabase = await supabaseServer();
+
+  let query = supabase.from("learn_questions_pub").select(QUESTION_COLUMNS).eq("scope", scope);
+  if (where.levelSlug) query = query.eq("level_slug", where.levelSlug);
+  if (where.moduleSlug) query = query.eq("module_slug", where.moduleSlug);
+
+  const { data: questionData } = await query.order("position");
+
+  const rows = (questionData ?? []) as unknown as QuestionFields[];
+  if (rows.length === 0) return [];
+
+  const { data: optionData } = await supabase
+    .from("learn_options_pub")
+    .select("question_id, option_key, position, text")
+    .in(
+      "question_id",
+      rows.map((r) => r.id),
+    )
+    .order("position");
+
+  const optionsByQuestion = new Map<string, ClientChoice[]>();
+  for (const option of (optionData ?? []) as unknown as OptionRow[]) {
+    const list = optionsByQuestion.get(option.question_id) ?? [];
+    list.push({ id: option.option_key, text: option.text });
+    optionsByQuestion.set(option.question_id, list);
+  }
+
+  return rows.map((row) => ({
+    id: row.id,
+    kind: row.kind as QuestionKind,
+    prompt: row.prompt,
+    scenario: row.scenario,
+    topicTag: row.topic_tag,
+    choices: optionsByQuestion.get(row.id) ?? [],
+  }));
 }
 
 /**
- * The columns a question is read with when it is bound for the client.
- *
- * Note what is absent: `choices.isCorrect` and `choices.feedback`. The answer key
- * is not merely stripped later — it is never selected in the first place, so it
- * cannot leak through a forgotten mapping step.
- */
-const CLIENT_QUESTION_QUERY = {
-  columns: {
-    id: true,
-    kind: true,
-    prompt: true,
-    scenario: true,
-    topicTag: true,
-  },
-  with: {
-    choices: {
-      columns: { id: true, text: true, order: true },
-      orderBy: asc(choices.order),
-    },
-  },
-} as const;
-
-// --- Grading ---------------------------------------------------------------
-
-/**
  * A multi-select answer is correct only on an exact set match: every correct
- * choice selected and no incorrect one. Partial credit would let a learner
- * select everything and score well, which teaches the wrong habit.
+ * choice selected and no incorrect one. Partial credit would let a learner select
+ * everything and score well, which teaches the wrong habit.
+ *
+ * Kept as a pure function because it is the one piece of grading worth being able
+ * to test without a database. The authoritative copy is in SQL — this must not be
+ * used to grade anything the app then records.
  */
 export function gradeSelection(
   selected: string[],
@@ -104,31 +126,15 @@ export function gradeSelection(
 // --- Reading questions ------------------------------------------------------
 
 export async function getBaselineQuestions(): Promise<ClientQuestion[]> {
-  const course = await getCourse();
-  const rows = await db.query.questions.findMany({
-    where: and(eq(questions.courseId, course.id), eq(questions.scope, "PRE")),
-    orderBy: asc(questions.order),
-    ...CLIENT_QUESTION_QUERY,
-  });
-  return rows.map(toClientQuestion);
+  return readQuestions("PRE");
 }
 
 export async function getPostQuestions(levelId: string): Promise<ClientQuestion[]> {
-  const rows = await db.query.questions.findMany({
-    where: and(eq(questions.levelId, levelId), eq(questions.scope, "POST")),
-    orderBy: asc(questions.order),
-    ...CLIENT_QUESTION_QUERY,
-  });
-  return rows.map(toClientQuestion);
+  return readQuestions("POST", { levelSlug: levelId });
 }
 
 export async function getCheckQuestions(moduleId: string): Promise<ClientQuestion[]> {
-  const rows = await db.query.questions.findMany({
-    where: and(eq(questions.moduleId, moduleId), eq(questions.scope, "CHECK")),
-    orderBy: asc(questions.order),
-    ...CLIENT_QUESTION_QUERY,
-  });
-  return rows.map(toClientQuestion);
+  return readQuestions("CHECK", { moduleSlug: moduleId });
 }
 
 // --- Attempts ---------------------------------------------------------------
@@ -139,65 +145,28 @@ export type AttemptRef = { id: string; attemptNo: number };
  * Start, or resume, an attempt.
  *
  * The baseline is special: it may only ever be taken once, so an existing
- * submitted PRE attempt is returned rather than a new one being created. A
- * learner who could retake the baseline could manufacture an improvement.
+ * submitted PRE attempt is returned rather than a new one being created. A learner
+ * who could retake the baseline could manufacture an improvement. That rule is
+ * enforced in `learn_start_attempt()`, not here.
  */
 export async function startAttempt(
   userId: string,
   kind: QuizScope,
   levelId: string | null,
 ): Promise<{ attempt: AttemptRef; alreadySubmitted: boolean }> {
-  const course = await getCourse();
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase.rpc("learn_start_attempt", {
+    p_scope: kind,
+    p_level: levelId,
+  });
 
-  // The most recent attempt: retakes increment attemptNo, so the highest is the
-  // one to resume or count from.
-  const [highest] = await db
-    .select({
-      id: quizAttempts.id,
-      attemptNo: quizAttempts.attemptNo,
-      submittedAt: quizAttempts.submittedAt,
-    })
-    .from(quizAttempts)
-    .where(
-      and(
-        eq(quizAttempts.userId, userId),
-        eq(quizAttempts.courseId, course.id),
-        eq(quizAttempts.kind, kind),
-        // Explicit null handling: a course-wide attempt has no level, and
-        // `eq(column, null)` is never true in SQL.
-        levelId === null ? isNull(quizAttempts.levelId) : eq(quizAttempts.levelId, levelId),
-      ),
-    )
-    .orderBy(desc(quizAttempts.attemptNo))
-    .limit(1);
+  if (error) throw new Error(`Could not start the assessment: ${error.message}`);
 
-  if (highest && !highest.submittedAt) {
-    // An abandoned attempt — let them carry on rather than losing their answers.
-    return {
-      attempt: { id: highest.id, attemptNo: highest.attemptNo },
-      alreadySubmitted: false,
-    };
-  }
-
-  if (kind === "PRE" && highest?.submittedAt) {
-    return {
-      attempt: { id: highest.id, attemptNo: highest.attemptNo },
-      alreadySubmitted: true,
-    };
-  }
-
-  const [created] = await db
-    .insert(quizAttempts)
-    .values({
-      userId,
-      courseId: course.id,
-      levelId,
-      kind,
-      attemptNo: (highest?.attemptNo ?? 0) + 1,
-    })
-    .returning({ id: quizAttempts.id, attemptNo: quizAttempts.attemptNo });
-
-  return { attempt: created, alreadySubmitted: false };
+  const result = data as { id: string; attempt_no: number; already_submitted: boolean };
+  return {
+    attempt: { id: result.id, attemptNo: result.attempt_no },
+    alreadySubmitted: result.already_submitted,
+  };
 }
 
 export type SubmittedAnswer = {
@@ -232,102 +201,97 @@ export type AttemptResult = {
   answers: GradedAnswer[];
 };
 
+/** The database's marked paper, in the shape the review screen renders. */
+type DetailPayload = {
+  error?: string;
+  attempt_id: string;
+  attempt_no: number;
+  score_raw: number;
+  score_max: number;
+  score_pct: number;
+  answers: Array<{
+    question_id: string;
+    prompt: string;
+    scenario: string | null;
+    topic_tag: string;
+    explanation: string;
+    is_correct: boolean;
+    selected: string[] | null;
+    choices: Array<{
+      id: string;
+      text: string;
+      is_correct: boolean;
+      feedback: string | null;
+      was_selected: boolean;
+    }> | null;
+  }> | null;
+};
+
+function mapDetail(payload: DetailPayload): AttemptResult {
+  return {
+    attemptId: payload.attempt_id,
+    attemptNo: payload.attempt_no,
+    scoreRaw: payload.score_raw,
+    scoreMax: payload.score_max,
+    scorePct: payload.score_pct,
+    answers: (payload.answers ?? []).map((a) => ({
+      questionId: a.question_id,
+      prompt: a.prompt,
+      scenario: a.scenario,
+      topicTag: a.topic_tag,
+      isCorrect: a.is_correct,
+      explanation: a.explanation,
+      selectedChoiceIds: a.selected ?? [],
+      choices: (a.choices ?? []).map((c) => ({
+        id: c.id,
+        text: c.text,
+        isCorrect: c.is_correct,
+        feedback: c.feedback,
+        wasSelected: c.was_selected,
+      })),
+    })),
+  };
+}
+
 /**
  * Grade and record a submission.
  *
  * Idempotent by design: re-submitting the same attempt returns the stored result
- * rather than regrading, so a double-tap on a slow phone connection cannot
- * produce two different scores.
+ * rather than regrading, so a double-tap on a slow phone connection cannot produce
+ * two different scores. `userId` is kept in the signature because every caller has
+ * it, but ownership is checked against the JWT inside the function — an argument
+ * naming somebody else would be a client grading another learner's paper.
  */
 export async function submitAttempt(
   userId: string,
   attemptId: string,
   submitted: SubmittedAnswer[],
 ): Promise<AttemptResult | { error: string }> {
-  const [attempt] = await db
-    .select({
-      id: quizAttempts.id,
-      userId: quizAttempts.userId,
-      kind: quizAttempts.kind,
-      levelId: quizAttempts.levelId,
-      courseId: quizAttempts.courseId,
-      attemptNo: quizAttempts.attemptNo,
-      submittedAt: quizAttempts.submittedAt,
-    })
-    .from(quizAttempts)
-    .where(eq(quizAttempts.id, attemptId))
-    .limit(1);
+  const supabase = await supabaseServer();
 
-  // Ownership is checked here, not only at the route boundary.
-  if (!attempt || attempt.userId !== userId) return { error: "Attempt not found." };
-
-  if (attempt.submittedAt) {
-    const stored = await readAttemptResult(userId, attemptId);
-    return stored ?? { error: "That assessment has already been submitted." };
-  }
-
-  // A POST attempt with no level cannot be graded: there would be no way to know
-  // which questions it is meant to contain. Previously this fell through to an
-  // unfiltered query, which would have graded against every POST question in the
-  // course.
-  if (attempt.kind !== "PRE" && !attempt.levelId) {
-    return { error: "This assessment is not attached to a level." };
-  }
-
-  // Load the questions this attempt is *supposed* to contain, from the server's
-  // own definition — never from the submitted payload. Otherwise a crafted
-  // request could submit a single easy question and score 100%.
-  const expected = await db.query.questions.findMany({
-    where:
-      attempt.kind === "PRE"
-        ? and(eq(questions.courseId, attempt.courseId), eq(questions.scope, "PRE"))
-        : and(eq(questions.levelId, attempt.levelId!), eq(questions.scope, "POST")),
-    orderBy: asc(questions.order),
-    with: { choices: { columns: { id: true, isCorrect: true } } },
-  });
-
-  if (expected.length === 0) return { error: "This assessment has no questions." };
-
-  const byQuestion = new Map(submitted.map((s) => [s.questionId, s]));
-
-  let scoreRaw = 0;
-  const answerRows = expected.map((q) => {
-    const given = byQuestion.get(q.id);
-    const choiceIds = (given?.choiceIds ?? []).filter((id) =>
-      q.choices.some((c) => c.id === id),
-    );
-    // Unanswered counts as incorrect rather than being silently dropped from the
-    // denominator, so a score always means "out of the whole assessment".
-    const isCorrect = choiceIds.length > 0 && gradeSelection(choiceIds, q.choices);
-    if (isCorrect) scoreRaw += 1;
-
-    return {
-      attemptId: attempt.id,
-      questionId: q.id,
-      choiceIdsJson: JSON.stringify(choiceIds),
-      freeText: given?.freeText?.trim() ? given.freeText.trim().slice(0, 4000) : null,
-      isCorrect,
+  // Keyed by question id, which is how the function looks each answer up. The
+  // payload is advisory: the questions the attempt *should* contain are loaded
+  // server-side, so an answer for anything outside the paper is ignored.
+  const answers: Record<string, { chosen: string[]; free_text: string | null }> = {};
+  for (const answer of submitted) {
+    answers[answer.questionId] = {
+      chosen: answer.choiceIds,
+      free_text: answer.freeText?.trim() ? answer.freeText.trim() : null,
     };
+  }
+
+  const { data, error } = await supabase.rpc("learn_submit_attempt", {
+    p_attempt: attemptId,
+    p_answers: answers,
   });
 
-  const scoreMax = expected.length;
-  const scorePct = Math.round((scoreRaw / scoreMax) * 100);
+  if (error) return { error: error.message };
 
-  // Three statements, deliberately in this order and deliberately not wrapped in
-  // an interactive transaction — D1 does not offer one.
-  //
-  // `submittedAt` is the commit marker, so it is written last. If any earlier
-  // step fails the attempt stays unsubmitted, and re-submitting starts again from
-  // the delete: no partially-graded attempt can ever be marked as submitted.
-  await db.delete(quizAnswers).where(eq(quizAnswers.attemptId, attempt.id));
-  await db.insert(quizAnswers).values(answerRows);
-  await db
-    .update(quizAttempts)
-    .set({ submittedAt: new Date(), scoreRaw, scoreMax, scorePct })
-    .where(eq(quizAttempts.id, attempt.id));
+  const payload = data as DetailPayload | null;
+  if (!payload) return { error: "Could not read back the graded attempt." };
+  if (payload.error) return { error: payload.error };
 
-  const result = await readAttemptResult(userId, attempt.id);
-  return result ?? { error: "Could not read back the graded attempt." };
+  return mapDetail(payload);
 }
 
 /** The full graded detail of a submitted attempt, for the review screen. */
@@ -335,86 +299,37 @@ export async function readAttemptResult(
   userId: string,
   attemptId: string,
 ): Promise<AttemptResult | null> {
-  const attempt = await db.query.quizAttempts.findFirst({
-    where: eq(quizAttempts.id, attemptId),
-    columns: {
-      id: true,
-      userId: true,
-      attemptNo: true,
-      scoreRaw: true,
-      scoreMax: true,
-      scorePct: true,
-      submittedAt: true,
-    },
-    with: {
-      answers: {
-        columns: { questionId: true, choiceIdsJson: true, isCorrect: true },
-        with: {
-          question: {
-            columns: {
-              prompt: true,
-              scenario: true,
-              explanation: true,
-              topicTag: true,
-              order: true,
-            },
-            with: {
-              choices: {
-                columns: {
-                  id: true,
-                  text: true,
-                  isCorrect: true,
-                  feedback: true,
-                  order: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
+  const supabase = await supabaseServer();
+  const { data } = await supabase.rpc("learn_read_attempt", { p_attempt: attemptId });
 
-  // The answer key is included here, which is correct: this only ever runs for an
-  // attempt that has already been submitted, and it is gated on that below.
-  if (!attempt || attempt.userId !== userId || !attempt.submittedAt) return null;
+  const payload = data as DetailPayload | null;
+  // Null covers all three refusals in one: no such attempt, somebody else's, or
+  // not submitted yet. The function applies them; this cannot tell them apart and
+  // has no reason to.
+  if (!payload || payload.error) return null;
 
-  const answers: GradedAnswer[] = attempt.answers
-    .map((a) => {
-      const selected = new Set(JSON.parse(a.choiceIdsJson) as string[]);
-      return {
-        order: a.question.order,
-        value: {
-          questionId: a.questionId,
-          prompt: a.question.prompt,
-          scenario: a.question.scenario,
-          topicTag: a.question.topicTag,
-          isCorrect: a.isCorrect,
-          explanation: a.question.explanation,
-          selectedChoiceIds: [...selected],
-          choices: [...a.question.choices]
-            .sort((x, y) => x.order - y.order)
-            .map((c) => ({
-              id: c.id,
-              text: c.text,
-              isCorrect: c.isCorrect,
-              feedback: c.feedback,
-              wasSelected: selected.has(c.id),
-            })),
-        } satisfies GradedAnswer,
-      };
-    })
-    .sort((a, b) => a.order - b.order)
-    .map((x) => x.value);
+  return mapDetail(payload);
+}
 
-  return {
-    attemptId: attempt.id,
-    attemptNo: attempt.attemptNo,
-    scoreRaw: attempt.scoreRaw ?? 0,
-    scoreMax: attempt.scoreMax ?? answers.length,
-    scorePct: attempt.scorePct ?? 0,
-    answers,
-  };
+/**
+ * What an attempt was for: its scope and its level.
+ *
+ * Used by the submit action to log the right event and route to the right place.
+ * Row level security scopes it to the caller, so an attempt id belonging to
+ * somebody else reads as absent rather than as somebody else's.
+ */
+export async function getAttemptMeta(
+  attemptId: string,
+): Promise<{ scope: QuizScope; levelSlug: string | null } | null> {
+  const supabase = await supabaseServer();
+  const { data } = await supabase
+    .from("learn_attempts")
+    .select("scope, level_slug")
+    .eq("id", attemptId)
+    .maybeSingle();
+
+  const row = data as { scope: QuizScope; level_slug: string | null } | null;
+  return row ? { scope: row.scope, levelSlug: row.level_slug } : null;
 }
 
 // --- Inline checks ----------------------------------------------------------
@@ -438,82 +353,31 @@ export async function gradeCheckAnswer(
   questionId: string,
   choiceIds: string[],
 ): Promise<CheckFeedback | { error: string }> {
-  const question = await db.query.questions.findFirst({
-    where: eq(questions.id, questionId),
-    columns: {
-      id: true,
-      scope: true,
-      courseId: true,
-      moduleId: true,
-      explanation: true,
-    },
-    with: {
-      module: { columns: { levelId: true } },
-      choices: { columns: { id: true, isCorrect: true, feedback: true } },
-    },
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase.rpc("learn_grade_check", {
+    p_question: questionId,
+    p_chosen: choiceIds,
   });
 
-  if (!question || question.scope !== "CHECK") return { error: "Question not found." };
+  if (error) return { error: error.message };
 
-  const valid = choiceIds.filter((id) => question.choices.some((c) => c.id === id));
-  const isCorrect = valid.length > 0 && gradeSelection(valid, question.choices);
+  const payload = data as {
+    error?: string;
+    is_correct: boolean;
+    explanation: string;
+    choices: Array<{ id: string; is_correct: boolean; feedback: string | null }> | null;
+  } | null;
 
-  if (question.moduleId) {
-    const attempt = await findOrCreateCheckAttempt(userId, question);
-
-    await db
-      .insert(quizAnswers)
-      .values({
-        attemptId: attempt.id,
-        questionId,
-        choiceIdsJson: JSON.stringify(valid),
-        isCorrect,
-      })
-      .onConflictDoUpdate({
-        target: [quizAnswers.attemptId, quizAnswers.questionId],
-        set: {
-          choiceIdsJson: JSON.stringify(valid),
-          isCorrect,
-          answeredAt: new Date(),
-        },
-      });
-  }
+  if (!payload) return { error: "Question not found." };
+  if (payload.error) return { error: payload.error };
 
   return {
-    isCorrect,
-    explanation: question.explanation,
-    choices: question.choices.map((c) => ({
+    isCorrect: payload.is_correct,
+    explanation: payload.explanation,
+    choices: (payload.choices ?? []).map((c) => ({
       id: c.id,
-      isCorrect: c.isCorrect,
+      isCorrect: c.is_correct,
       feedback: c.feedback,
     })),
   };
-}
-
-/** One CHECK attempt per learner per level, holding every inline answer in it. */
-async function findOrCreateCheckAttempt(
-  userId: string,
-  question: { courseId: string; module: { levelId: string } | null },
-): Promise<{ id: string }> {
-  const levelId = question.module?.levelId ?? null;
-
-  const [existing] = await db
-    .select({ id: quizAttempts.id })
-    .from(quizAttempts)
-    .where(
-      and(
-        eq(quizAttempts.userId, userId),
-        eq(quizAttempts.courseId, question.courseId),
-        eq(quizAttempts.kind, "CHECK"),
-        levelId === null ? isNull(quizAttempts.levelId) : eq(quizAttempts.levelId, levelId),
-      ),
-    )
-    .limit(1);
-  if (existing) return existing;
-
-  const [created] = await db
-    .insert(quizAttempts)
-    .values({ userId, courseId: question.courseId, levelId, kind: "CHECK", attemptNo: 1 })
-    .returning({ id: quizAttempts.id });
-  return created;
 }

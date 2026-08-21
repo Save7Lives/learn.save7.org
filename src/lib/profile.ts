@@ -1,9 +1,6 @@
 import "server-only";
 
-import { and, eq, isNull } from "drizzle-orm";
-
-import { db } from "./db";
-import { certificates, users } from "@/db/schema";
+import { supabaseServer } from "./supabase/server";
 import { recordEvent } from "./progress";
 import { NAME_MAX } from "./constants";
 
@@ -78,26 +75,33 @@ export type Profile = {
  * does — the form is never blank, and saving once makes the split permanent.
  */
 export async function getProfile(userId: string): Promise<Profile | null> {
-  const [row] = await db
-    .select({
-      id: users.id,
-      email: users.email,
-      name: users.name,
-      firstName: users.firstName,
-      lastName: users.lastName,
-      createdAt: users.createdAt,
-      popiaConsentAt: users.popiaConsentAt,
-    })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
+  const supabase = await supabaseServer();
+  const { data } = await supabase
+    .from("learners")
+    .select("id, email, name, first_name, last_name, created_at, popia_consent_at")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const row = data as {
+    id: string;
+    email: string;
+    name: string;
+    first_name: string | null;
+    last_name: string | null;
+    created_at: string;
+    popia_consent_at: string | null;
+  } | null;
   if (!row) return null;
 
   const spaceAt = row.name.indexOf(" ");
   return {
-    ...row,
-    firstName: row.firstName ?? (spaceAt > 0 ? row.name.slice(0, spaceAt) : row.name),
-    lastName: row.lastName ?? (spaceAt > 0 ? row.name.slice(spaceAt + 1).trim() : ""),
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    firstName: row.first_name ?? (spaceAt > 0 ? row.name.slice(0, spaceAt) : row.name),
+    lastName: row.last_name ?? (spaceAt > 0 ? row.name.slice(spaceAt + 1).trim() : ""),
+    createdAt: new Date(row.created_at),
+    popiaConsentAt: row.popia_consent_at ? new Date(row.popia_consent_at) : null,
   };
 }
 
@@ -121,15 +125,15 @@ export async function updateProfile(
 
   const { firstName, lastName, name } = validated;
 
-  await db
-    .update(users)
-    .set({ firstName, lastName, name, updatedAt: new Date() })
-    .where(eq(users.id, userId));
-
-  await db
-    .update(certificates)
-    .set({ learnerNameSnapshot: name })
-    .where(and(eq(certificates.userId, userId), isNull(certificates.revokedAt)));
+  // One call, because the two writes must not diverge: `learn_set_name()` updates
+  // the learner row and the name on their live certificates together. The
+  // certificates half needs it — that table has no update policy, and should not.
+  const supabase = await supabaseServer();
+  const { error } = await supabase.rpc("learn_set_name", {
+    p_first: firstName,
+    p_last: lastName,
+  });
+  if (error) return { ok: false, error: error.message };
 
   // Recorded so that a name change on an issued certificate is traceable. Stores
   // no names — keeping the old one would retain personal information the learner

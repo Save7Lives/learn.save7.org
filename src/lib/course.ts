@@ -1,20 +1,17 @@
 import "server-only";
 
-import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
-
-import { db } from "./db";
-import {
-  certificates,
-  courses,
-  levelProgress,
-  levels,
-  lessons,
-  moduleProgress,
-  modules,
-  quizAttempts,
-  resources,
-} from "@/db/schema";
+import { supabaseServer } from "./supabase/server";
 import { COURSE_SLUG, type LevelTier, type ProgressStatus } from "./constants";
+import type {
+  CertificateRow,
+  CourseRow,
+  LessonRow,
+  LevelProgressRow,
+  LevelRow,
+  ModuleProgressRow,
+  ModuleRow,
+  ResourceRow,
+} from "@/db/rows";
 
 /**
  * Course structure and learner progress.
@@ -22,40 +19,147 @@ import { COURSE_SLUG, type LevelTier, type ProgressStatus } from "./constants";
  * Everything here is read-only. Progress *writes* live in src/lib/progress.ts so
  * that the read path can be freely reused by pages, and the write path stays in
  * one auditable place.
+ *
+ * ── ON `id` BEING THE SLUG ──────────────────────────────────────────────────
+ * The database keys levels, modules and lessons by slug; the app was written
+ * against a database that keyed them by an opaque id and carried the slug beside
+ * it. Rather than rewrite every page that compares ids, the mapping functions
+ * below set `id` to the slug. One identifier, two names, and the pages that ask
+ * `completedLessonIds.has(lesson.id)` keep working — while what is actually
+ * stored is a slug, which is the readable thing to find in a database six months
+ * from now.
  */
 
+const levelShape =
+  "slug, position, title, tier, strapline, goal, est_min_minutes, est_max_minutes, accent_token, certificate_title, certificate_code, pass_mark_pct";
+
+const moduleShape =
+  "slug, level_slug, position, title, number, core_question, intro_markdown, est_minutes, is_mandatory";
+
+function mapLevel(row: LevelRow) {
+  return {
+    id: row.slug,
+    slug: row.slug,
+    order: row.position,
+    title: row.title,
+    tier: row.tier,
+    strapline: row.strapline,
+    goal: row.goal,
+    estMinMinutes: row.est_min_minutes,
+    estMaxMinutes: row.est_max_minutes,
+    accentToken: row.accent_token,
+    certificateTitle: row.certificate_title,
+    certificateCode: row.certificate_code,
+    passMarkPct: row.pass_mark_pct,
+  };
+}
+
+function mapModule(row: ModuleRow) {
+  return {
+    id: row.slug,
+    slug: row.slug,
+    levelId: row.level_slug,
+    order: row.position,
+    number: row.number,
+    title: row.title,
+    coreQuestion: row.core_question,
+    introMarkdown: row.intro_markdown,
+    estMinutes: row.est_minutes,
+    isMandatory: row.is_mandatory,
+  };
+}
+
+function mapLesson(row: LessonRow) {
+  return {
+    id: row.slug,
+    slug: row.slug,
+    moduleId: row.module_slug,
+    order: row.position,
+    title: row.title,
+    kind: row.kind,
+    bodyMarkdown: row.body_markdown,
+    componentKey: row.component_key,
+    payloadJson: row.payload === null ? null : JSON.stringify(row.payload),
+  };
+}
+
+function mapResource(row: ResourceRow) {
+  return {
+    id: row.slug,
+    authoringKey: row.slug,
+    moduleId: row.module_slug,
+    title: row.title,
+    description: row.description,
+    type: row.kind,
+    isRequired: row.is_required,
+    source: row.source,
+    author: row.author,
+    publishedOn: row.published_on,
+    externalUrl: row.external_url,
+    filePath: row.file_path,
+    licenceNote: row.licence_note,
+    isStub: row.is_stub,
+    order: row.position,
+  };
+}
+
 export async function getCourse() {
-  const course = await db.query.courses.findFirst({
-    where: eq(courses.slug, COURSE_SLUG),
-  });
-  if (!course) {
-    throw new Error(`Course "${COURSE_SLUG}" not found. Run: npm run db:seed`);
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase
+    .from("learn_course")
+    .select("slug, title, subtitle, description, is_published")
+    .eq("slug", COURSE_SLUG)
+    .maybeSingle<CourseRow>();
+
+  if (error) throw new Error(`Could not read the course: ${error.message}`);
+  if (!data) {
+    throw new Error(
+      `Course "${COURSE_SLUG}" not found. The course is loaded by ` +
+        `save7-os/supabase/migrations/0094_learn_content.sql — apply it with ` +
+        `\`supabase db push\`.`,
+    );
   }
-  return course;
+
+  return {
+    id: data.slug,
+    slug: data.slug,
+    title: data.title,
+    subtitle: data.subtitle,
+    description: data.description,
+    isPublished: data.is_published,
+  };
 }
 
 /** The full pathway: levels with their modules, in order. */
 export async function getPathway() {
+  const supabase = await supabaseServer();
   const course = await getCourse();
-  const pathwayLevels = await db.query.levels.findMany({
-    where: eq(levels.courseId, course.id),
-    orderBy: asc(levels.order),
-    with: {
-      modules: {
-        orderBy: asc(modules.order),
-        columns: {
-          id: true,
-          slug: true,
-          order: true,
-          title: true,
-          coreQuestion: true,
-          estMinutes: true,
-          isMandatory: true,
-        },
-      },
-    },
-  });
-  return { course, levels: pathwayLevels };
+
+  const [levelResult, moduleResult] = await Promise.all([
+    supabase.from("learn_levels").select(levelShape).order("position"),
+    supabase.from("learn_modules").select(moduleShape).order("position"),
+  ]);
+
+  if (levelResult.error) throw new Error(`Could not read levels: ${levelResult.error.message}`);
+  if (moduleResult.error) throw new Error(`Could not read modules: ${moduleResult.error.message}`);
+
+  // Two flat reads and a group, rather than a nested select. PostgREST would
+  // embed the modules, but the ordering of an embedded resource is applied per
+  // parent and reads as if it were global — which is exactly the kind of thing
+  // that works until a module is added out of order.
+  const modulesByLevel = new Map<string, ReturnType<typeof mapModule>[]>();
+  for (const row of (moduleResult.data ?? []) as ModuleRow[]) {
+    const list = modulesByLevel.get(row.level_slug) ?? [];
+    list.push(mapModule(row));
+    modulesByLevel.set(row.level_slug, list);
+  }
+
+  const levels = ((levelResult.data ?? []) as LevelRow[]).map((row) => ({
+    ...mapLevel(row),
+    modules: (modulesByLevel.get(row.slug) ?? []).sort((a, b) => a.order - b.order),
+  }));
+
+  return { course, levels };
 }
 
 export type LevelProgressSummary = {
@@ -83,9 +187,11 @@ export type LevelWithProgress = Awaited<
 /**
  * The pathway annotated with one learner's progress.
  *
- * Written as a small number of batched queries rather than per-level lookups —
- * this drives the landing page and the dashboard, so it runs on almost every
- * request a signed-in learner makes.
+ * Four batched reads rather than per-level lookups — this drives the landing page
+ * and the dashboard, so it runs on almost every request a signed-in learner
+ * makes. Row level security scopes each of them to the caller, so there is no
+ * `where learner = me` to forget: `learn_module_progress` returns this learner's
+ * rows and nobody else's whatever this code asks for.
  */
 export async function getPathwayForUser(userId: string | null) {
   const { course, levels: pathwayLevels } = await getPathway();
@@ -95,84 +201,68 @@ export async function getPathwayForUser(userId: string | null) {
   if (!userId) {
     return {
       course,
-      levels: pathwayLevels.map((level) => ({
-        ...level,
-        progress: null,
-      })) as LevelWithProgress[],
+      levels: pathwayLevels.map((level) => ({ ...level, progress: null })) as LevelWithProgress[],
     };
   }
 
+  const supabase = await supabaseServer();
   const [moduleRows, levelRows, attemptRows, certificateRows] = await Promise.all([
-    // Joined up to Level so this is scoped to the course, matching the other
-    // three queries. A learner could in principle have progress in a second
-    // Save7 course, and it must not leak into this one's totals.
-    db
-      .select({
-        moduleId: moduleProgress.moduleId,
-        status: moduleProgress.status,
-        updatedAt: moduleProgress.updatedAt,
-      })
-      .from(moduleProgress)
-      .innerJoin(modules, eq(moduleProgress.moduleId, modules.id))
-      .innerJoin(levels, eq(modules.levelId, levels.id))
-      .where(and(eq(moduleProgress.userId, userId), eq(levels.courseId, course.id))),
+    supabase
+      .from("learn_module_progress")
+      .select("module_slug, status, updated_at")
+      .eq("learner_id", userId),
 
-    db
-      .select({
-        levelId: levelProgress.levelId,
-        status: levelProgress.status,
-        percentComplete: levelProgress.percentComplete,
-      })
-      .from(levelProgress)
-      .innerJoin(levels, eq(levelProgress.levelId, levels.id))
-      .where(and(eq(levelProgress.userId, userId), eq(levels.courseId, course.id))),
+    supabase
+      .from("learn_level_progress")
+      .select("level_slug, status, percent_complete")
+      .eq("learner_id", userId),
 
-    db
-      .select({
-        levelId: quizAttempts.levelId,
-        scorePct: quizAttempts.scorePct,
-        attemptNo: quizAttempts.attemptNo,
-      })
-      .from(quizAttempts)
-      .where(
-        and(
-          eq(quizAttempts.userId, userId),
-          eq(quizAttempts.courseId, course.id),
-          eq(quizAttempts.kind, "POST"),
-          isNotNull(quizAttempts.submittedAt),
-        ),
-      )
-      .orderBy(asc(quizAttempts.attemptNo)),
+    supabase
+      .from("learn_attempts")
+      .select("level_slug, score_pct, attempt_no")
+      .eq("learner_id", userId)
+      .eq("scope", "POST")
+      .not("submitted_at", "is", null)
+      .order("attempt_no"),
 
-    db
-      .select({ levelId: certificates.levelId, publicId: certificates.publicId })
-      .from(certificates)
-      .where(
-        and(
-          eq(certificates.userId, userId),
-          eq(certificates.courseId, course.id),
-          isNull(certificates.revokedAt),
-        ),
-      ),
+    supabase
+      .from("learn_certificates")
+      .select("level_slug, code")
+      .eq("learner_id", userId)
+      .is("revoked_at", null),
   ]);
 
+  const progressRows = (moduleRows.data ?? []) as Pick<
+    ModuleProgressRow,
+    "module_slug" | "status" | "updated_at"
+  >[];
+  const levelProgressRows = (levelRows.data ?? []) as Pick<
+    LevelProgressRow,
+    "level_slug" | "status" | "percent_complete"
+  >[];
+  const attempts = (attemptRows.data ?? []) as Pick<
+    { level_slug: string | null; score_pct: number | null; attempt_no: number },
+    "level_slug" | "score_pct" | "attempt_no"
+  >[];
+  const certs = (certificateRows.data ?? []) as Pick<CertificateRow, "level_slug" | "code">[];
+
   const completeModuleIds = new Set(
-    moduleRows.filter((m) => m.status === "COMPLETE").map((m) => m.moduleId),
+    progressRows.filter((m) => m.status === "COMPLETE").map((m) => m.module_slug),
   );
-  const startedModuleIds = new Set(moduleRows.map((m) => m.moduleId));
-  const levelProgressByLevel = new Map(levelRows.map((l) => [l.levelId, l]));
-  const certByLevel = new Map(certificateRows.map((c) => [c.levelId, c.publicId]));
+  const startedModuleIds = new Set(progressRows.map((m) => m.module_slug));
+  const levelProgressByLevel = new Map(levelProgressRows.map((l) => [l.level_slug, l]));
+  const certByLevel = new Map(certs.map((c) => [c.level_slug, c.code]));
 
   const annotated: LevelWithProgress[] = pathwayLevels.map((level) => {
     const mandatory = level.modules.filter((m) => m.isMandatory);
     const modulesTotal = mandatory.length;
     const modulesComplete = mandatory.filter((m) => completeModuleIds.has(m.id)).length;
 
-    const levelAttempts = attemptRows.filter((a) => a.levelId === level.id);
-    // attemptNo 1 is the recorded measure — retakes must not inflate analytics.
-    const recorded = levelAttempts.find((a) => a.attemptNo === 1)?.scorePct ?? null;
+    const levelAttempts = attempts.filter((a) => a.level_slug === level.id);
+    // attempt 1 is the recorded measure — retakes must not inflate analytics.
+    const recorded = levelAttempts.find((a) => a.attempt_no === 1)?.score_pct ?? null;
     const best = levelAttempts.length
-      ? Math.max(...levelAttempts.map((a) => a.scorePct ?? 0))
+      ? Math.max(...levelAttempts.map((a) => a.score_pct ?? 0))
       : null;
 
     const lp = levelProgressByLevel.get(level.id);
@@ -196,7 +286,7 @@ export async function getPathwayForUser(userId: string | null) {
       ...level,
       progress: {
         status,
-        percentComplete: lp?.percentComplete ?? percentComplete,
+        percentComplete: lp?.percent_complete ?? percentComplete,
         modulesComplete,
         modulesTotal,
         postScorePct: recorded,
@@ -213,35 +303,38 @@ export async function getPathwayForUser(userId: string | null) {
 
 /** Whether the learner has completed the one-time baseline assessment. */
 export async function getBaselineState(userId: string) {
-  const course = await getCourse();
-  const [attempt] = await db
-    .select({
-      id: quizAttempts.id,
-      submittedAt: quizAttempts.submittedAt,
-      scorePct: quizAttempts.scorePct,
-      scoreRaw: quizAttempts.scoreRaw,
-      scoreMax: quizAttempts.scoreMax,
-    })
-    .from(quizAttempts)
-    .where(
-      and(
-        eq(quizAttempts.userId, userId),
-        eq(quizAttempts.courseId, course.id),
-        eq(quizAttempts.kind, "PRE"),
-      ),
-    )
+  const supabase = await supabaseServer();
+
+  const { data } = await supabase
+    .from("learn_attempts")
+    .select("id, submitted_at, score_pct, score_raw, score_max")
+    .eq("learner_id", userId)
+    .eq("scope", "PRE")
     // Earliest attempt: the baseline is taken once, and the first sitting is the
     // one that counts.
-    .orderBy(asc(quizAttempts.startedAt))
+    .order("started_at")
     .limit(1);
+
+  const attempt = (data ?? [])[0] as
+    | Pick<
+        {
+          id: string;
+          submitted_at: string | null;
+          score_pct: number | null;
+          score_raw: number | null;
+          score_max: number | null;
+        },
+        "id" | "submitted_at" | "score_pct" | "score_raw" | "score_max"
+      >
+    | undefined;
 
   return {
     /** An unsubmitted attempt means they started and can resume it. */
-    inProgressAttemptId: attempt && !attempt.submittedAt ? attempt.id : null,
-    completed: Boolean(attempt?.submittedAt),
-    scorePct: attempt?.submittedAt ? attempt.scorePct : null,
-    scoreRaw: attempt?.submittedAt ? attempt.scoreRaw : null,
-    scoreMax: attempt?.submittedAt ? attempt.scoreMax : null,
+    inProgressAttemptId: attempt && !attempt.submitted_at ? attempt.id : null,
+    completed: Boolean(attempt?.submitted_at),
+    scorePct: attempt?.submitted_at ? attempt.score_pct : null,
+    scoreRaw: attempt?.submitted_at ? attempt.score_raw : null,
+    scoreMax: attempt?.submitted_at ? attempt.score_max : null,
   };
 }
 
@@ -251,49 +344,206 @@ export async function getModuleForUser(
   levelSlug: string,
   moduleSlug: string,
 ) {
+  const supabase = await supabaseServer();
   const course = await getCourse();
-  const level = await db.query.levels.findFirst({
-    where: and(eq(levels.courseId, course.id), eq(levels.slug, levelSlug)),
-  });
-  if (!level) return null;
 
-  const mod = await db.query.modules.findFirst({
-    where: and(eq(modules.levelId, level.id), eq(modules.slug, moduleSlug)),
-    with: {
-      lessons: { orderBy: asc(lessons.order) },
-      resources: { orderBy: asc(resources.order) },
-    },
-  });
-  if (!mod) return null;
+  const { data: levelRow } = await supabase
+    .from("learn_levels")
+    .select(levelShape)
+    .eq("slug", levelSlug)
+    .maybeSingle<LevelRow>();
+  if (!levelRow) return null;
 
-  // Sibling modules, for prev/next navigation within the level.
-  const siblings = await db
-    .select({ slug: modules.slug, order: modules.order, title: modules.title })
-    .from(modules)
-    .where(eq(modules.levelId, level.id))
-    .orderBy(asc(modules.order));
+  const { data: moduleRow } = await supabase
+    .from("learn_modules")
+    .select(moduleShape)
+    .eq("slug", moduleSlug)
+    .eq("level_slug", levelSlug)
+    .maybeSingle<ModuleRow>();
+  if (!moduleRow) return null;
 
-  const progress = userId
-    ? ((await db.query.moduleProgress.findFirst({
-        where: and(
-          eq(moduleProgress.userId, userId),
-          eq(moduleProgress.moduleId, mod.id),
-        ),
-      })) ?? null)
+  const [lessonResult, resourceResult, siblingResult, progressResult] = await Promise.all([
+    supabase
+      .from("learn_lessons")
+      .select("slug, module_slug, position, title, kind, body_markdown, component_key, payload")
+      .eq("module_slug", moduleSlug)
+      .order("position"),
+
+    supabase
+      .from("learn_resources")
+      .select(
+        "slug, module_slug, title, description, kind, is_required, source, author, published_on, external_url, file_path, licence_note, is_stub, position",
+      )
+      .eq("module_slug", moduleSlug)
+      .order("position"),
+
+    // Sibling modules, for prev/next navigation within the level.
+    supabase
+      .from("learn_modules")
+      .select("slug, position, title")
+      .eq("level_slug", levelSlug)
+      .order("position"),
+
+    userId
+      ? supabase
+          .from("learn_module_progress")
+          .select(
+            "learner_id, module_slug, status, completed_lessons, last_lesson_slug, seconds_spent, started_at, updated_at, completed_at",
+          )
+          .eq("learner_id", userId)
+          .eq("module_slug", moduleSlug)
+          .maybeSingle<ModuleProgressRow>()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const progressRow = (progressResult.data ?? null) as ModuleProgressRow | null;
+
+  const progress = progressRow
+    ? {
+        userId: progressRow.learner_id,
+        moduleId: progressRow.module_slug,
+        status: progressRow.status,
+        completedLessonsJson: JSON.stringify(progressRow.completed_lessons ?? []),
+        secondsSpent: progressRow.seconds_spent,
+        lastLessonId: progressRow.last_lesson_slug,
+        startedAt: progressRow.started_at,
+        updatedAt: progressRow.updated_at,
+        completedAt: progressRow.completed_at,
+      }
     : null;
-
-  const completedLessonIds: string[] = progress
-    ? (JSON.parse(progress.completedLessonsJson) as string[])
-    : [];
 
   return {
     course,
-    level,
-    module: mod,
-    siblings,
+    level: mapLevel(levelRow),
+    module: {
+      ...mapModule(moduleRow),
+      lessons: ((lessonResult.data ?? []) as LessonRow[]).map(mapLesson),
+      resources: ((resourceResult.data ?? []) as ResourceRow[]).map(mapResource),
+    },
+    siblings: ((siblingResult.data ?? []) as Pick<ModuleRow, "slug" | "position" | "title">[]).map(
+      (row) => ({ slug: row.slug, order: row.position, title: row.title }),
+    ),
     progress,
-    completedLessonIds: new Set(completedLessonIds),
+    completedLessonIds: new Set(progressRow?.completed_lessons ?? []),
   };
+}
+
+/**
+ * One level, by slug.
+ *
+ * Several pages need a level's titles and pass mark without wanting the whole
+ * pathway. Since the database keys levels by slug, this is also the lookup that
+ * decides whether a URL is real — the pages call it and 404 on null.
+ */
+export async function getLevelBySlug(slug: string) {
+  const supabase = await supabaseServer();
+  const { data } = await supabase
+    .from("learn_levels")
+    .select(levelShape)
+    .eq("slug", slug)
+    .maybeSingle<LevelRow>();
+
+  return data ? mapLevel(data) : null;
+}
+
+/**
+ * The module after this one in the same level, or null when it was the last.
+ *
+ * Ordered by `position`, not by slug: the display order is the thing being asked
+ * about, and slugs sort alphabetically by accident.
+ */
+export async function getNextModuleSlug(
+  levelSlug: string,
+  afterModuleSlug: string,
+): Promise<string | null> {
+  const supabase = await supabaseServer();
+
+  const { data: current } = await supabase
+    .from("learn_modules")
+    .select("position")
+    .eq("slug", afterModuleSlug)
+    .maybeSingle();
+  const position = (current as { position: number } | null)?.position;
+  if (position === undefined) return null;
+
+  const { data } = await supabase
+    .from("learn_modules")
+    .select("slug")
+    .eq("level_slug", levelSlug)
+    .gt("position", position)
+    .order("position")
+    .limit(1);
+
+  return ((data ?? []) as unknown as Array<{ slug: string }>)[0]?.slug ?? null;
+}
+
+/** A learner's own certificates, newest first, with the level they are for. */
+export async function getLearnerCertificates(userId: string) {
+  const supabase = await supabaseServer();
+
+  const [certResult, levelResult] = await Promise.all([
+    supabase
+      .from("learn_certificates")
+      .select("code, level_slug, issued_name, award_title, score_pct, issued_at, revoked_at")
+      .eq("learner_id", userId)
+      .is("revoked_at", null)
+      .order("issued_at", { ascending: false }),
+    supabase.from("learn_levels").select("slug, title"),
+  ]);
+
+  const titles = new Map(
+    ((levelResult.data ?? []) as unknown as Array<{ slug: string; title: string }>).map((l) => [
+      l.slug,
+      l.title,
+    ]),
+  );
+
+  return ((certResult.data ?? []) as unknown as Array<{
+    code: string;
+    level_slug: string | null;
+    issued_name: string;
+    award_title: string | null;
+    score_pct: number | null;
+    issued_at: string;
+    revoked_at: string | null;
+  }>).map((c) => ({
+    publicId: c.code,
+    levelId: c.level_slug,
+    levelSlug: c.level_slug,
+    levelTitle: c.level_slug ? (titles.get(c.level_slug) ?? "") : "",
+    learnerNameSnapshot: c.issued_name,
+    awardTitleSnapshot: c.award_title ?? "",
+    scorePct: c.score_pct ?? 0,
+    issuedAt: new Date(c.issued_at),
+    revokedAt: c.revoked_at ? new Date(c.revoked_at) : null,
+  }));
+}
+
+/**
+ * Completion status per module, for a set of modules.
+ *
+ * Returned as a map because every caller is asking "is this one done" per row
+ * while rendering a list. Row level security scopes it to the caller.
+ */
+export async function getModuleStatuses(
+  userId: string,
+  moduleSlugs: string[],
+): Promise<Map<string, ProgressStatus>> {
+  if (moduleSlugs.length === 0) return new Map();
+
+  const supabase = await supabaseServer();
+  const { data } = await supabase
+    .from("learn_module_progress")
+    .select("module_slug, status")
+    .eq("learner_id", userId)
+    .in("module_slug", moduleSlugs);
+
+  return new Map(
+    ((data ?? []) as unknown as Array<{ module_slug: string; status: ProgressStatus }>).map((r) => [
+      r.module_slug,
+      r.status,
+    ]),
+  );
 }
 
 export function tierOf(level: { tier: string }): LevelTier {

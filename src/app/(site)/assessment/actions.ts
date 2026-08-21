@@ -2,10 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/authz";
-import { submitAttempt, type SubmittedAnswer } from "@/lib/quiz";
-import { eq } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { courseProgress, levels, quizAttempts } from "@/db/schema";
+import { getAttemptMeta, submitAttempt, type SubmittedAnswer } from "@/lib/quiz";
 import { recordEvent } from "@/lib/progress";
 
 /**
@@ -43,40 +40,20 @@ export async function submitAssessmentAction(
   const result = await submitAttempt(user.id, attemptId, answers);
   if ("error" in result) return { error: result.error };
 
-  const [attempt] = await db
-    .select({
-      kind: quizAttempts.kind,
-      levelSlug: levels.slug,
-      courseId: quizAttempts.courseId,
-    })
-    .from(quizAttempts)
-    .leftJoin(levels, eq(quizAttempts.levelId, levels.id))
-    .where(eq(quizAttempts.id, attemptId))
-    .limit(1);
+  const attempt = await getAttemptMeta(attemptId);
 
   await recordEvent(user.id, "quiz_submit", {
     metaJson: JSON.stringify({
-      kind: attempt?.kind,
+      kind: attempt?.scope,
       level: attempt?.levelSlug ?? null,
       scorePct: result.scorePct,
     }),
   });
 
-  if (attempt?.kind === "PRE") {
-    // Mark the baseline done so the learner is no longer gated out of modules.
-    const now = new Date();
-    await db
-      .insert(courseProgress)
-      .values({
-        userId: user.id,
-        courseId: attempt.courseId,
-        baselineDoneAt: now,
-        status: "IN_PROGRESS",
-      })
-      .onConflictDoUpdate({
-        target: [courseProgress.userId, courseProgress.courseId],
-        set: { baselineDoneAt: now, updatedAt: now },
-      });
+  if (attempt?.scope === "PRE") {
+    // The baseline-done marker is written by learn_submit_attempt(), in the same
+    // statement that records the score — so it cannot be set for an attempt that
+    // did not actually grade, and there is nothing to write here.
     redirect("/assessment/pre/done");
   }
 

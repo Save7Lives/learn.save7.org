@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { and, asc, eq } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { contentReviewItems } from "@/db/schema";
 import { getReviewSummary } from "@/lib/analytics";
+import { supabaseServer } from "@/lib/supabase/server";
 import { PageTitle, Section, StatCard } from "@/components/admin/AdminUi";
 import { Badge } from "@/components/ui/primitives";
 import { ReviewItemRow } from "@/components/admin/ReviewItemRow";
@@ -42,28 +40,53 @@ export default async function ContentReviewPage(
 
   const [summary, items] = await Promise.all([
     getReviewSummary(),
-    db.query.contentReviewItems.findMany({
-      where: and(
-        statusFilter !== "ALL" ? eq(contentReviewItems.status, statusFilter) : undefined,
-        categoryFilter ? eq(contentReviewItems.category, categoryFilter) : undefined,
-      ),
-      // Severity first, so the launch-blocking items are always at the top.
-      orderBy: [asc(contentReviewItems.severity), asc(contentReviewItems.location)],
-      limit: 400,
-      columns: {
-        id: true,
-        location: true,
-        claim: true,
-        category: true,
-        status: true,
-        severity: true,
-        sourceHint: true,
-        notes: true,
-        entityType: true,
-        reviewedAt: true,
-      },
-      with: { reviewedBy: { columns: { name: true } } },
-    }),
+    (async () => {
+      const supabase = await supabaseServer();
+      let query = supabase
+        .from("learn_review_items")
+        .select(
+          "id, location, claim, category, status, severity, source_hint, notes, entity_type, entity_ref, cleared_at, people(name)",
+        )
+        // Severity first, so the launch-blocking items are always at the top.
+        .order("severity")
+        .order("location")
+        .limit(400);
+
+      if (statusFilter !== "ALL") query = query.eq("status", statusFilter);
+      if (categoryFilter) query = query.eq("category", categoryFilter);
+
+      const { data } = await query;
+      return ((data ?? []) as unknown as Array<{
+        id: string;
+        location: string;
+        claim: string;
+        category: string;
+        status: string;
+        severity: number;
+        source_hint: string | null;
+        notes: string | null;
+        entity_type: string;
+        entity_ref: string;
+        cleared_at: string | null;
+        /* The staff member who signed it off, embedded through cleared_by's
+           foreign key into `people`. Readable here because this page is staff
+           only; a learner reading `people` gets nothing. */
+        people: { name: string } | null;
+      }>).map((r) => ({
+        id: r.id,
+        location: r.location,
+        claim: r.claim,
+        category: r.category,
+        status: r.status,
+        severity: r.severity,
+        sourceHint: r.source_hint,
+        notes: r.notes,
+        entityType: r.entity_type,
+        entityRef: r.entity_ref,
+        reviewedAt: r.cleared_at,
+        reviewedByName: r.people?.name ?? null,
+      }));
+    })(),
   ]);
 
   const filters: Array<{ label: string; status: string; count: number }> = [
@@ -145,8 +168,8 @@ export default async function ContentReviewPage(
                   sourceHint: item.sourceHint,
                   notes: item.notes,
                   entityType: item.entityType,
-                  reviewedAt: item.reviewedAt ? item.reviewedAt.toISOString() : null,
-                  reviewedByName: item.reviewedBy?.name ?? null,
+                  reviewedAt: item.reviewedAt,
+                  reviewedByName: item.reviewedByName,
                 }}
                 onSetStatus={setReviewStatusAction}
               />

@@ -1,30 +1,26 @@
 import "server-only";
 
-import { and, eq, gte, isNotNull, sql } from "drizzle-orm";
-
-import { db } from "./db";
-import { certificates, levels, quizAttempts, users } from "@/db/schema";
-import { isLevelContentComplete, recordEvent } from "./progress";
+import { supabaseServer } from "./supabase/server";
 
 /**
  * Certificates.
  *
- * Two rules govern issuance, and both are enforced here rather than in the UI so
- * that no route can bypass them:
+ * Two rules govern issuance, and both are now enforced in the database rather
+ * than here, because `learn_certificates` has no insert policy — a client that
+ * could write the table could award itself one:
  *
  *   1. Every mandatory module in the level must be complete.
  *   2. The learner must have reached the level's pass mark on some attempt.
  *
  * The learner's name and the award title are *snapshotted* onto the certificate.
  * Renaming an account later must not silently rewrite a certificate someone has
- * already shown to an employer, and re-wording a level's award must not retroactively
- * change what past learners were given.
+ * already shown to an employer, and re-wording a level's award must not
+ * retroactively change what past learners were given.
+ *
+ * The public id — "S7-2026-B-000123" — is minted by the same function, so the
+ * year, the level letter and the per-level sequence cannot be assigned by two
+ * different implementations that disagree.
  */
-
-/** e.g. "S7-2026-B-000123" — year, level letter, then a per-level sequence. */
-function formatPublicId(year: number, code: string, sequence: number): string {
-  return `S7-${year}-${code}-${String(sequence).padStart(6, "0")}`;
-}
 
 export type IssuedCertificate = {
   publicId: string;
@@ -38,105 +34,34 @@ export type IssuedCertificate = {
  * Issue a certificate if it has been earned, or return the existing one.
  *
  * Idempotent: a learner refreshing the results screen must not mint a second
- * certificate, which the unique constraint on (userId, levelId) also enforces at
- * the database level.
+ * certificate, which a unique index on (learner_id, level_slug) also enforces.
  */
 export async function issueCertificateIfEarned(
   userId: string,
   levelId: string,
 ): Promise<IssuedCertificate | null> {
-  const [existing] = await db
-    .select({
-      publicId: certificates.publicId,
-      awardTitleSnapshot: certificates.awardTitleSnapshot,
-      learnerNameSnapshot: certificates.learnerNameSnapshot,
-      issuedAt: certificates.issuedAt,
-      scorePct: certificates.scorePct,
-      revokedAt: certificates.revokedAt,
-    })
-    .from(certificates)
-    .where(and(eq(certificates.userId, userId), eq(certificates.levelId, levelId)))
-    .limit(1);
-  if (existing) return existing.revokedAt ? null : existing;
-
-  const [level] = await db
-    .select({
-      id: levels.id,
-      courseId: levels.courseId,
-      certificateTitle: levels.certificateTitle,
-      certificateCode: levels.certificateCode,
-      passMarkPct: levels.passMarkPct,
-    })
-    .from(levels)
-    .where(eq(levels.id, levelId))
-    .limit(1);
-  if (!level) return null;
-
-  // Gate 1: all mandatory modules complete.
-  if (!(await isLevelContentComplete(userId, levelId))) return null;
-
-  // Gate 2: pass mark reached on some attempt.
-  const attempts = await db
-    .select({ scorePct: quizAttempts.scorePct })
-    .from(quizAttempts)
-    .where(
-      and(
-        eq(quizAttempts.userId, userId),
-        eq(quizAttempts.levelId, levelId),
-        eq(quizAttempts.kind, "POST"),
-        isNotNull(quizAttempts.submittedAt),
-      ),
-    );
-  const best = attempts.length ? Math.max(...attempts.map((a) => a.scorePct ?? 0)) : 0;
-  if (best < level.passMarkPct) return null;
-
-  const [user] = await db
-    .select({ name: users.name })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-  if (!user) return null;
-
-  const year = new Date().getFullYear();
-
-  // Sequence per level per year. Counting existing rows is adequate here — a
-  // Postgres deployment with real concurrency should use a sequence, which is
-  // noted in prisma/README.md. The unique index means a collision fails loudly
-  // rather than issuing a duplicate id.
-  const [{ count: issuedThisYear }] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(certificates)
-    .where(
-      and(
-        eq(certificates.levelId, levelId),
-        gte(certificates.issuedAt, new Date(`${year}-01-01T00:00:00.000Z`)),
-      ),
-    );
-
-  const [created] = await db
-    .insert(certificates)
-    .values({
-      publicId: formatPublicId(year, level.certificateCode, Number(issuedThisYear) + 1),
-      userId,
-      courseId: level.courseId,
-      levelId,
-      learnerNameSnapshot: user.name,
-      awardTitleSnapshot: level.certificateTitle,
-      scorePct: best,
-    })
-    .returning({
-      publicId: certificates.publicId,
-      awardTitleSnapshot: certificates.awardTitleSnapshot,
-      learnerNameSnapshot: certificates.learnerNameSnapshot,
-      issuedAt: certificates.issuedAt,
-      scorePct: certificates.scorePct,
-    });
-
-  await recordEvent(userId, "certificate_issue", {
-    metaJson: JSON.stringify({ publicId: created.publicId, scorePct: best }),
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase.rpc("learn_issue_certificate", {
+    p_level_slug: levelId,
   });
 
-  return created;
+  if (error || !data) return null;
+
+  const row = data as {
+    public_id: string;
+    award_title_snapshot: string | null;
+    learner_name_snapshot: string;
+    issued_at: string;
+    score_pct: number | null;
+  };
+
+  return {
+    publicId: row.public_id,
+    awardTitleSnapshot: row.award_title_snapshot ?? "",
+    learnerNameSnapshot: row.learner_name_snapshot,
+    issuedAt: new Date(row.issued_at),
+    scorePct: row.score_pct ?? 0,
+  };
 }
 
 export type PublicCertificate = {
@@ -152,36 +77,40 @@ export type PublicCertificate = {
 /**
  * Look up a certificate for public verification.
  *
- * Returns only what a verifier legitimately needs: the name on it, what it is for,
- * when it was issued, and whether it is still valid. Never the email, the score, or
- * the answers — see the privacy notice.
+ * Returns only what a verifier legitimately needs: the name on it, what it is
+ * for, when it was issued, and whether it is still valid. Never the email, the
+ * score, or the answers — see the privacy notice.
+ *
+ * Goes through `learn_verify_certificate()` because a verifier has no account,
+ * and the table's select policy scopes reads to the learner who earned it. The
+ * function is executable by `anon` for exactly that reason, and returns those
+ * fields and no others.
  */
 export async function verifyCertificate(
   publicId: string,
 ): Promise<PublicCertificate | null> {
-  const row = await db.query.certificates.findFirst({
-    where: eq(certificates.publicId, publicId.trim().toUpperCase()),
-    columns: {
-      publicId: true,
-      learnerNameSnapshot: true,
-      awardTitleSnapshot: true,
-      issuedAt: true,
-      revokedAt: true,
-    },
-    with: {
-      course: { columns: { title: true, subtitle: true } },
-      level: { columns: { title: true } },
-    },
-  });
-  if (!row) return null;
+  const supabase = await supabaseServer();
+  const { data } = await supabase.rpc("learn_verify_certificate", { p_code: publicId });
+
+  if (!data) return null;
+
+  const row = data as {
+    public_id: string;
+    learner_name: string;
+    award_title: string | null;
+    course_title: string | null;
+    level_title: string | null;
+    issued_at: string;
+    revoked: boolean;
+  };
 
   return {
-    publicId: row.publicId,
-    learnerName: row.learnerNameSnapshot,
-    awardTitle: row.awardTitleSnapshot,
-    courseTitle: row.course.title,
-    levelTitle: row.level.title,
-    issuedAt: row.issuedAt,
-    revoked: row.revokedAt !== null,
+    publicId: row.public_id,
+    learnerName: row.learner_name,
+    awardTitle: row.award_title ?? "",
+    courseTitle: row.course_title ?? "",
+    levelTitle: row.level_title ?? "",
+    issuedAt: new Date(row.issued_at),
+    revoked: row.revoked,
   };
 }

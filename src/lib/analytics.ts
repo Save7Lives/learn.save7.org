@@ -1,19 +1,6 @@
 import "server-only";
 
-import { and, asc, desc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
-
-import { db } from "./db";
-import {
-  certificates,
-  contentReviewItems,
-  levelProgress,
-  levels as levelsTable,
-  modules as modulesTable,
-  questions as questionsTable,
-  quizAttempts,
-  users,
-} from "@/db/schema";
-import { getCourse } from "./course";
+import { supabaseServer } from "./supabase/server";
 
 
 /**
@@ -49,46 +36,52 @@ export type LearnerSummary = {
 };
 
 export async function getLearnerSummary(): Promise<LearnerSummary> {
-  const course = await getCourse();
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000);
+  const supabase = await supabaseServer();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
-  const [registered, registeredLast30Days, withBaseline, levelCompletions, levelsTotal] =
+  /* Every `learners` row is a learner, so there is no role to filter on any more:
+     staff and volunteers are `people` and `volunteers` rows, and a staff member
+     who enrols gets a learners row like anybody else and counts as one — which is
+     what the old `role = 'LEARNER'` filter was approximating. */
+  const [registeredResult, recentResult, baselineResult, completionResult, levelResult] =
     await Promise.all([
-      db
-        .select({ count: sql<number>`count(*)` })
-        .from(users)
-        .where(eq(users.role, "LEARNER"))
-        .then((r) => Number(r[0]?.count ?? 0)),
-      db
-        .select({ count: sql<number>`count(*)` })
-        .from(users)
-        .where(and(eq(users.role, "LEARNER"), gte(users.createdAt, thirtyDaysAgo)))
-        .then((r) => Number(r[0]?.count ?? 0)),
-      db
-        .selectDistinct({ userId: quizAttempts.userId })
-        .from(quizAttempts)
-        .where(and(eq(quizAttempts.courseId, course.id), eq(quizAttempts.kind, "PRE"))),
-      db
-        .select({ userId: levelProgress.userId, levelId: levelProgress.levelId })
-        .from(levelProgress)
-        .innerJoin(levelsTable, eq(levelProgress.levelId, levelsTable.id))
-        .where(
-          and(eq(levelProgress.status, "COMPLETE"), eq(levelsTable.courseId, course.id)),
-        ),
-      db
-        .select({ count: sql<number>`count(*)` })
-        .from(levelsTable)
-        .where(eq(levelsTable.courseId, course.id))
-        .then((r) => Number(r[0]?.count ?? 0)),
+      supabase.from("learners").select("id", { count: "exact", head: true }),
+      supabase
+        .from("learners")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", thirtyDaysAgo),
+      supabase.from("learn_attempts").select("learner_id").eq("scope", "PRE"),
+      supabase
+        .from("learn_level_progress")
+        .select("learner_id, level_slug")
+        .eq("status", "COMPLETE"),
+      supabase.from("learn_levels").select("slug", { count: "exact", head: true }),
     ]);
 
-  const active = withBaseline.length;
+  const registered = registeredResult.count ?? 0;
+  const registeredLast30Days = recentResult.count ?? 0;
+  const levelsTotal = levelResult.count ?? 0;
+
+  // PostgREST has no DISTINCT, so the set is built here. One row per learner is
+  // what "started the baseline" means.
+  const withBaseline = new Set(
+    ((baselineResult.data ?? []) as unknown as Array<{ learner_id: string }>).map(
+      (a) => a.learner_id,
+    ),
+  );
+
+  const levelCompletions = (completionResult.data ?? []) as unknown as Array<{
+    learner_id: string;
+    level_slug: string;
+  }>;
+
+  const active = withBaseline.size;
 
   const levelsByUser = new Map<string, Set<string>>();
   for (const row of levelCompletions) {
-    const set = levelsByUser.get(row.userId) ?? new Set<string>();
-    set.add(row.levelId);
-    levelsByUser.set(row.userId, set);
+    const set = levelsByUser.get(row.learner_id) ?? new Set<string>();
+    set.add(row.level_slug);
+    levelsByUser.set(row.learner_id, set);
   }
 
   const completedAnyLevel = levelsByUser.size;
@@ -143,46 +136,56 @@ function distribute(scores: number[]): Array<{ bucket: string; count: number }> 
 }
 
 export async function getKnowledgeSummary(): Promise<KnowledgeSummary> {
-  const course = await getCourse();
+  const supabase = await supabaseServer();
 
-  const [preAttempts, levels, postAttempts] = await Promise.all([
-    db
-      .select({ userId: quizAttempts.userId, scorePct: quizAttempts.scorePct })
-      .from(quizAttempts)
-      .where(
-        and(
-          eq(quizAttempts.courseId, course.id),
-          eq(quizAttempts.kind, "PRE"),
-          isNotNull(quizAttempts.submittedAt),
-        ),
-      ),
-    db
-      .select({
-        id: levelsTable.id,
-        slug: levelsTable.slug,
-        title: levelsTable.title,
-        tier: levelsTable.tier,
-        passMarkPct: levelsTable.passMarkPct,
-      })
-      .from(levelsTable)
-      .where(eq(levelsTable.courseId, course.id))
-      .orderBy(asc(levelsTable.order)),
-    db
-      .select({
-        userId: quizAttempts.userId,
-        levelId: quizAttempts.levelId,
-        scorePct: quizAttempts.scorePct,
-        attemptNo: quizAttempts.attemptNo,
-      })
-      .from(quizAttempts)
-      .where(
-        and(
-          eq(quizAttempts.courseId, course.id),
-          eq(quizAttempts.kind, "POST"),
-          isNotNull(quizAttempts.submittedAt),
-        ),
-      ),
+  const [preResult, levelResult, postResult] = await Promise.all([
+    supabase
+      .from("learn_attempts")
+      .select("learner_id, score_pct")
+      .eq("scope", "PRE")
+      .not("submitted_at", "is", null),
+
+    supabase
+      .from("learn_levels")
+      .select("slug, title, tier, pass_mark_pct")
+      .order("position"),
+
+    supabase
+      .from("learn_attempts")
+      .select("learner_id, level_slug, score_pct, attempt_no")
+      .eq("scope", "POST")
+      .not("submitted_at", "is", null),
   ]);
+
+  const preAttempts = ((preResult.data ?? []) as unknown as Array<{
+    learner_id: string;
+    score_pct: number | null;
+  }>).map((a) => ({ userId: a.learner_id, scorePct: a.score_pct }));
+
+  const levels = ((levelResult.data ?? []) as unknown as Array<{
+    slug: string;
+    title: string;
+    tier: string;
+    pass_mark_pct: number;
+  }>).map((l) => ({
+    id: l.slug,
+    slug: l.slug,
+    title: l.title,
+    tier: l.tier,
+    passMarkPct: l.pass_mark_pct,
+  }));
+
+  const postAttempts = ((postResult.data ?? []) as unknown as Array<{
+    learner_id: string;
+    level_slug: string | null;
+    score_pct: number | null;
+    attempt_no: number;
+  }>).map((a) => ({
+    userId: a.learner_id,
+    levelId: a.level_slug,
+    scorePct: a.score_pct,
+    attemptNo: a.attempt_no,
+  }));
 
   const baselineByUser = new Map(
     preAttempts.map((a) => [a.userId, a.scorePct ?? 0]),
@@ -257,23 +260,54 @@ export async function getMostMissedQuestions(
   minimumAnswers = 3,
   limit = 12,
 ): Promise<MissedQuestion[]> {
-  const course = await getCourse();
+  const supabase = await supabaseServer();
 
-  const questions = await db.query.questions.findMany({
-    where: eq(questionsTable.courseId, course.id),
-    columns: {
-      id: true,
-      authoringKey: true,
-      prompt: true,
-      topicTag: true,
-      scope: true,
-    },
-    with: {
-      level: { columns: { title: true } },
-      module: { columns: { title: true } },
-      answers: { columns: { isCorrect: true } },
-    },
-  });
+  /* Answers are embedded through the foreign key on learn_answers.question_id.
+     Level and module titles are looked up separately rather than embedded twice:
+     a question hangs off one or the other, never both, and two small maps are
+     cheaper to read than a query with two optional embeds. */
+  const [questionResult, levelResult, moduleResult] = await Promise.all([
+    supabase
+      .from("learn_questions")
+      .select(
+        "id, authoring_key, prompt, topic_tag, scope, level_slug, module_slug, learn_answers(was_correct)",
+      ),
+    supabase.from("learn_levels").select("slug, title"),
+    supabase.from("learn_modules").select("slug, title"),
+  ]);
+
+  const levelTitles = new Map(
+    ((levelResult.data ?? []) as unknown as Array<{ slug: string; title: string }>).map((l) => [
+      l.slug,
+      l.title,
+    ]),
+  );
+  const moduleTitles = new Map(
+    ((moduleResult.data ?? []) as unknown as Array<{ slug: string; title: string }>).map((m) => [
+      m.slug,
+      m.title,
+    ]),
+  );
+
+  const questions = ((questionResult.data ?? []) as unknown as Array<{
+    id: string;
+    authoring_key: string;
+    prompt: string;
+    topic_tag: string;
+    scope: string;
+    level_slug: string | null;
+    module_slug: string | null;
+    learn_answers: Array<{ was_correct: boolean }> | null;
+  }>).map((q) => ({
+    id: q.id,
+    authoringKey: q.authoring_key,
+    prompt: q.prompt,
+    topicTag: q.topic_tag,
+    scope: q.scope,
+    level: q.level_slug ? { title: levelTitles.get(q.level_slug) ?? null } : null,
+    module: q.module_slug ? { title: moduleTitles.get(q.module_slug) ?? null } : null,
+    answers: (q.learn_answers ?? []).map((a) => ({ isCorrect: a.was_correct })),
+  }));
 
   return questions
     .map((q) => {
@@ -318,45 +352,55 @@ export type ModuleEngagement = {
 };
 
 export async function getModuleEngagement(): Promise<ModuleEngagement[]> {
-  const course = await getCourse();
+  const supabase = await supabaseServer();
 
-  // Ordered by level then module. The relational query API cannot order by a
-  // parent's column, so the level order is fetched and applied below.
-  //
-  // The level ids are also used to scope the module query. An earlier version
-  // embedded a raw SQL subquery here, which broke: the relational query builder
-  // aliases its root table, so an interpolated column reference resolved against
-  // the wrong name at runtime.
-  const courseLevels = await db
-    .select({ id: levelsTable.id, order: levelsTable.order })
-    .from(levelsTable)
-    .where(eq(levelsTable.courseId, course.id));
-  const levelOrder = new Map(courseLevels.map((l) => [l.id, l.order]));
-  const levelIds = courseLevels.map((l) => l.id);
+  /* Ordered by level then module. PostgREST cannot order by a parent's column
+     either, so the level order is fetched and applied below — the same shape the
+     previous implementation needed, for the same reason. */
+  const [levelResult, moduleResult] = await Promise.all([
+    supabase.from("learn_levels").select("slug, title, position"),
+    supabase
+      .from("learn_modules")
+      .select(
+        "slug, title, position, est_minutes, level_slug, learn_module_progress(status, seconds_spent)",
+      ),
+  ]);
 
-  if (levelIds.length === 0) return [];
+  const levelRows = (levelResult.data ?? []) as unknown as Array<{
+    slug: string;
+    title: string;
+    position: number;
+  }>;
+  if (levelRows.length === 0) return [];
 
-  const modules = (
-    await db.query.modules.findMany({
-      where: inArray(modulesTable.levelId, levelIds),
-      columns: {
-        id: true,
-        slug: true,
-        title: true,
-        order: true,
-        estMinutes: true,
-        levelId: true,
-      },
-      with: {
-        level: { columns: { title: true, slug: true } },
-        progress: { columns: { status: true, secondsSpent: true } },
-      },
-    })
-  ).sort(
-    (a, b) =>
-      (levelOrder.get(a.levelId) ?? 0) - (levelOrder.get(b.levelId) ?? 0) ||
-      a.order - b.order,
-  );
+  const levelOrder = new Map(levelRows.map((l) => [l.slug, l.position]));
+  const levelTitles = new Map(levelRows.map((l) => [l.slug, l.title]));
+
+  const modules = ((moduleResult.data ?? []) as unknown as Array<{
+    slug: string;
+    title: string;
+    position: number;
+    est_minutes: number;
+    level_slug: string;
+    learn_module_progress: Array<{ status: string; seconds_spent: number }> | null;
+  }>)
+    .map((m) => ({
+      id: m.slug,
+      slug: m.slug,
+      title: m.title,
+      order: m.position,
+      estMinutes: m.est_minutes,
+      levelId: m.level_slug,
+      level: { title: levelTitles.get(m.level_slug) ?? "", slug: m.level_slug },
+      progress: (m.learn_module_progress ?? []).map((p) => ({
+        status: p.status,
+        secondsSpent: p.seconds_spent,
+      })),
+    }))
+    .sort(
+      (a, b) =>
+        (levelOrder.get(a.levelId) ?? 0) - (levelOrder.get(b.levelId) ?? 0) || a.order - b.order,
+    );
 
   return modules.map((m) => {
     const started = m.progress.length;
@@ -398,28 +442,40 @@ export type CertificateRow = {
 };
 
 export async function getCertificates(limit = 100): Promise<CertificateRow[]> {
-  const rows = await db.query.certificates.findMany({
-    orderBy: desc(certificates.issuedAt),
-    limit,
-    columns: {
-      publicId: true,
-      learnerNameSnapshot: true,
-      awardTitleSnapshot: true,
-      scorePct: true,
-      issuedAt: true,
-      revokedAt: true,
-    },
-    with: { level: { columns: { title: true } } },
-  });
+  const supabase = await supabaseServer();
 
-  return rows.map((r) => ({
-    publicId: r.publicId,
-    learnerName: r.learnerNameSnapshot,
-    awardTitle: r.awardTitleSnapshot,
-    levelTitle: r.level.title,
-    scorePct: r.scorePct,
-    issuedAt: r.issuedAt,
-    revokedAt: r.revokedAt,
+  const [certResult, levelResult] = await Promise.all([
+    supabase
+      .from("learn_certificates")
+      .select("code, issued_name, award_title, level_slug, score_pct, issued_at, revoked_at")
+      .order("issued_at", { ascending: false })
+      .limit(limit),
+    supabase.from("learn_levels").select("slug, title"),
+  ]);
+
+  const levelTitles = new Map(
+    ((levelResult.data ?? []) as unknown as Array<{ slug: string; title: string }>).map((l) => [
+      l.slug,
+      l.title,
+    ]),
+  );
+
+  return ((certResult.data ?? []) as unknown as Array<{
+    code: string;
+    issued_name: string;
+    award_title: string | null;
+    level_slug: string | null;
+    score_pct: number | null;
+    issued_at: string;
+    revoked_at: string | null;
+  }>).map((r) => ({
+    publicId: r.code,
+    learnerName: r.issued_name,
+    awardTitle: r.award_title ?? "",
+    levelTitle: r.level_slug ? (levelTitles.get(r.level_slug) ?? "") : "",
+    scorePct: r.score_pct ?? 0,
+    issuedAt: new Date(r.issued_at),
+    revokedAt: r.revoked_at ? new Date(r.revoked_at) : null,
   }));
 }
 
@@ -433,13 +489,16 @@ export type ReviewSummary = {
 };
 
 export async function getReviewSummary(): Promise<ReviewSummary> {
-  const items = await db
-    .select({
-      status: contentReviewItems.status,
-      category: contentReviewItems.category,
-      severity: contentReviewItems.severity,
-    })
-    .from(contentReviewItems);
+  const supabase = await supabaseServer();
+  const { data } = await supabase
+    .from("learn_review_items")
+    .select("status, category, severity");
+
+  const items = (data ?? []) as unknown as Array<{
+    status: string;
+    category: string;
+    severity: number;
+  }>;
 
   const byCategory = ["MEDICAL", "LEGAL", "STATISTIC"].map((category) => ({
     category,

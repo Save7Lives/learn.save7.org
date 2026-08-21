@@ -1,16 +1,6 @@
 import type { Metadata } from "next";
-import { and, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
-import { db } from "@/lib/db";
-import {
-  certificates,
-  levels,
-  moduleProgress,
-  modules,
-  quizAttempts,
-  users,
-} from "@/db/schema";
 import { getLearnerSummary } from "@/lib/analytics";
-import { getCourse } from "@/lib/course";
+import { supabaseServer } from "@/lib/supabase/server";
 import { DataTable, PageTitle, Section, StatCard } from "@/components/admin/AdminUi";
 import { Badge } from "@/components/ui/primitives";
 
@@ -27,34 +17,71 @@ export const runtime = "edge";
 export const metadata: Metadata = { title: "Learners" };
 
 export default async function LearnersPage() {
-  const [summary, course] = await Promise.all([getLearnerSummary(), getCourse()]);
+  const summary = await getLearnerSummary();
 
-  const learners = await db.query.users.findMany({
-    where: eq(users.role, "LEARNER"),
-    orderBy: desc(users.createdAt),
-    limit: 200,
-    columns: { id: true, name: true, createdAt: true, lastSeenAt: true },
-    with: {
-      attempts: {
-        where: isNotNull(quizAttempts.submittedAt),
-        columns: { kind: true, scorePct: true, attemptNo: true, levelId: true },
-      },
-      certificates: {
-        where: isNull(certificates.revokedAt),
-        columns: { publicId: true, awardTitleSnapshot: true },
-      },
-      moduleProgress: {
-        where: eq(moduleProgress.status, "COMPLETE"),
-        columns: { moduleId: true },
-      },
-    },
-  });
+  const supabase = await supabaseServer();
 
-  const [{ count: modulesTotal }] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(modules)
-    .innerJoin(levels, eq(modules.levelId, levels.id))
-    .where(and(eq(levels.courseId, course.id), eq(modules.isMandatory, true)));
+  /* Each learner with their submitted attempts, live certificates and completed
+     modules, embedded through the foreign keys on those three tables. Staff-only:
+     the select policies on all four admit `app_is_staff()`, and a learner reading
+     the same query sees one row — their own. */
+  const { data: learnerRows } = await supabase
+    .from("learners")
+    .select(
+      "id, name, created_at, last_seen_at, " +
+        "learn_attempts(scope, score_pct, attempt_no, level_slug, submitted_at), " +
+        "learn_certificates(code, award_title, revoked_at), " +
+        "learn_module_progress(module_slug, status)",
+    )
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  const learners = ((learnerRows ?? []) as unknown as Array<{
+    id: string;
+    name: string;
+    created_at: string;
+    last_seen_at: string | null;
+    learn_attempts: Array<{
+      scope: string;
+      score_pct: number | null;
+      attempt_no: number;
+      level_slug: string | null;
+      submitted_at: string | null;
+    }> | null;
+    learn_certificates: Array<{
+      code: string;
+      award_title: string | null;
+      revoked_at: string | null;
+    }> | null;
+    learn_module_progress: Array<{ module_slug: string; status: string }> | null;
+  }>).map((l) => ({
+    id: l.id,
+    name: l.name,
+    createdAt: new Date(l.created_at),
+    lastSeenAt: l.last_seen_at ? new Date(l.last_seen_at) : null,
+    // Filtered here rather than in the query: PostgREST cannot filter an embedded
+    // resource without also dropping parents that have none, which would hide
+    // every learner who has not attempted anything yet.
+    attempts: (l.learn_attempts ?? [])
+      .filter((a) => a.submitted_at !== null)
+      .map((a) => ({
+        kind: a.scope,
+        scorePct: a.score_pct,
+        attemptNo: a.attempt_no,
+        levelId: a.level_slug,
+      })),
+    certificates: (l.learn_certificates ?? [])
+      .filter((c) => c.revoked_at === null)
+      .map((c) => ({ publicId: c.code, awardTitleSnapshot: c.award_title ?? "" })),
+    moduleProgress: (l.learn_module_progress ?? [])
+      .filter((m) => m.status === "COMPLETE")
+      .map((m) => ({ moduleId: m.module_slug })),
+  }));
+
+  const { count: modulesTotal } = await supabase
+    .from("learn_modules")
+    .select("slug", { count: "exact", head: true })
+    .eq("is_mandatory", true);
 
   return (
     <>
