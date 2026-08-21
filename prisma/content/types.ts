@@ -102,3 +102,38 @@ export type ReviewSeed = {
 /** Standard placeholder copy, so every gap in the course reads identically. */
 export const AWAITING =
   "_Content pending._ This section will be written from the Save7 study guide and supporting material. It is intentionally blank rather than filled with unverified text.";
+
+/**
+ * A volunteer-gate question, imported from the portal by
+ * scripts/import-gate-questions.mjs.
+ *
+ * Separate from `QuestionSeed` for two reasons rather than one flag on it:
+ *
+ * 1. **`optionKey` is load-bearing here and absent there.** A gate submission
+ *    names the option key, and `volunteer_quiz_attempts.answers` has recorded
+ *    those keys since 0088 — so the keys are historical data, not presentation.
+ * 2. **A gate item has no level, module or `pairKey`.** It is not part of the
+ *    course's measured pre/post pair; it is the organisation's vetting gate,
+ *    which passes or fails at 15 of 20 and reports no improvement.
+ *
+ * `position` is authored order only. The correct answer is option "a" in all
+ * forty, which is why **the renderer must shuffle per render** — the portal has
+ * always done so, and a client that sorts by key would show the answer first
+ * every time.
+ */
+export type GateQuestionSeed = {
+  key: string;
+  scope: "GATE";
+  gate: "clinical" | "basics";
+  kind: "SINGLE";
+  topicTag: string;
+  position: number;
+  prompt: string;
+  explanation: string;
+  choices: Array<{
+    optionKey: string;
+    position: number;
+    text: string;
+    isCorrect?: boolean;
+  }>;
+};
