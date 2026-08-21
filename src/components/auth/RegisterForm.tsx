@@ -1,0 +1,131 @@
+"use client";
+
+import { useState } from "react";
+
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/config";
+import { Button, ButtonLink } from "@/components/ui/primitives";
+
+/**
+ * Registering for the course.
+ *
+ * **Registration comes first, and that ordering is the design.** Sign-in is
+ * refused for an address that is not already on a list — `auth_enforce_save7_domain()`
+ * admits a @save7.org account, an invited stakeholder, an active volunteer, or a
+ * registered learner, and nothing else. A trigger cannot explain itself, which is
+ * why this form exists and why the sign-in page points at it.
+ *
+ * The endpoint is an Edge Function rather than a route in this app: it holds
+ * `service_role` to write a row a client must never be able to write, it
+ * validates and throttles, and it records every attempt. See
+ * save7-os/supabase/functions/register-learner.
+ */
+export function RegisterForm() {
+  const [state, setState] = useState<"idle" | "sending" | "done">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setState("sending");
+
+    const form = new FormData(event.currentTarget);
+    if (!form.get("popiaConsent")) {
+      setState("idle");
+      setError("We need your consent to store your name, email and course progress.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/register-learner`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          // The anon key identifies the project, not the person. It grants
+          // nothing on its own — the function verifies everything itself.
+          authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          firstName: form.get("firstName"),
+          lastName: form.get("lastName"),
+          email: form.get("email"),
+          popiaConsent: true,
+        }),
+      });
+
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        setState("idle");
+        setError(body.error ?? "Could not register. Try again in a moment.");
+        return;
+      }
+      setState("done");
+    } catch {
+      setState("idle");
+      setError("Could not reach Save7. Check your connection and try again.");
+    }
+  }
+
+  if (state === "done") {
+    return (
+      <div className="space-y-4">
+        <p className="text-ink">
+          You&apos;re registered. Sign in with that same Google account to start the course.
+        </p>
+        <ButtonLink href="/login">Sign in with Google</ButtonLink>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-5">
+      <label className="block">
+        <span className="text-sm font-medium">First name</span>
+        <input name="firstName" required className="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2" />
+      </label>
+
+      <label className="block">
+        <span className="text-sm font-medium">Surname</span>
+        <input name="lastName" className="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2" />
+        <span className="mt-1 block text-xs text-ink/60">
+          This is the name that will appear on your certificate. You can change it later in
+          your profile.
+        </span>
+      </label>
+
+      <label className="block">
+        <span className="text-sm font-medium">Email address</span>
+        <input
+          name="email"
+          type="email"
+          required
+          className="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2"
+        />
+        <span className="mt-1 block text-xs text-ink/60">
+          Use the address of the Google account you will sign in with.
+        </span>
+      </label>
+
+      <label className="flex gap-3 text-sm">
+        <input type="checkbox" name="popiaConsent" className="mt-1" />
+        <span>
+          I agree that Save7 may store my name, email address and course progress so that my
+          learning and certificate can be recorded.{" "}
+          <a href="/privacy" className="underline">
+            How we handle your information
+          </a>
+          .
+        </span>
+      </label>
+
+      {error ? (
+        <p className="text-sm text-crit" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      <Button type="submit" disabled={state === "sending"} className="w-full">
+        {state === "sending" ? "Registering…" : "Register"}
+      </Button>
+    </form>
+  );
+}

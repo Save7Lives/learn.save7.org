@@ -14,7 +14,6 @@ import { and, eq } from "drizzle-orm";
 // Node driver, not the app's edge client — see src/lib/db-node.ts.
 import { dbNode as db } from "../src/lib/db-node";
 import { choices, levels, questions, users } from "../src/db/schema";
-import { registerUser } from "../src/lib/auth";
 import { getBaselineState, getCourse, getPathwayForUser } from "../src/lib/course";
 import { completeModule, isLevelContentComplete, markLessonViewed } from "../src/lib/progress";
 import { startAttempt, submitAttempt, gradeCheckAnswer } from "../src/lib/quiz";
@@ -57,35 +56,39 @@ async function answersFor(questionIds: string[], correctRatio: number) {
 async function main() {
   const email = `journey-${Date.now()}@example.test`;
 
-  // --- Register ------------------------------------------------------------
-  const reg = await registerUser({
-    firstName: "Journey",
-    lastName: "Tester",
-    email,
-    password: "correct horse battery",
-    popiaConsent: true,
-  });
-  check("register succeeds", reg.ok, reg.ok ? reg.user.email : reg);
-  if (!reg.ok) return;
-  const userId = reg.user.id;
-
-  const dup = await registerUser({
-    firstName: "Journey",
-    lastName: "Tester",
-    email,
-    password: "correct horse battery",
-    popiaConsent: true,
-  });
-  check("duplicate email rejected", !dup.ok);
-
-  const noConsent = await registerUser({
-    firstName: "No",
-    lastName: "Consent",
-    email: `nc-${Date.now()}@example.test`,
-    password: "correct horse battery",
-    popiaConsent: false,
-  });
-  check("POPIA consent enforced", !noConsent.ok);
+  // --- The learner ---------------------------------------------------------
+  /**
+   * Created directly, rather than through the app.
+   *
+   * There is no `registerUser` any more: sign-in is a Google account verified by
+   * Supabase, and the three rules this suite used to assert here have moved to
+   * where they are now enforced —
+   *
+   *   * a duplicate address is refused by `learners_email_key`, the unique index;
+   *   * POPIA consent is required by the `register-learner` Edge Function, which
+   *     refuses rather than defaults;
+   *   * name validation is shared with the profile page and still asserted below.
+   *
+   * **This suite still runs against the local SQLite file, which is the database
+   * the app reads until the data layer is ported to Supabase.** When that port
+   * lands, this file moves with it.
+   */
+  const [created] = await db
+    .insert(users)
+    .values({
+      name: "Journey Tester",
+      firstName: "Journey",
+      lastName: "Tester",
+      email,
+      passwordHash: "",
+      role: "LEARNER",
+      popiaConsentAt: new Date(),
+      lastSeenAt: new Date(),
+    })
+    .returning({ id: users.id, email: users.email });
+  check("learner created", Boolean(created?.id), created?.email);
+  if (!created) return;
+  const userId = created.id;
 
   // --- Baseline ------------------------------------------------------------
   const course = await getCourse();
@@ -213,7 +216,9 @@ async function main() {
   check("signed-out pathway has no progress", (await getPathwayForUser(null)).levels.every((l) => l.progress === null));
 
   // --- Profile editing -----------------------------------------------------
-  check("registration composed the full name", reg.user.name === "Journey Tester", reg.user.name);
+  const composed = await getProfile(userId);
+  check("the composed full name is what a certificate prints",
+    composed?.name === "Journey Tester", composed?.name);
 
   const beforeEdit = await getProfile(userId);
   check("profile splits into first name and surname",
