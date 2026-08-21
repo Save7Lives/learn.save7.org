@@ -35,7 +35,24 @@
     // `learn.save7.org` goes here once the domain is attached (DEPLOY.md), which
     // on Pages is a dashboard action rather than a line in this file.
     "SITE_URL": "https://transplant-alchemy.pages.dev",
-    "NEXT_PUBLIC_SITE_URL": "https://transplant-alchemy.pages.dev"
+    "NEXT_PUBLIC_SITE_URL": "https://transplant-alchemy.pages.dev",
+
+    // ── Supabase ──────────────────────────────────────────────────────────────
+    // The backend: the same project os.save7.org and volunteers.save7.org use,
+    // which is what gives a volunteer one identity across all three.
+    //
+    // Committed deliberately. All three ship to every browser that loads the
+    // page, so none of them is a secret — the anon key decodes to role "anon" and
+    // grants nothing without a policy admitting it, and row level security is the
+    // boundary (see verify_learn_isolation() in save7-os migration 0092).
+    //
+    // These are read at **runtime**, on the server, and passed to the client as
+    // props — see src/lib/supabase/config.ts. Next inlines NEXT_PUBLIC_* at build
+    // time and Cloudflare applies vars at deploy time, so a client component
+    // reading them directly would get undefined here.
+    "NEXT_PUBLIC_SUPABASE_URL": "https://zbaoziisqroqxfwcnhlb.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpiYW96aWlzcXJvcXhmd2NuaGxiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMTczMjIsImV4cCI6MjEwMTU5MzMyMn0.O_oFqf4kSZZoxDToiwstoFGGqHlQz5PTHO3FAtnHoKI",
+    "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "572341141393-cv3lctdv0tlp489u357g8jnqsmumv4f0.apps.googleusercontent.com"
   },
 
   // Preview deployments get the same bindings and their own origin. Without this
@@ -45,9 +62,9 @@
       "vars": {
         "SITE_URL": "https://transplant-alchemy.pages.dev",
         "NEXT_PUBLIC_SITE_URL": "https://transplant-alchemy.pages.dev",
-        "NEXT_PUBLIC_SUPABASE_URL": "https://SAVE7_PROJECT_REF.supabase.co",
-        "NEXT_PUBLIC_SUPABASE_ANON_KEY": "SAVE7_REPLACE_WITH_ANON_KEY",
-        "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "SAVE7_REPLACE_WITH_GOOGLE_CLIENT_ID"
+        "NEXT_PUBLIC_SUPABASE_URL": "https://zbaoziisqroqxfwcnhlb.supabase.co",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpiYW96aWlzcXJvcXhmd2NuaGxiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMTczMjIsImV4cCI6MjEwMTU5MzMyMn0.O_oFqf4kSZZoxDToiwstoFGGqHlQz5PTHO3FAtnHoKI",
+        "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "572341141393-cv3lctdv0tlp489u357g8jnqsmumv4f0.apps.googleusercontent.com"
       }
     }
   }

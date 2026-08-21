@@ -9,9 +9,9 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "brand:generate": "node scripts/generate-brand-assets.mjs",
-    "pages:build": "next-on-pages",
-    "pages:deploy": "next-on-pages && wrangler pages deploy .vercel/output/static",
-    "pages:dev": "next-on-pages && wrangler pages dev .vercel/output/static",
+    "pages:build": "next-on-pages && node scripts/strip-oversized-media.mjs",
+    "pages:deploy": "npm run pages:build && wrangler pages deploy .vercel/output/static",
+    "pages:dev": "npm run pages:build && wrangler pages dev .vercel/output/static",
     "content:emit": "tsx scripts/emit-supabase-content.ts"
   },
   "dependencies": {
