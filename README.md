@@ -273,7 +273,7 @@ list beside the player labels rather than seeks.
 
 **[DEPLOY.md](DEPLOY.md) is the guide.** It covers the setup end to end: applying
 the Supabase migrations, deploying the `register-learner` function, putting the
-video in R2, setting the Pages variables, attaching the domain, and how to push
+the video, setting the Pages variables, attaching the domain, and how to push
 content corrections after launch without touching learner data.
 
 Two things are worth knowing before the first deploy:

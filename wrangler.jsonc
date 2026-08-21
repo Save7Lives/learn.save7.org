@@ -58,6 +58,22 @@
     "NEXT_PUBLIC_SUPABASE_URL": "https://zbaoziisqroqxfwcnhlb.supabase.co",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpiYW96aWlzcXJvcXhmd2NuaGxiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMTczMjIsImV4cCI6MjEwMTU5MzMyMn0.O_oFqf4kSZZoxDToiwstoFGGqHlQz5PTHO3FAtnHoKI",
     "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "572341141393-cv3lctdv0tlp489u357g8jnqsmumv4f0.apps.googleusercontent.com"
+
+    // ── Module 5 video ────────────────────────────────────────────────────────
+    // Where the 35 MB film is served from. The build strips it out of the upload
+    // (scripts/strip-oversized-media.mjs), so with this unset src/lib/media.ts
+    // drops the path and Module 5 shows the player's "not hosted yet" state
+    // rather than a <video> that silently fails.
+    //
+    // Uncomment once the media repository's GitHub Pages site is publishing --
+    // GitHub Pages, not the Cloudflare Pages this course runs on. Fill in <owner>,
+    // no trailing slash, and confirm the URL answers with content-type video/mp4
+    // first: setting this before it serves is the one way to get a dead player.
+    // See MEDIA-HOSTING.md.
+    //
+    // "MEDIA_BASE_URL": "https://<owner>.github.io/save7-media"
+    //
+    // R2 remains the intended long-term home; same line, bucket hostname instead.
   },
 
   // Preview deployments get the same bindings and their own origin. Without this

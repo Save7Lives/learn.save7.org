@@ -1,10 +1,15 @@
 /**
  * Where large media files are served from.
  *
- * The course video is 35 MB, which exceeds Cloudflare's 25 MiB per-file limit for
- * Workers static assets, so in production it lives in an R2 bucket on its own
- * hostname instead of in /public. R2 serves it directly: correct range-request
- * handling for seeking, CDN caching, and no Worker CPU spent streaming bytes.
+ * The course video is 35 MB, which exceeds Cloudflare's 25 MiB per-file asset
+ * limit, so in production it is served from its own hostname rather than from
+ * /public. Any host will do that gets three things right: content-type video/mp4,
+ * HTTP range requests for seeking, and CDN caching.
+ *
+ * Currently a GitHub Pages site; R2 once Save7's payment details are on the
+ * Cloudflare account. Note that raw.githubusercontent.com is NOT a valid host: it
+ * serves mp4 as application/octet-stream with nosniff, which browsers refuse to
+ * play in a <video>. See MEDIA-HOSTING.md.
  *
  * MEDIA_BASE_URL is read on the server and the absolute URL is passed to the
  * client, rather than exposing a NEXT_PUBLIC_ variable. Public env vars are
@@ -20,7 +25,7 @@
  *                                  pending, which makes the player fall back to
  *                                  its placeholder instead of a dead <video>.
  *
- * State 3 exists because Save7 has not enabled R2 yet. Leaving the path in place
+ * State 3 exists because no media host is configured yet. Leaving the path in place
  * would render a player that silently fails — worse than saying plainly that the
  * film is not hosted yet.
  */

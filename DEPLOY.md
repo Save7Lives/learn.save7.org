@@ -203,17 +203,30 @@ It confirms row level security is on for every `learn_*` table, that
 `learn_choices` has **no policy at all**, that no view names `is_correct`, and that
 `anon` has no direct read of the bank.
 
-### 5. Create the video bucket
+### 5. Host the video
 
-**Deferred by Save7** — R2 needs a payment method on the account, and that will be
-added with Save7's bank details rather than a personal card. Nothing else waits on
-it, and the site does not break in the meantime: with no bucket configured,
+The 35 MB video is over Cloudflare's 25 MiB per-asset limit, so the build strips it
+out (`scripts/strip-oversized-media.mjs`) and production serves it from its own
+hostname. Two ways to do that.
+
+**Now: GitHub Pages.** R2 needs a payment method on the Cloudflare account, and
+that waits for Save7's bank details rather than a personal card, so in the meantime
+the file is published from a small public media repository via GitHub Pages — a
+different product from the Cloudflare Pages hosting the course. Full instructions,
+including why `raw.githubusercontent.com` cannot be used, are in
+**MEDIA-HOSTING.md**. It ends with one line in `wrangler.jsonc` and a deploy.
+
+**Later: R2.** The better home — free egress, a real CDN, and no soft bandwidth
+limit to think about. Switching is the same single variable.
+
+Neither is urgent for the rest of the site to work. With no host configured,
 `src/lib/media.ts` removes the video path and Module 5 renders the player's "not
 hosted yet" state, listing the chapters and saying plainly that the film is
 finished but not yet uploaded. That is deliberate — a `<video>` pointing at a
 missing file would look like a bug in the site.
 
-When the account is ready:
+When the Cloudflare account is ready for R2 (the bucket below happens to share its
+name with the GitHub media repository; they are unrelated):
 
 ```bash
 npx wrangler r2 bucket create save7-media
@@ -230,14 +243,12 @@ bucket → Settings → Public access; either the r2.dev subdomain or a custom d
 such as `media.save7.org`). Put that hostname in `wrangler.jsonc` as
 `MEDIA_BASE_URL`, with no trailing slash.
 
-Then redeploy, so the Worker picks up the new variable. Nothing else changes —
-the video path lives in the lesson payload already.
+Then redeploy, so the deployment picks up the new variable. Nothing else changes —
+the video path lives in the lesson content already.
 
-**Until this is done, Module 5 has no video.** The 35 MB file is over Cloudflare's
-25 MiB limit for Workers assets, so it is deliberately excluded from the deploy
-(see `public/.assetsignore`). R2's free tier covers 10 GB and egress is free, so
-this file will not cost anything to serve — the payment method is only there
-because R2 requires one to be on file.
+**Until one host or the other is configured, Module 5 has no video.** R2's free
+tier covers 10 GB and egress is free, so this file will not cost anything to serve
+— the payment method is only there because R2 requires one to be on file.
 
 ### 6. Set the Supabase variables
 
