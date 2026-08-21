@@ -11,7 +11,8 @@
 import "dotenv/config";
 import { and, eq } from "drizzle-orm";
 
-import { db } from "../src/lib/db";
+// Node driver, not the app's edge client — see src/lib/db-node.ts.
+import { dbNode as db } from "../src/lib/db-node";
 import { choices, levels, questions, users } from "../src/db/schema";
 import { registerUser } from "../src/lib/auth";
 import { getBaselineState, getCourse, getPathwayForUser } from "../src/lib/course";

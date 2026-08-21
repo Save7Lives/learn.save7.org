@@ -8,10 +8,19 @@
 import "dotenv/config";
 import { eq, and } from "drizzle-orm";
 
-import { db } from "../src/lib/db";
+// Node driver, not the app's edge client — see src/lib/db-node.ts.
+import { dbNode as db } from "../src/lib/db-node";
 import { choices, questions } from "../src/db/schema";
 
-const BASE = "http://localhost:3000";
+/**
+ * Where the running app is.
+ *
+ * `next dev` on :3000 was the only way to run this app; on Pages it is
+ * `npm run pages:dev`, which serves on :8788 by default. Overridable so the check
+ * can be pointed at a preview deployment as well as a local one:
+ *   BASE=https://abc123.transplant-alchemy.pages.dev npx tsx scripts/verify-no-answer-leak.ts <token>
+ */
+const BASE = process.env.BASE ?? "http://localhost:8788";
 
 async function main() {
   const token = process.argv[2];

@@ -10,6 +10,16 @@ import type { LevelTier } from "@/lib/constants";
 import { mediaUrl, resolvePayloadMedia } from "@/lib/media";
 import { completeModuleAction, viewLessonAction } from "../../../actions";
 
+/**
+ * Edge runtime, required by Cloudflare Pages.
+ *
+ * `@cloudflare/next-on-pages` refuses to build a route that renders on the
+ * Node runtime — every server-rendered route on Pages runs on workerd. This is
+ * the whole reason the app is pinned to Next 15.5.2: the adapter supports no
+ * higher, and OpenNext (which does not need this) supports no lower.
+ */
+export const runtime = "edge";
+
 export async function generateMetadata(
   props: PageProps<"/levels/[level]/modules/[module]">,
 ): Promise<Metadata> {

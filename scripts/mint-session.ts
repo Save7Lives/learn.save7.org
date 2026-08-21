@@ -5,7 +5,8 @@
 import "dotenv/config";
 import { SignJWT } from "jose";
 import { eq } from "drizzle-orm";
-import { db } from "../src/lib/db";
+// Node driver, not the app's edge client — see src/lib/db-node.ts.
+import { dbNode as db } from "../src/lib/db-node";
 import { users } from "../src/db/schema";
 
 async function main() {

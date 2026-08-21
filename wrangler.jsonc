@@ -1,86 +1,74 @@
 /**
- * Cloudflare Workers configuration for Transplant Alchemy 101.
+ * Cloudflare **Pages** configuration for Transplant Alchemy 101.
  *
- * Save7 must fill in the two placeholders marked SAVE7 below (the D1 database id
- * and the public site URL) before the first deploy. See DEPLOY.md.
+ * This was a Workers config until the move to Pages. What changed and why:
+ *
+ *   * `main` / `assets` are gone. Pages serves `.vercel/output/static`, which
+ *     `@cloudflare/next-on-pages` produces, with the app itself in
+ *     `_worker.js` inside it. `pages_build_output_dir` is what points at it.
+ *   * `alias` is gone. It was a Workers bundler feature; on Pages the bundling is
+ *     done by the adapter, and the Node-only driver is kept out of the graph by
+ *     the src/lib/db.ts / src/lib/db-node.ts split instead.
+ *   * **`routes` is gone, and this is a real loss.** A Workers config could
+ *     declare `learn.save7.org` here, so changing where the course lives was a
+ *     reviewable pull request. Pages custom domains cannot be declared in
+ *     configuration — they are attached in the dashboard, or with
+ *     `wrangler pages domain add`. See DEPLOY.md.
+ *
+ * Deploy with `npm run pages:deploy`, which builds and then uploads.
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "transplant-alchemy",
-  "main": ".open-next/worker.js",
+  "pages_build_output_dir": ".vercel/output/static",
   "compatibility_date": "2026-08-01",
 
-  // Required by OpenNext: the Next.js server needs Node built-ins (crypto,
-  // buffer, async_hooks) that are only available under nodejs_compat.
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-
-  "assets": {
-    "directory": ".open-next/assets",
-    "binding": "ASSETS"
-  },
-
-  "observability": {
-    "enabled": true
-  },
-
-  // The public hostname. Declared here rather than clicked in the dashboard, so
-  // changing where the course lives is a reviewable pull request instead of
-  // something only the account holder can do.
-  //
-  // Uncomment once save7.org DNS is on Cloudflare (DEPLOY.md step 9), set SITE_URL
-  // below to match, and deploy. Cloudflare issues the certificate and routes
-  // traffic; no separate DNS record is needed.
-  //
-  // "routes": [
-  //   { "pattern": "learn.save7.org", "custom_domain": true }
-  // ],
-
-
-  // Node-only database drivers, stubbed out of the Worker bundle. Only the D1
-  // branch of src/lib/db.ts can run here. See worker-stubs/empty.js.
-  "alias": {
-    "pg-cloudflare": "./worker-stubs/empty.js"
-  },
+  // Required by the adapter: the Next server needs Node built-ins (crypto,
+  // buffer, async_hooks) even on the edge runtime.
+  "compatibility_flags": ["nodejs_compat"],
 
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "transplant-alchemy",
       // Created 2026-08-18 in the Cloudflare account zubayyrparak@gmail.com.
-      // Cloudflare Workers Builds reads this file from the repository, so this id
-      // has to be committed. It is an identifier, not a secret — access is
-      // controlled by the account, and the binding only works from this Worker.
+      // Committed deliberately: it is an identifier, not a secret, and the build
+      // reads this file from the repository. Access is controlled by the account.
       "database_id": "906e5372-8b73-4073-8e78-c701ac64c07d",
       "migrations_dir": "prisma/d1-migrations"
     }
   ],
 
   "vars": {
-    // The public origin, used to build certificate verification links.
+    // The public origin, used to build certificate verification links. Tracks
+    // what actually resolves rather than what is intended — a dead link printed
+    // on a real certificate is worse than an ugly hostname.
     //
-    // Currently the workers.dev hostname, because that is what actually resolves.
-    // The intended final home is https://learn.save7.org, which cannot be
-    // attached until save7.org DNS moves to Cloudflare (see DEPLOY.md step 9).
-    // Pointing this at a domain that does not resolve yet would print dead links
-    // on real certificates, so it tracks reality rather than intent.
-    //
-    // Switching later is this one line plus `npx wrangler deploy` — no rebuild.
-    // SITE_URL is read at runtime, whereas NEXT_PUBLIC_ variables are inlined
-    // when Next builds, which on Cloudflare happens before deploy vars apply.
-    // Both are set so a local .env keeps working; SITE_URL is the one that wins.
-    "SITE_URL": "https://transplant-alchemy.zubayyrparak.workers.dev",
-    "NEXT_PUBLIC_SITE_URL": "https://transplant-alchemy.zubayyrparak.workers.dev"
+    // `learn.save7.org` goes here once the domain is attached (DEPLOY.md), which
+    // on Pages is a dashboard action rather than a line in this file.
+    "SITE_URL": "https://transplant-alchemy.pages.dev",
+    "NEXT_PUBLIC_SITE_URL": "https://transplant-alchemy.pages.dev"
+  },
 
-    // MEDIA_BASE_URL is deliberately absent until Save7 enables R2.
-    //
-    // The 35 MB video exceeds Cloudflare's 25 MiB limit for Workers assets, so it
-    // is excluded from the deploy (public/.assetsignore). With no bucket to serve
-    // it from, src/lib/media.ts drops the path and Module 5 shows the player's
-    // "not hosted yet" state rather than a <video> that silently fails. Set this
-    // to the bucket's public hostname, no trailing slash, e.g.
-    //   "MEDIA_BASE_URL": "https://media.save7.org"
+  // Preview deployments get the same bindings and their own origin. Without this
+  // block a preview build runs with no vars at all and prints links to nowhere.
+  "env": {
+    "preview": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "transplant-alchemy",
+          "database_id": "906e5372-8b73-4073-8e78-c701ac64c07d",
+          "migrations_dir": "prisma/d1-migrations"
+        }
+      ],
+      "vars": {
+        "SITE_URL": "https://transplant-alchemy.pages.dev",
+        "NEXT_PUBLIC_SITE_URL": "https://transplant-alchemy.pages.dev"
+      }
+    }
   }
 
-  // AUTH_SECRET is NOT here. It is a secret, set with:
-  //   wrangler secret put AUTH_SECRET
+  // AUTH_SECRET is NOT here. It is a secret:
+  //   wrangler pages secret put AUTH_SECRET
 }

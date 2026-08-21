@@ -15,26 +15,29 @@
     "brand:generate": "node scripts/generate-brand-assets.mjs",
     "db:push": "tsx scripts/apply-schema.ts",
     "db:export": "tsx scripts/export-d1-content.ts",
-    "cf:build": "opennextjs-cloudflare build",
-    "cf:preview": "opennextjs-cloudflare build && wrangler dev",
-    "cf:deploy": "opennextjs-cloudflare build && wrangler deploy",
-    "cf:types": "wrangler types",
-    "verify": "tsx --conditions=react-server scripts/verify-journey.ts"
+    "verify": "tsx --conditions=react-server scripts/verify-journey.ts",
+    "pages:build": "next-on-pages",
+    "pages:deploy": "next-on-pages && wrangler pages deploy .vercel/output/static",
+    "pages:dev": "next-on-pages && wrangler pages dev .vercel/output/static",
+    "d1:local": "wrangler d1 migrations apply DB --local"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^3.3.0",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^13.0.3",
     "drizzle-orm": "^0.45.2",
     "jose": "^6.2.9",
-    "next": "16.3.1",
+    "next": "15.5.2",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^3.10.1",
     "zod": "^4.4.3"
   },
+  "optionalDependencies": {
+    "better-sqlite3": "^13.0.3"
+  },
   "devDependencies": {
-    "@opennextjs/cloudflare": "^1.20.2",
+    "@cloudflare/next-on-pages": "1.13.16",
+    "@eslint/eslintrc": "^3.3.6",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/better-sqlite3": "^9.6.0",
@@ -44,11 +47,12 @@
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
-    "eslint-config-next": "16.3.1",
+    "eslint-config-next": "^15.5.2",
     "server-only": "^0.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
     "typescript": "^5",
+    "vercel": "47.0.4",
     "wrangler": "^4.124.0"
   },
   "allowScripts": {
