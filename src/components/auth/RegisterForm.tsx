@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/config";
+import type { PublicSupabaseConfig } from "@/lib/supabase/config";
 import { Button, ButtonLink } from "@/components/ui/primitives";
 
 /**
@@ -19,7 +19,7 @@ import { Button, ButtonLink } from "@/components/ui/primitives";
  * validates and throttles, and it records every attempt. See
  * save7-os/supabase/functions/register-learner.
  */
-export function RegisterForm() {
+export function RegisterForm({ config }: { config: PublicSupabaseConfig }) {
   const [state, setState] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -36,13 +36,13 @@ export function RegisterForm() {
     }
 
     try {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/register-learner`, {
+      const response = await fetch(`${config.url}/functions/v1/register-learner`, {
         method: "POST",
         headers: {
           "content-type": "application/json",
           // The anon key identifies the project, not the person. It grants
           // nothing on its own — the function verifies everything itself.
-          authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          authorization: `Bearer ${config.anonKey}`,
         },
         body: JSON.stringify({
           firstName: form.get("firstName"),

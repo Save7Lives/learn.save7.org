@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Script from "next/script";
 
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import type { PublicSupabaseConfig } from "@/lib/supabase/config";
 import { Button } from "@/components/ui/primitives";
 
 /**
@@ -58,7 +59,14 @@ async function makeNonce(): Promise<{ raw: string; hashed: string }> {
 /** The trigger refuses an unregistered address, and a trigger cannot explain itself. */
 const NOT_REGISTERED = /not allowed|restricted|save7|database error|500/i;
 
-export function GoogleSignIn({ next }: { next?: string }) {
+export function GoogleSignIn({
+  config,
+  next,
+}: {
+  /** Handed down by the server: these are runtime values, not build-time ones. */
+  config: PublicSupabaseConfig;
+  next?: string;
+}) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -82,7 +90,7 @@ export function GoogleSignIn({ next }: { next?: string }) {
     async (credential: string) => {
       setBusy(true);
       setError(null);
-      const supabase = supabaseBrowser();
+      const supabase = supabaseBrowser(config);
       const { error: signInError } = await supabase.auth.signInWithIdToken({
         provider: "google",
         token: credential,
@@ -104,12 +112,12 @@ export function GoogleSignIn({ next }: { next?: string }) {
 
       await finish();
     },
-    [finish],
+    [config, finish],
   );
 
   /** Render Google's own button once the script is there. */
   const initIdentity = useCallback(async () => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const clientId = config.googleClientId;
     const identity = window.google?.accounts?.id;
     if (!clientId || !identity || !buttonSlot.current) return;
 
@@ -131,13 +139,13 @@ export function GoogleSignIn({ next }: { next?: string }) {
       text: "signin_with",
       width: 320,
     });
-  }, [onCredential]);
+  }, [config.googleClientId, onCredential]);
 
   /** The redirect flow. Lands back here, where Supabase reads the fragment. */
   const redirectFlow = useCallback(async () => {
     setBusy(true);
     setError(null);
-    const supabase = supabaseBrowser();
+    const supabase = supabaseBrowser(config);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: window.location.origin + window.location.pathname },
@@ -146,16 +154,16 @@ export function GoogleSignIn({ next }: { next?: string }) {
       setBusy(false);
       setError(oauthError.message || "Could not start Google sign-in.");
     }
-  }, []);
+  }, [config]);
 
   /** Coming back from the redirect flow already signed in. */
   useEffect(() => {
-    const supabase = supabaseBrowser();
+    const supabase = supabaseBrowser(config);
     void (async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) await finish();
     })();
-  }, [finish]);
+  }, [config, finish]);
 
   return (
     <div className="space-y-6">

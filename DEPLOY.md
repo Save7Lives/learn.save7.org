@@ -263,6 +263,40 @@ mentioned it, it is gone along with password sign-in.
 bypasses every policy, and `wrangler.jsonc` is committed to the repository. The app
 does not need it and must not have it.
 
+### 6b. Let Google and Supabase know the hostname
+
+**Both of these fail silently, and this is the step most likely to be missed.**
+Sign-in has two paths and each one has its own allow-list, held in a different
+console.
+
+**Supabase → Authentication → URL Configuration.** Add the hostname to the redirect
+allow-list, and set it as the Site URL if the course is the primary site for it:
+
+```
+https://transplant-alchemy.pages.dev
+https://learn.save7.org
+http://localhost:4327
+```
+
+Without this, `signInWithOAuth` — the fallback path — returns the learner to a
+refused redirect after they have already approved the Google prompt.
+
+**Google Cloud console → the volunteer portal's OAuth client → Authorised
+JavaScript origins.** Add the same hostnames, **appending rather than replacing**:
+that client is what `volunteers.save7.org` signs in with, and clearing an existing
+entry breaks the portal.
+
+Without this, Identity Services still draws a perfectly convincing button and 403s
+an iframe request the moment it is pressed — a failure the page cannot observe, and
+the reason the "Continue with Google" fallback is never hidden.
+
+⚠️ **The registration endpoint has a third allow-list of its own.** `register-learner`
+names its permitted origins in code, currently `learn.save7.org`,
+`transplant-alchemy.pages.dev` and localhost. If your Pages project ends up with a
+different name, that list needs the new hostname and a redeploy — it is not a
+wildcard, deliberately, because that endpoint is the one thing anybody can call
+without a token.
+
 ### 7. Set the public URL
 
 Done — `wrangler.jsonc` sets both `SITE_URL` and `NEXT_PUBLIC_SITE_URL` to

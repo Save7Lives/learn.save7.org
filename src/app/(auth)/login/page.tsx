@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { GoogleSignIn } from "@/components/auth/GoogleSignIn";
 import { Display, Eyebrow } from "@/components/ui/primitives";
 import { getSession } from "@/lib/auth";
+import { publicConfig } from "@/lib/supabase/config";
 
 export const runtime = "edge";
 
@@ -26,7 +27,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
       </p>
 
       <div className="mt-8">
-        <GoogleSignIn next={typeof next === "string" ? next : undefined} />
+        <GoogleSignIn config={publicConfig()} next={typeof next === "string" ? next : undefined} />
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 import { Display, Eyebrow } from "@/components/ui/primitives";
 import { getSession } from "@/lib/auth";
+import { publicConfig } from "@/lib/supabase/config";
 
 export const runtime = "edge";
 
@@ -23,7 +24,7 @@ export default async function RegisterPage() {
       </p>
 
       <div className="mt-8">
-        <RegisterForm />
+        <RegisterForm config={publicConfig()} />
       </div>
     </div>
   );

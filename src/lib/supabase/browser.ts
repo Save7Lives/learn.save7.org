@@ -2,21 +2,23 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 
-import { requireConfig, STORAGE_KEY } from "./config";
+import { STORAGE_KEY, type PublicSupabaseConfig } from "./config";
 
 /**
- * The browser client, for the sign-in page.
+ * The browser client, for the sign-in and registration pages.
  *
- * One instance per tab: `createBrowserClient` is memoised inside the SSR helper,
- * but the module-level cache here makes it explicit, because two clients on one
- * page means two listeners racing to refresh the same token.
+ * Takes its configuration as an argument rather than reading `process.env`: those
+ * values are inlined at build time and this app is configured at runtime — see
+ * config.ts. The server hands them down as props.
+ *
+ * One instance per tab: two clients on one page means two listeners racing to
+ * refresh the same token.
  */
 let client: ReturnType<typeof createBrowserClient> | undefined;
 
-export function supabaseBrowser() {
+export function supabaseBrowser(config: PublicSupabaseConfig) {
   if (!client) {
-    const { url, anonKey } = requireConfig();
-    client = createBrowserClient(url, anonKey, {
+    client = createBrowserClient(config.url, config.anonKey, {
       cookieOptions: { name: STORAGE_KEY },
     });
   }

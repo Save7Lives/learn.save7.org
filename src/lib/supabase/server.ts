@@ -3,7 +3,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
-import { requireConfig, STORAGE_KEY } from "./config";
+import { publicConfig, STORAGE_KEY } from "./config";
 
 /**
  * The server-side Supabase client, for server components and route handlers.
@@ -21,7 +21,7 @@ import { requireConfig, STORAGE_KEY } from "./config";
  * security definer in the database and returns a score rather than a key.
  */
 export async function supabaseServer() {
-  const { url, anonKey } = requireConfig();
+  const { url, anonKey } = publicConfig();
   const jar = await cookies();
 
   return createServerClient(url, anonKey, {
