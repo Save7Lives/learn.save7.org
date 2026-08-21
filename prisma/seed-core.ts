@@ -67,7 +67,15 @@ const levels: LevelSeed[] = [beginnerLevel, intermediateLevel, advancedLevel];
  * course without appearing in Save7's review queue, because the queue is built
  * from the same objects.
  */
-function deriveReviewItems(): ReviewSeed[] {
+/**
+ * Exported so the Supabase content generator derives the same register.
+ *
+ * scripts/emit-supabase-content.ts writes the course into the Supabase migration
+ * that loads it, and the review register has to be derived from the content
+ * rather than authored twice — the whole point of it is that a claim cannot enter
+ * the course without appearing in Save7's queue.
+ */
+export function deriveReviewItems(): ReviewSeed[] {
   const items: ReviewSeed[] = [];
 
   // Walk every lesson payload looking for pendingReview markers.
