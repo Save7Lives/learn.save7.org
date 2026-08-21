@@ -2,9 +2,16 @@
 
 # Transplant Alchemy 101 — working rules
 
-Save7's organ-donation course, replacing their Google Classroom. Read README.md for
-what it is and DEPLOY.md for how it ships. This file is the short list of things
-that are easy to break without noticing.
+Save7's organ-donation course, replacing their Google Classroom.
+
+> **Read [HANDOVER.md](HANDOVER.md) first if you have not worked on this before.**
+> The app moved from Workers + D1 + password sign-in to Cloudflare Pages + the shared
+> Save7 Supabase project + Google sign-in. Most of what enforces correctness is now
+> SQL in another repository, and HANDOVER.md is the map: the invariants, the traps
+> that already cost a cycle, and what is unfinished.
+
+Read README.md for what the course is and DEPLOY.md for how it ships. This file is
+the short list of things that are easy to break without noticing.
 
 The audience is South African, mostly on phones, mostly learning this for the first
 time. The metric Save7 cares about is **knowledge improvement** (pre-course score →
