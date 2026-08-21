@@ -24,13 +24,30 @@ import { Button } from "@/components/ui/primitives";
  * failure is a 403 on an iframe request that this page cannot observe. So the
  * answer is not to detect it but to always leave a second door.
  */
+/**
+ * The moment notification `prompt()` hands back.
+ *
+ * This is the reason there is one button rather than two. Google's *rendered*
+ * button draws itself on an unauthorised origin and then 403s an iframe request
+ * the page cannot observe — so a page relying on it alone has a control that looks
+ * fine and silently does nothing. `prompt()` reports why it did not display,
+ * including `unregistered_origin` and `invalid_client`, which is exactly the
+ * failure the second button used to cover for.
+ */
+type PromptMoment = {
+  isNotDisplayed: () => boolean;
+  isSkippedMoment: () => boolean;
+  getNotDisplayedReason?: () => string;
+  getSkippedReason?: () => string;
+};
+
 declare global {
   interface Window {
     google?: {
       accounts?: {
         id?: {
           initialize: (config: Record<string, unknown>) => void;
-          renderButton: (el: HTMLElement, options: Record<string, unknown>) => void;
+          prompt: (listener?: (moment: PromptMoment) => void) => void;
         };
       };
     };
@@ -71,7 +88,7 @@ export function GoogleSignIn({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [needsRegistration, setNeedsRegistration] = useState(false);
-  const buttonSlot = useRef<HTMLDivElement>(null);
+  const [identityReady, setIdentityReady] = useState(false);
   const nonce = useRef<{ raw: string; hashed: string } | null>(null);
 
   /** Enrol, then go where they were headed. */
@@ -115,11 +132,13 @@ export function GoogleSignIn({
     [config, finish],
   );
 
-  /** Render Google's own button once the script is there. */
+  /**
+   * Prepare Identity Services. No button is rendered — see PromptMoment above.
+   */
   const initIdentity = useCallback(async () => {
     const clientId = config.googleClientId;
     const identity = window.google?.accounts?.id;
-    if (!clientId || !identity || !buttonSlot.current) return;
+    if (!clientId || !identity) return;
 
     nonce.current = await makeNonce();
     identity.initialize({
@@ -133,12 +152,7 @@ export function GoogleSignIn({
         void onCredential(response.credential);
       },
     });
-    identity.renderButton(buttonSlot.current, {
-      theme: "filled_blue",
-      size: "large",
-      text: "signin_with",
-      width: 320,
-    });
+    setIdentityReady(true);
   }, [config.googleClientId, onCredential]);
 
   /** The redirect flow. Lands back here, where Supabase reads the fragment. */
@@ -156,6 +170,39 @@ export function GoogleSignIn({
     }
   }, [config]);
 
+  /**
+   * What the button does.
+   *
+   * Tries the ID-token flow first, because it signs the learner in without leaving
+   * the page and it is the flow whose consent screen admits a personal Google
+   * account. If Google declines to show it — unregistered origin, wrong client, a
+   * browser that will not do it, or a script that never loaded — the redirect flow
+   * runs instead, with no second control for the learner to discover.
+   */
+  const signIn = useCallback(() => {
+    const identity = window.google?.accounts?.id;
+    if (!identityReady || !identity) {
+      void redirectFlow();
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    identity.prompt((moment) => {
+      if (moment.isNotDisplayed() || moment.isSkippedMoment()) {
+        const reason =
+          moment.getNotDisplayedReason?.() ?? moment.getSkippedReason?.() ?? "unknown";
+        // `suppressed_by_user` is a deliberate dismissal — offering the redirect
+        // immediately would be arguing with somebody who just said no.
+        if (reason === "suppressed_by_user" || reason === "user_cancel") {
+          setBusy(false);
+          return;
+        }
+        void redirectFlow();
+      }
+    });
+  }, [identityReady, redirectFlow]);
+
   /** Coming back from the redirect flow already signed in. */
   useEffect(() => {
     const supabase = supabaseBrowser(config);
@@ -169,9 +216,7 @@ export function GoogleSignIn({
     <div className="space-y-6">
       <Script src="https://accounts.google.com/gsi/client" async onLoad={() => void initIdentity()} />
 
-      <div ref={buttonSlot} className="flex justify-center" />
-
-      <Button type="button" onClick={() => void redirectFlow()} disabled={busy} className="w-full">
+      <Button type="button" onClick={signIn} disabled={busy} className="w-full">
         {busy ? "Signing in…" : "Continue with Google"}
       </Button>
 
