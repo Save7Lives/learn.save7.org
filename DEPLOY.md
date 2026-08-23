@@ -211,8 +211,10 @@ hostname. Two ways to do that.
 
 **Now: GitHub Pages.** R2 needs a payment method on the Cloudflare account, and
 that waits for Save7's bank details rather than a personal card, so in the meantime
-the file is published from a small public media repository via GitHub Pages — a
-different product from the Cloudflare Pages hosting the course. Full instructions,
+the file is published from this repository's orphan **`media` branch** via GitHub
+Pages — a different product from the Cloudflare Pages hosting the course. The
+branch already exists and holds the video; publishing it is one setting, and note
+that Pages on a private repository needs a paid GitHub plan. Full instructions,
 including why `raw.githubusercontent.com` cannot be used, are in
 **MEDIA-HOSTING.md**. It ends with one line in `wrangler.jsonc` and a deploy.
 

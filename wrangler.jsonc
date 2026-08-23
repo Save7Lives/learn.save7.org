@@ -65,13 +65,13 @@
     // drops the path and Module 5 shows the player's "not hosted yet" state
     // rather than a <video> that silently fails.
     //
-    // Uncomment once the media repository's GitHub Pages site is publishing --
-    // GitHub Pages, not the Cloudflare Pages this course runs on. Fill in <owner>,
-    // no trailing slash, and confirm the URL answers with content-type video/mp4
-    // first: setting this before it serves is the one way to get a dead player.
+    // Uncomment once GitHub Pages is publishing this repository's `media` branch
+    // -- GitHub Pages, not the Cloudflare Pages this course runs on. Confirm the
+    // URL answers with content-type video/mp4 first: setting this before it serves
+    // is the one way to get a dead player instead of the honest placeholder.
     // See MEDIA-HOSTING.md.
     //
-    // "MEDIA_BASE_URL": "https://<owner>.github.io/save7-media"
+    // "MEDIA_BASE_URL": "https://zzubyr7x.github.io/transplant-alchemy"
     //
     // R2 remains the intended long-term home; same line, bucket hostname instead.
   },
