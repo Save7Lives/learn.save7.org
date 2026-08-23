@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Badge, Button, cx } from "@/components/ui/primitives";
 import type { ReviewStatus } from "@/lib/constants";
 
@@ -34,10 +35,15 @@ export function ReviewItemRow({
   const [expanded, setExpanded] = useState(false);
   const [notes, setNotes] = useState(item.notes ?? "");
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   function decide(status: ReviewStatus) {
     startTransition(async () => {
       await onSetStatus(item.id, status, notes);
+      // Re-fetches this route's server components, so the row shows the decision
+      // that was just recorded. The supported replacement for revalidatePath(),
+      // which cannot be called on this platform.
+      router.refresh();
     });
   }
 

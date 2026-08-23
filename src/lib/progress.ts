@@ -64,6 +64,9 @@ export async function recordEvent(
 
 // --- Module progress --------------------------------------------------------
 
+/** The outcome of a write a learner is waiting on. */
+export type WriteResult = { ok: true } | { ok: false; error: string };
+
 /** Mark a lesson as viewed, and keep the resume pointer up to date. */
 export async function markLessonViewed(
   userId: string,
@@ -77,11 +80,24 @@ export async function markLessonViewed(
   // argument naming somebody else would be a client editing another learner's
   // record. `userId` stays in the signature because every caller has it and the
   // event below is attributed with it.
-  await supabase.rpc("learn_view_lesson", {
+  const { error } = await supabase.rpc("learn_view_lesson", {
     p_module_slug: moduleId,
     p_lesson_slug: lessonId,
     p_seconds: secondsToAdd,
   });
+
+  // Logged rather than ignored. supabase.rpc() resolves with an error object
+  // instead of throwing, so an unchecked call turns a refused write — a missing
+  // policy, a renamed function — into progress that silently never saves. This
+  // one is fire-and-forget from an effect, so it must not throw; the log is what
+  // makes the failure findable in the deployment's function logs.
+  if (error) {
+    console.error("learn_view_lesson failed", {
+      moduleId,
+      lessonId,
+      message: error.message,
+    });
+  }
 
   await recordEvent(userId, "lesson_view", { moduleId, lessonId });
 }
@@ -96,10 +112,29 @@ export async function markLessonViewed(
  * The level and course percentages are recomputed by the same call, inside the
  * database, so they cannot drift from the module rows they are derived from.
  */
-export async function completeModule(userId: string, moduleId: string): Promise<void> {
+export async function completeModule(
+  userId: string,
+  moduleId: string,
+): Promise<WriteResult> {
   const supabase = await supabaseServer();
-  await supabase.rpc("learn_complete_module", { p_module_slug: moduleId });
+  const { error } = await supabase.rpc("learn_complete_module", {
+    p_module_slug: moduleId,
+  });
+
+  // Unlike the lesson-view write above, this one is reported back to the learner.
+  // Completing a module is the deliberate act the whole module builds up to, and
+  // telling somebody it is done when nothing was recorded loses their progress
+  // and the completion metric with it.
+  if (error) {
+    console.error("learn_complete_module failed", {
+      moduleId,
+      message: error.message,
+    });
+    return { ok: false, error: "We couldn't save your progress. Please try again." };
+  }
+
   await recordEvent(userId, "module_complete", { moduleId });
+  return { ok: true };
 }
 
 /** Whether every mandatory module in a level is complete. Gates the certificate. */

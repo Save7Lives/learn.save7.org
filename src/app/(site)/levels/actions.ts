@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/authz";
 import { getNextModuleSlug } from "@/lib/course";
 import { completeModule, markLessonViewed, recordEvent } from "@/lib/progress";
@@ -43,19 +42,39 @@ export async function viewLessonAction(
 export async function completeModuleAction(
   levelSlug: string,
   moduleSlug: string,
-): Promise<void> {
+): Promise<{ error?: string } | void> {
   const user = await requireUser();
 
-  await completeModule(user.id, moduleSlug);
+  // Failures are returned, not thrown. The caller runs this inside a transition,
+  // and an error escaping a transition reaches React's error boundary — which
+  // replaces the entire page with "a client-side exception has occurred" instead
+  // of telling the learner that one button did not work. A learner who has just
+  // finished a module should never lose the module to a failed write.
+  let next: string | null = null;
+  try {
+    const result = await completeModule(user.id, moduleSlug);
+    if (!result.ok) return { error: result.error };
 
-  revalidatePath(`/levels/${levelSlug}`);
-  revalidatePath("/dashboard");
-  revalidatePath("/");
+    next = await getNextModuleSlug(levelSlug, moduleSlug);
+  } catch (error) {
+    // Logged as well as reported, because the learner-facing message is
+    // deliberately vague and the deployment's function logs are where the real
+    // cause has to be readable.
+    console.error("completeModuleAction failed", { levelSlug, moduleSlug, error });
+    return { error: "We couldn't save your progress. Please try again." };
+  }
 
-  // Send them to the next module in the level, or back to the level overview
+  // No revalidatePath. Every route in this app reads cookies for the session, so
+  // all of them are dynamic and none has a server-side cached entry to
+  // invalidate; its only real effect here would be clearing the client's router
+  // cache, and the redirect below already re-renders on the server. On
+  // @cloudflare/next-on-pages on-demand revalidation is unsupported anyway.
+  //
+  // Outside the try above, deliberately: redirect() signals by throwing, so
+  // catching it would turn a successful completion into an error message.
+  //
+  // Sends them to the next module in the level, or back to the level overview
   // when this was the last one — that is where the post-assessment CTA lives.
-  const next = await getNextModuleSlug(levelSlug, moduleSlug);
-
   redirect(next ? `/levels/${levelSlug}/modules/${next}` : `/levels/${levelSlug}`);
 }
 

@@ -1,7 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
 import { requireUser } from "@/lib/authz";
 import { updateProfile } from "@/lib/profile";
 
@@ -28,7 +26,10 @@ export async function updateProfileAction(
 
   // The name appears in the header and on the dashboard, both of which are
   // server-rendered, so those need to re-render rather than show the old name.
-  revalidatePath("/", "layout");
+  // The form calls router.refresh() for that. revalidatePath() would be the other
+  // way round, but this route is dynamic — it reads the session cookie — so there
+  // is no cached entry for it to invalidate, and on @cloudflare/next-on-pages
+  // on-demand revalidation is unsupported regardless.
 
   return { savedName: result.name };
 }

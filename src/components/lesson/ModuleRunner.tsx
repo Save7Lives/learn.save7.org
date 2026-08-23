@@ -66,13 +66,17 @@ export function ModuleRunner({
     lessonSlug: string,
     secondsOnPreviousStep: number,
   ) => Promise<void>;
-  onComplete: (levelSlug: string, moduleSlug: string) => Promise<void>;
+  onComplete: (
+    levelSlug: string,
+    moduleSlug: string,
+  ) => Promise<{ error?: string } | void>;
   nextModuleTitle: string | null;
 }) {
   const [index, setIndex] = useState(
     Math.min(Math.max(initialLessonIndex, 0), lessons.length - 1),
   );
   const [pending, startTransition] = useTransition();
+  const [saveError, setSaveError] = useState<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   // Set inside the effect below, never during render: calling Date.now() while
   // rendering is impure and React can re-render at any time.
@@ -108,8 +112,23 @@ export function ModuleRunner({
   }
 
   function finish() {
+    setSaveError(null);
     startTransition(async () => {
-      await onComplete(levelSlug, moduleSlug);
+      // An error escaping a transition reaches React's error boundary, which
+      // replaces the entire page with "a client-side exception has occurred" —
+      // a learner who has just finished a module loses the module instead of
+      // being told to press the button again. Caught here so the failure stays
+      // the size of the thing that failed.
+      try {
+        const result = await onComplete(levelSlug, moduleSlug);
+        if (result?.error) setSaveError(result.error);
+      } catch (error) {
+        // Logged so the browser console names the cause. Next redacts server
+        // error messages in production, but the digest it does print can be
+        // matched against the deployment's function logs.
+        console.error("Marking the module complete failed", error);
+        setSaveError("We couldn't save your progress. Please try again.");
+      }
     });
   }
 
@@ -233,6 +252,15 @@ export function ModuleRunner({
           >
             All modules
           </Link>
+        </div>
+
+        {/* aria-live so a failed save is announced, not just drawn. */}
+        <div aria-live="polite">
+          {saveError ? (
+            <p className="mt-4 rounded-xl border border-pink/30 bg-pink/5 px-4 py-3 text-sm font-semibold text-pink-600">
+              {saveError}
+            </p>
+          ) : null}
         </div>
 
         {isLastStep && !isComplete ? (

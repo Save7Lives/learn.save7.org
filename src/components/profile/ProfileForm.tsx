@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/primitives";
 import { NAME_MAX } from "@/lib/constants";
@@ -26,6 +27,15 @@ export function ProfileForm({
   hasCertificates: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
+  const router = useRouter();
+
+  // The saved name appears in the header and on the dashboard, which are server
+  // components. Refreshing re-fetches them so they stop showing the old name.
+  // This is the supported replacement for revalidatePath(), which cannot be
+  // called on this platform — see the server action.
+  useEffect(() => {
+    if (state?.savedName) router.refresh();
+  }, [state?.savedName, router]);
 
   return (
     <form action={formAction} className="mt-6 space-y-5" noValidate>

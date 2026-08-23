@@ -57,5 +57,10 @@ export async function submitAssessmentAction(
     redirect("/assessment/pre/done");
   }
 
-  redirect(`/assessment/${attempt?.levelSlug ?? ""}/results`);
+  // Without a level there is no results page to show — an empty segment would
+  // build "/assessment//results" and land the learner on a 404 after an
+  // assessment they actually completed.
+  redirect(
+    attempt?.levelSlug ? `/assessment/${attempt.levelSlug}/results` : "/dashboard",
+  );
 }
