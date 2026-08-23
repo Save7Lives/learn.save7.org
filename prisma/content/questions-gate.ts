@@ -175,11 +175,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 9,
     prompt: "Which ejection fraction (EF) threshold and class indicate a candidate for adult heart transplantation?",
-    explanation: "Adult heart transplantation is indicated for NYHA class IV end-stage heart failure accompanied by an ejection fraction <20%.",
+    explanation: "Advanced heart failure with severe functional limitation — typically NYHA class IV — is the clinical picture. Be careful with ejection fraction: a figure below 20% describes the kind of patient, but the ISHLT criteria guide listing on functional capacity (peak VO2), haemodynamics and risk scores rather than on an ejection-fraction threshold. Quoting \u201cEF under 20%\u201d as the criterion is a common error.",
     verifiedAgainst:
       "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
     choices: [
-      { optionKey: "a", position: 0, text: "End-stage heart failure (NYHA class IV) with EF <20%", isCorrect: true },
+      { optionKey: "a", position: 0, text: "End-stage heart failure, typically NYHA class IV, with severely reduced ejection fraction", isCorrect: true },
       { optionKey: "b", position: 1, text: "NYHA class II heart failure with EF <40%" },
       { optionKey: "c", position: 2, text: "NYHA class III heart failure with EF 30–35%" },
       { optionKey: "d", position: 3, text: "Asymptomatic LV dysfunction with EF <25%" },
@@ -193,11 +193,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 10,
     prompt: "What Peak VO2 metric indicates a heart transplant requirement in ambulatory patients?",
-    explanation: "Ambulatory heart failure patients qualify for heart transplant evaluation when peak oxygen consumption (VO2) drops below 10–12 mL/kg/min or <50% predicted.",
+    explanation: "The ISHLT criteria are specific about the beta-blocker: a cutoff of ≤12 mL/kg/min guides listing where the patient is on one, and 14 mL/kg/min where they cannot tolerate one. In younger patients (under 50) and in women it is reasonable to use percent-predicted peak VO2 (≤50%) alongside the absolute figure. The test must be maximal — a respiratory exchange ratio above 1.05 — or the number does not mean what it appears to.",
     verifiedAgainst:
       "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
     choices: [
-      { optionKey: "a", position: 0, text: "Peak VO2 <10–12 mL/kg/min (or <50% of predicted value)", isCorrect: true },
+      { optionKey: "a", position: 0, text: "Peak VO2 ≤12 mL/kg/min on a beta-blocker, or ≤14 mL/kg/min if beta-blocker intolerant", isCorrect: true },
       { optionKey: "b", position: 1, text: "Peak VO2 between 15–20 mL/kg/min" },
       { optionKey: "c", position: 2, text: "Peak VO2 >25 mL/kg/min" },
       { optionKey: "d", position: 3, text: "Peak VO2 equal to 75% of predicted value" },
@@ -229,11 +229,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 12,
     prompt: "For a patient with COPD, which spirometric/clinical index criteria indicate lung transplantation?",
-    explanation: "COPD patients meet lung transplant criteria when their BODE index is ≥7 or their FEV1 falls below 15–20% of predicted values.",
+    explanation: "The 2021 ISHLT consensus lists COPD patients for transplant at a BODE score of 7–10, with additional factors that may prompt listing including FEV1 below 20% predicted, moderate to severe pulmonary hypertension, a history of severe exacerbations, and chronic hypercapnia. Referral comes earlier, at BODE 5–6. The older \u201c15–20%\u201d range belongs to the 2014 document.",
     verifiedAgainst:
       "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
     choices: [
-      { optionKey: "a", position: 0, text: "BODE index ≥7 or FEV1 <15–20% predicted", isCorrect: true },
+      { optionKey: "a", position: 0, text: "BODE index of 7–10, with FEV1 <20% predicted among the additional factors", isCorrect: true },
       { optionKey: "b", position: 1, text: "BODE index of 3 or FEV1 <50% predicted" },
       { optionKey: "c", position: 2, text: "FEV1/FVC ratio >0.70 with mild dyspnea" },
       { optionKey: "d", position: 3, text: "BODE index of 5 with stable exertional tolerance" },
@@ -247,11 +247,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 13,
     prompt: "What rate of decline in Idiopathic Pulmonary Fibrosis (IPF) indicates lung transplant suitability?",
-    explanation: "IPF patients are indicated for lung transplant when showing a significant progression defined by a ≥10% drop in FVC or ≥15% drop in DLCO over 6 months.",
+    explanation: "The 2021 ISHLT listing criteria for pulmonary fibrosis are an absolute decline in FVC over 10%, or in DLCO over 10%, in the past six months despite appropriate treatment — or a >5% FVC decline with radiographic progression, desaturation below 88% on a six-minute walk, pulmonary hypertension, or hospitalisation for respiratory decline. Note the DLCO figure: 15% is the older criterion, and in the 2021 document a relative 15% DLCO decline is a *referral* trigger rather than a listing one.",
     verifiedAgainst:
       "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
     choices: [
-      { optionKey: "a", position: 0, text: "A decline in FVC ≥10% or DLCO ≥15% over 6 months", isCorrect: true },
+      { optionKey: "a", position: 0, text: "An absolute decline in FVC >10% or in DLCO >10% over 6 months despite treatment", isCorrect: true },
       { optionKey: "b", position: 1, text: "A decline in FVC of 3% over 12 months" },
       { optionKey: "c", position: 2, text: "A stable DLCO with no change in oxygen requirements" },
       { optionKey: "d", position: 3, text: "An isolated decrease in total lung capacity of 2% over 1 year" },

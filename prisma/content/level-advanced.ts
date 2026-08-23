@@ -682,10 +682,10 @@ export const advancedLevel: LevelSeed = {
                   "Anastomotic biliary strictures are amenable to endoscopic intervention and rarely require surgery",
                   "The presence of a biliary stricture mandates evaluation of hepatic artery patency",
                   "Ischaemic-type intrahepatic strictures are a common indication for re-transplantation",
-                  "Recipients of living-related liver transplants and of grafts donated after circulatory death are at highest risk of late biliary and vascular complications",
+                  "Recipients of living-related liver transplants and of grafts donated after circulatory death are at highest risk: reported stricture incidence is 5–15% after deceased-donor transplantation against 28–32% after right-lobe living-donor surgery",
                 ],
                 verifiedAgainst:
-                  "Reviewed 23 August 2026 against established hepatology and transplant-surgery practice: biliary stricture as the commonest late surgical complication, endoscopic management of anastomotic strictures, arterial patency assessment when a stricture is found, ischaemic-type intrahepatic strictures as a re-transplant indication, and the higher biliary and vascular risk of living-donor and DCD grafts. No figure or threshold is asserted.",
+                  "Checked against the peer-reviewed biliary-complication literature: strictures are the most frequent late biliary complication (about 46% of biliary complications, anastomotic strictures about 40%); endoscopic management is the preferred approach; hepatic artery thrombosis is an established risk factor, which is why arterial patency is assessed when a stricture is found; and donation after circulatory death and living donation are both risk factors — reported stricture incidence is 5-15% after deceased-donor transplantation against 28-32% after right-lobe living-donor surgery.",
               },
               {
                 id: "s3",

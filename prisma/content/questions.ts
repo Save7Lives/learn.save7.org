@@ -40,7 +40,7 @@ const preQuestions: QuestionSeed[] = [
     explanation:
       "Transplantation is not an enhancement or an optional upgrade. When an organ fails completely, treatment can often buy time, but for some conditions a transplant is the only remaining option.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "Their organ has failed completely and cannot be repaired", isCorrect: true, feedback: "Correct. This is what end-stage organ failure means." },
       { text: "To improve the performance of a healthy organ", feedback: "Transplantation is not an enhancement — it treats organs that have failed." },
@@ -231,7 +231,7 @@ const preQuestions: QuestionSeed[] = [
     explanation:
       "Transplantation is the start of a lifelong medical journey, not a cure. Describing it honestly is more persuasive than a happy ending, and it respects recipients' actual experience.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "The beginning of a lifelong medical journey involving ongoing medication and monitoring", isCorrect: true, feedback: "Correct. Overselling transplantation damages credibility." },
       { text: "A complete cure, with no further medical involvement", feedback: "A transplant is not a cure. Presenting it as one misrepresents recipients' lives." },
@@ -278,7 +278,7 @@ const postBeginner: QuestionSeed[] = [
     explanation:
       "Transplantation treats organs that have failed completely. For some conditions it is the only remaining option once other treatment can no longer sustain the organ's function.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "Their organ has failed completely and cannot be repaired", isCorrect: true },
       { text: "To improve the performance of a healthy organ" },
@@ -731,7 +731,7 @@ const postIntermediate: QuestionSeed[] = [
     explanation:
       "The start of a lifelong medical journey involving ongoing medication and monitoring — not a cure. Describing it honestly is more persuasive than a happy ending.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "The beginning of a lifelong medical journey", isCorrect: true },
       { text: "A complete cure" },
@@ -821,7 +821,7 @@ const postAdvanced: QuestionSeed[] = [
     explanation:
       "Most are relative rather than absolute, and several have changed substantially as evidence and practice have moved. This is the strongest reason for advocates to avoid stating exclusion rules confidently in public.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "Most are relative rather than absolute, and several have changed over time", isCorrect: true },
       { text: "They are fixed and universally agreed", feedback: "They are neither fixed nor universally agreed." },
@@ -841,7 +841,7 @@ const postAdvanced: QuestionSeed[] = [
     explanation:
       "It means transplantation is not always the only option in advanced heart failure, which complicates any simple framing of transplant as the single available answer.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "It means transplantation is not always the only option", isCorrect: true },
       { text: "It replaces transplantation entirely", feedback: "It does not replace transplantation." },
@@ -861,7 +861,7 @@ const postAdvanced: QuestionSeed[] = [
     explanation:
       "Prognostic assessment forms part of allocation: the question is not only how ill someone is now, but what outcome a transplant is likely to achieve. It is a matching process, not a queue ordered by severity.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "Prognostic assessment forms part of allocation, alongside matching", isCorrect: true },
       { text: "Because allocation is random", feedback: "It is not random." },
@@ -879,9 +879,9 @@ const postAdvanced: QuestionSeed[] = [
     difficulty: 2,
     prompt: "Which best describes immunosuppression after transplantation?",
     explanation:
-      "It prevents rejection but carries its own risks. It is a trade-off rather than a fix, and describing it that way is more honest than presenting a transplant as a clean solution.",
+      "It prevents rejection but carries its own risks — and they are specific, not vague: infection, a raised risk of some cancers, kidney impairment, hypertension and diabetes, sustained for life. A trade-off rather than a fix, and describing it that way is more honest than presenting a transplant as a clean solution.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "It prevents rejection but carries its own risks — a trade-off", isCorrect: true },
       { text: "A short course of medication after the operation", feedback: "It is generally ongoing rather than a short course." },
@@ -899,9 +899,9 @@ const postAdvanced: QuestionSeed[] = [
     difficulty: 2,
     prompt: "An episode of rejection always means the recipient will lose the transplanted organ.",
     explanation:
-      "No. Rejection is monitored for and is often treatable. It does not automatically mean losing the graft.",
+      "No. Acute rejection is common — in kidney transplantation it affects up to around 30% of recipients, most often in the first six to twelve months — and it is treated, usually with high-dose steroids first and other agents if needed. It is monitored for precisely because it is treatable. It does not automatically mean losing the graft.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "True" },
       { text: "False", isCorrect: true },
@@ -919,7 +919,7 @@ const postAdvanced: QuestionSeed[] = [
     explanation:
       "Overselling transplantation damages credibility and misrepresents recipients' actual lives. A transplant trades one serious medical situation for another, usually far better, one — and saying so plainly is more persuasive than a happy ending.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "Overselling damages credibility and misrepresents recipients' experience", isCorrect: true },
       { text: "Because transplantation usually fails", feedback: "Not the reason, and not accurate." },
@@ -1073,7 +1073,7 @@ const checkQuestions: QuestionSeed[] = [
     prompt: "What does end-stage organ failure mean?",
     explanation: "The organ has failed to the point where it can no longer sustain its function, and cannot be repaired. For some conditions, transplantation is the only remaining option.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "The organ can no longer sustain its function and cannot be repaired", isCorrect: true },
       { text: "The organ is working at reduced capacity but is stable" },
@@ -1479,7 +1479,7 @@ const checkQuestions: QuestionSeed[] = [
     prompt: "Who decides whether someone is a transplant candidate?",
     explanation: "A specialist multidisciplinary team, applying judgement rather than a checklist.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "A specialist multidisciplinary team", isCorrect: true },
       { text: "The patient's general practitioner" },
@@ -1493,7 +1493,7 @@ const checkQuestions: QuestionSeed[] = [
     prompt: "Contraindications to transplantation are fixed and have not changed over time.",
     explanation: "They are largely relative rather than absolute, and several have changed substantially as evidence and practice have moved.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "True" },
       { text: "False", isCorrect: true },
@@ -1519,9 +1519,9 @@ const checkQuestions: QuestionSeed[] = [
     key: "chk-m11-01", scope: "CHECK", kind: "SINGLE", moduleSlug: "life-after-donation",
     topicTag: "after-transplant", difficulty: 2,
     prompt: "What does immunosuppression do?",
-    explanation: "It reduces the risk of the body rejecting the graft, at the cost of its own risks. A trade-off rather than a fix.",
+    explanation: "It reduces the risk of the body rejecting the graft, at the cost of infection risk, a raised risk of some cancers, and effects on the kidneys, blood pressure and blood sugar. A trade-off rather than a fix.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "Reduces the risk of rejection, while carrying its own risks", isCorrect: true },
       { text: "Cures rejection permanently" },
@@ -1535,7 +1535,7 @@ const checkQuestions: QuestionSeed[] = [
     prompt: "Why is follow-up lifelong after a transplant?",
     explanation: "Because a transplant is an ongoing medical situation requiring continued medication and monitoring, not a completed repair.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
+      "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (\u00a72.3 multidisciplinary team approach; \u00a74.2 candidate selection for durable mechanical circulatory support; candidacy structured around comorbidities rather than fixed exclusion lists); ISHLT lung candidate selection consensus, JHLT 2021;40(11):1349-1379 (\u201cfar fewer absolute contraindications exist now\u201d); National Health Act s 61(1)-(2), which requires organs to be used and allocated in the prescribed manner rather than at individual discretion; and the peer-reviewed immunosuppression literature for the lifelong-treatment trade-off and the treatability of acute rejection",
     choices: [
       { text: "A transplant is an ongoing medical situation, not a completed repair", isCorrect: true },
       { text: "Because rejection always eventually occurs" },

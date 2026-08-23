@@ -124,7 +124,10 @@ export function deriveReviewItems(): ReviewSeed[] {
               category: categoriseFor(mod.slug),
               severity: severityFor(mod.slug),
               status: verified && obj.pendingReview !== true ? "APPROVED" : "NEEDS_VERIFICATION",
-              sourceHint: (obj.reviewSourceHint as string) ?? sourceHintFor(mod.slug),
+              // A recorded source outranks the module's generic hint: the register
+              // should show what the claim was actually checked against.
+              sourceHint:
+                (obj.reviewSourceHint as string) ?? verified ?? sourceHintFor(mod.slug),
               notes: verified
                 ? `Checked against: ${verified}`
                 : obj.awaitingContent === true

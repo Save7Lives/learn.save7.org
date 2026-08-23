@@ -98,7 +98,7 @@ export const beginnerLevel: LevelSeed = {
                     name: "Heart",
                     category: "Solid organ",
                     whyNeeded:
-                      "End-stage heart failure — typically NYHA class IV, with an ejection fraction below 20%. The heart can no longer pump enough blood to sustain ordinary activity.",
+                      "End-stage heart failure — typically NYHA class IV, often with an ejection fraction below 20%. The heart can no longer pump enough blood to sustain ordinary activity. (Transplant listing itself turns on exercise capacity, haemodynamics and risk scores rather than on an ejection-fraction cut-off.)",
                     restores:
                       "Years of active living. 292 hearts were transplanted in South Africa between 2010 and 2019.",
                   },
@@ -222,7 +222,7 @@ export const beginnerLevel: LevelSeed = {
                 bullets: [
                   "Kidney — end-stage renal disease (CKD 5)",
                   "Liver — hepatocellular carcinoma, decompensated cirrhosis, fulminant hepatic failure",
-                  "Heart — end-stage heart failure (NYHA class IV) with an ejection fraction below 20%",
+                  "Heart — end-stage heart failure, typically NYHA class IV, often with an ejection fraction below 20%",
                   "Lung — advanced lung disease such as COPD or cystic fibrosis, with a risk of death exceeding 50% over the next two years",
                   "Pancreas — to eliminate insulin dependency",
                 ],
