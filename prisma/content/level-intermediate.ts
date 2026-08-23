@@ -126,9 +126,9 @@ export const intermediateLevel: LevelSeed = {
               {
                 id: "consent",
                 label: "Consent",
-                summary: "Informed consent is sought from next of kin.",
+                summary: "Consent is sought from the person\u2019s own decision first, then relatives in statutory order.",
                 detail:
-                  "Consent must come from next of kin — spouse, parent, child, brother or sister — or from a legal guardian. There is an ethical obligation to give every family the chance to make a fully informed decision, and nobody should be excluded from being offered the option.\n\nIf the death was unnatural, additional consent is required from the state pathologist or district surgeon. Administrative permission to recover organs comes from the medical superintendent or hospital manager.",
+                  "Where the person made no donation while alive, consent comes from relatives in the order section 62(2) sets out: spouse, partner, major child, parent, guardian, major brother, major sister. \u201cMajor\u201d means adult, and a partner ranks above every relative but a spouse. There is an ethical obligation to give every family the chance to make a fully informed decision, and nobody should be excluded from being offered the option.\n\nIf the death was unnatural, it must also go for a medico-legal post-mortem, and recovery needs the forensic pathologist\u2019s authorisation. Institutional authorisation comes in writing from the medical practitioner in charge of clinical services at the hospital. Module 9 covers the legal detail.",
               },
               {
                 id: "donor-management",

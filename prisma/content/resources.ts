@@ -222,10 +222,49 @@ export const resourceSeeds: ResourceSeed[] = [
       "The primary legislation governing organ and tissue donation and transplantation in South Africa. Chapter 8 covers donation, post-mortem examination and related matters.",
     type: "WEBSITE",
     source: "Republic of South Africa",
+    externalUrl: "https://www.gov.za/sites/default/files/gcis_document/201409/a61-03.pdf",
     isRequired: true,
     isStub: true,
     licenceNote:
-      "Act and chapter confirmed from the Save7 study guide. Save7 should add a link to the current consolidated text including amendments in force, and have the module's legal statements reviewed before launch.",
+      "Links the Act as gazetted (Government Gazette No. 26595, 23 July 2004), which is what this course's legal statements were checked against. Two gaps remain and are why this stays a stub: a link to the current *consolidated* text including amendments in force, and the gazetted text of the regulations made under the Act (GN R180, 2 March 2012), which is where the determination-of-death requirement actually sits. A qualified legal review of Module 9 is still required before launch.",
+  },
+  {
+    key: "sa-determination-of-death-guidelines",
+    moduleSlug: "what-does-death-mean",
+    title: "South African guidelines on the determination of death",
+    description:
+      "The national clinical guideline behind Module 6: what death is, how brain death is distinguished from coma, the prerequisites and the examination itself including apnoea testing, and how the time of death is recorded.",
+    type: "PDF",
+    source: "South African Journal of Critical Care 2021;37(1):466",
+    author: "Thomson D, et al.",
+    externalUrl: "https://doi.org/10.7196/SAJCC.2021v37i1b.466",
+    isRequired: true,
+  },
+  {
+    key: "wits-transplant-procurement-model",
+    moduleSlug: "art-of-the-conversation",
+    title:
+      "Increasing deceased organ donor numbers in Johannesburg, South Africa: 18-month results of the Wits Transplant Procurement Model",
+    description:
+      "The paper that describes FACTS — its origin at Wits Transplant, its adaptation from the UK NHSBT model, and its 18-month results: consent up from 25% to 73% and referrals up 54%. It describes FACTS as a stepwise process but does not enumerate the steps.",
+    type: "PDF",
+    source: "South African Medical Journal 2019;109(9):626–631",
+    author: "de Jager M, Wilmans C, Fabian J, Botha JF, Etheredge HR",
+    externalUrl: "https://doi.org/10.7196/SAMJ.2019.v109i9.14313",
+    isRequired: true,
+  },
+  {
+    key: "dcd-legal-in-south-africa",
+    moduleSlug: "the-law",
+    title:
+      "Organ donation after circulatory death — legal in South Africa and in alignment with Chapter 8 of the National Health Act and Regulations relating to organ and tissue donation",
+    description:
+      "Peer-reviewed legal analysis of Chapter 8 and the 2012 regulations: the statutory definition of death, Regulation 9's two-doctor requirement, the section 62(2) consent hierarchy, the handling of unnatural deaths, and the lawfulness of donation after circulatory death.",
+    type: "PDF",
+    source: "South African Journal of Bioethics and Law 2024;17(1)",
+    author: "Thomson D, Labuschaigne M",
+    externalUrl: "https://doi.org/10.7196/SAJBL.2024.v17i1.1561",
+    isRequired: false,
   },
   {
     key: "hpcsa-informed-consent",

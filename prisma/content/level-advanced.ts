@@ -59,7 +59,7 @@ export const advancedLevel: LevelSeed = {
       title: "The Law",
       coreQuestion: "What does South African law actually say about organ donation?",
       introMarkdown:
-        "Advocates get asked legal questions constantly. *Can my family override my wishes? Who has to consent? Does it cost anything?*\n\nThis module answers those from Save7's own study guide, which sets out the legislation directly. The governing law is **Chapter 8 of the National Health Act No. 61 of 2003**.\n\nOne caution stands: legislation is amended, and this module states what the study guide states. Before Save7 publishes, the provisions here should be checked against the current consolidated text.",
+        "Advocates get asked legal questions constantly. *Can my family override my wishes? Who has to consent? Does it cost anything?*\n\nThe governing law is **Chapter 8 of the National Health Act No. 61 of 2003**, with the operational detail in the **regulations made under it**. This module states the provisions as they appear in the Act itself, with the places where common donation material gets them wrong marked as you go — because several widely repeated \u201clegal facts\u201d about donation in South Africa are inaccurate, out of date, or belong to an Act repealed in 2003.\n\nOne caution stands. Legislation is amended, and a course is not legal advice: the provisions here still need confirmation against the current consolidated text by someone qualified to do it. Where this module is less certain, it says so.",
       estMinutes: 18,
       lessons: [
         {
@@ -84,7 +84,7 @@ export const advancedLevel: LevelSeed = {
                 label: "The National Health Act",
                 summary: "Chapter 8 of Act No. 61 of 2003.",
                 detail:
-                  "The primary legislation governing organ and tissue donation and transplantation in South Africa is Chapter 8 of the National Health Act No. 61 of 2003. The donation process itself is strictly regulated.",
+                  "The primary legislation governing organ and tissue donation and transplantation in South Africa is Chapter 8 of the National Health Act No. 61 of 2003. The donation process itself is strictly regulated.\n\nTwo things are worth knowing precisely. First, the Act **defines death**: in section 1, *\u201cdeath\u201d means brain death*. That is not a clinical convention the law tolerates — it is the statutory definition.\n\nSecond, the detail sits one level down. Much of what advocates are asked about — how death is determined, who may authorise what — is set by the **regulations made under the Act**, chiefly the Regulations regarding the general control of human bodies, tissue, blood, blood products and gametes (GN R180, 2 March 2012). Citing \u201cChapter 8\u201d for a rule that actually lives in the regulations is a common and avoidable error.",
               },
               {
                 id: "referral",
@@ -98,35 +98,55 @@ export const advancedLevel: LevelSeed = {
                 label: "Brain-death certification",
                 summary: "Who may certify, and what qualifies them.",
                 detail:
-                  "Certification of brain death must be completed by **two registered medical doctors**, one of whom must have been registered with the HPCSA for **at least five years**. Neither may be part of the transplant team, and neither may be an intern.\n\n**Legal death** is defined as the time at which both doctors have confirmed brain death, after completing all required clinical tests.",
+                  "**Regulation 9** of the 2012 regulations — not Chapter 8 itself — sets the requirement. Death must be determined by **two doctors**, one of whom must have been practising as a medical practitioner for **at least five years after the date of registration**, and **neither may be a member of the transplant team**.\n\nThat independence requirement is the point of the rule. The people who decide that a patient has died must have nothing to gain from the organs.\n\nOn **time of death**, the South African guidelines on the determination of death are specific: it is recorded at the confirmatory examination — the moment the arterial paCO\u2082 reaches the target during apnoea testing with no spontaneous breath, confirmed by both doctors. Not the moment donation is discussed, and not the moment the heart stops.",
               },
               {
                 id: "consent",
                 label: "Informed consent",
                 summary: "Who may give it.",
                 detail:
-                  "Informed consent must be obtained from the **next of kin** — a spouse, parent, child, brother or sister — or from a **legal guardian**.\n\nHPCSA guidance on informed consent governs the standard: sufficient information, room for questions, and a genuinely voluntary decision. Consent that was not understood is not informed consent, which is why translators are treated as a safeguard rather than a convenience.",
+                  "Section 62 works in two layers, and the order matters.\n\n**The person themselves, first.** Someone competent to make a will may donate their body or specified tissue in a will, in a document signed before two competent witnesses, or in an **oral statement made before two competent witnesses**.\n\n**Relatives, only in the absence of that.** Where the person made no donation and gave no contrary direction while alive, section 62(2) allows the following to donate, **in this specific statutory order**: **spouse, partner, major child, parent, guardian, major brother, major sister**.\n\nThree details advocates routinely get wrong. A **partner** is included, and ranks above every relative except a spouse. *Major* means adult — a minor child or sibling cannot consent. And the Act sets a **priority order**, so \u201cthe family\u201d is not a single undifferentiated group.\n\nHPCSA guidance on informed consent governs the standard: sufficient information, room for questions, and a genuinely voluntary decision. Consent that was not understood is not informed consent, which is why translators are treated as a safeguard rather than a convenience.",
+              },
+              {
+                id: "family-override",
+                label: "Can a family override a donor?",
+                summary: "The question advocates are asked most — and the honest answer has two halves.",
+                detail:
+                  "**In law:** a donation validly made under section 62(1) stands. Relatives acquire the power to donate only *in the absence of* a donation, or where the person gave a contrary direction while alive. On the face of the statute, a registered decision is the person\u2019s own to make.\n\n**In practice:** South African hospitals approach the family in every case, and a family refusal is respected. Legal scholarship describes exactly this gap between the Act and hospital practice, and treats it as a real weakness in how donor autonomy is protected here.\n\nBoth halves must be said together. Telling someone \u201cyour family cannot override you\u201d is wrong as a description of what will happen. Telling them \u201cregistering is pointless\u201d is wrong as a description of the law, and it also destroys the single most useful thing registration does: it tells your family what you wanted, at the moment they are least able to guess.\n\nSo the accurate advocacy line is the practical one. **Register, and then tell your family** \u2014 because the conversation, not the register, is what your family will be asked to act on.",
+                reviewSourceHint:
+                  "Legal position from National Health Act s 62(1)-(2). The practice gap is documented in South African legal scholarship (Slabbert & Venter, De Jure, 2019). Save7's legal reviewer to confirm the wording before publication.",
+                pendingReview: true,
               },
               {
                 id: "unnatural-deaths",
                 label: "Unnatural deaths",
                 summary: "An additional authority enters the process.",
                 detail:
-                  "Where death is due to unnatural causes — a motor vehicle accident, for example — **additional consent is required from the state pathologist or district surgeon**.\n\nIn practice this also brings paperwork and a forensic authority into the timeline. Save7's own referral pathway records that an unnatural death requires an FPS 100 form to be completed, with the forensic pathology service contacted to determine which organs may be recovered, and a SAPS liaison available where there is uncertainty. A natural death instead requires the DHA1663-B1163 form, which must accompany the donor.",
+                  "Where death is due to unnatural causes — a motor vehicle accident, for example — the death **must** be referred for a medico-legal (forensic) post-mortem. That duty comes from **section 66(1)(c)** of the National Health Act together with **section 3 of the Inquests Act 58 of 1959**, and it is not waivable by the family.\n\nDonation is still possible, but recovery needs the **authorisation of the forensic pathologist**, who decides which organs may be taken without compromising the medico-legal examination. Family consent alone is not enough.\n\nA note on terminology: older material refers to the *district surgeon*. That office no longer performs this function — medico-legal post-mortems moved to the **Forensic Pathology Service** under the Department of Health. Saying \u201cdistrict surgeon\u201d in public dates the speaker and invites correction.\n\nSave7's own referral pathway — its internal procedure, not a legal requirement — records that an unnatural death requires an FPS 100 form, with the forensic pathology service contacted to determine which organs may be recovered and a SAPS liaison available where there is uncertainty. A natural death instead requires the DHA1663-B1163 form, which must accompany the donor.",
               },
               {
                 id: "hospital-authorisation",
                 label: "Hospital authorisation",
-                summary: "Institutional permission to recover.",
+                summary: "Institutional permission to recover, in writing.",
                 detail:
-                  "Administrative permission to recover organs must be granted by the **medical superintendent or hospital manager** of the facility where the recovery occurs.",
+                  "The Act names an office, and it is not the one older material names. Authorisation comes from the **medical practitioner in charge of clinical services** at the hospital or authorised institution — or another medical practitioner authorised by them — in writing (sections 58(1)(b) and 66(2)). Where there is no such practitioner, one authorised by the person in charge of the institution may act.\n\n*Medical superintendent* belongs to the repealed Human Tissue Act of 1983. It is still in circulation in donation material, and it is out of date.",
               },
               {
                 id: "costs",
                 label: "Costs",
-                summary: "The reassurance families most need, and it is a legal one.",
+                summary: "The reassurance families most need — stated carefully.",
                 detail:
-                  "**By law, the donor's medical aid, estate and next of kin are not responsible for any costs related to the donation**, once brain death has been declared and consent has been obtained.\n\nThis is worth knowing precisely, because a frightened family asking about money is asking a legal question and deserves a legal answer.",
+                  "**A donor family does not pay for the donation.** The costs of recovering organs and tissue are carried by the hospital or tissue bank, from the point consent is given. This is the position stated by the Organ Donor Foundation and by the tissue banks, and it is what happens in practice.\n\nSay it that way, rather than as a citation. What the Act itself does say is narrower and about something else: section 60 prohibits trading in human tissue, and it is an **offence** for a donor to receive any financial or other reward for a donation, beyond reimbursement of reasonable costs actually incurred. That is the anti-trafficking rule, not a rule allocating hospital bills.\n\nSo: *\u201cthe donation itself costs the family nothing\u201d* is safe and true. *\u201cThe National Health Act says your medical aid cannot be charged\u201d* is a claim this course cannot support, and Save7\u2019s legal reviewer should confirm the exact source before anyone says it from a platform. The family still pays for the care the patient received before death, as they would for any hospital admission.",
+                reviewSourceHint:
+                  "Cost-allocation claim: no provision found in the National Health Act or the 2012 regulations. Section 60 covers payment for tissue only. Save7 to identify the legal basis, or keep this framed as the ODF/tissue-bank position.",
+                pendingReview: true,
+              },
+              {
+                id: "citizenship",
+                label: "Who may receive an organ",
+                summary: "A restriction most people have never heard of.",
+                detail:
+                  "Section 61(3): an organ **may not be transplanted into a person who is not a South African citizen or permanent resident without the Minister\u2019s written authorisation**.\n\nWorth knowing because it answers a question advocates are asked in a suspicious tone — whether South African organs go to foreign patients who can pay. Allocation is also governed by section 61(1) and (2), which require organs to be used and allocated in the prescribed manner rather than at any one clinician\u2019s discretion.",
               },
               {
                 id: "palliative-context",
@@ -147,7 +167,7 @@ export const advancedLevel: LevelSeed = {
             takeaways: [
               {
                 id: "t1",
-                text: "Chapter 8 of the National Health Act No. 61 of 2003 is the governing legislation.",
+                text: "Chapter 8 of the National Health Act No. 61 of 2003 is the governing legislation, and the Act defines death as brain death. Much of the operational detail is in the 2012 regulations made under it, not in the Act itself.",
               },
               {
                 id: "t2",
@@ -155,23 +175,23 @@ export const advancedLevel: LevelSeed = {
               },
               {
                 id: "t3",
-                text: "Two registered doctors must certify brain death, one registered with the HPCSA for at least five years, neither on the transplant team, neither an intern.",
+                text: "Regulation 9 of the 2012 regulations requires two doctors to determine death, one having practised for at least five years since registration, and neither may be on the transplant team.",
               },
               {
                 id: "t4",
-                text: "Legal death is the time both doctors confirmed brain death after completing all required clinical tests.",
+                text: "Time of death is recorded at the confirmatory examination, when the apnoea test target is reached with no spontaneous breath and both doctors confirm it.",
               },
               {
                 id: "t5",
-                text: "Consent comes from next of kin — spouse, parent, child, brother or sister — or a legal guardian.",
+                text: "A person may donate in a will, a document signed before two witnesses, or an oral statement before two witnesses. Only in the absence of that may relatives donate, in the statutory order: spouse, partner, major child, parent, guardian, major brother, major sister.",
               },
               {
                 id: "t6",
-                text: "Unnatural death requires additional consent from the state pathologist or district surgeon. Hospital authorisation comes from the medical superintendent or hospital manager.",
+                text: "An unnatural death must go for a forensic post-mortem (s 66(1)(c); Inquests Act s 3), and recovery needs the forensic pathologist\u2019s authorisation. Institutional authorisation comes from the medical practitioner in charge of clinical services — not a \u201cmedical superintendent\u201d, which is repealed-Act language.",
               },
               {
                 id: "t7",
-                text: "By law the donor's medical aid, estate and next of kin bear no costs of the donation once death is declared and consent obtained.",
+                text: "The donation itself costs the family nothing — the hospital or tissue bank carries it. Say that as practice, not as statute: the Act\u2019s payment section prohibits trading in tissue, it does not allocate donation costs.",
               },
               {
                 id: "t8",
@@ -194,6 +214,8 @@ export const advancedLevel: LevelSeed = {
                 heading: "The legislation",
                 bullets: [
                   "The primary legislation is Chapter 8 of the National Health Act No. 61 of 2003",
+                  "The Act defines death: in section 1, \u201cdeath\u201d means brain death",
+                  "Operational detail sits in the regulations made under the Act — chiefly GN R180 of 2 March 2012 — not in Chapter 8 itself",
                   "There is no legal requirement for the referral of a potential donor, but the donation process itself is strictly regulated",
                 ],
               },
@@ -201,29 +223,33 @@ export const advancedLevel: LevelSeed = {
                 id: "s2",
                 heading: "Certification of death",
                 bullets: [
-                  "Two registered medical doctors must certify brain death",
-                  "One must have been registered with the HPCSA for at least five years",
-                  "Legal death is the time when both doctors have confirmed brain death after completing all required clinical tests",
+                  "Regulation 9 of the 2012 regulations requires death to be determined by two doctors",
+                  "One must have practised as a medical practitioner for at least five years after the date of registration",
+                  "Neither may be a member of the transplant team — the independence requirement is the purpose of the rule",
+                  "Time of death is recorded at the confirmatory examination, when the apnoea test target is reached with no spontaneous breath and both doctors confirm it",
                 ],
               },
               {
                 id: "s3",
                 heading: "Consent and authorisation",
                 bullets: [
-                  "Informed consent must be obtained from next of kin — spouse, parent, child, brother or sister — or a legal guardian",
-                  "For deaths due to unnatural causes, additional consent is required from the state pathologist or district surgeon",
-                  "Administrative permission to recover organs must be granted by the medical superintendent or hospital manager where the recovery occurs",
+                  "A person may donate in a will, in a document signed before two competent witnesses, or in an oral statement before two competent witnesses (s 62(1))",
+                  "Only in the absence of such a donation, or where a contrary direction was given while alive, may relatives donate (s 62(2))",
+                  "The statutory order is spouse, partner, major child, parent, guardian, major brother, major sister — a partner ranks above all relatives but a spouse, and \u201cmajor\u201d means adult",
+                  "An unnatural death must be referred for a forensic post-mortem (s 66(1)(c); Inquests Act 58 of 1959, s 3), and recovery requires the forensic pathologist\u2019s authorisation",
+                  "Institutional authorisation comes in writing from the medical practitioner in charge of clinical services, or another practitioner authorised by them (ss 58(1)(b), 66(2))",
+                  "An organ may not be transplanted into a non-citizen or non-permanent-resident without the Minister\u2019s written authorisation (s 61(3))",
                 ],
               },
               {
                 id: "s4",
                 heading: "Costs",
-                body: "By law, the donor's medical aid, estate and next of kin are not responsible for any costs related to the donation after brain death has been declared and consent obtained.",
+                body: "The donation itself costs the donor family nothing: the hospital or tissue bank carries the cost of recovery from the point of consent. State this as the position of the Organ Donor Foundation and the tissue banks — which is what it is — rather than as a provision of the Act.\n\nWhat the Act does say is different in kind. Section 60 prohibits trading in human tissue and makes it an offence for a donor to receive any reward beyond reimbursement of reasonable costs actually incurred. That is an anti-trafficking rule, not a rule about who pays hospital bills. No cost-allocation provision was found in the Act or in the 2012 regulations, so the legal basis for the stronger claim needs to come from Save7\u2019s legal reviewer.",
               },
               {
                 id: "s5",
                 heading: "Before Save7 publishes",
-                body: "These provisions are transcribed from Save7's study guide. Legislation is amended, and the wording above should be checked against the current consolidated text of the National Health Act, with a legal review of this module, before the course is published.",
+                body: "**What has been checked, and what has not.** The provisions above were verified against the text of the National Health Act 61 of 2003 as gazetted, and against peer-reviewed South African legal and clinical sources. That check corrected six statements carried over from the study guide: the consent hierarchy (which has a statutory order, includes partners, and requires adult relatives), the source of the two-doctor rule (Regulation 9 of the 2012 regulations, not Chapter 8), the claim that neither doctor may be an intern (not found in the regulation), \u201cstate pathologist or district surgeon\u201d (the function sits with the Forensic Pathology Service), \u201cmedical superintendent\u201d (repealed-Act language), and the claim that the Act allocates donation costs (no such provision was found).\n\n**Still required before publication.** A qualified legal reviewer must confirm this module against the current *consolidated* text including any amendments in force, since the check above used the Act as gazetted plus the 2012 regulations as described in the literature rather than the gazetted regulation text itself. The cost-allocation statement and the family-override wording are flagged individually and need specific sign-off.",
                 pendingReview: true,
               },
             ],
@@ -703,7 +729,7 @@ export const advancedLevel: LevelSeed = {
           title: "Five things that hold under pressure",
           kind: "INTRO",
           bodyMarkdown:
-            "Two rules carry most of the weight here.\n\n**You are not a counsellor.** Recognising when a conversation has moved beyond your role — and stopping — is a skill, not a failure.\n\n**You are never obliged to win.** Someone in acute grief who feels respected by you may reconsider months later. Someone who feels pressured will not.\n\nBeyond that, five principles come directly out of the source material rather than out of intuition:\n\n1. **Decouple.** The death and the donation are separate conversations. A family must understand and accept a death before donation is raised — and it is raised by a coordinator, not by whoever delivered the news.\n2. **Do not rush.** Families who took more than 48 hours to decide consented at 73%, against 55% for those who decided sooner. Delay is not refusal, and patience costs nothing.\n3. **Patience and empathy are the method, not the garnish.** Accepting a diagnosis of death by neurological criteria genuinely takes time, and the guidelines make room for it — that is what *accommodation* means.\n4. **Do not assume.** It should never be assumed that because someone comes from a particular ethnic, cultural or spiritual background, donation should not be raised. That assumption removes their choice before it is offered.\n5. **The conversation has value either way.** Discussing donation as part of end-of-life care helps families independent of what they decide. You are not only recruiting donors.\n\n> **Where these come from.** The next lesson walks through **FACTS** — the Family Approach to Consent for Transplant Strategy used by transplant coordinators in South Africa. Several of the principles above are visible in it. Note carefully: FACTS is a clinical strategy for procurement coordinators, and this course teaches you to *understand* it, not to perform it.",
+            "Two rules carry most of the weight here.\n\n**You are not a counsellor.** Recognising when a conversation has moved beyond your role — and stopping — is a skill, not a failure.\n\n**You are never obliged to win.** Someone in acute grief who feels respected by you may reconsider months later. Someone who feels pressured will not.\n\nBeyond that, five principles come directly out of the source material rather than out of intuition:\n\n1. **Decouple.** The death and the donation are separate conversations. A family must understand and accept a death before donation is raised — and it is raised by a coordinator, not by whoever delivered the news.\n2. **Do not rush.** In a single-centre study of 107 brain-dead potential donors, families who took 48 hours or more to decide consented at 73% (11 of 15), against 55% (51 of 92) among those who decided sooner — the authors\u2019 conclusion being that a delayed decision was *not inferior*, not that delay improves consent. The delayed group is small, and the study is not South African. Read it for what it supports: delay is not refusal, and patience costs nothing.\n3. **Patience and empathy are the method, not the garnish.** Accepting a diagnosis of death by neurological criteria genuinely takes time, and the guidelines make room for it — that is what *accommodation* means.\n4. **Do not assume.** It should never be assumed that because someone comes from a particular ethnic, cultural or spiritual background, donation should not be raised. That assumption removes their choice before it is offered.\n5. **The conversation has value either way.** Discussing donation as part of end-of-life care helps families independent of what they decide. You are not only recruiting donors.\n\n> **Where these come from.** The next lesson walks through **FACTS** — the Family Approach to Consent for Transplant Strategy used by transplant coordinators in South Africa. Several of the principles above are visible in it. Note carefully: FACTS is a clinical strategy for procurement coordinators, and this course teaches you to *understand* it, not to perform it.",
         },
         {
           slug: "hard-conversations",
@@ -1065,7 +1091,7 @@ export const advancedLevel: LevelSeed = {
               {
                 id: "s4",
                 heading: "FACTS — what it is, and what it is not",
-                body: "FACTS stands for the **Family Approach to Consent for Transplant Strategy**. It was developed at Wits Transplant (Wits Donald Gordon Medical Centre, Johannesburg), adapted from the National Health Service Blood and Transplant model in the United Kingdom, and is described as a stepwise process guiding transplant procurement coordinators through initiating and following through the donation conversation — with particular attention to planning, choice of words and timing.\n\nIt is a professional procurement strategy. It is **not** a volunteer script, and completing this course does not make anyone a designated consent-requester. This module teaches the reasoning behind FACTS so that advocates understand why real donation conversations are structured as they are.",
+                body: "FACTS stands for the **Family Approach to Consent for Transplant Strategy**. It was developed at Wits Transplant (Wits Donald Gordon Medical Centre, Johannesburg), adapted from the National Health Service Blood and Transplant model in the United Kingdom, and is described as a stepwise process guiding transplant procurement coordinators through initiating and following through the donation conversation — with particular attention to planning, choice of words and timing.\n\nIt is a professional procurement strategy. It is **not** a volunteer script, and completing this course does not make anyone a designated consent-requester. This module teaches the reasoning behind FACTS so that advocates understand why real donation conversations are structured as they are.\n\n**Does it work?** In the 18-month results published by the team that built it, the consent rate rose from 25% (n=6) to 73% (n=35) after FACTS was introduced, and referrals from targeted hospitals rose 54% (from 31 to 57). Those are the figures from the paper; note they are one centre\u2019s before-and-after, not a controlled trial.",
               },
               {
                 id: "s5",

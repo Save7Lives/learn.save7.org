@@ -49,9 +49,9 @@ function severityFor(moduleSlug: string): 1 | 2 | 3 {
 function sourceHintFor(moduleSlug: string): string | undefined {
   switch (moduleSlug) {
     case "what-does-death-mean":
-      return "South African guidelines on the determination of death (current edition).";
+      return "Checked against Thomson D, et al. South African guidelines on the determination of death. SAJCC 2021;37(1):466. Confirm this is still the current edition.";
     case "the-law":
-      return "National Health Act, current consolidated text. Requires legal verification.";
+      return "Checked against the National Health Act 61 of 2003 as gazetted, plus Regulation 9 of GN R180 (2 March 2012) as described in the peer-reviewed literature. Still needs a qualified legal review against the current consolidated text and the gazetted regulations.";
     case "who-can-donate":
       return "Current authoritative guidance on donor suitability — not an older study guide.";
     case "why-are-we-losing-organs":

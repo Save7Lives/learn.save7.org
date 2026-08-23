@@ -462,7 +462,7 @@ const postIntermediate: QuestionSeed[] = [
     difficulty: 2,
     prompt: "A person who is brain dead may later recover, as sometimes happens with a coma.",
     explanation:
-      "No. This is the distinction the module exists to establish. Recovery is possible from a coma; brain death is death.",
+      "No. This is the distinction the module exists to establish. Recovery is possible from a coma, because some brain function remains. Brain death is the irreversible loss of the capacity for consciousness and of the capacity to breathe — there is no function left to recover.",
     choices: [
       { text: "True" },
       { text: "False", isCorrect: true },
@@ -686,7 +686,7 @@ const postAdvanced: QuestionSeed[] = [
     difficulty: 2,
     prompt: "Which statute is the primary legal framework for organ donation and transplantation in South Africa?",
     explanation:
-      "The National Health Act. Note that specific requirements under it must always be checked against current authoritative sources rather than an older study guide.",
+      "The National Health Act 61 of 2003, and Chapter 8 in particular — which also defines death as brain death. Note that much of the operational detail sits in the regulations made under the Act rather than in Chapter 8 itself, and that requirements must be checked against the current consolidated text rather than an older study guide.",
     choices: [
       { text: "The National Health Act", isCorrect: true },
       { text: "The Human Tissue Act, which remains the current governing statute", feedback: "Earlier legislation governed this area historically. Always verify which provisions are currently in force." },
@@ -723,7 +723,7 @@ const postAdvanced: QuestionSeed[] = [
     difficulty: 2,
     prompt: "Why do unnatural deaths add complexity to a potential donation?",
     explanation:
-      "They bring additional legal requirements and additional people into the process, including forensic authorities such as the state pathologist or district surgeon. The specific requirements must be verified against current sources.",
+      "An unnatural death must be referred for a forensic post-mortem under section 66(1)(c) of the National Health Act and section 3 of the Inquests Act, so recovery also needs the forensic pathologist\u2019s authorisation — family consent alone is not enough. Note that older material calls this office the \u201cdistrict surgeon\u201d; the function now sits with the Forensic Pathology Service.",
     choices: [
       { text: "They bring additional legal requirements and forensic authorities into the process", isCorrect: true },
       { text: "Donation is never possible after an unnatural death", feedback: "An overstatement. Additional requirements apply rather than an absolute bar." },
@@ -1169,7 +1169,7 @@ const checkQuestions: QuestionSeed[] = [
     key: "chk-m6-01", scope: "CHECK", kind: "SINGLE", moduleSlug: "what-does-death-mean",
     topicTag: "brain-death", difficulty: 2,
     prompt: "What is the single most important distinction in this module?",
-    explanation: "Brain death is not a coma, and not simply being unconscious. It is death, determined by neurological criteria.",
+    explanation: "Brain death is not a coma, and not simply being unconscious. It is death, determined by neurological criteria: the South African guidelines define it as the irreversible loss of the capacity for consciousness together with the irreversible loss of the capacity to breathe.",
     choices: [
       { text: "Brain death is death; a coma is not", isCorrect: true },
       { text: "Circulatory death is more common than brain death" },
@@ -1307,7 +1307,7 @@ const checkQuestions: QuestionSeed[] = [
     key: "chk-m9-03", scope: "CHECK", kind: "SINGLE", moduleSlug: "the-law",
     topicTag: "law", difficulty: 2,
     prompt: "What additional element does an unnatural death introduce?",
-    explanation: "Additional legal requirements, and forensic authorities such as the state pathologist or district surgeon.",
+    explanation: "Additional legal requirements, and a forensic authority: the death must go for a medico-legal post-mortem, and the forensic pathologist decides which organs may be recovered. \u201cDistrict surgeon\u201d is out-of-date terminology for this role — it is the Forensic Pathology Service.",
     choices: [
       { text: "Forensic authorities and additional legal requirements", isCorrect: true },
       { text: "An automatic prohibition on donation" },

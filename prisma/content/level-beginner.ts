@@ -18,6 +18,14 @@ import { type LevelSeed } from "./types";
  * Foundation and reproduced in the Red File. They are date-stamped everywhere
  * they appear and flagged for Save7 to refresh, because an undated statistic
  * quietly becomes a wrong one.
+ *
+ * Checked August 2026: the ODF statistics page no longer publishes these figures
+ * and now redirects to the South African Transplant Society. Current national
+ * figures could not be obtained from ODF, SATS or IRODaT in that check, so
+ * nothing here has been substituted — the decade totals stand, explicitly dated,
+ * until Save7 supplies current ones. Secondary sources quote conflicting
+ * waiting-list totals (figures around 2 780 and around 4 300 both circulate),
+ * which is why no single number is stated as fact below.
  */
 export const beginnerLevel: LevelSeed = {
   slug: "beginner",
@@ -48,7 +56,7 @@ export const beginnerLevel: LevelSeed = {
           title: "Why this matters",
           kind: "INTRO",
           bodyMarkdown:
-            "Most conversations about organ donation start in the wrong place — with death. This one starts with the people who are still alive, and waiting.\n\nOrgan and tissue transplantation is needed by patients with **end-stage organ failure**, to save their lives or significantly improve them. When an organ fails completely there is often no way to repair it. Treatment can buy time, sometimes a great deal of it, but for some conditions a transplant is the only remaining option.\n\n**Thousands of patients are currently on South African waiting lists** for lifesaving organ and tissue transplants.\n\nThe rest of this course is about why so few of them receive one. This module is about who they are.",
+            "Most conversations about organ donation start in the wrong place — with death. This one starts with the people who are still alive, and waiting.\n\nOrgan and tissue transplantation is needed by patients with **end-stage organ failure**, to save their lives or significantly improve them. When an organ fails completely there is often no way to repair it. Treatment can buy time, sometimes a great deal of it, but for some conditions a transplant is the only remaining option.\n\n**Thousands of South Africans are on waiting lists** for lifesaving organ and tissue transplants. Published totals vary between sources, which is why this course says *thousands* rather than a number it cannot stand behind.\n\nThe rest of this course is about why so few of them receive one. This module is about who they are.",
         },
         {
           slug: "explore-organs-and-tissues",
@@ -175,7 +183,7 @@ export const beginnerLevel: LevelSeed = {
               },
               {
                 id: "t2",
-                text: "Thousands of South Africans are on waiting lists for organ and tissue transplants right now.",
+                text: "Thousands of South Africans are on waiting lists for organ and tissue transplants. Published totals differ between sources, so quote the scale rather than a figure.",
               },
               {
                 id: "t3",
@@ -206,7 +214,7 @@ export const beginnerLevel: LevelSeed = {
               {
                 id: "s1",
                 heading: "End-stage organ failure",
-                body: "Organ and tissue transplantation is required by patients with end-stage organ failure, to save or significantly improve their lives. Thousands of patients are currently on national waiting lists for lifesaving organ and tissue transplants.\n\nRecipients include people needing hearts for years of active living, lungs to allow unaided breathing, and kidneys to save them from dialysis or early death. Patients with liver failure require transplants to restore life, and those needing a pancreas can eliminate insulin dependency.",
+                body: "Organ and tissue transplantation is required by patients with end-stage organ failure, to save or significantly improve their lives. Thousands of patients are on national waiting lists for lifesaving organ and tissue transplants; published totals vary between sources, so the scale is what to quote.\n\nRecipients include people needing hearts for years of active living, lungs to allow unaided breathing, and kidneys to save them from dialysis or early death. Patients with liver failure require transplants to restore life, and those needing a pancreas can eliminate insulin dependency.",
               },
               {
                 id: "s2",
@@ -398,7 +406,7 @@ export const beginnerLevel: LevelSeed = {
                     id: "rushing",
                     label: "Rushing the decision",
                     detail:
-                      "A study of 107 brain-dead potential donors found that families who took longer than 48 hours to decide consented at 73%, compared with 55% among those who decided sooner. A slower decision was not a worse one — which is a strong argument for continuing to support a family rather than pressing them.",
+                      "A single-centre study of 107 brain-dead potential donors found that families who took 48 hours or more to decide consented at 73% (11 of 15), compared with 55% (51 of 92) among those who decided sooner. The authors\u2019 own conclusion is the careful one: the delayed group was *not inferior*, not that waiting produces consent. The numbers in that subgroup are small and the setting is not South African — but it is a real argument for continuing to support a family rather than pressing them.",
                   },
                 ],
               },
