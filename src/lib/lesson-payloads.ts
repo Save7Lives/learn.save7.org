@@ -16,6 +16,15 @@ export type Pending = {
   /** Shows the learner-facing "pending Save7 review" badge. */
   pendingReview?: boolean;
   /**
+   * The source this claim was checked against.
+   *
+   * The counterpart to `pendingReview`: a claim carrying this is signed off in
+   * the content itself, and the review register emits it as APPROVED with the
+   * source recorded. A claim carrying neither is still outstanding. Nothing is
+   * cleared by having been read — only by naming what it was checked against.
+   */
+  verifiedAgainst?: string;
+  /**
    * Overrides the per-module default source hint in the generated review
    * register. Use it when one specific claim needs a named source that is not
    * the module's usual one — e.g. Module 12's FACTS sequence, which needs the

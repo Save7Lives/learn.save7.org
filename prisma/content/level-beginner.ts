@@ -187,7 +187,7 @@ export const beginnerLevel: LevelSeed = {
               },
               {
                 id: "t3",
-                text: "One donor can give seven or more life-saving organs — and their tissues and corneas can improve 65 or more lives.",
+                text: "One donor can save seven lives through organ donation, and improve up to fifty more through tissue and corneas — the published South African figures, and where Save7's name comes from.",
                 detail:
                   "This is where Save7's name comes from. The tissue figure is the part most people have never heard.",
               },
@@ -235,7 +235,7 @@ export const beginnerLevel: LevelSeed = {
               {
                 id: "s4",
                 heading: "The impact of one donor",
-                body: "One donor can provide seven or more life-saving organs, and tissues and corneas that can improve 65 or more lives.",
+                body: "One donor can save seven lives through organ donation, and improve up to fifty more through tissue donation — the figures the Organ Donor Foundation and ORTIDA both publish, and where Save7's name comes from. (An earlier version of this page said \u201c65 or more\u201d; that figure could not be sourced, and the published South African number is fifty.)",
                 bullets: [
                   "2 416 kidneys transplanted (2010–2019)",
                   "593 patients helped with liver transplants (2010–2019)",
@@ -244,7 +244,8 @@ export const beginnerLevel: LevelSeed = {
                   "1 911 patients had sight restored by corneal transplants (2010–2019)",
                   "In excess of 150 000 South Africans received tissue transplants (2010–2019)",
                 ],
-                pendingReview: true,
+                verifiedAgainst:
+                  "Organ Donor Foundation and ORTIDA published figures: one donor can save seven lives and enhance up to fifty more through tissue donation. The 2010–2019 decade totals remain as published by the ODF and are date-stamped; the ODF no longer hosts them, so Save7 should refresh them from SATS when current figures are available.",
               },
             ],
           },

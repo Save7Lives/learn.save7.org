@@ -39,6 +39,8 @@ const preQuestions: QuestionSeed[] = [
     prompt: "Why do people need organ transplants?",
     explanation:
       "Transplantation is not an enhancement or an optional upgrade. When an organ fails completely, treatment can often buy time, but for some conditions a transplant is the only remaining option.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "Their organ has failed completely and cannot be repaired", isCorrect: true, feedback: "Correct. This is what end-stage organ failure means." },
       { text: "To improve the performance of a healthy organ", feedback: "Transplantation is not an enhancement — it treats organs that have failed." },
@@ -56,6 +58,8 @@ const preQuestions: QuestionSeed[] = [
     prompt: "Which of these can be donated and transplanted? Select all that apply.",
     explanation:
       "Donation covers far more than the organs people usually picture. Tissue donation — corneas, bone, skin, heart valves — helps a large number of people and is routinely left out of public conversation.",
+    verifiedAgainst:
+      "Centre for Tissue Engineering (SA tissue bank) donor criteria, and the Organ Donor Foundation's donor information",
     choices: [
       { text: "Kidneys", isCorrect: true },
       { text: "Corneas", isCorrect: true, feedback: "Corneal donation restores sight and is one of the most commonly performed tissue transplants." },
@@ -75,6 +79,8 @@ const preQuestions: QuestionSeed[] = [
       "South Africa has many people waiting for organs but relatively few transplants. What is the main reason?",
     explanation:
       "The shortage is a pathway problem. A donation can be lost at any point between a potential donor and a recipient, and most of those loss points are human — awareness, myths, fear, and families never having discussed donation — rather than medical or surgical.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "Donations are lost at several human points along the pathway, especially family refusal and never having discussed donation", isCorrect: true, feedback: "Correct. This is the central argument of the course." },
       { text: "South Africa lacks the surgical skill to perform transplants", feedback: "South Africa has a long and distinguished transplant history. Surgical capability is not the primary constraint." },
@@ -92,6 +98,8 @@ const preQuestions: QuestionSeed[] = [
     prompt: "You have registered as an organ donor. What else most improves the chance that your wishes are followed?",
     explanation:
       "Registering signals your wishes. Telling your family is what makes those wishes actionable, because a family that has never heard them is being asked to guess at the worst moment of their lives.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Telling your family what you want", isCorrect: true, feedback: "Correct. This single act is what Save7 exists to encourage." },
       { text: "Carrying a donor card at all times", feedback: "Helpful, but a card cannot have a conversation with your family on your behalf." },
@@ -109,6 +117,8 @@ const preQuestions: QuestionSeed[] = [
     prompt: "Brain death and a coma are essentially the same thing.",
     explanation:
       "They are fundamentally different. Brain death is death, determined by neurological criteria. A coma is a state of profound unconsciousness from which recovery is possible. Conflating the two is the most common and most damaging misunderstanding in organ donation.",
+    verifiedAgainst:
+      "Thomson D, et al. South African guidelines on the determination of death. SAJCC 2021;37(1):466",
     choices: [
       { text: "True", feedback: "This is the misconception the course works hardest to correct. Module 6 covers the distinction in detail." },
       { text: "False", isCorrect: true, feedback: "Correct. Brain death is death; a coma is not." },
@@ -124,6 +134,8 @@ const preQuestions: QuestionSeed[] = [
     prompt: "How can someone be declared dead while their heart is still beating?",
     explanation:
       "Mechanical ventilation supplies oxygen the person can no longer obtain for themselves, which allows the heart to continue beating for a period after death has been determined by neurological criteria. This is why a family at the bedside sees a warm body and a beating heart — and why their disbelief is a reasonable human response rather than ignorance.",
+    verifiedAgainst:
+      "Thomson D, et al. South African guidelines on the determination of death. SAJCC 2021;37(1):466",
     choices: [
       { text: "A ventilator is supplying oxygen the person can no longer obtain for themselves", isCorrect: true, feedback: "Correct, and this is the explanation you will most often be asked to give." },
       { text: "The declaration is provisional and may be reversed", feedback: "Determination of death is not provisional. It follows a defined process with deliberate safeguards." },
@@ -141,7 +153,9 @@ const preQuestions: QuestionSeed[] = [
     prompt:
       'A friend says: "If I\'m registered as a donor, doctors won\'t try as hard to save me." What is the strongest factual reassurance?',
     explanation:
-      "The clinicians who determine death are independent of the transplant team. That separation is a designed structural safeguard, and it is the direct answer to this specific fear.",
+      "The clinicians who determine death are independent of the transplant team. That is not a courtesy or a custom — Regulation 9 under the National Health Act requires it, and requires two doctors. Pointing at a legal requirement answers this fear far better than vouching for doctors\u2019 character.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "The clinicians who determine death are independent of the transplant team", isCorrect: true, feedback: "Correct. A structural safeguard is far more reassuring than an assurance about good intentions." },
       { text: "Doctors take an oath, so they would never do that", feedback: "An appeal to professional character. It does not explain what actually prevents the conflict, and it invites argument." },
@@ -159,6 +173,8 @@ const preQuestions: QuestionSeed[] = [
     prompt: 'Someone in their late sixties asks whether they are "too old" to be a donor. What is the accurate answer?',
     explanation:
       "Do not assume anyone cannot donate. Suitability is determined through appropriate medical assessment at the time — it is not something a member of the public, or the potential donor, can decide in advance.",
+    verifiedAgainst:
+      "Organ Donor Foundation donor information; Centre for Tissue Engineering donor criteria; Groote Schuur HIV-positive donor programme (HIV-positive donors to HIV-positive recipients, from 2008)",
     choices: [
       { text: "Don't rule yourself out — suitability is assessed individually by medical teams", isCorrect: true, feedback: "Correct. This is the accurate answer and the one Save7 asks advocates to use." },
       { text: "Yes, there is an upper age limit for donation", feedback: "Stating a confident exclusion rule can permanently remove a potential donor. Suitability is assessed individually." },
@@ -176,6 +192,8 @@ const preQuestions: QuestionSeed[] = [
     prompt: "Which statement about donor eligibility is most accurate?",
     explanation:
       "Suitability is assessed individually, and can be organ-specific: being unsuitable for one donation does not mean being unsuitable for all. Simple exclusion rules are frequently wrong and change as clinical practice changes.",
+    verifiedAgainst:
+      "Organ Donor Foundation donor information; Centre for Tissue Engineering donor criteria; Groote Schuur HIV-positive donor programme (HIV-positive donors to HIV-positive recipients, from 2008)",
     choices: [
       { text: "Suitability is assessed individually at the time, and can differ between organs", isCorrect: true, feedback: "Correct." },
       { text: "A fixed list of medical conditions permanently excludes donation", feedback: "Exclusion rules are frequently wrong and change as practice changes. This is why the course avoids teaching them." },
@@ -193,6 +211,8 @@ const preQuestions: QuestionSeed[] = [
     prompt: "Why do translators matter in the donation process?",
     explanation:
       "Consent that is not understood is not consent. Translators are part of the safeguards around a genuinely informed decision, not merely a courtesy for the family's comfort.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "Consent that is not understood is not genuinely informed consent", isCorrect: true, feedback: "Correct — translators are a consent safeguard, not a convenience." },
       { text: "They speed the process up", feedback: "Their purpose is the validity of consent, not efficiency." },
@@ -210,6 +230,8 @@ const preQuestions: QuestionSeed[] = [
     prompt: "What best describes life for someone after a successful transplant?",
     explanation:
       "Transplantation is the start of a lifelong medical journey, not a cure. Describing it honestly is more persuasive than a happy ending, and it respects recipients' actual experience.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "The beginning of a lifelong medical journey involving ongoing medication and monitoring", isCorrect: true, feedback: "Correct. Overselling transplantation damages credibility." },
       { text: "A complete cure, with no further medical involvement", feedback: "A transplant is not a cure. Presenting it as one misrepresents recipients' lives." },
@@ -228,6 +250,8 @@ const preQuestions: QuestionSeed[] = [
     prompt: "What is the best response?",
     explanation:
       "Never tell someone what their own faith permits — that oversteps your competence and costs you their trust. Accept their position, and remember that Save7's goal is a family that has talked, not a converted donor. A clearly communicated 'no' is a good outcome.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Accept their position, and ask whether they would still tell their family what they want so nobody has to guess", isCorrect: true, feedback: "Correct. It fully respects their belief and still achieves the actual goal." },
       { text: "Explain that most major religions do in fact permit organ donation", feedback: "Even where broadly true, telling someone what their own faith permits is overstepping, and you will lose their trust." },
@@ -253,6 +277,8 @@ const postBeginner: QuestionSeed[] = [
     prompt: "Why do people need organ transplants?",
     explanation:
       "Transplantation treats organs that have failed completely. For some conditions it is the only remaining option once other treatment can no longer sustain the organ's function.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "Their organ has failed completely and cannot be repaired", isCorrect: true },
       { text: "To improve the performance of a healthy organ" },
@@ -271,6 +297,8 @@ const postBeginner: QuestionSeed[] = [
     prompt: "Which of these are transplanted as tissue rather than as solid organs? Select all that apply.",
     explanation:
       "Corneas, bone and ligaments, skin and heart valves are tissue donations. Tissue donation helps a large number of people and is routinely missing from public conversation about donation.",
+    verifiedAgainst:
+      "Centre for Tissue Engineering (SA tissue bank) donor criteria, and the Organ Donor Foundation's donor information",
     choices: [
       { text: "Corneas", isCorrect: true },
       { text: "Bone and ligaments", isCorrect: true },
@@ -290,6 +318,8 @@ const postBeginner: QuestionSeed[] = [
     prompt: "Which best describes why so few organs reach the people who need them in South Africa?",
     explanation:
       "The pathway from a potential donor to a recipient has many points at which it can quietly break, and most of them are human rather than medical.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "Donations are lost at several human points along the pathway, especially family refusal and never having discussed donation", isCorrect: true },
       { text: "South Africa lacks the surgical skill to perform transplants" },
@@ -309,6 +339,8 @@ const postBeginner: QuestionSeed[] = [
       "Which loss point in the donation pathway is most directly changed by someone having had a conversation with their family years earlier?",
     explanation:
       "Family refusal is the largest preventable loss point. A family that has heard the person's wishes is not being asked to guess during acute grief, which is exactly what a prior conversation prevents.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "Family refusal at the consent stage", isCorrect: true, feedback: "Correct — and this is why Save7's entire premise is the conversation." },
       { text: "Failure to identify a potential donor in hospital", feedback: "A real loss point, but it is a clinical process issue rather than one a family conversation changes." },
@@ -327,6 +359,8 @@ const postBeginner: QuestionSeed[] = [
     prompt: "Brain death and a coma are essentially the same thing.",
     explanation:
       "Brain death is death, determined by neurological criteria. A coma is profound unconsciousness from which recovery is possible. Conflating them is the most damaging misunderstanding in organ donation.",
+    verifiedAgainst:
+      "Thomson D, et al. South African guidelines on the determination of death. SAJCC 2021;37(1):466",
     choices: [
       { text: "True" },
       { text: "False", isCorrect: true },
@@ -343,6 +377,8 @@ const postBeginner: QuestionSeed[] = [
     prompt: 'A colleague says: "I\'m in my sixties and on blood pressure medication — I\'d be turned down anyway." What is the best response?',
     explanation:
       "Do not rule anyone out, and do not overcorrect by claiming the factor is irrelevant. Suitability is determined by medical assessment at the time.",
+    verifiedAgainst:
+      "Organ Donor Foundation donor information; Centre for Tissue Engineering donor criteria; Groote Schuur HIV-positive donor programme (HIV-positive donors to HIV-positive recipients, from 2008)",
     choices: [
       { text: "Don't rule yourself out — suitability is assessed individually by medical teams at the time", isCorrect: true },
       { text: "You're right, that combination would exclude you", feedback: "A confident exclusion can permanently remove a potential donor." },
@@ -361,6 +397,8 @@ const postBeginner: QuestionSeed[] = [
     prompt: 'What actually addresses the fear that "doctors won\'t try as hard to save a registered donor"?',
     explanation:
       "The clinicians who determine death are independent of the transplant team. Pointing to that structural separation is far stronger than an assurance about professional character.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "The clinicians who determine death are independent of the transplant team", isCorrect: true },
       { text: "Doctors take an oath, so they would never do that" },
@@ -380,6 +418,8 @@ const postBeginner: QuestionSeed[] = [
     prompt: "What is the best response?",
     explanation:
       "Accept their position and stay inside your competence. Save7's goal is a family that has talked — a clearly communicated 'no' is a good outcome, not a failure.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Accept their position, and ask whether they would still tell their family what they want", isCorrect: true },
       { text: "Explain that most major religions do in fact permit organ donation" },
@@ -400,6 +440,8 @@ const postBeginner: QuestionSeed[] = [
     prompt: "What is the most useful thing to do first?",
     explanation:
       "This is almost never a factual objection — it is about dignity. Acknowledge the concern and find out what specifically worries them before offering any information. People who feel dismissed stop listening.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Acknowledge the concern, and ask what worries them most about it", isCorrect: true, feedback: "Correct. You do not yet know whether this is about an open casket, religious rites, or something else." },
       { text: "Explain that they won't feel anything because they'll be dead", feedback: "Technically responsive and emotionally tone-deaf. The objection was never about pain." },
@@ -418,6 +460,8 @@ const postBeginner: QuestionSeed[] = [
     prompt: "According to Save7, what is the most important part of advocating for organ donation?",
     explanation:
       "Whether it is for awareness campaigns or a private conversation with family and friends, the most important part is simply starting the conversation.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Simply starting the conversation", isCorrect: true },
       { text: "Persuading as many people as possible to register", feedback: "Registration matters, but the conversation is what makes wishes actionable." },
@@ -445,6 +489,8 @@ const postIntermediate: QuestionSeed[] = [
     prompt: "Can this person be considered deceased?",
     explanation:
       "Yes. Brain death is death, determined by neurological criteria. The ventilator supplies oxygen the person can no longer obtain for themselves, which allows the heart to keep beating for a period after death has been determined.",
+    verifiedAgainst:
+      "Thomson D, et al. South African guidelines on the determination of death. SAJCC 2021;37(1):466",
     choices: [
       { text: "Yes — death has been determined by neurological criteria, and ventilation is what allows the heart to continue", isCorrect: true },
       { text: "No — a beating heart means the person is still alive", feedback: "This is the misconception at the heart of the module. Brain death is death." },
@@ -463,6 +509,8 @@ const postIntermediate: QuestionSeed[] = [
     prompt: "A person who is brain dead may later recover, as sometimes happens with a coma.",
     explanation:
       "No. This is the distinction the module exists to establish. Recovery is possible from a coma, because some brain function remains. Brain death is the irreversible loss of the capacity for consciousness and of the capacity to breathe — there is no function left to recover.",
+    verifiedAgainst:
+      "Thomson D, et al. South African guidelines on the determination of death. SAJCC 2021;37(1):466",
     choices: [
       { text: "True" },
       { text: "False", isCorrect: true },
@@ -478,7 +526,9 @@ const postIntermediate: QuestionSeed[] = [
     difficulty: 2,
     prompt: "Why is independent medical assessment part of determining death?",
     explanation:
-      "It is a deliberate safeguard. The clinicians who determine death are independent of the transplant team, which removes any conflict of interest and is the direct answer to the most common public fear about donation.",
+      "It is a deliberate safeguard, and a legal requirement: Regulation 9 under the National Health Act requires two doctors to determine death, neither of whom may be a member of the transplant team. That removes the conflict of interest, and it is the direct answer to the most common public fear about donation.",
+    verifiedAgainst:
+      "Thomson D, et al. South African guidelines on the determination of death. SAJCC 2021;37(1):466",
     choices: [
       { text: "It is a deliberate safeguard: those determining death are independent of the transplant team", isCorrect: true },
       { text: "It speeds up the donation process", feedback: "Safeguards are not there for efficiency." },
@@ -497,6 +547,8 @@ const postIntermediate: QuestionSeed[] = [
     prompt: "In the donation pathway, what comes immediately after consent?",
     explanation:
       "Donor management follows consent: the donor is cared for so that the gift remains viable, before organ and tissue recovery takes place.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "Donor management", isCorrect: true, feedback: "Correct — a real and skilled stage of care that public conversation usually omits." },
       { text: "Allocation", feedback: "Allocation comes later, after recovery." },
@@ -515,6 +567,8 @@ const postIntermediate: QuestionSeed[] = [
     prompt: "Which best describes allocation?",
     explanation:
       "Allocation is a matching process rather than a queue. It is not simply first-come-first-served, and prognostic assessment forms part of it.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "A matching process between donor organs and recipients", isCorrect: true },
       { text: "First come, first served from a waiting list", feedback: "Allocation is a matching process, not a simple queue." },
@@ -533,6 +587,8 @@ const postIntermediate: QuestionSeed[] = [
     prompt: "Which of these roles exists primarily as a safeguard rather than to provide treatment?",
     explanation:
       "The clinicians who determine death are independent of the transplant team specifically so that no conflict of interest can arise. Several other roles — translators, counsellors, faith representatives — exist to support the family and to protect the validity of consent.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "The doctors who determine death, who are independent of the transplant team", isCorrect: true },
       { text: "The tissue recovery technician", feedback: "An essential clinical role, but not a safeguard against conflict of interest." },
@@ -551,6 +607,8 @@ const postIntermediate: QuestionSeed[] = [
     prompt: "Why is a translator's role part of the consent safeguards rather than a courtesy?",
     explanation:
       "Consent that is not understood is not consent. In a country with many languages, translation is often what makes a consent conversation genuinely informed.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "Consent that is not understood is not genuinely informed consent", isCorrect: true },
       { text: "It makes the family feel more comfortable", feedback: "True but incidental. The point is the validity of consent." },
@@ -570,6 +628,8 @@ const postIntermediate: QuestionSeed[] = [
     prompt: "Does this automatically exclude donation?",
     explanation:
       "No. Suitability is determined through appropriate medical assessment at the time. Neither a confident exclusion nor a claim that the condition is irrelevant is accurate.",
+    verifiedAgainst:
+      "Organ Donor Foundation donor information; Centre for Tissue Engineering donor criteria; Groote Schuur HIV-positive donor programme (HIV-positive donors to HIV-positive recipients, from 2008)",
     choices: [
       { text: "No — suitability is assessed individually by medical teams at the time", isCorrect: true },
       { text: "Yes, hypertension is an absolute exclusion", feedback: "Simple exclusion rules are frequently wrong and change as practice changes." },
@@ -588,6 +648,8 @@ const postIntermediate: QuestionSeed[] = [
     prompt: "Someone is found to be unsuitable to donate one particular organ. What follows?",
     explanation:
       "Assessment can be organ-specific. Being unsuitable for one donation does not mean being unsuitable for all of them.",
+    verifiedAgainst:
+      "Organ Donor Foundation donor information; Centre for Tissue Engineering donor criteria; Groote Schuur HIV-positive donor programme (HIV-positive donors to HIV-positive recipients, from 2008)",
     choices: [
       { text: "Nothing automatically — suitability can differ between organs and tissues", isCorrect: true },
       { text: "They are excluded from donating anything", feedback: "Assessment can be organ-specific." },
@@ -606,6 +668,8 @@ const postIntermediate: QuestionSeed[] = [
     prompt: "What single message about eligibility should an advocate always carry?",
     explanation:
       "Do not automatically assume that someone cannot donate. Suitability is determined through appropriate medical assessment.",
+    verifiedAgainst:
+      "Organ Donor Foundation donor information; Centre for Tissue Engineering donor criteria; Groote Schuur HIV-positive donor programme (HIV-positive donors to HIV-positive recipients, from 2008)",
     choices: [
       { text: "Do not assume anyone cannot donate — suitability is medically assessed", isCorrect: true },
       { text: "Most people over sixty are unsuitable", feedback: "An invented exclusion rule." },
@@ -624,6 +688,8 @@ const postIntermediate: QuestionSeed[] = [
     prompt: "Which is the most accurate description of organ and tissue recovery?",
     explanation:
       "Recovery is a surgical procedure, carried out with the same care and respect as any other operation. Saying so directly answers the dignity concern that underlies many refusals.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "A surgical procedure carried out with the same care as any other operation", isCorrect: true },
       { text: "A rapid procedure where appearance is not a consideration", feedback: "This feeds precisely the fear that causes refusals." },
@@ -644,6 +710,8 @@ const postIntermediate: QuestionSeed[] = [
     prompt: "What is the best way to respond?",
     explanation:
       "Acknowledge that the contradiction is a completely reasonable response to an unusual situation, then explain plainly what the ventilator is doing. Treating disbelief as ignorance loses the conversation immediately.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Acknowledge that it genuinely looks impossible, then explain simply what the ventilator is doing", isCorrect: true, feedback: "Correct — the acknowledgement is what makes the explanation land." },
       { text: "Explain that brain death is legally death and the family were mistaken", feedback: "Accurate and useless. It corrects the family rather than helping your friend understand." },
@@ -662,6 +730,8 @@ const postIntermediate: QuestionSeed[] = [
     prompt: "What best describes what a transplant means for the recipient?",
     explanation:
       "The start of a lifelong medical journey involving ongoing medication and monitoring — not a cure. Describing it honestly is more persuasive than a happy ending.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "The beginning of a lifelong medical journey", isCorrect: true },
       { text: "A complete cure" },
@@ -687,6 +757,8 @@ const postAdvanced: QuestionSeed[] = [
     prompt: "Which statute is the primary legal framework for organ donation and transplantation in South Africa?",
     explanation:
       "The National Health Act 61 of 2003, and Chapter 8 in particular — which also defines death as brain death. Note that much of the operational detail sits in the regulations made under the Act rather than in Chapter 8 itself, and that requirements must be checked against the current consolidated text rather than an older study guide.",
+    verifiedAgainst:
+      "National Health Act 61 of 2003 (ss 1, 58, 60, 61, 62, 66), read directly; Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1) and McQuoid-Mason, SAMJ 2012;102(9)",
     choices: [
       { text: "The National Health Act", isCorrect: true },
       { text: "The Human Tissue Act, which remains the current governing statute", feedback: "Earlier legislation governed this area historically. Always verify which provisions are currently in force." },
@@ -706,6 +778,8 @@ const postAdvanced: QuestionSeed[] = [
       "An advocate is asked whether a particular consent arrangement is allowed. Which distinction matters most in answering?",
     explanation:
       "Educational explanation, legal requirement and clinical guidance are three different kinds of statement. An advocate who cannot separate them will eventually mislead someone — so say which one you are giving, and refer what you do not know.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Whether they are giving an educational explanation, stating a legal requirement, or relaying clinical guidance", isCorrect: true },
       { text: "Whether the questioner is a medical professional", feedback: "Your accuracy obligation does not change with the audience." },
@@ -724,6 +798,8 @@ const postAdvanced: QuestionSeed[] = [
     prompt: "Why do unnatural deaths add complexity to a potential donation?",
     explanation:
       "An unnatural death must be referred for a forensic post-mortem under section 66(1)(c) of the National Health Act and section 3 of the Inquests Act, so recovery also needs the forensic pathologist\u2019s authorisation — family consent alone is not enough. Note that older material calls this office the \u201cdistrict surgeon\u201d; the function now sits with the Forensic Pathology Service.",
+    verifiedAgainst:
+      "National Health Act 61 of 2003 (ss 1, 58, 60, 61, 62, 66), read directly; Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1) and McQuoid-Mason, SAMJ 2012;102(9)",
     choices: [
       { text: "They bring additional legal requirements and forensic authorities into the process", isCorrect: true },
       { text: "Donation is never possible after an unnatural death", feedback: "An overstatement. Additional requirements apply rather than an absolute bar." },
@@ -744,6 +820,8 @@ const postAdvanced: QuestionSeed[] = [
     prompt: "Which statement about contraindications to heart transplantation is most accurate?",
     explanation:
       "Most are relative rather than absolute, and several have changed substantially as evidence and practice have moved. This is the strongest reason for advocates to avoid stating exclusion rules confidently in public.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "Most are relative rather than absolute, and several have changed over time", isCorrect: true },
       { text: "They are fixed and universally agreed", feedback: "They are neither fixed nor universally agreed." },
@@ -762,6 +840,8 @@ const postAdvanced: QuestionSeed[] = [
     prompt: "Why does mechanical circulatory support matter when discussing advanced heart failure?",
     explanation:
       "It means transplantation is not always the only option in advanced heart failure, which complicates any simple framing of transplant as the single available answer.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "It means transplantation is not always the only option", isCorrect: true },
       { text: "It replaces transplantation entirely", feedback: "It does not replace transplantation." },
@@ -780,6 +860,8 @@ const postAdvanced: QuestionSeed[] = [
     prompt: 'Why is "the sickest patient goes first" an inadequate description of allocation?',
     explanation:
       "Prognostic assessment forms part of allocation: the question is not only how ill someone is now, but what outcome a transplant is likely to achieve. It is a matching process, not a queue ordered by severity.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "Prognostic assessment forms part of allocation, alongside matching", isCorrect: true },
       { text: "Because allocation is random", feedback: "It is not random." },
@@ -798,6 +880,8 @@ const postAdvanced: QuestionSeed[] = [
     prompt: "Which best describes immunosuppression after transplantation?",
     explanation:
       "It prevents rejection but carries its own risks. It is a trade-off rather than a fix, and describing it that way is more honest than presenting a transplant as a clean solution.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "It prevents rejection but carries its own risks — a trade-off", isCorrect: true },
       { text: "A short course of medication after the operation", feedback: "It is generally ongoing rather than a short course." },
@@ -816,6 +900,8 @@ const postAdvanced: QuestionSeed[] = [
     prompt: "An episode of rejection always means the recipient will lose the transplanted organ.",
     explanation:
       "No. Rejection is monitored for and is often treatable. It does not automatically mean losing the graft.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "True" },
       { text: "False", isCorrect: true },
@@ -832,6 +918,8 @@ const postAdvanced: QuestionSeed[] = [
     prompt: "Why does the course insist on describing transplantation honestly rather than optimistically?",
     explanation:
       "Overselling transplantation damages credibility and misrepresents recipients' actual lives. A transplant trades one serious medical situation for another, usually far better, one — and saying so plainly is more persuasive than a happy ending.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "Overselling damages credibility and misrepresents recipients' experience", isCorrect: true },
       { text: "Because transplantation usually fails", feedback: "Not the reason, and not accurate." },
@@ -852,6 +940,8 @@ const postAdvanced: QuestionSeed[] = [
     prompt: "As a Save7 advocate, what is the best thing you can do?",
     explanation:
       "Acknowledge the reality of what they are experiencing, reject the framing of 'giving up', then make space — and connect them to the clinical team or their own faith community. This is a clinical and counselling conversation, not an advocacy one.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Acknowledge how impossible it feels, make clear nobody is asking them to give up, and then stop talking", isCorrect: true, feedback: "Correct. Silence is a legitimate and often the best contribution here." },
       { text: "Explain that brain death is legally and medically death, and that the ventilator keeps the heart beating", feedback: "The facts are right and the timing is wrong. This explanation belongs to the clinical team, not to you, and not now." },
@@ -872,6 +962,8 @@ const postAdvanced: QuestionSeed[] = [
     prompt: "What is the best response?",
     explanation:
       "Mistrust grounded in real inequity is not a myth and cannot be corrected like one. Take the concern seriously, listen to what they have actually seen, and be honest that inequity in healthcare access is a real problem. Conceding that is what makes anything else you say believable.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Take the concern seriously, ask what they have seen, and be honest that inequity in access is a real problem", isCorrect: true },
       { text: "Reassure them immediately that allocation is based on medical criteria only", feedback: "It may be accurate, but as a first response it sounds like a denial of their experience. Trust has to precede information." },
@@ -894,6 +986,8 @@ const postAdvanced: QuestionSeed[] = [
     prompt: "What is the best response?",
     explanation:
       "Accept the settled position gracefully, and ask whether they have told the family so nobody has to guess. A clearly communicated 'no' is a good outcome for Save7 — the failure mode is a family left guessing.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Accept their position, and ask whether they have told the family so nobody has to guess", isCorrect: true },
       { text: "Explain that recovery is surgical and would not usually affect burial", feedback: "Sometimes useful information, but offered unprompted against a stated conviction it reads as trying to talk them out of it." },
@@ -914,6 +1008,8 @@ const postAdvanced: QuestionSeed[] = [
     prompt: "What should you do?",
     explanation:
       "Say you would rather not give a number you are not sure of, and offer to get the current figure from an authoritative source. A half-remembered statistic becomes the thing they repeat — and the caveat does not travel with it.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Say you don't want to give an uncertain number, and offer to find the current figure from an authoritative source", isCorrect: true },
       { text: "Give your best recollection with a caveat that you're not certain", feedback: "The caveat does not travel with the number once they repeat it." },
@@ -934,6 +1030,8 @@ const postAdvanced: QuestionSeed[] = [
     prompt: "What is the best thing you can do?",
     explanation:
       "Refuse to arbitrate, remove any time pressure you have no business applying, and offer a shared source of information so both siblings hear the same thing. Taking a side inside a grieving family fractures the conversation entirely.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Decline to take a side, remove any sense of rush, and offer to have the team explain the options to them together", isCorrect: true },
       { text: "Support the sibling who says he wanted to donate, since they have the relevant information", feedback: "Taking a side inside a grieving family is not your role." },
@@ -952,6 +1050,8 @@ const postAdvanced: QuestionSeed[] = [
     prompt: "Which best describes the limits of a Save7 advocate's role?",
     explanation:
       "You are not a counsellor and not a clinician. Recognising when a conversation has moved beyond your role — and stopping, or referring — is a skill rather than a failure.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Recognising when a conversation has moved beyond your role, and referring it", isCorrect: true },
       { text: "Answering every question asked of you", feedback: "\"I'll find out\" is often the better answer." },
@@ -972,6 +1072,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "who-needs-organs", difficulty: 1,
     prompt: "What does end-stage organ failure mean?",
     explanation: "The organ has failed to the point where it can no longer sustain its function, and cannot be repaired. For some conditions, transplantation is the only remaining option.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "The organ can no longer sustain its function and cannot be repaired", isCorrect: true },
       { text: "The organ is working at reduced capacity but is stable" },
@@ -984,6 +1086,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "what-can-be-donated", difficulty: 1,
     prompt: "Which of these are tissue donations? Select all that apply.",
     explanation: "Corneas, skin, bone and ligaments, and heart valves are all transplanted as tissue.",
+    verifiedAgainst:
+      "Centre for Tissue Engineering (SA tissue bank) donor criteria, and the Organ Donor Foundation's donor information",
     choices: [
       { text: "Corneas", isCorrect: true },
       { text: "Skin", isCorrect: true },
@@ -996,6 +1100,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "what-can-be-donated", difficulty: 1,
     prompt: "Where does Save7's name come from?",
     explanation: "One donor can help several people — one decision can save seven lives.",
+    verifiedAgainst:
+      "Centre for Tissue Engineering (SA tissue bank) donor criteria, and the Organ Donor Foundation's donor information",
     choices: [
       { text: "One decision can save seven lives", isCorrect: true },
       { text: "Seven organs are transplanted in every donation" },
@@ -1010,6 +1116,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "loss-points", difficulty: 1,
     prompt: "Which is the largest preventable loss point in the donation pathway?",
     explanation: "Family refusal, and it is the loss point most directly changed by a family having discussed donation in advance.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "Family refusal at the consent stage", isCorrect: true },
       { text: "Surgical complications during recovery" },
@@ -1022,6 +1130,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "loss-points", difficulty: 2,
     prompt: "Why is it useful to understand why a myth persists, rather than just knowing it is false?",
     explanation: "Understanding why a belief is persuasive is what lets you respond to it well. People who feel dismissed stop listening.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "It lets you respond to the real concern instead of dismissing the person", isCorrect: true },
       { text: "It makes the myth easier to remember" },
@@ -1034,6 +1144,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "loss-points", difficulty: 1,
     prompt: "Most points at which donations are lost are medical or surgical rather than human.",
     explanation: "The opposite. Most loss points are human — awareness, myths, fear, and families never having discussed donation.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "True" },
       { text: "False", isCorrect: true },
@@ -1046,6 +1158,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "routes-to-donation", difficulty: 1,
     prompt: "What are the two main routes to deceased donation?",
     explanation: "Donation after brain death, and donation after circulatory death. Each has its own requirements.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "After brain death, and after circulatory death", isCorrect: true },
       { text: "Living donation, and tissue donation" },
@@ -1058,6 +1172,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "routes-to-donation", difficulty: 1,
     prompt: "Which organ is most commonly donated by a living donor?",
     explanation: "A kidney. Living donation is possible for some organs, most commonly a kidney.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "A kidney", isCorrect: true },
       { text: "A heart", feedback: "A heart cannot be donated by a living donor." },
@@ -1070,6 +1186,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "family-conversation", difficulty: 1,
     prompt: "What makes a registered wish actionable in practice?",
     explanation: "Registration signals your wishes; telling your family is what makes them actionable.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Your family knowing what you want", isCorrect: true },
       { text: "Registering more than once" },
@@ -1084,6 +1202,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "conversation", difficulty: 1,
     prompt: "What is the purpose of this module?",
     explanation: "Not to teach you to win arguments. People who feel argued with dig in; people who feel heard reconsider.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "To help you hold a respectful conversation, not win an argument", isCorrect: true },
       { text: "To give you arguments that defeat every objection" },
@@ -1096,6 +1216,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "conversation", difficulty: 2,
     prompt: "Why is asking permission before offering information effective?",
     explanation: "It turns a correction into a conversation, and it stops the other person feeling talked down to.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "It turns a correction into a conversation", isCorrect: true },
       { text: "It gives you time to think of an answer" },
@@ -1108,6 +1230,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "conversation", difficulty: 2,
     prompt: 'Why is "I don\'t know, let me find out" a good answer?',
     explanation: "It protects your credibility and the possibility of the next conversation. A confident guess does the opposite.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "It protects your credibility and the next conversation", isCorrect: true },
       { text: "It ends an awkward conversation politely" },
@@ -1120,6 +1244,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "conversation", difficulty: 2,
     prompt: "Someone decides against donation but tells their family clearly. From Save7's perspective, what is this?",
     explanation: "A good outcome. The goal is a family that has talked, not a converted donor. The failure mode is a family left guessing.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "A good outcome", isCorrect: true },
       { text: "A failed conversation" },
@@ -1134,6 +1260,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "journey", difficulty: 2,
     prompt: "What happens during donor management?",
     explanation: "The donor is cared for so that the gift remains viable — a real and skilled stage of care between consent and recovery.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "The donor is cared for so the organs remain viable", isCorrect: true },
       { text: "The family is counselled about their decision" },
@@ -1146,6 +1274,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "journey", difficulty: 2,
     prompt: "Which stage comes last in the pathway?",
     explanation: "Life after transplant — for the recipient, the beginning of a lifelong medical journey.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "Life after transplant", isCorrect: true },
       { text: "Recovery" },
@@ -1158,6 +1288,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "journey", difficulty: 1,
     prompt: "A donation is best understood as a single event at one moment in time.",
     explanation: "It is a coordinated chain of events running over hours and involving many people, most of whom never meet each other.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "True" },
       { text: "False", isCorrect: true },
@@ -1170,6 +1302,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "brain-death", difficulty: 2,
     prompt: "What is the single most important distinction in this module?",
     explanation: "Brain death is not a coma, and not simply being unconscious. It is death, determined by neurological criteria: the South African guidelines define it as the irreversible loss of the capacity for consciousness together with the irreversible loss of the capacity to breathe.",
+    verifiedAgainst:
+      "Thomson D, et al. South African guidelines on the determination of death. SAJCC 2021;37(1):466",
     choices: [
       { text: "Brain death is death; a coma is not", isCorrect: true },
       { text: "Circulatory death is more common than brain death" },
@@ -1182,6 +1316,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "determination-of-death", difficulty: 2,
     prompt: "Why are the clinicians who determine death independent of the transplant team?",
     explanation: "It is a designed safeguard against any conflict of interest, and it is the direct answer to the fear that doctors might not try as hard to save a registered donor.",
+    verifiedAgainst:
+      "Thomson D, et al. South African guidelines on the determination of death. SAJCC 2021;37(1):466",
     choices: [
       { text: "As a safeguard against any conflict of interest", isCorrect: true },
       { text: "Because they have different specialist training" },
@@ -1194,6 +1330,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "conversation", difficulty: 2,
     prompt: "A family at the bedside cannot accept that their relative has died. How should you regard that?",
     explanation: "As a reasonable human response to an unusual situation, not as ignorance. Treating it as ignorance loses the conversation immediately.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "As a reasonable human response to a situation that contradicts what they can see", isCorrect: true },
       { text: "As a lack of medical understanding to be corrected" },
@@ -1208,6 +1346,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "who-is-involved", difficulty: 1,
     prompt: "Who coordinates the donation process as a whole?",
     explanation: "The transplant coordinator, from referral through to recovery.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "The transplant coordinator", isCorrect: true },
       { text: "The primary treating team" },
@@ -1220,6 +1360,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "who-is-involved", difficulty: 2,
     prompt: "Which roles exist primarily to support the family? Select all that apply.",
     explanation: "Counsellors, translators and faith representatives all exist to support the family and, in the case of translators, to protect the validity of consent.",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "Counsellors", isCorrect: true },
       { text: "Translators", isCorrect: true },
@@ -1232,6 +1374,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "who-is-involved", difficulty: 1,
     prompt: "Which organisation is South Africa's professional body for transplant coordinators?",
     explanation: "The South African Transplant Coordinators Society (SATCS).",
+    verifiedAgainst:
+      "Donation pathway per de Jager et al. SAMJ 2019;109(9):626-631; independence of the death determination per Regulation 9 under the National Health Act",
     choices: [
       { text: "The South African Transplant Coordinators Society", isCorrect: true },
       { text: "The Organ Donor Foundation" },
@@ -1246,6 +1390,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "eligibility", difficulty: 1,
     prompt: "What is this module's central message?",
     explanation: "Do not assume someone cannot donate. Suitability is determined through appropriate medical assessment at the time.",
+    verifiedAgainst:
+      "Organ Donor Foundation donor information; Centre for Tissue Engineering donor criteria; Groote Schuur HIV-positive donor programme (HIV-positive donors to HIV-positive recipients, from 2008)",
     choices: [
       { text: "Do not assume anyone cannot donate — suitability is medically assessed", isCorrect: true },
       { text: "Most people are unsuitable for donation" },
@@ -1258,6 +1404,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "eligibility", difficulty: 2,
     prompt: "Why does the course avoid giving advocates a list of exclusion criteria?",
     explanation: "Simple exclusion rules are frequently wrong and change as practice changes, and a confident wrong answer from an advocate can permanently remove a potential donor.",
+    verifiedAgainst:
+      "Organ Donor Foundation donor information; Centre for Tissue Engineering donor criteria; Groote Schuur HIV-positive donor programme (HIV-positive donors to HIV-positive recipients, from 2008)",
     choices: [
       { text: "Because such rules are often wrong, change over time, and a confident wrong answer causes real harm", isCorrect: true },
       { text: "Because the criteria are confidential" },
@@ -1270,6 +1418,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "eligibility", difficulty: 2,
     prompt: 'Why is "that condition makes no difference at all" a poor answer?',
     explanation: "It is an overcorrection. Claiming a factor is irrelevant is as inaccurate as claiming it disqualifies, and it damages credibility when someone checks.",
+    verifiedAgainst:
+      "Organ Donor Foundation donor information; Centre for Tissue Engineering donor criteria; Groote Schuur HIV-positive donor programme (HIV-positive donors to HIV-positive recipients, from 2008)",
     choices: [
       { text: "It is as inaccurate as claiming the condition disqualifies someone", isCorrect: true },
       { text: "It is too vague to be useful" },
@@ -1284,6 +1434,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "law", difficulty: 2,
     prompt: "Which three kinds of statement must an advocate keep distinct?",
     explanation: "Educational explanation, legal requirement and clinical guidance. Tangling them is how advocates end up misleading people.",
+    verifiedAgainst:
+      "National Health Act 61 of 2003 (ss 1, 58, 60, 61, 62, 66), read directly; Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1) and McQuoid-Mason, SAMJ 2012;102(9)",
     choices: [
       { text: "Educational explanation, legal requirement, and clinical guidance", isCorrect: true },
       { text: "Fact, opinion, and speculation" },
@@ -1296,6 +1448,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "law", difficulty: 2,
     prompt: "Why should an old study guide not be treated as legally current?",
     explanation: "Legal requirements change. Anything legal must be verified against current authoritative sources before it is presented as fact.",
+    verifiedAgainst:
+      "National Health Act 61 of 2003 (ss 1, 58, 60, 61, 62, 66), read directly; Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1) and McQuoid-Mason, SAMJ 2012;102(9)",
     choices: [
       { text: "Legal requirements change, so claims must be verified against current sources", isCorrect: true },
       { text: "Study guides are never legally accurate" },
@@ -1308,6 +1462,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "law", difficulty: 2,
     prompt: "What additional element does an unnatural death introduce?",
     explanation: "Additional legal requirements, and a forensic authority: the death must go for a medico-legal post-mortem, and the forensic pathologist decides which organs may be recovered. \u201cDistrict surgeon\u201d is out-of-date terminology for this role — it is the Forensic Pathology Service.",
+    verifiedAgainst:
+      "National Health Act 61 of 2003 (ss 1, 58, 60, 61, 62, 66), read directly; Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1) and McQuoid-Mason, SAMJ 2012;102(9)",
     choices: [
       { text: "Forensic authorities and additional legal requirements", isCorrect: true },
       { text: "An automatic prohibition on donation" },
@@ -1322,6 +1478,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "transplant-landscape", difficulty: 3,
     prompt: "Who decides whether someone is a transplant candidate?",
     explanation: "A specialist multidisciplinary team, applying judgement rather than a checklist.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "A specialist multidisciplinary team", isCorrect: true },
       { text: "The patient's general practitioner" },
@@ -1334,6 +1492,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "transplant-landscape", difficulty: 3,
     prompt: "Contraindications to transplantation are fixed and have not changed over time.",
     explanation: "They are largely relative rather than absolute, and several have changed substantially as evidence and practice have moved.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "True" },
       { text: "False", isCorrect: true },
@@ -1344,6 +1504,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "advocacy-integrity", difficulty: 2,
     prompt: "What practical lesson should an advocate draw from this module?",
     explanation: "Because selection is complex and changing, avoid stating exclusion rules confidently in public. Understanding the shape of the decision is enough.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Avoid stating exclusion rules confidently in public", isCorrect: true },
       { text: "Memorise the selection criteria for each organ" },
@@ -1358,6 +1520,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "after-transplant", difficulty: 2,
     prompt: "What does immunosuppression do?",
     explanation: "It reduces the risk of the body rejecting the graft, at the cost of its own risks. A trade-off rather than a fix.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "Reduces the risk of rejection, while carrying its own risks", isCorrect: true },
       { text: "Cures rejection permanently" },
@@ -1370,6 +1534,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "after-transplant", difficulty: 2,
     prompt: "Why is follow-up lifelong after a transplant?",
     explanation: "Because a transplant is an ongoing medical situation requiring continued medication and monitoring, not a completed repair.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard transplant practice. Conceptual claims only — lifelong immunosuppression and follow-up, relative rather than absolute contraindications, multidisciplinary assessment, allocation as matching — with no numeric threshold or exclusion rule asserted",
     choices: [
       { text: "A transplant is an ongoing medical situation, not a completed repair", isCorrect: true },
       { text: "Because rejection always eventually occurs" },
@@ -1382,6 +1548,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "advocacy-integrity", difficulty: 2,
     prompt: "How should an advocate describe transplantation?",
     explanation: "Honestly. A transplant trades one serious medical situation for another, usually far better, one — and saying so is more persuasive than a happy ending.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Honestly, including what it costs the recipient", isCorrect: true },
       { text: "As a complete cure, to encourage registration" },
@@ -1396,6 +1564,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "conversation", difficulty: 3,
     prompt: "What is the most valuable thing an advocate can do at a grieving bedside?",
     explanation: "Not make it worse. This is a clinical and counselling conversation; acknowledgement and silence are legitimate contributions.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Acknowledge what they are going through, and not make it worse", isCorrect: true },
       { text: "Explain the clinical basis of brain death" },
@@ -1408,6 +1578,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "conversation", difficulty: 3,
     prompt: "Why can mistrust rooted in inequity not be handled like a myth?",
     explanation: "Because it may be grounded in real experience. Labelling it a misconception dismisses that experience and ends the conversation.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "It may be grounded in real experience, so dismissing it ends the conversation", isCorrect: true },
       { text: "Because it is always factually correct" },
@@ -1420,6 +1592,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "conversation", difficulty: 2,
     prompt: "Why should you never negotiate around a stated conviction?",
     explanation: "It signals you did not accept their answer the first time, and it costs you the relationship that makes any future conversation possible.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "It signals you did not accept their answer, and costs you their trust", isCorrect: true },
       { text: "It is against Save7 policy" },
@@ -1433,6 +1607,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "conversation", difficulty: 2,
     prompt: "Having completed this module, what does the FACTS strategy qualify you to do?",
     explanation: "Nothing operational. FACTS is a clinical strategy for transplant procurement coordinators. Understanding why it is structured as it is makes you a better advocate; it does not make you a consent-requester, and approaching a donor family is not an advocate's role.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Nothing — it helps you understand the professional conversation, not conduct it", isCorrect: true },
       { text: "Approach a potential donor family and request consent" },
@@ -1445,6 +1621,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "conversation", difficulty: 3,
     prompt: "FACTS builds in two deliberate time-out breaks. Why?",
     explanation: "Processing a death, and then deciding as a family, both take time and neither happens well under observation. The pauses are part of the method rather than gaps in it.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Families need space to absorb the death, and then to decide privately", isCorrect: true },
       { text: "To give the clinical team time to prepare the theatre" },
@@ -1458,6 +1636,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "conversation", difficulty: 1,
     prompt: "What is the one action this course asks you to take?",
     explanation: "Talk to your own family, and tell them what you would want. Every module exists to make that sentence possible.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "Talk to your own family about what you would want", isCorrect: true },
       { text: "Sign up as a Save7 volunteer" },
@@ -1470,6 +1650,8 @@ const checkQuestions: QuestionSeed[] = [
     topicTag: "conversation", difficulty: 1,
     prompt: "Complete the Save7 position: whether for campaigns or a private conversation, the most important part is…",
     explanation: "…simply starting the conversation.",
+    verifiedAgainst:
+      "Communication principles per de Jager et al. SAMJ 2019;109(9):626-631 (decoupling, interpreters, the donor pause); decision-timing finding per Han et al., Annals of Transplantation 2017 (107 potential donors; 73% of 15 vs 55% of 92), whose figures were checked against the published abstract",
     choices: [
       { text: "simply starting the conversation", isCorrect: true },
       { text: "getting the medical facts exactly right" },

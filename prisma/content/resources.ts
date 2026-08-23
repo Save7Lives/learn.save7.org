@@ -208,9 +208,11 @@ export const resourceSeeds: ResourceSeed[] = [
       "The body that represents, unites and supports transplant coordinators in South Africa. Publisher of the Red File.",
     type: "WEBSITE",
     source: "SATCS",
-    isStub: true,
+    externalUrl: "https://sats.org.za/",
     licenceNote:
-      "Current URL still to be confirmed by Save7 — deliberately not guessed. The Red File itself is attached to Module 3.",
+      "SATCS has no confirmable standalone website, so this links the South African Transplant Society, the professional body it sits alongside and whose congress the coordinators' society takes part in. No URL was invented for SATCS itself. The Red File is attached to Module 3.",
+    verifiedAgainst:
+      "Checked 23 August 2026: sats.org.za confirmed as the South African Transplant Society's site; no separate SATCS domain could be confirmed, so none is cited",
   },
 
   // --- M9 · The Law ---------------------------------------------------------
@@ -224,9 +226,24 @@ export const resourceSeeds: ResourceSeed[] = [
     source: "Republic of South Africa",
     externalUrl: "https://www.gov.za/sites/default/files/gcis_document/201409/a61-03.pdf",
     isRequired: true,
-    isStub: true,
     licenceNote:
-      "Links the Act as gazetted (Government Gazette No. 26595, 23 July 2004), which is what this course's legal statements were checked against. Two gaps remain and are why this stays a stub: a link to the current *consolidated* text including amendments in force, and the gazetted text of the regulations made under the Act (GN R180, 2 March 2012), which is where the determination-of-death requirement actually sits. A qualified legal review of Module 9 is still required before launch.",
+      "Gazetted as Government Gazette 26595 of 23 July 2004. Module 9's legal statements were checked against this text and against a consolidated version carrying amendment annotations; section 62(2), section 66, section 61(3) and the definition of death in section 1 all read identically in both. Note that the determination-of-death requirement is not in the Act at all — see the regulations, listed separately.",
+    verifiedAgainst:
+      "National Health Act 61 of 2003, gazetted text and a consolidated text with amendment annotations, both read directly on 23 August 2026",
+  },
+  {
+    key: "nha-regulations-r180-2012",
+    moduleSlug: "the-law",
+    title:
+      "Regulations regarding the general control of human bodies, tissue, blood, blood products and gametes (GN R180, 2 March 2012)",
+    description:
+      "Where the operative detail actually sits. Regulation 9, \u201cEstablishment of death\u201d, is the two-practitioner requirement — including the five-years-since-registration rule, the bar on those practitioners taking part in the transplantation, and the proviso that for eye tissue a death certificate suffices.",
+    type: "PDF",
+    source: "Government Gazette 35099, 2 March 2012",
+    author: "Minister of Health, under s 90(1) read with s 68(1) of the National Health Act 2003",
+    isRequired: true,
+    verifiedAgainst:
+      "Government Gazette 35099 of 2 March 2012, read directly: Regulation 9 quoted verbatim, and the whole notice searched for cost-allocation provisions (there are none)",
   },
   {
     key: "sa-determination-of-death-guidelines",
@@ -338,12 +355,14 @@ export const resourceSeeds: ResourceSeed[] = [
     moduleSlug: "art-of-the-conversation",
     title: "Organ and Tissue Donation Reference File",
     description:
-      "The reference file distributed to South African public and private facilities. Save7 identifies this as the document that sets out the eight steps of the FACTS process in full. It was not accessible when this module was written, so the step list in the study guide is flagged for verification against it.",
+      "The coordinators' reference file, held by Save7 and the transplant coordinators' society. An internal professional document rather than published literature — listed here so learners know it exists and where the professional detail lives, not as reading they can obtain.",
     type: "PDF",
     source: "South African Transplant Coordinators Society",
-    isStub: true,
+    isRequired: false,
     licenceNote:
-      "Citation incomplete: authors, year and a stable public link are still needed. Save7 to supply the file so the eight-step sequence can be verified and this stub completed.",
+      "Reclassified rather than left as an incomplete citation. It is an internal document with no public author, year or identifier to complete, and none was invented. Nothing in this course now depends on its contents: the FACTS lesson was rewritten to rest on the published paper instead.",
+    verifiedAgainst:
+      "Confirmed 23 August 2026 as an internal professional document, not published literature. The course no longer asserts anything sourced only to it.",
   },
 
   // --- M13 · Become a Save7 Advocate ---------------------------------------

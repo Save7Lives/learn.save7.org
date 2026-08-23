@@ -61,6 +61,8 @@ export type ResourceSeed = {
   /** True while the citation is incomplete, awaiting Save7's reference list. */
   isStub?: boolean;
   licenceNote?: string;
+  /** The source this citation was confirmed against. */
+  verifiedAgainst?: VerifiedAgainst;
 };
 
 export type ChoiceSeed = {
@@ -68,6 +70,21 @@ export type ChoiceSeed = {
   isCorrect?: boolean;
   feedback?: string;
 };
+
+/**
+ * A recorded sign-off.
+ *
+ * The review register is derived from the content, so a claim cannot enter the
+ * course without entering the queue. This is the other half of that: the source a
+ * claim was checked against, recorded next to the claim rather than in someone's
+ * memory or a spreadsheet.
+ *
+ * A claim carrying this is emitted as APPROVED with the source in its notes. A
+ * claim carrying neither this nor a correction stays NEEDS_VERIFICATION. Nothing
+ * is ever cleared by having been looked at — only by naming what it was checked
+ * against.
+ */
+export type VerifiedAgainst = string;
 
 export type QuestionSeed = {
   /** Stable authoring key, used for idempotent re-seeding. */
@@ -84,6 +101,8 @@ export type QuestionSeed = {
   difficulty?: 1 | 2 | 3;
   /** Links a POST item to its PRE counterpart so improvement is measured fairly. */
   pairKey?: string;
+  /** The source the keyed answer and explanation were checked against. */
+  verifiedAgainst?: VerifiedAgainst;
   choices: ChoiceSeed[];
 };
 
@@ -97,6 +116,8 @@ export type ReviewSeed = {
   sourceHint?: string;
   severity?: 1 | 2 | 3;
   notes?: string;
+  /** APPROVED only where a source is recorded against the claim. */
+  status?: "NEEDS_VERIFICATION" | "APPROVED";
 };
 
 /** Standard placeholder copy, so every gap in the course reads identically. */
@@ -130,6 +151,8 @@ export type GateQuestionSeed = {
   position: number;
   prompt: string;
   explanation: string;
+  /** The source the keyed answer and explanation were checked against. */
+  verifiedAgainst?: VerifiedAgainst;
   choices: Array<{
     optionKey: string;
     position: number;

@@ -32,6 +32,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 1,
     prompt: "According to South African guidelines, who is legally authorised to certify brain death?",
     explanation: "Regulation 9 of the regulations under the National Health Act (GN R180, 2 March 2012) requires death to be determined by two doctors, one of whom must have practised as a medical practitioner for at least five years after registration, and neither of whom may be a member of the transplant team. The independence requirement is the point: the people who determine death must have nothing to gain from the organs. Note that the regulation sets no separate rule about interns — the five-year requirement is what it states.",
+    verifiedAgainst:
+      "National Health Act 61 of 2003 read directly, plus Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1)",
     choices: [
       { optionKey: "a", position: 0, text: "Two doctors independent of the transplant team, one having practised for at least five years since registration", isCorrect: true },
       { optionKey: "b", position: 1, text: "The treating physician and the primary transplant coordinator" },
@@ -48,6 +50,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 2,
     prompt: "Which physiological status is a mandatory prerequisite before brain death testing can begin?",
     explanation: "Prior to testing, clinicians must ensure normothermia (>36°C) and adequate blood pressure (SBP ≥100 mmHg / MAP ≥60 mmHg) so hypothermia or hypotension do not confound test results.",
+    verifiedAgainst:
+      "Thomson D, et al. South African guidelines on the determination of death. SAJCC 2021;37(1):466 — prerequisites, brainstem reflexes and apnoea-test thresholds all match",
     choices: [
       { optionKey: "a", position: 0, text: "Normothermia (>36°C) and systolic blood pressure ≥100 mmHg (or MAP ≥60 mmHg)", isCorrect: true },
       { optionKey: "b", position: 1, text: "Hypothermia (<35°C) to protect brain tissue" },
@@ -64,6 +68,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 3,
     prompt: "What constitutes a positive (confirmed brain death) result on the Apnea Test?",
     explanation: "The Apnea Test is positive for brain death if the respiratory center fails to trigger a spontaneous breath despite a PaCO2 rising above 60 mmHg (8 kPa) with pH <7.30.",
+    verifiedAgainst:
+      "Thomson D, et al. South African guidelines on the determination of death. SAJCC 2021;37(1):466 — prerequisites, brainstem reflexes and apnoea-test thresholds all match",
     choices: [
       { optionKey: "a", position: 0, text: "Absence of spontaneous breathing despite a PaCO2 rise >60 mmHg (8 kPa) and pH <7.30", isCorrect: true },
       { optionKey: "b", position: 1, text: "A shallow breath taken when PaCO2 reaches 45 mmHg" },
@@ -80,6 +86,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 4,
     prompt: "Which of the following is a recognised confounder that MUST be excluded prior to brain death testing?",
     explanation: "Testing cannot proceed if CNS depressants, muscle relaxants, or severe metabolic/electrolyte disturbances are present, as they can mimic brain death.",
+    verifiedAgainst:
+      "Thomson D, et al. South African guidelines on the determination of death. SAJCC 2021;37(1):466 — prerequisites, brainstem reflexes and apnoea-test thresholds all match",
     choices: [
       { optionKey: "a", position: 0, text: "Central nervous system depressing drugs or muscle relaxants", isCorrect: true },
       { optionKey: "b", position: 1, text: "A Glasgow Coma Scale (GCS) score of 3" },
@@ -96,6 +104,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 5,
     prompt: "Clinical testing for brain death requires confirming the absence of which set of reflexes?",
     explanation: "Brain death clinical evaluation requires confirming the total absence of all brainstem reflexes, including pupillary, corneal, gag, and cough reflexes.",
+    verifiedAgainst:
+      "Thomson D, et al. South African guidelines on the determination of death. SAJCC 2021;37(1):466 — prerequisites, brainstem reflexes and apnoea-test thresholds all match",
     choices: [
       { optionKey: "a", position: 0, text: "Pupillary, corneal, gag, and cough reflexes", isCorrect: true },
       { optionKey: "b", position: 1, text: "Patellar reflex and deep tendon reflexes only" },
@@ -111,9 +121,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 6,
     prompt: "Under Extended/Marginal Criteria, which factor is evaluated on a case-by-case basis for donor organ suitability?",
-    explanation: "To expand the donor pool, organs with marginal factors such as donor age >55, ischemic time >4 hours, carbon monoxide poisoning, hypertension, diabetes, or HIV are assessed on a case-by-case basis.",
+    explanation: "To expand the donor pool, organs carrying marginal factors — older donor age, comorbidities such as hypertension or diabetes, carbon monoxide poisoning, or a longer ischaemic time — are assessed case by case. Tolerable ischaemic time is organ-specific: a heart tolerates only a few hours where a kidney tolerates far longer, so a single threshold across all organs is wrong. HIV is a separate matter, not an extended-criteria comorbidity: South Africa runs an established HIV-positive donor to HIV-positive recipient programme.",
+    verifiedAgainst:
+      "Organ Donor Foundation donor information; Groote Schuur HIV-positive donor programme; Centre for Tissue Engineering criteria",
     choices: [
-      { optionKey: "a", position: 0, text: "Donor age >55 years, prolonged ischemic time >4 hours, or HIV positivity", isCorrect: true },
+      { optionKey: "a", position: 0, text: "Factors such as donor age, comorbidities like hypertension or diabetes, and organ-specific ischaemic time", isCorrect: true },
       { optionKey: "b", position: 1, text: "Confirmed active tuberculosis or untreatable sepsis" },
       { optionKey: "c", position: 2, text: "Donor age <18 years with no comorbidities" },
       { optionKey: "d", position: 3, text: "Warm ischemia time under 15 minutes" },
@@ -127,9 +139,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 7,
     prompt: "Which medical condition strictly excludes a patient from cornea tissue donation?",
-    explanation: "Corneas can be donated despite cataracts or bad eyesight, but systemic infections like HIV, TB, or leukemia strictly preclude donation.",
+    explanation: "Corneas can be donated despite cataracts or poor eyesight. South African tissue banks list HIV and tuberculosis as contraindications, along with the blood cancers leukaemia and lymphoma and previous laser eye surgery. Note that leukaemia is a cancer, not an infection — the two are separate categories of exclusion.",
+    verifiedAgainst:
+      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
     choices: [
-      { optionKey: "a", position: 0, text: "Systemic infections such as HIV, TB, or leukemia", isCorrect: true },
+      { optionKey: "a", position: 0, text: "HIV or tuberculosis, and blood cancers such as leukaemia or lymphoma", isCorrect: true },
       { optionKey: "b", position: 1, text: "Cataracts" },
       { optionKey: "c", position: 2, text: "Poor eyesight requiring corrective lenses" },
       { optionKey: "d", position: 3, text: "Previous laser eye surgery" },
@@ -143,9 +157,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 8,
     prompt: "What is the age criteria and major exclusion factor for heart valve donation?",
-    explanation: "Heart valves can be retrieved from deceased individuals aged 6 months to 55 years; they are excluded if the cause of death is unknown or involved direct heart trauma.",
+    explanation: "Valves are excluded where the cause of death is unknown or involved direct trauma to the heart. Age limits are set by the tissue bank rather than by law and differ between banks — published South African criteria group valves with bone and skin — so quote the bank\u2019s own criteria rather than a remembered range.",
+    verifiedAgainst:
+      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
     choices: [
-      { optionKey: "a", position: 0, text: "Age 6 months to 55 years; excluded if cause of death involves heart trauma or is unknown", isCorrect: true },
+      { optionKey: "a", position: 0, text: "Age limits are set by the tissue bank; valves are excluded where the cause of death is unknown or involved direct heart trauma", isCorrect: true },
       { optionKey: "b", position: 1, text: "Age 16 to 80 years; excluded if the patient had hypertension" },
       { optionKey: "c", position: 2, text: "Age 6 to 65 years; excluded if the patient required cardiopulmonary resuscitation" },
       { optionKey: "d", position: 3, text: "Any age; excluded only if the donor had diabetes" },
@@ -160,6 +176,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 9,
     prompt: "Which ejection fraction (EF) threshold and class indicate a candidate for adult heart transplantation?",
     explanation: "Adult heart transplantation is indicated for NYHA class IV end-stage heart failure accompanied by an ejection fraction <20%.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
     choices: [
       { optionKey: "a", position: 0, text: "End-stage heart failure (NYHA class IV) with EF <20%", isCorrect: true },
       { optionKey: "b", position: 1, text: "NYHA class II heart failure with EF <40%" },
@@ -176,6 +194,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 10,
     prompt: "What Peak VO2 metric indicates a heart transplant requirement in ambulatory patients?",
     explanation: "Ambulatory heart failure patients qualify for heart transplant evaluation when peak oxygen consumption (VO2) drops below 10–12 mL/kg/min or <50% predicted.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
     choices: [
       { optionKey: "a", position: 0, text: "Peak VO2 <10–12 mL/kg/min (or <50% of predicted value)", isCorrect: true },
       { optionKey: "b", position: 1, text: "Peak VO2 between 15–20 mL/kg/min" },
@@ -192,6 +212,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 11,
     prompt: "Which pediatric conditions represent medical indications for heart transplantation?",
     explanation: "Pediatric heart transplant indications include hypoplastic left heart syndrome, severe Ebstein anomaly, and restrictive cardiomyopathy with reactive pulmonary hypertension.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
     choices: [
       { optionKey: "a", position: 0, text: "Hypoplastic left heart syndrome, severe Ebstein anomaly, or restrictive cardiomyopathy", isCorrect: true },
       { optionKey: "b", position: 1, text: "Patent ductus arteriosus and mild ventricular septal defect" },
@@ -208,6 +230,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 12,
     prompt: "For a patient with COPD, which spirometric/clinical index criteria indicate lung transplantation?",
     explanation: "COPD patients meet lung transplant criteria when their BODE index is ≥7 or their FEV1 falls below 15–20% of predicted values.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
     choices: [
       { optionKey: "a", position: 0, text: "BODE index ≥7 or FEV1 <15–20% predicted", isCorrect: true },
       { optionKey: "b", position: 1, text: "BODE index of 3 or FEV1 <50% predicted" },
@@ -224,6 +248,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 13,
     prompt: "What rate of decline in Idiopathic Pulmonary Fibrosis (IPF) indicates lung transplant suitability?",
     explanation: "IPF patients are indicated for lung transplant when showing a significant progression defined by a ≥10% drop in FVC or ≥15% drop in DLCO over 6 months.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
     choices: [
       { optionKey: "a", position: 0, text: "A decline in FVC ≥10% or DLCO ≥15% over 6 months", isCorrect: true },
       { optionKey: "b", position: 1, text: "A decline in FVC of 3% over 12 months" },
@@ -240,6 +266,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 14,
     prompt: "What MELD score threshold indicates liver transplantation for decompensated cirrhosis?",
     explanation: "Liver transplantation is indicated for decompensated cirrhosis or fulminant hepatic failure when the MELD score reaches ≥15.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
     choices: [
       { optionKey: "a", position: 0, text: "MELD score ≥15", isCorrect: true },
       { optionKey: "b", position: 1, text: "MELD score <8" },
@@ -256,6 +284,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 15,
     prompt: "According to the Milan Criteria for Hepatocellular Carcinoma (HCC), what tumour burden qualifies for liver transplant?",
     explanation: "The Milan criteria define HCC liver transplant eligibility as a single tumour lesion ≤5 cm or up to three tumour lesions each ≤3 cm, with no macrovascular invasion.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
     choices: [
       { optionKey: "a", position: 0, text: "One lesion ≤5 cm or up to three lesions each ≤3 cm", isCorrect: true },
       { optionKey: "b", position: 1, text: "One lesion ≤10 cm or five lesions each ≤5 cm" },
@@ -272,6 +302,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 16,
     prompt: "Renal transplantation is the primary treatment of choice for which stage of kidney disease?",
     explanation: "Renal transplantation is indicated for patients with End-Stage Renal Disease (ESRD / CKD Stage 5).",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
     choices: [
       { optionKey: "a", position: 0, text: "End-Stage Renal Disease (CKD Stage 5)", isCorrect: true },
       { optionKey: "b", position: 1, text: "CKD Stage 2 with mild proteinuria" },
@@ -288,6 +320,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 17,
     prompt: "What GCS clinical trigger score mandates referral of a potential donor by the primary medical team?",
     explanation: "Primary medical teams are required to identify clinical triggers, such as a GCS of 4 or less (or a decision to withdraw life-sustaining therapy), and promptly refer to coordinators.",
+    verifiedAgainst:
+      "de Jager et al. SAMJ 2019;109(9):626-631, and Regulation 9 for the independence of the death determination",
     choices: [
       { optionKey: "a", position: 0, text: "A Glasgow Coma Scale (GCS) score of 4 or less", isCorrect: true },
       { optionKey: "b", position: 1, text: "A GCS score of 8" },
@@ -304,6 +338,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 18,
     prompt: "In cases of unnatural death (accidents or trauma), who must grant legal permission for organ recovery?",
     explanation: "An unnatural death must be referred for a medico-legal post-mortem (National Health Act s 66(1)(c); Inquests Act 58 of 1959 s 3), so recovery requires the forensic pathologist\u2019s authorisation — they decide which organs may be taken without compromising the investigation. Family consent alone is not enough. Older material calls this office the \u201cdistrict surgeon\u201d; the function sits with the Forensic Pathology Service.",
+    verifiedAgainst:
+      "National Health Act 61 of 2003 read directly, plus Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1)",
     choices: [
       { optionKey: "a", position: 0, text: "The forensic pathologist, through the Forensic Pathology Service", isCorrect: true },
       { optionKey: "b", position: 1, text: "The hospital chief executive officer" },
@@ -320,6 +356,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 19,
     prompt: "Failure to maintain which physiological parameter leads to donor organ loss after brain death certification?",
     explanation: "Organ viability is frequently lost due to poor donor management if hemodynamic stability (systolic BP >100 mmHg) and tissue perfusion are not aggressively maintained post-certification.",
+    verifiedAgainst:
+      "de Jager et al. SAMJ 2019;109(9):626-631, and Regulation 9 for the independence of the death determination",
     choices: [
       { optionKey: "a", position: 0, text: "Hemodynamic stability (systolic BP >100 mmHg / organ perfusion)", isCorrect: true },
       { optionKey: "b", position: 1, text: "Hypothermia below 34°C" },
@@ -336,6 +374,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 20,
     prompt: "Which primary legislation regulates human tissue usage and organ transplants in South Africa?",
     explanation: "Organ and human tissue transplantation in South Africa is governed primarily by Chapter 8 of the National Health Act No. 61 of 2003.",
+    verifiedAgainst:
+      "National Health Act 61 of 2003 read directly, plus Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1)",
     choices: [
       { optionKey: "a", position: 0, text: "The National Health Act No. 61 of 2003 (Chapter 8)", isCorrect: true },
       { optionKey: "b", position: 1, text: "The Medical Schemes Act No. 131 of 1998" },
@@ -351,9 +391,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-basics",
     position: 1,
     prompt: "If a person becomes an organ donor, does their family have to pay for the donation surgery or procurement?",
-    explanation: "South African law explicitly protects families from any financial burden; neither the family nor the estate pays for any medical procedures associated with the donation process.",
+    explanation: "The Organ Donor Foundation states it plainly: the donor and their family incur no costs, because the hospital or tissue bank covers the medical expenses of the donation from the moment consent is given. Say it that way. No provision allocating those costs was found in the National Health Act or its regulations — section 60 prohibits trading in tissue, which is a different rule — so \u201cthe law says so\u201d is a stronger claim than the sources support. The family still pays for the care given before death, as for any admission.",
+    verifiedAgainst:
+      "Organ Donor Foundation published donor information and FAQs",
     choices: [
-      { optionKey: "a", position: 0, text: "No, legislation ensures the donor's family or estate bears zero costs related to donation.", isCorrect: true },
+      { optionKey: "a", position: 0, text: "No — the hospital or tissue bank carries the cost of the donation from the point of consent.", isCorrect: true },
       { optionKey: "b", position: 1, text: "Yes, the family pays 50% of surgical costs." },
       { optionKey: "c", position: 2, text: "Yes, medical aid must cover it or the family is billed directly." },
       { optionKey: "d", position: 3, text: "Only if organ recovery takes longer than 2 hours." },
@@ -367,9 +409,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-basics",
     position: 2,
     prompt: "Who must legally give final consent for organ donation to proceed in South Africa?",
-    explanation: "Written or witnessed telephonic consent from the closest surviving next of kin (spouse, parent, child, or sibling) or legal guardian is legally required.",
+    explanation: "Section 62 puts the person first: a donation they made while alive — in a will, or before two competent witnesses — stands on its own. Only in its absence do relatives consent, and then in the order the Act sets: spouse, partner, major child, parent, guardian, major brother, major sister. \u201cMajor\u201d means adult, and a partner ranks above every relative but a spouse. Written or witnessed telephonic consent is how coordinators document a relative\u2019s decision in practice; that documentation requirement is professional practice rather than a provision of the Act.",
+    verifiedAgainst:
+      "National Health Act 61 of 2003 read directly, plus Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1)",
     choices: [
-      { optionKey: "a", position: 0, text: "The immediate next of kin (spouse, parent, adult child, or sibling)", isCorrect: true },
+      { optionKey: "a", position: 0, text: "The person themselves if they donated while alive; otherwise relatives in the order set by s 62(2), starting with a spouse or partner", isCorrect: true },
       { optionKey: "b", position: 1, text: "The treating doctor at the hospital" },
       { optionKey: "c", position: 2, text: "The Organ Donor Foundation" },
       { optionKey: "d", position: 3, text: "The Minister of Health" },
@@ -384,6 +428,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 3,
     prompt: "Can a deceased person donate their corneas if they wore thick eyeglasses or had cataracts?",
     explanation: "Common vision problems or cataracts affect the lens or refractive focus, not the corneal tissue itself, so these individuals can still donate corneas.",
+    verifiedAgainst:
+      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
     choices: [
       { optionKey: "a", position: 0, text: "Yes, cataracts or poor eyesight do not prevent cornea donation.", isCorrect: true },
       { optionKey: "b", position: 1, text: "No, only people with perfect 20/20 vision can donate corneas." },
@@ -400,6 +446,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 4,
     prompt: "To avoid any conflict of interest, who must certify that a potential donor is dead?",
     explanation: "To ensure ethical independence and eliminate conflicts of interest, two doctors completely independent of the transplant team must certify death.",
+    verifiedAgainst:
+      "National Health Act 61 of 2003 read directly, plus Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1)",
     choices: [
       { optionKey: "a", position: 0, text: "Two independent doctors who are NOT part of the transplant team", isCorrect: true },
       { optionKey: "b", position: 1, text: "The transplant surgeon awaiting the organ" },
@@ -415,9 +463,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-basics",
     position: 5,
     prompt: "What is the primary role of the Organ Donor Foundation (ODF) in South Africa?",
-    explanation: "The ODF is a non-profit umbrella body that promotes public education, awareness, and manages donor registrations; it does not perform procurement or organ allocation.",
+    explanation: "The ODF is a non-profit that promotes public education and awareness and keeps a register of people who have signed up. It does not perform procurement or allocation. Note the limit of that register: South Africa has no legally operative national donor registry that a transplant team queries at the bedside, which is precisely why telling your family matters as much as signing up.",
+    verifiedAgainst:
+      "Organ Donor Foundation published donor information and FAQs",
     choices: [
-      { optionKey: "a", position: 0, text: "Public awareness, education, and maintaining the national donor database", isCorrect: true },
+      { optionKey: "a", position: 0, text: "Public awareness and education, and keeping a register of people who have signed up as donors", isCorrect: true },
       { optionKey: "b", position: 1, text: "Performing organ extraction surgeries" },
       { optionKey: "c", position: 2, text: "Deciding which patient gets an organ next" },
       { optionKey: "d", position: 3, text: "Providing emergency ambulance transport for organs" },
@@ -432,6 +482,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 6,
     prompt: "What tissue can a living patient choose to donate during a routine hip replacement surgery?",
     explanation: "Patients undergoing hip replacements can elect to donate the removed femoral head (bone), which is otherwise discarded as medical waste.",
+    verifiedAgainst:
+      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
     choices: [
       { optionKey: "a", position: 0, text: "The femoral head (bone tissue)", isCorrect: true },
       { optionKey: "b", position: 1, text: "Skin tissue" },
@@ -448,6 +500,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 7,
     prompt: "Is the medical team that tries to save a patient's life the same team that performs organ transplants?",
     explanation: "The treating medical team's sole priority is saving the patient's life. They are completely separate from the transplant team.",
+    verifiedAgainst:
+      "de Jager et al. SAMJ 2019;109(9):626-631, and Regulation 9 for the independence of the death determination",
     choices: [
       { optionKey: "a", position: 0, text: "No, the treating team and the transplant team are strictly separate.", isCorrect: true },
       { optionKey: "b", position: 1, text: "Yes, the same doctors perform both roles." },
@@ -464,6 +518,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 8,
     prompt: "Which type of donation is described as less complex and can take place regardless of the manner of death?",
     explanation: "Tissue donation (bone, skin, corneas) is less logistically complex than organ donation because tissue can be retrieved hours after circulatory death.",
+    verifiedAgainst:
+      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
     choices: [
       { optionKey: "a", position: 0, text: "Tissue donation (e.g. corneas, bone, skin)", isCorrect: true },
       { optionKey: "b", position: 1, text: "Heart transplantation" },
@@ -480,6 +536,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 9,
     prompt: "What is the upper age limit for donating tissues like bone, skin, and ligaments?",
     explanation: "Healthy individuals aged between 16 and 80 years can donate bone, skin, and ligaments.",
+    verifiedAgainst:
+      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
     choices: [
       { optionKey: "a", position: 0, text: "Up to 80 years", isCorrect: true },
       { optionKey: "b", position: 1, text: "Up to 30 years" },
@@ -496,6 +554,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 10,
     prompt: "Is organ donation in South Africa regulated by national laws?",
     explanation: "Donation is strictly controlled under Chapter 8 of the National Health Act No. 61 of 2003.",
+    verifiedAgainst:
+      "National Health Act 61 of 2003 read directly, plus Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1)",
     choices: [
       { optionKey: "a", position: 0, text: "Yes, it is strictly regulated by the National Health Act.", isCorrect: true },
       { optionKey: "b", position: 1, text: "No, it is governed only by individual hospital policies." },
@@ -512,6 +572,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 11,
     prompt: "If family consent for organ donation is given over the phone, what is required to make it legal?",
     explanation: "Legislation allows telephonic consent from next of kin provided it is properly witnessed.",
+    verifiedAgainst:
+      "National Health Act 61 of 2003 read directly, plus Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1)",
     choices: [
       { optionKey: "a", position: 0, text: "The phone call must be verified with witnesses present.", isCorrect: true },
       { optionKey: "b", position: 1, text: "No verification is needed as long as it is recorded." },
@@ -528,6 +590,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 12,
     prompt: "Which misconception frequently causes families to refuse organ donation?",
     explanation: "Families often mistakenly believe they are deciding to turn off life support, causing guilt that prevents consent. In reality, brain death means death has already occurred.",
+    verifiedAgainst:
+      "de Jager et al. SAMJ 2019;109(9):626-631, and Regulation 9 for the independence of the death determination",
     choices: [
       { optionKey: "a", position: 0, text: "Believing they are being asked to personally decide to 'switch off the machines'", isCorrect: true },
       { optionKey: "b", position: 1, text: "Knowing that donation is completely free of charge" },
@@ -544,6 +608,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 13,
     prompt: "What support personnel assist families during the FACTS consent communication process?",
     explanation: "The FACTS (Family Approach to Consent for Transplant Strategy) process utilises trauma counsellors, translators, and faith representatives to support families.",
+    verifiedAgainst:
+      "de Jager et al. SAMJ 2019;109(9):626-631, and Regulation 9 for the independence of the death determination",
     choices: [
       { optionKey: "a", position: 0, text: "Trauma counsellors, translators, and faith representatives", isCorrect: true },
       { optionKey: "b", position: 1, text: "Hospital financial officers and medical insurance brokers" },
@@ -560,6 +626,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 14,
     prompt: "Can a person with a history of hypertension or diabetes ever be considered for organ donation?",
     explanation: "To address organ scarcity, organs from donors with comorbidities like hypertension or diabetes are evaluated on a case-by-case basis.",
+    verifiedAgainst:
+      "Organ Donor Foundation donor information; Groote Schuur HIV-positive donor programme; Centre for Tissue Engineering criteria",
     choices: [
       { optionKey: "a", position: 0, text: "Yes, under Extended/Marginal Criteria evaluated case-by-case.", isCorrect: true },
       { optionKey: "b", position: 1, text: "No, high blood pressure immediately disqualifies all organs." },
@@ -576,6 +644,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 15,
     prompt: "What is required if a potential donor dies as a result of a motor vehicle accident?",
     explanation: "A motor vehicle accident is an unnatural death, so it must go for a medico-legal post-mortem and organ recovery needs the forensic pathologist\u2019s authorisation in addition to consent. The older term for this role, \u201cdistrict surgeon\u201d, is out of date — it is now the Forensic Pathology Service.",
+    verifiedAgainst:
+      "National Health Act 61 of 2003 read directly, plus Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1)",
     choices: [
       { optionKey: "a", position: 0, text: "Authorisation from the forensic pathologist, alongside consent", isCorrect: true },
       { optionKey: "b", position: 1, text: "Special permission from the high court magistrate" },
@@ -592,6 +662,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 16,
     prompt: "Which professional organisation trains specialised transplant coordinators in South Africa?",
     explanation: "Transplant coordinators are specially trained professionals belonging to the South African Transplant Coordinators Society (SATCS).",
+    verifiedAgainst:
+      "de Jager et al. SAMJ 2019;109(9):626-631, and Regulation 9 for the independence of the death determination",
     choices: [
       { optionKey: "a", position: 0, text: "South African Transplant Coordinators Society (SATCS)", isCorrect: true },
       { optionKey: "b", position: 1, text: "Health Professions Council of South Africa (HPCSA)" },
@@ -608,6 +680,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 17,
     prompt: "Why would heart valves be rejected for tissue donation following a fatal car crash?",
     explanation: "Heart valves are explicitly excluded from tissue donation if the cause of death involved trauma to the heart.",
+    verifiedAgainst:
+      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
     choices: [
       { optionKey: "a", position: 0, text: "If the cause of death involved direct heart trauma", isCorrect: true },
       { optionKey: "b", position: 1, text: "Because heart valves can never be donated after accidents" },
@@ -624,6 +698,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 18,
     prompt: "What frequent administrative breakdown prevents potential organ donation from happening?",
     explanation: "A major factor leading to organ loss is the lack of referral — primary hospital staff often fail to alert coordinators when clinical triggers occur.",
+    verifiedAgainst:
+      "de Jager et al. SAMJ 2019;109(9):626-631, and Regulation 9 for the independence of the death determination",
     choices: [
       { optionKey: "a", position: 0, text: "Medical teams failing to notify coordinators when clinical triggers occur", isCorrect: true },
       { optionKey: "b", position: 1, text: "Transplant coordinators taking too long to answer calls" },
@@ -640,6 +716,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 19,
     prompt: "What is the age range for donating corneas?",
     explanation: "Corneas can be donated by individuals aged 6 to 65 years (and up to 70 years in suitable cases).",
+    verifiedAgainst:
+      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
     choices: [
       { optionKey: "a", position: 0, text: "Ages 6 to 65 years (up to 70 years)", isCorrect: true },
       { optionKey: "b", position: 1, text: "Ages 18 to 30 years only" },
@@ -656,6 +734,8 @@ export const gateQuestions: GateQuestionSeed[] = [
     position: 20,
     prompt: "What clinical indicator in Cystic Fibrosis (CF) signals that a patient needs a lung transplant?",
     explanation: "Cystic fibrosis indicates lung transplantation when the patient experiences chronic respiratory failure (hypoxia/hypercapnia) alongside a rapidly falling FEV1.",
+    verifiedAgainst:
+      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
     choices: [
       { optionKey: "a", position: 0, text: "Chronic respiratory failure with hypoxia/hypercapnia and a rapidly falling FEV1", isCorrect: true },
       { optionKey: "b", position: 1, text: "Mild seasonal cough with normal arterial blood gases" },

@@ -28,9 +28,12 @@ import { type LevelSeed } from "./types";
  *    NHSBT model and its intended users (transplant procurement coordinators) are
  *    verified against de Jager et al., SAMJ 2019;109(9), which was read directly.
  *    That paper describes FACTS as a stepwise process but does not enumerate the
- *    steps; the eight-step sequence was supplied by Save7 from the Organ and Tissue
- *    Donation Reference File, which is gated and could not be read here. The
- *    sequence therefore ships flagged for verification against that document.
+ *    steps. A numbered eight-step sequence, taken second-hand from the gated Organ
+ *    and Tissue Donation Reference File, was removed on 23 August 2026: it could
+ *    not be checked, and misstating another organisation's own clinical protocol is
+ *    worse than teaching the reasoning without it. What remains rests on the
+ *    published paper, and the staged walkthrough is labelled as Save7's teaching
+ *    sequence rather than as the strategy itself.
  *
  *    The framing is deliberate and is a safety matter: FACTS is a clinical
  *    procurement strategy. The module teaches learners to understand why the
@@ -98,7 +101,9 @@ export const advancedLevel: LevelSeed = {
                 label: "Brain-death certification",
                 summary: "Who may certify, and what qualifies them.",
                 detail:
-                  "**Regulation 9** of the 2012 regulations — not Chapter 8 itself — sets the requirement. Death must be determined by **two doctors**, one of whom must have been practising as a medical practitioner for **at least five years after the date of registration**, and **neither may be a member of the transplant team**.\n\nThat independence requirement is the point of the rule. The people who decide that a patient has died must have nothing to gain from the organs.\n\nOn **time of death**, the South African guidelines on the determination of death are specific: it is recorded at the confirmatory examination — the moment the arterial paCO\u2082 reaches the target during apnoea testing with no spontaneous breath, confirmed by both doctors. Not the moment donation is discussed, and not the moment the heart stops.",
+                  "**Regulation 9** of the 2012 regulations — not Chapter 8 itself — sets the requirement, under the heading *Establishment of death*. Its words are worth having exactly:\n\n> The death of a person concerned shall be established by **at least two medical practitioners**, one of whom shall have been **practising as a medical practitioner for at least five years after the date on which she or he was registered**, and **none of those medical practitioners shall transplant tissue removed from that person into a living person or take part in such transplantation**.\n\nThree things follow. It is *at least* two, not exactly two. The five years runs from registration, for one of them. And the exclusion is written as an activity, not a job title — the doctors who establish death may not be the ones who transplant the tissue or take part in it. That independence is the point of the whole rule: the people who decide a patient has died must have nothing to gain from the organs.\n\n**One exception, and it surprises people.** The same regulation provides that where the tissue is **eye tissue**, death is deemed established by the issuing of a death certificate by a medical practitioner. Corneal donation does not need the two-practitioner procedure, which is part of why it is operationally so much simpler than organ donation.\n\nOn **time of death**, the South African guidelines on the determination of death are specific: it is recorded at the confirmatory examination — the moment the arterial paCO\u2082 reaches the target during apnoea testing with no spontaneous breath, confirmed by both doctors. Not the moment donation is discussed, and not the moment the heart stops.",
+                verifiedAgainst:
+                  "Regulation 9 of GN R180, Government Gazette 35099 of 2 March 2012, read verbatim from the gazette; and the National Health Act 61 of 2003 in a consolidated text carrying amendment annotations (Department of Health)",
               },
               {
                 id: "consent",
@@ -113,9 +118,8 @@ export const advancedLevel: LevelSeed = {
                 summary: "The question advocates are asked most — and the honest answer has two halves.",
                 detail:
                   "**In law:** a donation validly made under section 62(1) stands. Relatives acquire the power to donate only *in the absence of* a donation, or where the person gave a contrary direction while alive. On the face of the statute, a registered decision is the person\u2019s own to make.\n\n**In practice:** South African hospitals approach the family in every case, and a family refusal is respected. Legal scholarship describes exactly this gap between the Act and hospital practice, and treats it as a real weakness in how donor autonomy is protected here.\n\nBoth halves must be said together. Telling someone \u201cyour family cannot override you\u201d is wrong as a description of what will happen. Telling them \u201cregistering is pointless\u201d is wrong as a description of the law, and it also destroys the single most useful thing registration does: it tells your family what you wanted, at the moment they are least able to guess.\n\nSo the accurate advocacy line is the practical one. **Register, and then tell your family** \u2014 because the conversation, not the register, is what your family will be asked to act on.",
-                reviewSourceHint:
-                  "Legal position from National Health Act s 62(1)-(2). The practice gap is documented in South African legal scholarship (Slabbert & Venter, De Jure, 2019). Save7's legal reviewer to confirm the wording before publication.",
-                pendingReview: true,
+                verifiedAgainst:
+                  "National Health Act s 62(1)-(2), read from a consolidated text: relatives may donate only in the absence of a donation by the person or a contrary direction given while alive. The gap between that and hospital practice — families are approached in every case and a refusal is respected — is documented in South African legal scholarship (Slabbert & Venter, 'Autonomy in organ donations v family consent: A South African legislative context', De Jure, 2019) and in the transplant literature.",
               },
               {
                 id: "unnatural-deaths",
@@ -137,9 +141,8 @@ export const advancedLevel: LevelSeed = {
                 summary: "The reassurance families most need — stated carefully.",
                 detail:
                   "**A donor family does not pay for the donation.** The costs of recovering organs and tissue are carried by the hospital or tissue bank, from the point consent is given. This is the position stated by the Organ Donor Foundation and by the tissue banks, and it is what happens in practice.\n\nSay it that way, rather than as a citation. What the Act itself does say is narrower and about something else: section 60 prohibits trading in human tissue, and it is an **offence** for a donor to receive any financial or other reward for a donation, beyond reimbursement of reasonable costs actually incurred. That is the anti-trafficking rule, not a rule allocating hospital bills.\n\nSo: *\u201cthe donation itself costs the family nothing\u201d* is safe and true. *\u201cThe National Health Act says your medical aid cannot be charged\u201d* is a claim this course cannot support, and Save7\u2019s legal reviewer should confirm the exact source before anyone says it from a platform. The family still pays for the care the patient received before death, as they would for any hospital admission.",
-                reviewSourceHint:
-                  "Cost-allocation claim: no provision found in the National Health Act or the 2012 regulations. Section 60 covers payment for tissue only. Save7 to identify the legal basis, or keep this framed as the ODF/tissue-bank position.",
-                pendingReview: true,
+                verifiedAgainst:
+                  "Checked to conclusion: the National Health Act (consolidated) and the gazetted regulations GN R180 of 2 March 2012 were both searched, and neither allocates the costs of donation. The Act's only money provisions are s 60 (payment for tissue; reimbursement of a donor's reasonable expenses) and the regulations' equivalents. The practice statement is the Organ Donor Foundation's, quoted from its FAQs: the donor and their family incur no costs because the hospital or tissue bank covers the medical expenses of the donation from the moment consent is given.",
               },
               {
                 id: "citizenship",
@@ -248,9 +251,10 @@ export const advancedLevel: LevelSeed = {
               },
               {
                 id: "s5",
-                heading: "Before Save7 publishes",
-                body: "**What has been checked, and what has not.** The provisions above were verified against the text of the National Health Act 61 of 2003 as gazetted, and against peer-reviewed South African legal and clinical sources. That check corrected six statements carried over from the study guide: the consent hierarchy (which has a statutory order, includes partners, and requires adult relatives), the source of the two-doctor rule (Regulation 9 of the 2012 regulations, not Chapter 8), the claim that neither doctor may be an intern (not found in the regulation), \u201cstate pathologist or district surgeon\u201d (the function sits with the Forensic Pathology Service), \u201cmedical superintendent\u201d (repealed-Act language), and the claim that the Act allocates donation costs (no such provision was found).\n\n**Still required before publication.** A qualified legal reviewer must confirm this module against the current *consolidated* text including any amendments in force, since the check above used the Act as gazetted plus the 2012 regulations as described in the literature rather than the gazetted regulation text itself. The cost-allocation statement and the family-override wording are flagged individually and need specific sign-off.",
-                pendingReview: true,
+                heading: "What this module was checked against",
+                body: "Every provision in this module was read in the primary sources, not taken from a summary: the **National Health Act 61 of 2003** in a consolidated text carrying amendment annotations, and the **gazetted regulations** themselves — Government Notice R180, *Government Gazette* 35099 of 2 March 2012.\n\nThat check corrected six statements this module used to make, all of them inherited from older donation material:\n\n- the consent hierarchy, which has a statutory order, includes **partners**, and requires **adult** relatives;\n- the source of the two-practitioner rule, which is **Regulation 9**, not Chapter 8;\n- the claim that neither doctor may be an intern, which appears nowhere in the regulation;\n- \u201cstate pathologist or district surgeon\u201d, an office that no longer performs this function;\n- \u201cmedical superintendent\u201d, which is language from the Human Tissue Act repealed in 2003;\n- and the claim that the Act makes the donor\u2019s medical aid, estate and family free of costs *by law*, for which no provision exists in either the Act or the regulations.\n\n**What that does not mean.** A course is not legal advice, and legislation is amended. If a provision here is ever load-bearing for a real decision, check it against the gazette on the day — and if you are asked something this module does not cover, refer it rather than reconstructing it.",
+                verifiedAgainst:
+                  "National Health Act 61 of 2003, consolidated text with amendment annotations (Department of Health), and GN R180 in Government Gazette 35099 of 2 March 2012, both read directly. Supporting analysis: Thomson & Labuschaigne, SAJBL 2024;17(1); McQuoid-Mason, SAMJ 2012;102(9); Slabbert & Venter, De Jure 2019.",
               },
             ],
           },
@@ -318,16 +322,20 @@ export const advancedLevel: LevelSeed = {
                 factor: "Cancer history",
                 commonAssumption: '"Any history of cancer is an absolute bar."',
                 reality:
-                  "Active or recent solid organ or blood malignancy within five years is an absolute contraindication. A history beyond that window is assessed rather than assumed.",
+                  "There is no five-year rule in current guidance. The 2024 ISHLT guideline recommends individualised risk stratification with oncology, and supports transplantation where malignancy-related survival will not affect post-transplant survival and recurrence risk is low given tumour type, response to therapy and a negative metastatic evaluation.",
                 verdict: "depends",
+                verifiedAgainst:
+                  "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates, 2024, read directly",
               },
               {
                 id: "hiv",
                 factor: "HIV",
                 commonAssumption: '"HIV is an absolute contraindication."',
                 reality:
-                  "The absolute contraindication is stated specifically as AIDS with frequent opportunistic infections — not HIV as such. This is a good example of a criterion that is far narrower than the public assumption.",
+                  "HIV is not the contraindication. *Uncontrolled* HIV is. The 2024 ISHLT guideline advises against transplantation where there is opportunistic infection or HIV-related malignancy, no stable antiretroviral regimen, a detectable viral load, or a low CD4 count \u2014 and considers candidates with an undetectable viral load and a CD4 count above 200. A criterion far narrower than the public assumption, and worth stating precisely rather than reassuringly.",
                 verdict: "rarely-absolute",
+                verifiedAgainst:
+                  "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates, 2024, read directly",
               },
               {
                 id: "renal",
@@ -342,7 +350,7 @@ export const advancedLevel: LevelSeed = {
                 factor: "Body mass index",
                 commonAssumption: '"Weight is an automatic exclusion."',
                 reality:
-                  "Morbid obesity — BMI above 35 — and cachexia, BMI below 18, are both listed as relative contraindications. Relative means weighed, not decided.",
+                  "Both obesity and cachexia are weighed, not decisive. Older guidance published cut-offs (BMI above 35, below 18); the 2024 guideline treats body mass as one comorbidity assessed alongside the others, which is why an advocate should name the factor and never the number.",
                 verdict: "rarely-absolute",
               },
               {
@@ -401,23 +409,25 @@ export const advancedLevel: LevelSeed = {
                 id: "age",
                 label: "Age",
                 cells: {
-                  lung: "There is no endorsement of an upper age limit as an absolute contraindication, and age by itself is not considered a contraindication. Age over 65 with low physiologic reserve is relative; adults over 75 are unlikely to be candidates in most cases.",
+                  lung: "No upper age limit is endorsed as an absolute contraindication, and age alone is not one. The 2021 ISHLT consensus treats age as a risk factor rather than a threshold: the categorical \u201cover 65 with low reserve\u201d rule belongs to the 2006 and 2014 versions. Candidates over 65 are now more than 30% of the United States waiting list and the age group with the highest transplant rate, though survival falls beyond about 70.",
                   kidney: "Assessed as part of overall candidacy.",
                   liver: "Assessed as part of overall candidacy.",
                   pancreas: "Assessed as part of overall candidacy.",
                 },
-                pendingReview: true,
+                verifiedAgainst:
+                  "Leard LE, et al. Consensus document for the selection of lung transplant candidates: an update from the ISHLT. J Heart Lung Transplant 2021;40(11):1349-1379, read directly",
               },
               {
                 id: "malignancy",
                 label: "Cancer history",
                 cells: {
-                  lung: "A recent history of malignancy is an absolute contraindication. A 2-year disease-free interval may be reasonable where recurrence risk is low; 5 years is prudent in most cases, particularly for haematologic malignancy, sarcoma, melanoma, or cancers of the breast, bladder or kidney.",
+                  lung: "Malignancy with a high risk of recurrence or death is an absolute contraindication, and every candidate has age-appropriate and disease-specific cancer screening with confirmation that there is no residual or metastatic disease. Note what current guidance does *not* say: the fixed \u201ctwo years clear, five to be safe\u201d intervals come from the superseded 2014 document, and the 2021 update assesses recurrence risk individually instead.",
                   kidney: "Assessed individually.",
-                  liver: "Hepatocellular carcinoma can itself be an indication, within defined limits.",
+                  liver: "Hepatocellular carcinoma can itself be an indication, within defined limits — the Milan criteria: one lesion up to 5 cm, or up to three each up to 3 cm, with no macrovascular invasion.",
                   pancreas: "Assessed individually.",
                 },
-                pendingReview: true,
+                verifiedAgainst:
+                  "Leard LE, et al. ISHLT consensus for the selection of lung transplant candidates. J Heart Lung Transplant 2021;40(11):1349-1379, read directly (malignancy with high recurrence risk absolute; fixed disease-free intervals dropped); ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates 2024 (individualised risk stratification with oncology, no fixed interval); Milan criteria for hepatocellular carcinoma",
               },
               {
                 id: "obesity",
@@ -465,7 +475,7 @@ export const advancedLevel: LevelSeed = {
               },
               {
                 id: "t4",
-                text: "Public assumptions are often far broader than the actual criterion. The heart absolute contraindication is AIDS with frequent opportunistic infections, not HIV as such.",
+                text: "Public assumptions are often far broader than the actual criterion. HIV is not a bar to a heart transplant; uncontrolled HIV is — the 2024 guideline looks for a stable antiretroviral regimen, an undetectable viral load and a CD4 count above 200.",
               },
               {
                 id: "t5",
@@ -498,35 +508,24 @@ export const advancedLevel: LevelSeed = {
               },
               {
                 id: "s2",
-                heading: "Heart — absolute contraindications",
-                bullets: [
-                  "Systemic illness with a life expectancy under two years despite transplantation",
-                  "Active or recent solid organ or blood malignancy within five years",
-                  "AIDS with frequent opportunistic infections",
-                  "Active multisystem systemic lupus erythematosus, sarcoid or amyloidosis",
-                  "Irreversible renal or hepatic dysfunction, in patients considered for heart transplantation alone",
-                  "Significant obstructive pulmonary disease; fixed pulmonary hypertension",
-                ],
-                pendingReview: true,
+                heading: "Heart — where transplantation is not recommended",
+                body: "The 2024 ISHLT guideline does not publish a list of absolute bars. It assesses comorbidities individually, and reserves \u201cnot recommended\u201d for situations where a transplant cannot achieve its purpose. Two examples it names: active infection requiring ongoing antibiotic treatment (an infected durable LVAD excepted), and HIV that is *uncontrolled* \u2014 opportunistic infection or related malignancy, no stable antiretroviral regimen, a detectable viral load, or a low CD4 count.\n\nRead the second one carefully, because it is the opposite of the public assumption. HIV is not the bar. Uncontrolled HIV is. Candidates with an undetectable viral load and a CD4 count above 200 are considered.\n\nThis section previously carried a fixed list \u2014 including \u201cmalignancy within five years\u201d and \u201cAIDS with frequent opportunistic infections\u201d \u2014 taken from guidance now two revisions old. It was removed because current guidance explicitly moved away from that approach.",
+                verifiedAgainst:
+                  "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates, 2024, read directly",
               },
               {
                 id: "s3",
-                heading: "Heart — examples of relative contraindications",
-                bullets: [
-                  "Morbid obesity (BMI above 35) or cachexia (BMI below 18)",
-                  "Creatinine above 2.5 mg/dL or creatinine clearance below 25 mL/min",
-                  "Severe pulmonary dysfunction with FEV1 below 40% of normal",
-                  "Difficult-to-control hypertension",
-                  "Active mental illness or psychosocial instability",
-                  "Drug, tobacco or alcohol abuse within six months",
-                ],
-                pendingReview: true,
+                heading: "Heart — the factors actually assessed",
+                body: "The 2024 guideline structures candidacy around comorbidities considered one at a time and together: age, obesity, cancer, diabetes, cerebral and peripheral vascular disease, pulmonary disease, pulmonary hypertension, kidney disease, liver disease, connective tissue disease and sarcoidosis, infections and vaccination status, and psychosocial factors including substance use.\n\nOn a history of cancer specifically, it recommends collaboration with oncology for individualised risk stratification, and supports transplantation where malignancy-related survival will not affect post-transplant survival and recurrence risk is low given tumour type, response to therapy and a negative metastatic evaluation. There is no arbitrary interval to clear.\n\nThe thresholds an older version of this page listed \u2014 BMI above 35, creatinine above 2.5 mg/dL, FEV1 below 40% \u2014 are the kind of number that changes between guideline revisions. Advocates should name the factors, never the cut-offs.",
+                verifiedAgainst:
+                  "ISHLT Guidelines for the Evaluation and Care of Cardiac Transplant Candidates, 2024, read directly",
               },
               {
                 id: "s4",
                 heading: "Lung — age and malignancy",
-                body: "There is no endorsement of an upper age limit as an absolute contraindication, and age by itself should not be considered a contraindication; increasing age is generally associated with comorbidities that are themselves absolute or relative contraindications. Age over 65 with low physiologic reserve is relative, and adults over 75 are unlikely to be candidates in most cases. A recent history of malignancy is an absolute contraindication; a two-year disease-free interval may be reasonable where recurrence risk is low, and five years is prudent in most cases.",
-                pendingReview: true,
+                body: "No upper age limit is endorsed as an absolute contraindication, and age alone is not one \u2014 though older candidates have worse long-term survival, and the decline is measurable beyond about 70. The 2021 ISHLT update explicitly notes that the categorical \u201cover 65 with low physiologic reserve\u201d rule was the 2006 and 2014 position, and replaces it with a framework of interacting risk factors. Candidates over 65 are now more than 30% of the United States waiting list.\n\nOn malignancy: a cancer with a high risk of recurrence or death is an absolute contraindication, and every candidate undergoes age-appropriate and disease-specific screening with confirmation of no residual or metastatic disease. The fixed \u201ctwo years clear, five to be prudent\u201d intervals are from the superseded 2014 document and were removed from this page.\n\nThe wider point for an advocate: the 2021 update states that far fewer absolute contraindications exist now than when earlier versions were written. Any list of exclusions you were taught is probably already out of date.",
+                verifiedAgainst:
+                  "Leard LE, et al. Consensus document for the selection of lung transplant candidates: an update from the ISHLT. J Heart Lung Transplant 2021;40(11):1349-1379, read directly",
               },
             ],
           },
@@ -685,7 +684,8 @@ export const advancedLevel: LevelSeed = {
                   "Ischaemic-type intrahepatic strictures are a common indication for re-transplantation",
                   "Recipients of living-related liver transplants and of grafts donated after circulatory death are at highest risk of late biliary and vascular complications",
                 ],
-                pendingReview: true,
+                verifiedAgainst:
+                  "Reviewed 23 August 2026 against established hepatology and transplant-surgery practice: biliary stricture as the commonest late surgical complication, endoscopic management of anastomotic strictures, arterial patency assessment when a stricture is found, ischaemic-type intrahepatic strictures as a re-transplant indication, and the higher biliary and vascular risk of living-donor and DCD grafts. No figure or threshold is asserted.",
               },
               {
                 id: "s3",
@@ -729,7 +729,7 @@ export const advancedLevel: LevelSeed = {
           title: "Five things that hold under pressure",
           kind: "INTRO",
           bodyMarkdown:
-            "Two rules carry most of the weight here.\n\n**You are not a counsellor.** Recognising when a conversation has moved beyond your role — and stopping — is a skill, not a failure.\n\n**You are never obliged to win.** Someone in acute grief who feels respected by you may reconsider months later. Someone who feels pressured will not.\n\nBeyond that, five principles come directly out of the source material rather than out of intuition:\n\n1. **Decouple.** The death and the donation are separate conversations. A family must understand and accept a death before donation is raised — and it is raised by a coordinator, not by whoever delivered the news.\n2. **Do not rush.** In a single-centre study of 107 brain-dead potential donors, families who took 48 hours or more to decide consented at 73% (11 of 15), against 55% (51 of 92) among those who decided sooner — the authors\u2019 conclusion being that a delayed decision was *not inferior*, not that delay improves consent. The delayed group is small, and the study is not South African. Read it for what it supports: delay is not refusal, and patience costs nothing.\n3. **Patience and empathy are the method, not the garnish.** Accepting a diagnosis of death by neurological criteria genuinely takes time, and the guidelines make room for it — that is what *accommodation* means.\n4. **Do not assume.** It should never be assumed that because someone comes from a particular ethnic, cultural or spiritual background, donation should not be raised. That assumption removes their choice before it is offered.\n5. **The conversation has value either way.** Discussing donation as part of end-of-life care helps families independent of what they decide. You are not only recruiting donors.\n\n> **Where these come from.** The next lesson walks through **FACTS** — the Family Approach to Consent for Transplant Strategy used by transplant coordinators in South Africa. Several of the principles above are visible in it. Note carefully: FACTS is a clinical strategy for procurement coordinators, and this course teaches you to *understand* it, not to perform it.",
+            "Two rules carry most of the weight here.\n\n**You are not a counsellor.** Recognising when a conversation has moved beyond your role — and stopping — is a skill, not a failure.\n\n**You are never obliged to win.** Someone in acute grief who feels respected by you may reconsider months later. Someone who feels pressured will not.\n\nBeyond that, five principles come directly out of the source material rather than out of intuition:\n\n1. **Decouple.** The death and the donation are separate conversations. A family must understand and accept a death before donation is raised — and it is raised by a coordinator, not by whoever delivered the news.\n2. **Do not rush.** In a single-centre study of 107 brain-dead potential donors, families who took 48 hours or more to decide consented at 73% (11 of 15), against 55% (51 of 92) among those who decided sooner — the authors\u2019 conclusion being that a delayed decision was *not inferior*, not that delay improves consent. The delayed group is small, and the study is not South African. Read it for what it supports: delay is not refusal, and patience costs nothing.\n3. **Patience and empathy are the method, not the garnish.** Accepting a diagnosis of death by neurological criteria genuinely takes time, and the guidelines make room for it — that is what *accommodation* means.\n4. **Do not assume.** It should never be assumed that because someone comes from a particular ethnic, cultural or spiritual background, donation should not be raised. That assumption removes their choice before it is offered.\n5. **The conversation has value either way.** Discussing donation as part of end-of-life care helps families independent of what they decide. You are not only recruiting donors.\n\n> **Where these come from.** The next lesson walks through **FACTS** — the Family Approach to Consent for Transplant Strategy used by transplant coordinators in South Africa. Its published account names planning, interpreters, facilitating the family's own discussion and a donor pause; the staged walkthrough there is Save7's way of teaching that reasoning, not the strategy's own protocol. Several of the principles above are visible in it. Note carefully: FACTS is a clinical strategy for procurement coordinators, and this course teaches you to *understand* it, not to perform it.",
         },
         {
           slug: "hard-conversations",
@@ -952,7 +952,7 @@ export const advancedLevel: LevelSeed = {
           componentKey: "PathwayJourney",
           payload: {
             intro:
-              "When a family in South Africa is asked about donation, the conversation usually follows a structured process called **FACTS** — the Family Approach to Consent for Transplant Strategy, developed at Wits Transplant and adapted from the UK's NHS Blood and Transplant model.\n\n**Read this before you go any further.** FACTS is a clinical strategy for transplant procurement coordinators. Completing this course does not qualify you to approach a family or to request consent, and this lesson is not training to do either. You are here to understand *why* the professional conversation is built this way — because the reasoning behind it also makes you better at the conversations that genuinely are yours to have.\n\nWalk through the eight steps. For each one, note the principle underneath it.",
+              "When a family in South Africa is asked about donation, the conversation usually follows a structured process called **FACTS** — the Family Approach to Consent for Transplant Strategy, developed at Wits Transplant and adapted from the UK's NHS Blood and Transplant model.\n\n**Read this before you go any further.** FACTS is a clinical strategy for transplant procurement coordinators. Completing this course does not qualify you to approach a family or to request consent, and this lesson is not training to do either. You are here to understand *why* the professional conversation is built this way — because the reasoning behind it also makes you better at the conversations that genuinely are yours to have.\n\nWalk through the stages below. They are Save7\u2019s teaching sequence, built from the elements the published account of FACTS describes rather than a reproduction of the strategy itself. For each one, note the principle underneath it.",
             steps: [
               {
                 id: "f1",
@@ -1054,7 +1054,7 @@ export const advancedLevel: LevelSeed = {
               },
               {
                 id: "t9",
-                text: "FACTS is a coordinator's strategy, not a volunteer's script. Understanding why it is built that way is the point; performing it is not your role.",
+                text: "FACTS is a coordinator's strategy, not a volunteer's script. Understanding why it is built that way is the point; performing it is not your role — and the stages taught here are Save7's way of explaining it, not the strategy's own protocol.",
               },
             ],
           },
@@ -1095,20 +1095,10 @@ export const advancedLevel: LevelSeed = {
               },
               {
                 id: "s5",
-                heading: "The eight steps",
-                bullets: [
-                  "1. Planning — who, when, where, in which language",
-                  "2. Breaking bad news — the death, and only the death",
-                  "3. Time-out break — a designed pause before donation is raised",
-                  "4. Assessing understanding and acceptance of the loss",
-                  "5. The consent conversation — introduce, listen, answer",
-                  "6. Time-out break — the family discusses it privately",
-                  "7. Final family discussion — ask, address, respect the decision",
-                  "8. Family follow-up, feedback and support",
-                ],
-                pendingReview: true,
-                reviewSourceHint:
-                  "Verify the eight-step sequence and step names against the Organ and Tissue Donation Reference File (SATCS/Wits). The acronym, origin and purpose are confirmed by de Jager et al., SAMJ 2019;109(9) — that paper describes FACTS as a stepwise process but does not enumerate the steps, so the list itself is second-hand.",
+                heading: "How the conversation is structured",
+                body: "**What the published account of FACTS actually contains.** The paper that describes it — de Jager et al., *SAMJ* 2019;109(9) — sets out a stepwise process for procurement coordinators and names its distinctive elements: careful **planning** of the approach, the use of an **interpreter** where language requires it, deliberate **facilitation of the family\u2019s own discussion**, and a **donor pause**. It reports the result too: consent rose from 25% to 73%, and referrals from targeted hospitals by 54%.\n\nWhat it does not do is enumerate a numbered sequence of steps. An earlier version of this page listed eight, taken second-hand from an internal reference file this course cannot obtain. Rather than reproduce someone else\u2019s clinical strategy from a source that could not be checked, the list has been removed — because misstating another organisation\u2019s own protocol is worse than teaching the reasoning without it.\n\n**The structure below is Save7\u2019s teaching sequence**, built from the elements the paper does document. It is a way of understanding why the professional conversation is shaped as it is. It is not a reproduction of FACTS, and it is not a script to follow.",
+                verifiedAgainst:
+                  "de Jager M, Wilmans C, Fabian J, Botha JF, Etheredge HR. Increasing deceased organ donor numbers in Johannesburg, South Africa: 18-month results of the Wits Transplant Procurement Model. SAMJ 2019;109(9):626-631 — read in full. The paper confirms the acronym, the Wits origin, the adaptation from the UK NHSBT model, the intended users, the named elements (planning, interpreter, family discussion, donor pause) and the outcome figures. It does not enumerate steps, so no numbered sequence is presented as the strategy's own.",
               },
               {
                 id: "s6",
@@ -1134,7 +1124,7 @@ export const advancedLevel: LevelSeed = {
           componentKey: "ResourceList",
           payload: {
             intro: "The evidence behind the principles above.",
-            note: "The FACTS strategy is described in the Wits Transplant Procurement Model paper below. Its eight-step sequence is drawn from the Organ and Tissue Donation Reference File and is pending confirmation against that document.",
+            note: "The FACTS strategy is described in the Wits Transplant Procurement Model paper below, which is where every claim this module makes about it comes from. The staged walkthrough in the lesson is Save7's teaching sequence built on that account, not a reproduction of the strategy's own protocol.",
           },
         },
         { slug: "complete", title: "Complete module", kind: "COMPLETE" },
@@ -1156,7 +1146,7 @@ export const advancedLevel: LevelSeed = {
           title: "Where you started, and where you are now",
           kind: "INTRO",
           bodyMarkdown:
-            "At the beginning of this course, the goal was stated plainly: to leave feeling *I understand organ donation and transplantation well enough to confidently start a conversation about it.*\n\nYou now know who is waiting, and that one donor can give seven or more organs and improve 65 or more lives. You know where donations are lost, and that most of those losses are human rather than medical. You can explain that death is the irreversible loss of the capacity for consciousness and the capacity to breathe — and why the heart can still be beating. You know that two independent doctors certify brain death and neither may be on the transplant team. You know the statute is Chapter 8 of the National Health Act, that consent comes from next of kin, and that the family bears no costs. You know there is no age restriction for solid organ donation.\n\nAnd you have practised the conversation itself — including the versions of it that go badly.",
+            "At the beginning of this course, the goal was stated plainly: to leave feeling *I understand organ donation and transplantation well enough to confidently start a conversation about it.*\n\nYou now know who is waiting, and that one donor can save seven lives and improve up to fifty more. You know where donations are lost, and that most of those losses are human rather than medical. You can explain that death is the irreversible loss of the capacity for consciousness and the capacity to breathe — and why the heart can still be beating. You know that two independent doctors certify brain death and neither may be on the transplant team. You know the statute is Chapter 8 of the National Health Act, that consent comes from next of kin, and that the family bears no costs. You know there is no age restriction for solid organ donation.\n\nAnd you have practised the conversation itself — including the versions of it that go badly.",
         },
         {
           slug: "what-you-can-now-do",
@@ -1248,7 +1238,7 @@ export const advancedLevel: LevelSeed = {
                 id: "s2",
                 heading: "The facts worth memorising",
                 bullets: [
-                  "One donor can give seven or more life-saving organs, and improve 65 or more lives through tissue and corneas",
+                  "One donor can save seven lives through organ donation, and improve up to fifty more through tissue and corneas — the figures the ODF and ORTIDA publish",
                   "Consent from next of kin is always required",
                   "Two registered doctors certify brain death; neither may be on the transplant team; one must have five years' HPCSA registration",
                   "Death is the irreversible loss of the capacity for consciousness and the capacity to breathe",

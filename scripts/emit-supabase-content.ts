@@ -25,6 +25,17 @@ import { deriveReviewItems } from "../prisma/content/review";
 const OS = process.argv[2] ?? "../save7-os";
 const OUT = `${OS}/supabase/migrations/0094_learn_content.sql`;
 
+// A second copy, committed to this repository.
+//
+// The migration's home is save7-os, which is where `supabase db push` runs from.
+// But whoever edits the course content is working here, and the generated SQL is
+// the only artefact that carries a content change to learners — so a copy lives
+// here too, and is committed. It means the current content can be applied by
+// anyone with database access (including through the Supabase SQL editor) without
+// first having a save7-os checkout, and it makes content changes visible in this
+// repository's diffs.
+const LOCAL_OUT = "prisma/supabase/0094_learn_content.sql";
+
 const levels = [beginnerLevel, intermediateLevel, advancedLevel];
 
 /** SQL literal. Never interpolate anything into this file without going through it. */
@@ -287,22 +298,36 @@ const review = [
       claim: g.prompt,
       category: "MEDICAL" as const,
       severity: 3 as const,
-      sourceHint: "Imported from the volunteer portal's generated quiz. No source was supplied with it.",
-      notes: undefined as string | undefined,
+      status: g.verifiedAgainst ? ("APPROVED" as const) : ("NEEDS_VERIFICATION" as const),
+      sourceHint:
+        g.verifiedAgainst ??
+        "Imported from the volunteer portal's generated quiz. No source was supplied with it.",
+      notes: g.verifiedAgainst
+        ? `Keyed answer and explanation checked against: ${g.verifiedAgainst}`
+        : (undefined as string | undefined),
     })),
 ];
 
 for (const item of review) {
   counts.review++;
   out.push(`insert into learn_review_items (
-  entity_type, entity_ref, location, claim, category, severity, source_hint, notes
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
 ) values (
   ${q(item.entityType)}, ${q(item.entityRef)}, ${q(item.location)}, ${q(item.claim)},
-  ${q(item.category)}, ${item.severity ?? 1}, ${q(item.sourceHint)}, ${q(item.notes)}
+  ${q(item.category)}, ${item.severity ?? 1}, ${q(item.status ?? "NEEDS_VERIFICATION")},
+  ${q(item.sourceHint)}, ${q(item.notes)}
 ) on conflict (entity_type, entity_ref, claim) do update set
   location = excluded.location, category = excluded.category,
   severity = excluded.severity, source_hint = excluded.source_hint,
-  notes = excluded.notes;
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
 `);
 }
 
@@ -344,6 +369,16 @@ select verify_learn_isolation();
 commit;
 `);
 
-writeFileSync(OUT, out.join("\n"));
-console.log(`${OUT}`);
+const sql = out.join("\n");
+writeFileSync(LOCAL_OUT, sql);
+try {
+  writeFileSync(OUT, sql);
+  console.log(`${OUT}`);
+} catch {
+  // No save7-os checkout here. The committed copy is still written, which is the
+  // one that matters for review; applying it needs that repository or database
+  // access either way.
+  console.log(`${OUT} not writable — skipped (no save7-os checkout)`);
+}
+console.log(`${LOCAL_OUT}`);
 console.log(counts);

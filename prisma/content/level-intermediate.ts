@@ -818,14 +818,14 @@ export const intermediateLevel: LevelSeed = {
             intro:
               "The factors people most often rule themselves out for. Open each one to see the assumption people arrive with, and how the question is actually answered.",
             bottomLine:
-              "There is no age restriction for solid organ donation, and conditions like hypertension, diabetes and HIV do not automatically exclude someone. Suitability is assessed organ by organ, at the time. Nobody should be excluded from being offered the option to donate.",
+              "There is no upper age limit for solid organ donation, and hypertension, diabetes and obesity do not disqualify anyone. HIV does not exclude organ donation in South Africa — it has its own established programme — though tissue banks currently do exclude it, which is why the answer depends on what is being donated. Suitability is assessed organ by organ, at the time. Nobody should be excluded from being offered the option to donate.",
             factors: [
               {
                 id: "age-solid-organ",
                 factor: "Age — solid organs",
                 commonAssumption: '"I\'m too old to be a donor."',
                 reality:
-                  "There is no age restriction for solid organ donation. This is one of the few places where the answer really is that clear.",
+                  "There is no upper age limit for solid organ donation. Nobody is disqualified by age alone: the organs are assessed at the time of death, and that assessment is what decides. Registering has an age floor rather than a ceiling — 16 to register independently, younger with parental consent.",
                 verdict: "rarely-absolute",
               },
               {
@@ -849,7 +849,7 @@ export const intermediateLevel: LevelSeed = {
                 factor: "HIV",
                 commonAssumption: '"Being HIV positive automatically excludes donation."',
                 reality:
-                  "HIV is named alongside hypertension and diabetes as a condition under which a donor may still be eligible if individual organs are assessed as transplantable. This surprises most people, including many clinicians.",
+                  "For **organs**, no — and South Africa led the world here. Groote Schuur Hospital in Cape Town has transplanted kidneys from HIV-positive deceased donors since 2008, into recipients who are themselves HIV positive and on stable treatment with an undetectable viral load. Being HIV positive does not put someone outside donation.\n\nFor **tissue**, the answer is currently different: South African tissue banks list HIV as an exclusion, along with cancer, septicaemia and hepatitis. So the honest answer is *it depends what is being donated* — which is the module\u2019s whole point, and is why an advocate should never answer this from memory.",
                 verdict: "assessed-individually",
               },
               {
@@ -873,7 +873,7 @@ export const intermediateLevel: LevelSeed = {
                 factor: "Corneas",
                 commonAssumption: '"My eyesight is terrible, so my corneas are no use."',
                 reality:
-                  "Cornea donors are generally between 6 and 65 years old. Poor eyesight and cataracts do not disqualify a donor.",
+                  "South African tissue banks give roughly 6 to 65 years, and up to 70 in some cases. Poor eyesight and cataracts do not disqualify a donor. Corneas can be recovered after either a natural or an unnatural death, but the window is short — around 12 hours. Previous laser eye surgery, tuberculosis, lymphoma and leukaemia are contraindications.",
                 verdict: "stated-criteria",
               },
               {
@@ -881,7 +881,7 @@ export const intermediateLevel: LevelSeed = {
                 factor: "Skin and bone",
                 commonAssumption: '"Surely there\'s an age limit."',
                 reality:
-                  "Skin and bone donors are typically healthy individuals between the ages of 16 and 80, without infectious diseases or cancer.",
+                  "South African tissue banks give roughly 15 or 16 up to 80 years, for donors without cancer, septicaemia, hepatitis or HIV. The recovery window is longer than for corneas — bone up to about five days after death.",
                 verdict: "stated-criteria",
               },
               {
@@ -889,7 +889,7 @@ export const intermediateLevel: LevelSeed = {
                 factor: "Heart valves",
                 commonAssumption: '"Only adults can donate heart valves."',
                 reality:
-                  "Heart valve donors are eligible from the age of 6 months up to 55 years.",
+                  "Valve criteria are narrower than for bone or skin, and they are set by the tissue bank rather than by law — published South African criteria group heart valves with bone and skin, and paediatric valves are used where they are available. Treat any specific age range you are given as that bank\u2019s, and check it with them rather than quoting it from a course.",
                 verdict: "stated-criteria",
               },
               {
@@ -945,7 +945,7 @@ export const intermediateLevel: LevelSeed = {
                   dbd: "No age restriction for solid organ donation.",
                   dcd: "No age restriction for solid organ donation.",
                   living: "Assessed as part of the donor work-up.",
-                  tissue: "Stated ranges apply: corneas generally 6–65; skin and bone typically 16–80; heart valves 6 months to 55 years.",
+                  tissue: "Stated ranges apply, set by the tissue bank rather than by law: corneas generally 6–65 (up to 70 in some cases); skin and bone roughly 15 or 16 to 80. Heart valve limits differ between banks — ask them rather than quoting a range.",
                 },
               },
               {
@@ -984,7 +984,7 @@ export const intermediateLevel: LevelSeed = {
               },
               {
                 id: "t4",
-                text: "Tissue does have stated ranges — corneas generally 6–65, skin and bone typically 16–80, heart valves 6 months to 55 years.",
+                text: "Tissue does have stated ranges, set by the bank rather than by law — corneas generally 6–65, skin and bone roughly 15 or 16 to 80. Heart valve limits vary between banks.",
               },
               {
                 id: "t5",

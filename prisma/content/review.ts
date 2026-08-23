@@ -101,7 +101,10 @@ export function deriveReviewItems(): ReviewSeed[] {
 
           const obj = node as Record<string, unknown>;
 
-          if (obj.pendingReview === true) {
+          const verified =
+            typeof obj.verifiedAgainst === "string" ? obj.verifiedAgainst : null;
+
+          if (obj.pendingReview === true || verified) {
             const label =
               (obj.name as string) ??
               (obj.role as string) ??
@@ -120,15 +123,20 @@ export function deriveReviewItems(): ReviewSeed[] {
               claim: truncate(String(label)),
               category: categoriseFor(mod.slug),
               severity: severityFor(mod.slug),
+              status: verified && obj.pendingReview !== true ? "APPROVED" : "NEEDS_VERIFICATION",
               sourceHint: (obj.reviewSourceHint as string) ?? sourceHintFor(mod.slug),
-              notes:
-                obj.awaitingContent === true
+              notes: verified
+                ? `Checked against: ${verified}`
+                : obj.awaitingContent === true
                   ? "Body text is a placeholder awaiting the Save7 study guide."
                   : undefined,
             });
           }
 
-          if (obj.bottomLinePendingReview === true && typeof obj.bottomLine === "string") {
+          if (
+            typeof obj.bottomLine === "string" &&
+            (obj.bottomLinePendingReview === true || typeof obj.bottomLineVerifiedAgainst === "string")
+          ) {
             items.push({
               entityType: "LESSON",
               entityRef: `${ref}#bottomLine`,
@@ -136,8 +144,13 @@ export function deriveReviewItems(): ReviewSeed[] {
               claim: truncate(obj.bottomLine),
               category: categoriseFor(mod.slug),
               severity: 1,
+              status:
+                obj.bottomLinePendingReview === true ? "NEEDS_VERIFICATION" : "APPROVED",
               sourceHint: (obj.reviewSourceHint as string) ?? sourceHintFor(mod.slug),
-              notes: "Summary statement shown prominently to learners.",
+              notes:
+                typeof obj.bottomLineVerifiedAgainst === "string"
+                  ? `Shown prominently to learners. Checked against: ${obj.bottomLineVerifiedAgainst}`
+                  : "Summary statement shown prominently to learners.",
             });
           }
 
@@ -155,16 +168,19 @@ export function deriveReviewItems(): ReviewSeed[] {
 
   // Every stub resource is a citation Save7 must complete.
   for (const r of resourceSeeds) {
-    if (!r.isStub) continue;
+    if (!r.isStub && !r.verifiedAgainst) continue;
     items.push({
       entityType: "RESOURCE",
       entityRef: `resource:${r.key}`,
       location: r.moduleSlug ? `Resource · ${r.moduleSlug}` : "Resource · course-wide",
-      claim: `Incomplete citation: "${r.title}"`,
+      claim: r.isStub ? `Incomplete citation: "${r.title}"` : `Citation: "${r.title}"`,
       category: r.type === "WEBSITE" || r.title.toLowerCase().includes("act") ? "LEGAL" : "MEDICAL",
       severity: r.isRequired ? 1 : 2,
+      status: r.isStub ? "NEEDS_VERIFICATION" : "APPROVED",
       sourceHint: r.licenceNote ?? "Awaiting Save7's reference list.",
-      notes: "No author, year or identifier has been invented for this resource.",
+      notes: r.verifiedAgainst
+        ? `Checked against: ${r.verifiedAgainst}`
+        : "No author, year or identifier has been invented for this resource.",
     });
   }
 
@@ -185,9 +201,13 @@ export function deriveReviewItems(): ReviewSeed[] {
             ? "MEDICAL"
             : "MEDICAL",
       severity: q.topicTag === "law" || q.topicTag === "brain-death" ? 1 : 2,
+      status: q.verifiedAgainst ? "APPROVED" : "NEEDS_VERIFICATION",
       sourceHint:
+        q.verifiedAgainst ??
         "Derived from Save7's own course brief and stated key messages. Confirm against the study guide.",
-      notes: "Confirm the keyed correct answer and the explanation text.",
+      notes: q.verifiedAgainst
+        ? `Keyed answer and explanation checked against: ${q.verifiedAgainst}`
+        : "Confirm the keyed correct answer and the explanation text.",
     });
   }
 
