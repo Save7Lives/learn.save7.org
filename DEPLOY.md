@@ -9,6 +9,56 @@ launch-blocking in the content-review register.
 
 ---
 
+## Outstanding right now, and who can clear it
+
+Three separate deliveries, each needing a credential this repository deliberately
+does not hold. Nothing here is waiting on code.
+
+### 1. Nothing has deployed since 23 August
+
+The Pages project was created by direct upload, so the git integration never built
+anything — see `.github/workflows/deploy.yml`. Verified from outside: the live
+`main-app` chunk has not changed across four pushes, and the module page's chunk
+returns 404 while the shared vendor chunks are byte-identical to a local build.
+
+**This is what keeps the module-completion crash alive.** The fix is committed and
+has been since before the workflow existed.
+
+Two ways to clear it, either is fine:
+
+- **Fastest, no secrets.** From a checkout on a machine logged in to the Cloudflare
+  account that owns the Pages project: `npm run pages:deploy`. One command,
+  deploys everything on `main`.
+- **Durable.** Add two repository secrets so every push deploys itself —
+  `CLOUDFLARE_API_TOKEN` (Account → Cloudflare Pages → Edit) and
+  `CLOUDFLARE_ACCOUNT_ID`. Both must come from the account that owns the project.
+  Then Actions → Deploy → Run workflow.
+
+### 2. The content corrections are not in the database
+
+Course content lives in Supabase, not in the bundle, so deploying does nothing for
+it. The review corrections are in `prisma/supabase/0102_learn_content.sql`.
+
+- **Proper route:** copy it into `save7-os/supabase/migrations/` and
+  `supabase db push`.
+- **Without that checkout:** `npm run content:apply` — see
+  `scripts/apply-content.mjs`. It takes the connection string from the environment,
+  runs the file in one transaction, records the migration so a later `db push`
+  skips it, and prints the row counts. Idempotent, so a re-run is safe.
+
+### 3. The video has nowhere to live
+
+35 MB against Pages' 25 MiB per-asset limit, so it must be served from elsewhere.
+GitHub Pages needs a paid plan for a private repository; R2 needs a payment method.
+Supabase Storage needs neither.
+
+`npm run media:upload` creates a public bucket, uploads the file, verifies that it
+comes back as `video/mp4`, and prints the `MEDIA_BASE_URL` to set. It needs the
+service-role key in the environment — which must never be committed, put in
+`wrangler.jsonc`, or pasted into a chat.
+
+---
+
 ## Where this stands
 
 **The previous deploy is superseded.** It ran on Cloudflare Workers against its own

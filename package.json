@@ -12,7 +12,9 @@
     "pages:build": "next-on-pages && node scripts/strip-oversized-media.mjs",
     "pages:deploy": "npm run pages:build && wrangler pages deploy .vercel/output/static",
     "pages:dev": "npm run pages:build && wrangler pages dev .vercel/output/static",
-    "content:emit": "tsx scripts/emit-supabase-content.ts"
+    "content:emit": "tsx scripts/emit-supabase-content.ts",
+    "content:apply": "node scripts/apply-content.mjs",
+    "media:upload": "node scripts/upload-media.mjs"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^3.3.0",
@@ -29,10 +31,12 @@
     "@eslint/eslintrc": "^3.3.6",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "^15.5.2",
+    "pg": "^8.23.0",
     "server-only": "^0.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
