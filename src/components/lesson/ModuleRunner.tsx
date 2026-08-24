@@ -123,6 +123,13 @@ export function ModuleRunner({
         const result = await onComplete(levelSlug, moduleSlug);
         if (result?.error) setSaveError(result.error);
       } catch (error) {
+        // A successful completion ends in redirect(), which signals by throwing.
+        // Catching that would cancel the navigation and report a failure for a
+        // write that worked — so it is re-thrown for the framework to handle.
+        // This guard is the difference between "the fix works" and "the fix
+        // replaced a crash with a learner who can never leave the page".
+        if (isFrameworkSignal(error)) throw error;
+
         // Logged so the browser console names the cause. Next redacts server
         // error messages in production, but the digest it does print can be
         // matched against the deployment's function logs.
@@ -272,5 +279,19 @@ export function ModuleRunner({
         ) : null}
       </div>
     </div>
+  );
+}
+
+/**
+ * Whether an error is Next's own control flow rather than a real failure.
+ *
+ * `redirect()` and `notFound()` are implemented by throwing an error carrying a
+ * `digest`. Any catch around a server action call has to let those through.
+ */
+function isFrameworkSignal(error: unknown): boolean {
+  const digest = (error as { digest?: unknown } | null)?.digest;
+  return (
+    typeof digest === "string" &&
+    (digest.startsWith("NEXT_REDIRECT") || digest === "NEXT_NOT_FOUND")
   );
 }

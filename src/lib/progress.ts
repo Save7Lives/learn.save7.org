@@ -117,18 +117,33 @@ export async function completeModule(
   moduleId: string,
 ): Promise<WriteResult> {
   const supabase = await supabaseServer();
-  const { error } = await supabase.rpc("learn_complete_module", {
-    p_module_slug: moduleId,
-  });
+
+  // Tried twice. This is one HTTP call to Supabase from a Worker, and the cost of
+  // a transient failure here is a learner who finished a module and is told they
+  // did not — on a connection that may well be a phone on mobile data. One retry
+  // is cheap; the write is idempotent, so a duplicate attempt is harmless.
+  let error = (await supabase.rpc("learn_complete_module", { p_module_slug: moduleId }))
+    .error;
+  if (error) {
+    error = (await supabase.rpc("learn_complete_module", { p_module_slug: moduleId }))
+      .error;
+  }
 
   // Unlike the lesson-view write above, this one is reported back to the learner.
   // Completing a module is the deliberate act the whole module builds up to, and
   // telling somebody it is done when nothing was recorded loses their progress
   // and the completion metric with it.
   if (error) {
-    console.error("learn_complete_module failed", {
+    // Logged in full — code, details and hint, not just the message. A Postgres
+    // error code distinguishes a missing grant from a missing function from a
+    // guard inside the function itself, and that is the difference between three
+    // very different fixes.
+    console.error("learn_complete_module failed twice", {
       moduleId,
+      code: error.code,
       message: error.message,
+      details: error.details,
+      hint: error.hint,
     });
     return { ok: false, error: "We couldn't save your progress. Please try again." };
   }
