@@ -22,6 +22,9 @@
  * back, and prints the value to put in MEDIA_BASE_URL.
  */
 import { readFileSync, statSync } from "node:fs";
+import { loadSecrets } from "./load-secrets.mjs";
+
+loadSecrets();
 
 const url = (process.env.SUPABASE_URL ?? "").replace(/\/$/, "");
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -32,11 +35,11 @@ const REMOTE = "media/journey-of-a-gift.mp4";
 if (!url || !key) {
   console.error(
     "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must both be set.\n\n" +
-      "Supabase dashboard -> Project Settings -> API. Use the service_role key,\n" +
-      "and pass both in the environment rather than saving them anywhere:\n\n" +
-      "  SUPABASE_URL='https://<ref>.supabase.co' \\\n" +
-      "  SUPABASE_SERVICE_ROLE_KEY='eyJ...' \\\n" +
-      "  node scripts/upload-media.mjs\n",
+      "Put them in .env.secrets, which is git-ignored:\n\n" +
+      "  SUPABASE_URL=https://<ref>.supabase.co\n" +
+      "  SUPABASE_SERVICE_ROLE_KEY=eyJ...\n\n" +
+      "Dashboard -> Project Settings -> API -> service_role. That key bypasses row\n" +
+      "level security, so it belongs in that file and nowhere else.\n",
   );
   process.exit(1);
 }

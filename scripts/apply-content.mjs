@@ -21,6 +21,9 @@
 import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 import pg from "pg";
+import { loadSecrets } from "./load-secrets.mjs";
+
+loadSecrets();
 
 const url = process.env.SUPABASE_DB_URL;
 const file = process.argv[2];
@@ -28,9 +31,10 @@ const file = process.argv[2];
 if (!url) {
   console.error(
     "SUPABASE_DB_URL is not set.\n\n" +
-      "Supabase dashboard -> Project Settings -> Database -> Connection string -> URI.\n" +
-      "Pass it in the environment so it stays out of your shell history:\n\n" +
-      "  SUPABASE_DB_URL='postgresql://...' node scripts/apply-content.mjs <file.sql>\n",
+      "Put it in .env.secrets, which is git-ignored:\n\n" +
+      "  SUPABASE_DB_URL=postgresql://...\n\n" +
+      "Supabase dashboard -> Project Settings -> Database -> Connection string ->\n" +
+      "URI, session pooler on port 5432. Or export it for one command instead.\n",
   );
   process.exit(1);
 }
