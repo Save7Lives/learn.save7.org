@@ -22,9 +22,14 @@ import type { GateQuestionSeed } from "./types";
  * The pass mark stays the organisation's — 15 of 20 per quiz, per migration 0088,
  * and stored there rather than compiled in here.
  *
- * The twenty `clinical` items all now carry a Save7-approved disposition
- * (learn.save7.org-map#38) — citation, Source Note, or rewrite. Applying those
- * dispositions to the entries below is tracked in learn.save7.org-map#42.
+ * The twenty `clinical` items each carry a Save7-approved disposition
+ * (learn.save7.org-map#38), applied to the entries below in #42: every one names a
+ * primary source in `verifiedAgainst`, which is what the emitted register reads to
+ * mark the item APPROVED. **Do not replace one of those strings with an attestation
+ * naming no document.** Eight previously read "Reviewed 23 August 2026 against
+ * standard published listing criteria", which cleared the register while citing
+ * nothing — and under that cover `c12` and `c13` drifted onto figures from a document
+ * nobody held, away from the Weill 2015 consensus they were eventually cited to.
  */
 export const gateQuestions: GateQuestionSeed[] = [
   {
@@ -125,9 +130,9 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 6,
     prompt: "Under Extended/Marginal Criteria, which factor is evaluated on a case-by-case basis for donor organ suitability?",
-    explanation: "To expand the donor pool, organs carrying marginal factors — older donor age, comorbidities such as hypertension or diabetes, carbon monoxide poisoning, or a longer ischaemic time — are assessed case by case. Tolerable ischaemic time is organ-specific: a heart tolerates only a few hours where a kidney tolerates far longer, so a single threshold across all organs is wrong. HIV is a separate matter, not an extended-criteria comorbidity: South Africa runs an established HIV-positive donor to HIV-positive recipient programme.",
+    explanation: "To address donor scarcity, extended selection criteria are applied and individual organs are assessed for transplantability in a donor with comorbidities — the Red File names hypertension, diabetes and HIV. Extended-criteria donors have shown excellent outcomes and offer a significant survival benefit over no transplant, which is the reason the criteria exist. Tolerable ischaemic time is organ-specific: a heart tolerates only a few hours where a kidney tolerates far longer, so a single threshold across all organs is wrong. When in doubt about suitability, refer — that judgement belongs to the transplant coordinator, not to the referring team.",
     verifiedAgainst:
-      "Organ Donor Foundation donor information; Groote Schuur HIV-positive donor programme; Centre for Tissue Engineering criteria",
+      "SATCS Organ and Tissue Donation Reference File (Red File), p.20 — extended selection criteria, naming hypertension, diabetes and HIV as assessable comorbidities",
     choices: [
       { optionKey: "a", position: 0, text: "Factors such as donor age, comorbidities like hypertension or diabetes, and organ-specific ischaemic time", isCorrect: true },
       { optionKey: "b", position: 1, text: "Confirmed active tuberculosis or untreatable sepsis" },
@@ -145,7 +150,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "Which medical condition strictly excludes a patient from cornea tissue donation?",
     explanation: "Corneas can be donated despite cataracts or poor eyesight. South African tissue banks list HIV and tuberculosis as contraindications, along with the blood cancers leukaemia and lymphoma and previous laser eye surgery. Note that leukaemia is a cancer, not an infection — the two are separate categories of exclusion.",
     verifiedAgainst:
-      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
+      "SATCS Organ and Tissue Donation Reference File (Red File), p.21 — cornea selection criteria and exclusions",
     choices: [
       { optionKey: "a", position: 0, text: "HIV or tuberculosis, and blood cancers such as leukaemia or lymphoma", isCorrect: true },
       { optionKey: "b", position: 1, text: "Cataracts" },
@@ -161,11 +166,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 8,
     prompt: "What is the age criteria and major exclusion factor for heart valve donation?",
-    explanation: "Valves are excluded where the cause of death is unknown or involved direct trauma to the heart. Age limits are set by the tissue bank rather than by law and differ between banks — published South African criteria group valves with bone and skin — so quote the bank\u2019s own criteria rather than a remembered range.",
+    explanation: "South African criteria state the range plainly: deceased individuals from the age of 6 months up to and including 55 years can donate heart valves. Valves cannot be donated where death was caused by septicaemia, cancer, poisoning, blood-borne infection or trauma to the heart, or where the cause of death is unknown. Note that this range is valve-specific and much narrower than the 16-to-80-year range that applies to skin, bone, ligaments and tendons — the tissue types carry different criteria and must not be quoted interchangeably.",
     verifiedAgainst:
-      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
+      "SATCS Organ and Tissue Donation Reference File (Red File), p.21 — heart valve donation: age range and exclusions stated verbatim",
     choices: [
-      { optionKey: "a", position: 0, text: "Age limits are set by the tissue bank; valves are excluded where the cause of death is unknown or involved direct heart trauma", isCorrect: true },
+      { optionKey: "a", position: 0, text: "From 6 months up to and including 55 years; excluded where death was caused by septicaemia, cancer, poisoning, blood-borne infection or heart trauma, or the cause of death is unknown", isCorrect: true },
       { optionKey: "b", position: 1, text: "Age 16 to 80 years; excluded if the patient had hypertension" },
       { optionKey: "c", position: 2, text: "Age 6 to 65 years; excluded if the patient required cardiopulmonary resuscitation" },
       { optionKey: "d", position: 3, text: "Any age; excluded only if the donor had diabetes" },
@@ -179,9 +184,9 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 9,
     prompt: "Which ejection fraction (EF) threshold and class indicate a candidate for adult heart transplantation?",
-    explanation: "Advanced heart failure with severe functional limitation — typically NYHA class IV — is the clinical picture. Be careful with ejection fraction: a figure below 20% describes the kind of patient, but the ISHLT criteria guide listing on functional capacity (peak VO2), haemodynamics and risk scores rather than on an ejection-fraction threshold. Quoting \u201cEF under 20%\u201d as the criterion is a common error.",
+    explanation: "Advanced heart failure with severe functional limitation — persistent NYHA class IV symptoms refractory to maximal medical therapy — is the clinical picture, and the source pairs it with an LVEF <20% and a peak VO2 <12 mL/kg/min. Be careful with ejection fraction on its own: that figure describes the kind of patient, but listing is guided by functional capacity (peak VO2), haemodynamics and risk scores rather than by an ejection-fraction threshold. Quoting \u201cEF under 20%\u201d as the criterion is a common error.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
+      "Mancini D, Lietz K. Selection of cardiac transplantation candidates in 2010. Circulation 2010;122(2):173-183 — states persistent NYHA class IV refractory to maximal therapy with LVEF <20% and peak VO2 <12 mL/kg/min",
     choices: [
       { optionKey: "a", position: 0, text: "End-stage heart failure, typically NYHA class IV, with severely reduced ejection fraction", isCorrect: true },
       { optionKey: "b", position: 1, text: "NYHA class II heart failure with EF <40%" },
@@ -199,7 +204,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "What Peak VO2 metric indicates a heart transplant requirement in ambulatory patients?",
     explanation: "The ISHLT criteria are specific about the beta-blocker: a cutoff of ≤12 mL/kg/min guides listing where the patient is on one, and 14 mL/kg/min where they cannot tolerate one. In younger patients (under 50) and in women it is reasonable to use percent-predicted peak VO2 (≤50%) alongside the absolute figure. The test must be maximal — a respiratory exchange ratio above 1.05 — or the number does not mean what it appears to.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
+      "Mehra MR, Canter CE, Hannan MM, et al. The 2016 ISHLT listing criteria for heart transplantation: a 10-year update. J Heart Lung Transplant 2016;35(1):1-23 — beta-blocker conditional (≤12 on, ≤14 intolerant) and the ≤50% percent-predicted adjunct for young/female patients",
     choices: [
       { optionKey: "a", position: 0, text: "Peak VO2 ≤12 mL/kg/min on a beta-blocker, or ≤14 mL/kg/min if beta-blocker intolerant", isCorrect: true },
       { optionKey: "b", position: 1, text: "Peak VO2 between 15–20 mL/kg/min" },
@@ -215,11 +220,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 11,
     prompt: "Which pediatric conditions represent medical indications for heart transplantation?",
-    explanation: "Pediatric heart transplant indications include hypoplastic left heart syndrome, severe Ebstein anomaly, and restrictive cardiomyopathy with reactive pulmonary hypertension.",
+    explanation: "The AHA scientific statement makes restrictive cardiomyopathy an indication only where it is associated with reactive pulmonary hypertension — the qualifier carries the recommendation, so restrictive cardiomyopathy alone is not sufficient. Separately, infants with a functional single ventricle are candidates when specific anatomic findings are present: severe coronary artery stenosis or atresia, moderate-to-severe AV or semilunar valve disease, or severe ventricular dysfunction. Two commonly repeated answers do not survive the source: hypoplastic left heart syndrome is not itself a listed indication (improving staged Norwood palliation outcomes have decreased transplant as primary therapy for it), and severe Ebstein's anomaly does not appear in the statement at all.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
+      "Canter CE, Shaddy RE, Bernstein D, et al. Indications for heart transplantation in pediatric heart disease: a scientific statement from the American Heart Association. Circulation 2007;115(5):658-676 — Class I restrictive cardiomyopathy with reactive pulmonary hypertension; Class IIA functional single ventricle conditioned on anatomic findings; no Ebstein's anomaly recommendation exists",
     choices: [
-      { optionKey: "a", position: 0, text: "Hypoplastic left heart syndrome, severe Ebstein anomaly, or restrictive cardiomyopathy", isCorrect: true },
+      { optionKey: "a", position: 0, text: "Restrictive cardiomyopathy with reactive pulmonary hypertension, or a functional single ventricle with severe valve or ventricular dysfunction", isCorrect: true },
       { optionKey: "b", position: 1, text: "Patent ductus arteriosus and mild ventricular septal defect" },
       { optionKey: "c", position: 2, text: "Coarctation of the aorta without heart failure" },
       { optionKey: "d", position: 3, text: "Mild rheumatic fever without valvular stenosis" },
@@ -233,11 +238,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 12,
     prompt: "For a patient with COPD, which spirometric/clinical index criteria indicate lung transplantation?",
-    explanation: "The 2021 ISHLT consensus lists COPD patients for transplant at a BODE score of 7–10, with additional factors that may prompt listing including FEV1 below 20% predicted, moderate to severe pulmonary hypertension, a history of severe exacerbations, and chronic hypercapnia. Referral comes earlier, at BODE 5–6. The older \u201c15–20%\u201d range belongs to the 2014 document.",
+    explanation: "The ISHLT consensus lists a COPD patient for transplant on any one of: a BODE index of 7 or more, an FEV1 below 15–20% predicted, three or more severe exacerbations in the preceding year, one severe exacerbation with acute hypercapnic respiratory failure, or moderate-to-severe pulmonary hypertension. Referral comes earlier, at BODE 5–6. A BODE of 7–10 is the top band of the original 0–10 score and carries roughly 80% mortality at four years, which is what makes it the listing threshold.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
+      "Weill D, Benden C, Corris PA, et al. A consensus document for the selection of lung transplant candidates: 2014 (ISHLT). J Heart Lung Transplant 2015;34(1):1-15 — COPD 'Timing of listing' criteria quoted verbatim",
     choices: [
-      { optionKey: "a", position: 0, text: "BODE index of 7–10, with FEV1 <20% predicted among the additional factors", isCorrect: true },
+      { optionKey: "a", position: 0, text: "BODE index of 7 or more, with FEV1 <15–20% predicted among the alternative listing criteria", isCorrect: true },
       { optionKey: "b", position: 1, text: "BODE index of 3 or FEV1 <50% predicted" },
       { optionKey: "c", position: 2, text: "FEV1/FVC ratio >0.70 with mild dyspnea" },
       { optionKey: "d", position: 3, text: "BODE index of 5 with stable exertional tolerance" },
@@ -251,11 +256,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 13,
     prompt: "What rate of decline in Idiopathic Pulmonary Fibrosis (IPF) indicates lung transplant suitability?",
-    explanation: "The 2021 ISHLT listing criteria for pulmonary fibrosis are an absolute decline in FVC over 10%, or in DLCO over 10%, in the past six months despite appropriate treatment — or a >5% FVC decline with radiographic progression, desaturation below 88% on a six-minute walk, pulmonary hypertension, or hospitalisation for respiratory decline. Note the DLCO figure: 15% is the older criterion, and in the 2021 document a relative 15% DLCO decline is a *referral* trigger rather than a listing one.",
+    explanation: "The ISHLT consensus lists interstitial lung disease, including IPF, on any one of: a decline in FVC of 10% or more over six months of follow-up, a decline in DLCO of 15% or more over six months, desaturation below 88% or under 250 m on a six-minute-walk test (or a fall of more than 50 m over six months), pulmonary hypertension, or hospitalisation for respiratory decline, pneumothorax or acute exacerbation. Note the two figures differ: 10% for FVC, 15% for DLCO. A 5% FVC decline carries a poorer prognosis and may itself warrant listing.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
+      "Weill D, Benden C, Corris PA, et al. A consensus document for the selection of lung transplant candidates: 2014 (ISHLT). J Heart Lung Transplant 2015;34(1):1-15 — interstitial lung disease 'Timing of listing' criteria quoted verbatim",
     choices: [
-      { optionKey: "a", position: 0, text: "An absolute decline in FVC >10% or in DLCO >10% over 6 months despite treatment", isCorrect: true },
+      { optionKey: "a", position: 0, text: "A decline in FVC of ≥10% or in DLCO of ≥15% over 6 months of follow-up", isCorrect: true },
       { optionKey: "b", position: 1, text: "A decline in FVC of 3% over 12 months" },
       { optionKey: "c", position: 2, text: "A stable DLCO with no change in oxygen requirements" },
       { optionKey: "d", position: 3, text: "An isolated decrease in total lung capacity of 2% over 1 year" },
@@ -269,9 +274,9 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 14,
     prompt: "What MELD score threshold indicates liver transplantation for decompensated cirrhosis?",
-    explanation: "Liver transplantation is indicated for decompensated cirrhosis or fulminant hepatic failure when the MELD score reaches ≥15.",
+    explanation: "Liver transplantation is indicated for decompensated cirrhosis or fulminant hepatic failure, and MELD 15 is the point where transplant starts to help rather than harm: below it, mortality after transplant was higher than for comparable candidates left on the waiting list. 📌 Source Note: the specific \u201c≥15\u201d cutoff comes from the United States OPTN \u201cShare 15\u201d allocation policy adopted on the strength of that finding — a geographic organ-sharing rule built on the US multi-region structure, not a universal clinical threshold. MELD itself is South African practice: SA allocates deceased-donor livers sickest-first by MELD on a single combined waiting list. What has no confirmed SA equivalent is the ≥15 regional-sharing figure.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
+      "Merion RM, Schaubel DE, Dykstra DM, Freeman RB, Port FK, Wolfe RA. The survival benefit of liver transplantation. Am J Transplant 2005;5(2):307-313 (results confirmed from the published abstract; full text paywalled) — survival-benefit finding below MELD 15; the ≥15 cutoff itself is US OPTN Share 15 allocation policy, carried under a Source Note",
     choices: [
       { optionKey: "a", position: 0, text: "MELD score ≥15", isCorrect: true },
       { optionKey: "b", position: 1, text: "MELD score <8" },
@@ -287,11 +292,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 15,
     prompt: "According to the Milan Criteria for Hepatocellular Carcinoma (HCC), what tumour burden qualifies for liver transplant?",
-    explanation: "The Milan criteria define HCC liver transplant eligibility as a single tumour lesion ≤5 cm or up to three tumour lesions each ≤3 cm, with no macrovascular invasion.",
+    explanation: "The Milan criteria define HCC liver transplant eligibility as a single tumour lesion no larger than 5 cm, or up to three lesions each no larger than 3 cm. The original trial excluded patients in whom tumour invasion of blood vessels — or of lymph nodes — was evident or suspected before surgery, so nodal involvement excludes just as vascular involvement does. The nodal half is commonly dropped when the criteria are quoted from memory.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
+      "Mazzaferro V, Regalia E, Doci R, et al. Liver transplantation for the treatment of small hepatocellular carcinomas in patients with cirrhosis. N Engl J Med 1996;334(11):693-700 — size criteria and the vascular/nodal exclusion stated in the methods",
     choices: [
-      { optionKey: "a", position: 0, text: "One lesion ≤5 cm or up to three lesions each ≤3 cm", isCorrect: true },
+      { optionKey: "a", position: 0, text: "One lesion ≤5 cm or up to three lesions each ≤3 cm, with no vascular or nodal invasion", isCorrect: true },
       { optionKey: "b", position: 1, text: "One lesion ≤10 cm or five lesions each ≤5 cm" },
       { optionKey: "c", position: 2, text: "Any single lesion regardless of size as long as vascular invasion is present" },
       { optionKey: "d", position: 3, text: "Multiple lesions larger than 6 cm without lymph node involvement" },
@@ -305,9 +310,9 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 16,
     prompt: "Renal transplantation is the primary treatment of choice for which stage of kidney disease?",
-    explanation: "Renal transplantation is indicated for patients with End-Stage Renal Disease (ESRD / CKD Stage 5).",
+    explanation: "Renal transplantation is the treatment of choice for end-stage renal disease (CKD stage 5). The KDIGO guideline in fact reaches earlier than the label suggests: candidates with CKD G4–G5 (GFR below 30 mL/min/1.73 m\u00b2) expected to progress should already be informed about and considered for transplantation, referral should come 6–12 months before anticipated dialysis, and pre-emptive transplantation is recommended once eGFR falls below 10 mL/min/1.73 m\u00b2, or earlier with symptoms. Transplantation before dialysis is preferred, not a later rescue.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
+      "Chadban SJ, Ahn C, Axelrod DA, et al. KDIGO clinical practice guideline on the evaluation and management of candidates for kidney transplantation. Transplantation 2020;104(4S1):S11-S103 — Recommendations 1.1, 1.1.1 and 1.4.1; no SA-specific transplant-candidacy guideline found to diverge from it",
     choices: [
       { optionKey: "a", position: 0, text: "End-Stage Renal Disease (CKD Stage 5)", isCorrect: true },
       { optionKey: "b", position: 1, text: "CKD Stage 2 with mild proteinuria" },
@@ -323,11 +328,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 17,
     prompt: "What GCS clinical trigger score mandates referral of a potential donor by the primary medical team?",
-    explanation: "Primary medical teams are required to identify clinical triggers, such as a GCS of 4 or less (or a decision to withdraw life-sustaining therapy), and promptly refer to coordinators.",
+    explanation: "The referral trigger is a GCS of four or less in a patient with a catastrophic brain injury, not explained by sedation. Both qualifiers matter: a sedated patient can score four or less without being a potential donor, so a bare GCS number is not the trigger. The other two triggers are a decision to perform brain death testing, and a decision to withdraw organ support where death is expected. Best practice is to assess donation potential before death, so that end-of-life discussions are fully informed.",
     verifiedAgainst:
-      "de Jager et al. SAMJ 2019;109(9):626-631, and Regulation 9 for the independence of the death determination",
+      "SATCS Organ and Tissue Donation Reference File (Red File), p.17 — clinical triggers for referral, stated verbatim including both qualifiers; de Jager et al. SAMJ 2019;109(9):626-631 for the referral pathway",
     choices: [
-      { optionKey: "a", position: 0, text: "A Glasgow Coma Scale (GCS) score of 4 or less", isCorrect: true },
+      { optionKey: "a", position: 0, text: "A Glasgow Coma Scale (GCS) score of 4 or less in a patient with catastrophic brain injury, not explained by sedation", isCorrect: true },
       { optionKey: "b", position: 1, text: "A GCS score of 8" },
       { optionKey: "c", position: 2, text: "A GCS score of 12" },
       { optionKey: "d", position: 3, text: "Any change in GCS from 15 to 14" },

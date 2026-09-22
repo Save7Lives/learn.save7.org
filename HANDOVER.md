@@ -214,10 +214,26 @@ generated file. Nothing in this app shows them yet. **If it ever does, it must
 shuffle options per render** — the correct answer is option `'a'` in all forty, and
 this app renders choices by stored order. The portal survives it by shuffling.
 
-**The twenty clinical gate questions are uncited.** They assert MELD thresholds,
-peak-VO2 figures, Milan criteria and HPCSA registration rules that no supplied
-source backs. They are in the review register at severity 3, uncleared. Save7 signs
-them off or they come out — do not clear them in code.
+**The twenty clinical gate questions are cited, and Save7 has signed them off.** The
+claim that they assert figures "no supplied source backs" was audited and did not
+hold (learn.save7.org-map#34): nine already carried real citations, five more were
+stated verbatim by papers already in `public/resources/`, and there is no HPCSA
+question at all. Save7 signed off all twenty in #38, and #42 attached a named primary
+source to each in `prisma/content/questions-gate.ts`, so the register rows clear on
+the next content emit — which derives `APPROVED` from `verifiedAgainst`.
+
+That does not retire the rule in §7. What cleared these was a recorded human sign-off,
+not an agent's reading. Eight had previously been cleared by a `verifiedAgainst` string
+naming no document at all ("Reviewed 23 August 2026 against standard published listing
+criteria"), and behind that cover two of them (`c12`, `c13`) drifted onto figures from
+a document nobody held. **A citation that does not name a document you can open is not
+a citation**, and it clears the register just as effectively as a real one.
+
+**The corrected content is authored but not applied.** `prisma/supabase/0102_learn_content.sql`
+was emitted in August and never copied into save7-os, whose 0102 slot Gilbert then took
+for his own migration. Everything in it — plus #42's citations — is still unapplied, so
+the live `learn_questions` GATE rows remain the pre-August text. Re-emit against the
+current sequence rather than reusing that file's number.
 
 **Outstanding operational steps**, none of which a session can do alone: the
 Supabase Auth redirect allowlist and the Google client's JavaScript origins (both
