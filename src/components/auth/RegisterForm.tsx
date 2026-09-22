@@ -19,6 +19,23 @@ import { Button, ButtonLink } from "@/components/ui/primitives";
  * validates and throttles, and it records every attempt. See
  * save7-os/supabase/functions/register-learner.
  */
+/** Courtesy only — mirrors register-learner's own check so most under-18
+ * attempts never reach the network, but the endpoint is public and this is
+ * trivially bypassable. The refusal that actually counts is server-side. */
+function isAtLeast18(isoDate: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return false;
+  const dob = new Date(`${isoDate}T00:00:00Z`);
+  if (Number.isNaN(dob.getTime()) || dob.getTime() > Date.now()) return false;
+
+  const today = new Date();
+  let age = today.getUTCFullYear() - dob.getUTCFullYear();
+  const hadBirthdayThisYear =
+    today.getUTCMonth() > dob.getUTCMonth() ||
+    (today.getUTCMonth() === dob.getUTCMonth() && today.getUTCDate() >= dob.getUTCDate());
+  if (!hadBirthdayThisYear) age -= 1;
+  return age >= 18;
+}
+
 export function RegisterForm({ config }: { config: PublicSupabaseConfig }) {
   const [state, setState] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -29,9 +46,17 @@ export function RegisterForm({ config }: { config: PublicSupabaseConfig }) {
     setState("sending");
 
     const form = new FormData(event.currentTarget);
+    const dateOfBirth = String(form.get("dateOfBirth") ?? "");
+
+    if (!dateOfBirth || !isAtLeast18(dateOfBirth)) {
+      setState("idle");
+      setError("You must be 18 or older to register for this course.");
+      return;
+    }
+
     if (!form.get("popiaConsent")) {
       setState("idle");
-      setError("We need your consent to store your name, email and course progress.");
+      setError("We need your consent to store your name, email, date of birth and course progress.");
       return;
     }
 
@@ -48,6 +73,7 @@ export function RegisterForm({ config }: { config: PublicSupabaseConfig }) {
           firstName: form.get("firstName"),
           lastName: form.get("lastName"),
           email: form.get("email"),
+          dateOfBirth,
           popiaConsent: true,
         }),
       });
@@ -105,11 +131,26 @@ export function RegisterForm({ config }: { config: PublicSupabaseConfig }) {
         </span>
       </label>
 
+      <label className="block">
+        <span className="text-sm font-medium">Date of birth</span>
+        <input
+          name="dateOfBirth"
+          type="date"
+          required
+          max={new Date().toISOString().slice(0, 10)}
+          className="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2"
+        />
+        <span className="mt-1 block text-xs text-ink/60">
+          This course is for adults. You must be 18 or older to register — there is no
+          exception, so please use your real date of birth.
+        </span>
+      </label>
+
       <label className="flex gap-3 text-sm">
         <input type="checkbox" name="popiaConsent" className="mt-1" />
         <span>
-          I agree that Save7 may store my name, email address and course progress so that my
-          learning and certificate can be recorded.{" "}
+          I agree that Save7 may store my name, email address, date of birth and course
+          progress so that my learning and certificate can be recorded.{" "}
           <a href="/privacy" className="underline">
             How we handle your information
           </a>

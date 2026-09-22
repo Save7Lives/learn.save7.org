@@ -64,6 +64,10 @@ export default function PrivacyPage() {
                 ["Your name", "To greet you, and to print on your certificate."],
                 ["Your email address", "To sign you in. It is your account identifier."],
                 [
+                  "Your date of birth",
+                  "This course is 18+ only. We check your age when you register, and keep the date rather than just a yes/no so that check can be reviewed later.",
+                ],
+                [
                   "Your password",
                   "Stored only as a bcrypt hash. We cannot read it, and neither can anyone with database access.",
                 ],
@@ -116,8 +120,9 @@ export default function PrivacyPage() {
             social widgets or analytics scripts from other companies on this site.
           </li>
           <li>
-            <strong>No demographic profiling.</strong> We do not ask your age, race,
-            gender, religion or location.
+            <strong>No demographic profiling beyond the 18+ check.</strong> We ask your date
+            of birth because this course is for adults only, and nothing else about it. We do
+            not ask your race, gender, religion or location.
           </li>
         </ul>
       </section>
