@@ -7,74 +7,140 @@ should not: publishing the course is your decision, not mine.
 Read [Before you launch](#before-you-launch) first. There are 13 items flagged as
 launch-blocking in the content-review register.
 
+The course is a **Cloudflare Worker** again, built by `@opennextjs/cloudflare`.
+If you remember an earlier version of this guide saying the domain needed nothing
+but one CNAME at xneelo, that was true of **Pages** and is not true of **Workers**.
+[Step 9](#9-attach-your-domain) and DNS-MIGRATION.md carry the correction, and it
+is the largest change in this document.
+
 ---
 
 ## Outstanding right now, and who can clear it
 
-Three separate deliveries, each needing a credential this repository deliberately
-does not hold. Nothing here is waiting on code.
+Four things. None of them is waiting on code.
 
-### 1. Nothing has deployed since 23 August
+### 1. The Worker has never been deployed
 
-The Pages project was created by direct upload, so the git integration never built
-anything — see `.github/workflows/deploy.yml`. Verified from outside: the live
-`main-app` chunk has not changed across four pushes, and the module page's chunk
-returns 404 while the shared vendor chunks are byte-identical to a local build.
+Checked on 22 September 2026 rather than assumed:
 
-**This is what keeps the module-completion crash alive.** The fix is committed and
-has been since before the workflow existed.
+```bash
+npx wrangler deployments list --name learn
+```
+
+```
+✘ This Worker does not exist on your account. [code: 10007]
+```
+
+`https://learn.save7.workers.dev` agrees: it answers `404` with body
+`error code: 1042`, the same response `nope-does-not-exist.save7.workers.dev`
+gives. So the port back to Workers is complete in the repository and has never
+been uploaded. **Until the first deploy, that hostname serves nothing** — do not
+read it as a staging site that is already up.
+
+Nothing about development is blocked by that. `npm run dev` runs against the live
+Supabase project, and `npm run preview` builds and runs the **real Worker on
+workerd**, which is the only local thing that catches runtime-specific breakage.
+The end-to-end journey can be walked on either.
 
 Two ways to clear it, either is fine:
 
-- **Fastest, no secrets.** From a checkout on a machine logged in to the Cloudflare
-  account that owns the Pages project: `npm run pages:deploy`. One command,
-  deploys everything on `main`.
-- **Durable.** Add two repository secrets so every push deploys itself —
-  `CLOUDFLARE_API_TOKEN` (Account → Cloudflare Pages → Edit) and
-  `CLOUDFLARE_ACCOUNT_ID`. Both must come from the account that owns the project.
-  Then Actions → Deploy → Run workflow.
+- **Fastest, no credentials to arrange.** From a checkout on a machine logged in
+  to the `admin@save7.org` Cloudflare account (`npx wrangler whoami` confirms —
+  account `cab9730a43ee3fb2e8aaf3d36a25cb8d`): `npm run deploy`. One command,
+  builds and uploads.
+- **Durable.** Connect **Cloudflare Workers Builds** to the repository, so a push
+  to `main` deploys itself — see
+  [Deploying from GitHub](#deploying-from-github-recommended). No repository
+  secrets are involved either way; Workers Builds holds its own credential.
 
-### 2. The content corrections are not in the database
+Finish steps 2 to 7 before the first deploy, or the site goes up unable to reach
+its database.
+
+### 2. `learn.save7.org` currently serves the holding page, from somewhere else
+
+Checked the same day:
+
+```bash
+dig +short learn.save7.org      # transplant-alchemy.pages.dev.
+curl -sI https://learn.save7.org # 503
+```
+
+The hostname is a CNAME at xneelo pointing at the old **Pages** project, which is
+still serving `maintenance/`'s 503 holding page. Two consequences worth knowing
+before anybody expects a deploy to change what the public sees:
+
+- **`npm run deploy` will not take the site out of maintenance.** It uploads the
+  Worker; `learn.save7.org` still resolves to the Pages project. The hostname
+  moves only when the DNS question in step 9 is answered.
+- **`npx wrangler pages project list` on `admin@save7.org` returns nothing**,
+  while `transplant-alchemy.pages.dev` still serves. The most likely reading is
+  that the Pages project lives on a different Cloudflare account (the personal
+  one the first deploy used). That is unconfirmed — whoever can see both accounts
+  should confirm it, because retiring that project later needs whichever account
+  owns it.
+
+`maintenance/README.md` documents the holding page as a `wrangler pages deploy`,
+which matches where it is deployed and **not** where the course now lives. Taking
+it down is a Pages operation on that account, not a Workers one.
+
+### 3. The content corrections are not in the database
 
 Course content lives in Supabase, not in the bundle, so deploying does nothing for
-it. The review corrections are in `prisma/supabase/0102_learn_content.sql`.
+it.
 
-- **Proper route:** copy it into `save7-os/supabase/migrations/` and
+`prisma/supabase/0102_learn_content.sql` was emitted in August and never copied
+into `save7-os`, whose `0102` slot Gilbert has since taken for his own migration.
+**Do not reuse that file's number.** Re-emit against the current sequence:
+
+- **Proper route:** `npm run content:emit`, then copy the generated file into
+  `save7-os/supabase/migrations/` under the next free number, then
   `supabase db push`.
 - **Without that checkout:** `npm run content:apply` — see
-  `scripts/apply-content.mjs`. It takes the connection string from the environment,
-  runs the file in one transaction, records the migration so a later `db push`
-  skips it, and prints the row counts. Idempotent, so a re-run is safe.
+  `scripts/apply-content.mjs`. It takes the connection string from the
+  environment, runs the file in one transaction, records the migration so a later
+  `db push` skips it, and prints the row counts. Idempotent, so a re-run is safe.
 
-### 3. The video has nowhere to live
+### 4. The video has nowhere to live
 
-35 MB against Pages' 25 MiB per-asset limit, so it must be served from elsewhere.
-GitHub Pages needs a paid plan for a private repository; R2 needs a payment method.
-Supabase Storage needs neither.
+`journey-of-a-gift.mp4` is **34.6 MiB** against a **25 MiB per-file static-asset
+cap**. That cap is the same on Workers as it was on Pages — re-checked against
+Cloudflare's limits page during the port, not assumed to have improved with the
+platform.
 
-`npm run media:upload` creates a public bucket, uploads the file, verifies that it
-comes back as `video/mp4`, and prints the `MEDIA_BASE_URL` to set. It needs the
-service-role key in the environment — which must never be committed, put in
-`wrangler.jsonc`, or pasted into a chat.
+What did change is the mechanism. Pages ignored `public/.assetsignore` and needed
+a post-build strip script; **Workers honours it**, verified by serving the built
+output and watching `/media/journey-of-a-gift.mp4` return 404 while
+`/favicon.ico` returned 200. `scripts/strip-oversized-media.mjs` is therefore
+deleted, and the exclusion is one line of configuration instead of a build step.
+
+The file's home is **Supabase Storage**, public bucket `learn-media` — see
+[step 5](#5-host-the-video). `npm run media:upload` creates the bucket, uploads
+the file, verifies it comes back as `video/mp4`, and prints the `MEDIA_BASE_URL`
+to set. It needs the service-role key in the environment, which must never be
+committed, put in `wrangler.jsonc`, or pasted into a chat.
 
 ---
 
 ## Where this stands
 
-**The previous deploy is superseded.** It ran on Cloudflare Workers against its own
-D1 database with password sign-in. Both are gone: the app is built for Cloudflare
-Pages, and the backend is the Save7 Supabase project. What was deployed at
-the old `workers.dev` hostname no longer matches this repository.
-
 | | Status |
 |---|---|
-| Build target | Cloudflare Pages, via `@cloudflare/next-on-pages` |
+| Build target | Cloudflare **Workers**, via `@opennextjs/cloudflare` 1.20.6 |
+| Framework | Next **16.3.6**, React 19.2.8 |
+| Worker | `learn`, on the `admin@save7.org` account (`cab9730a43ee3fb2e8aaf3d36a25cb8d`) |
+| Hostname once deployed | `https://learn.save7.workers.dev` — the account's workers.dev subdomain is `save7` |
 | Backend | The Save7 Supabase project — the same one the OS and the volunteer portal use |
 | Database migrations | `save7-os/supabase/migrations/0091`–`0098` |
 | Sign-in | Google, verified by Supabase. No passwords, no `AUTH_SECRET` |
-| Registration endpoint | `register-learner`, needs deploying — step 3 |
-| **Video** | **Not hosted. R2 is deferred until Save7's own bank details are used. See step 5.** |
-| Custom domain | Not attached. `learn.save7.org` needs a DNS move first — see step 9 |
+| Registration endpoint | `register-learner`, needs redeploying for the new allow-list — step 3 |
+| **Video** | **Not hosted.** Supabase Storage, bucket `learn-media` — step 5 |
+| Custom domain | Not attached, and **no longer a single CNAME edit** — step 9 |
+
+The `@cloudflare/next-on-pages` adapter capped Next at 15.5.2, which is what made
+the version problem intractable on Pages. `@opennextjs/cloudflare` peers at
+`>=15.5.24 <16 || >=16.3.3` — a **floor**, not a ceiling — so patches can be taken
+as they land. The floor is where the September 2026 AVIF image-optimization RCE
+(GHSA-2xp9-vwfh-vxw4, CVSS 9.5) was fixed. Do not drop below it.
 
 ---
 
@@ -82,9 +148,10 @@ the old `workers.dev` hostname no longer matches this repository.
 
 | | Status |
 |---|---|
-| Builds for Pages | Verified from a clean checkout: `npm ci` then `npm run pages:build`, no `.env` needed |
-| Runs on `workerd` | Verified — the real runtime, not an emulator |
+| Builds for Workers | `npm ci` then `npm run cf:build` from a clean checkout, no `.env` needed |
+| Runs on `workerd` | `npm run preview` — the real runtime, not an emulator |
 | Type and lint | `tsc --noEmit` and `eslint` clean |
+| `.assetsignore` is honoured | Served the built output: the video 404s, `/favicon.ico` serves |
 | Answer-key isolation | Enforced by the database: `learn_choices` has no policy, and `verify_learn_isolation()` asserts it |
 | Content load | 0094's probe asserts all six counts and the one-correct-answer invariant |
 
@@ -92,11 +159,13 @@ the old `workers.dev` hostname no longer matches this repository.
 
 | | |
 |---|---|
+| Anything on production | The Worker does not exist yet. Every claim below about deployed behaviour is about what the configuration says, not what a live site has done. |
 | The end-to-end journey | The 53-assertion suite drove the old SQLite database and was removed with it. Nothing equivalent runs against Supabase yet. |
-| Google sign-in on production | The flow is the volunteer portal's, unchanged, but it has not been walked on this hostname |
+| Google sign-in on production | The flow is the volunteer portal's, unchanged, but it has not been walked on a `workers.dev` hostname |
 | Marking against real data | The rules moved into SQL functions whose probes are structural, not behavioural |
+| Workers Builds | The connection has never been made. The settings in the next section are what the configuration implies, not what a build has run. |
 
-That first row is the real gap. The rules it used to check — the baseline being
+The journey row is the real gap. The rules it used to check — the baseline being
 once-only, unanswered counting as incorrect, only attempt 1 counting — are now
 stated in migrations 0097 and 0098 and enforced there, but nothing exercises them
 end to end.
@@ -105,68 +174,47 @@ end to end.
 
 ## Deploying from GitHub (recommended)
 
-Cloudflare Workers Builds watches a GitHub repository and redeploys on every push.
-That is better than deploying from a laptop: the deploy is reproducible, there is a
-record of what shipped, and it does not depend on one person's machine.
+Cloudflare **Workers Builds** watches a GitHub repository and redeploys on every
+push. That is better than deploying from a laptop: the deploy is reproducible,
+there is a record of what shipped, and it does not depend on one person's machine.
 
-The code is already committed on the `main` branch. What is left needs your GitHub
-and Cloudflare accounts.
-
-### Make the repository private
-
-**Recommended: private.** Two reasons, both concrete:
-
-1. `public/resources/` holds ten third-party academic PDFs — ISHLT consensus
-   documents, SAMJ papers, the SATCS reference file. Save7 was given them for the
-   course; a public repository republishes them, which is a different thing from
-   citing them.
-2. Module 9's legal content and Module 10's clinical criteria have not been
-   reviewed yet. A public repository is a public claim.
-
-Nothing about the build requires a public repository, so private costs you nothing.
-
-### Push it
-
-The `gh` CLI is not installed on this machine, so create the repository through
-github.com — **New repository**, name it `transplant-alchemy`, set it **Private**,
-and do **not** add a README, licence or `.gitignore` (the repo already has them).
-
-Then:
-
-```bash
-git remote add origin https://github.com/<your-org>/transplant-alchemy.git
-```
-
-```bash
-git push -u origin main
-```
-
-GitHub will ask for a username and password; the "password" is a **personal access
-token**, not your account password (github.com → Settings → Developer settings →
-Personal access tokens → Fine-grained tokens, with Contents: read and write). macOS
-will store it in your keychain, so this is once-only.
+`.github/workflows/build.yml` deliberately does **not** deploy. It runs `npm ci`,
+`typecheck`, `lint` and `cf:build` as gates on every push and pull request, and
+nothing else — two systems deploying the same Worker would race. A red build here
+is the signal; the deploy is Cloudflare's job.
 
 ### Connect Cloudflare to the repository
 
-Cloudflare dashboard → **Workers & Pages** → **Create** → **Pages** → **Connect to
-Git**. Authorise GitHub, pick `transplant-alchemy`, then set:
+The repository is `zzubyr7x/learn.save7.org`, **renamed from
+`transplant-alchemy`**. That rename is the first thing to check: if a Git
+connection was ever made under the old name, confirm it survived — a connection
+pointing at a repository name that no longer exists is the kind of thing that
+fails quietly, by simply never building. **This is an open question, not a known
+problem.** Nobody has looked.
+
+Cloudflare dashboard → **Workers & Pages** → the `learn` Worker → **Settings** →
+**Builds** → connect the repository, then:
 
 | Setting | Value |
 |---|---|
-| Build command | `npm run pages:build` |
-| Build output directory | `.vercel/output/static` |
 | Branch | `main` |
-| Compatibility flags | `nodejs_compat` |
+| Build command | `npm run cf:build` |
+| Deploy command | `npx wrangler deploy` |
+| Root directory | the repository root |
 
-`nodejs_compat` is not optional: the Next server needs Node built-ins (crypto,
-buffer, async_hooks) even on the edge runtime.
+`cf:build` produces `.open-next/worker.js` and `.open-next/assets`, and
+`wrangler.jsonc` names both, so the deploy step needs no arguments. There are no
+compatibility flags to set in the dashboard either — `nodejs_compat` and
+`global_fetch_strictly_public` are in `wrangler.jsonc`, which is where Workers
+reads them from. `nodejs_compat` is not optional: the Next server needs Node
+built-ins (crypto, buffer, async_hooks).
 
 **Finish steps 2 to 7 below before the first build**, or the deploy will serve a
 site that cannot reach its database. Cloudflare reads `wrangler.jsonc` from the
-repository, so the Supabase values and the URLs must be committed:
+repository, so the Supabase values must be committed:
 
 ```bash
-git commit -am "Point wrangler at the Supabase project and the domain"
+git commit -am "Point wrangler at the Supabase project"
 ```
 
 ```bash
@@ -175,6 +223,20 @@ git push
 
 There is no secret to set. Every value the app needs is public by design — see
 step 6 — and the service-role key must never be added.
+
+### Keep the repository private
+
+Two reasons, both concrete:
+
+1. `public/resources/` holds ten third-party academic PDFs — ISHLT consensus
+   documents, SAMJ papers, the SATCS reference file. Save7 was given them for the
+   course; a public repository republishes them, which is a different thing from
+   citing them.
+2. Module 9's legal content and Module 10's clinical criteria have not been
+   reviewed yet. A public repository is a public claim.
+
+Nothing about the build requires a public repository, and Workers Builds works on
+a private one, so private costs you nothing.
 
 ### After that
 
@@ -193,6 +255,17 @@ Do these regardless of whether you deploy from GitHub or from your laptop.
 ```bash
 npx wrangler login
 ```
+
+```bash
+npx wrangler whoami
+```
+
+The second one matters more than it looks. The Worker must land on
+`admin@save7.org` (`cab9730a43ee3fb2e8aaf3d36a25cb8d`), because that account's
+`workers.dev` subdomain is `save7` — which is what makes the hostname
+`learn.save7.workers.dev` rather than something on a personal account. Deploying
+while logged in as somebody else produces a working site at the wrong address,
+and every allow-list in step 6b then names the wrong host.
 
 ### 2. Apply the database
 
@@ -233,6 +306,20 @@ has to work before anybody can sign in:
 cd ../save7-os && supabase functions deploy register-learner
 ```
 
+**This needs doing again even if you deployed it in August.** The function's CORS
+allow-list was rewritten for Workers and the change is in the repository, not in
+the deployed function. It now matches:
+
+```
+^https://([a-z0-9]+-)?learn\.save7\.workers\.dev$
+```
+
+Note the shape, because it is not the Pages shape. `wrangler versions upload`
+publishes a per-version hostname that **hyphenates onto the same label** —
+`<version-prefix>-learn.save7.workers.dev` — where a Pages preview added a
+subdomain. It is deliberately not `*.workers.dev`, which would admit every Worker
+on the internet.
+
 Set the throttle salt while you are there. Without it the function falls back to
 the service key, which works but is not the intended state:
 
@@ -255,56 +342,45 @@ It confirms row level security is on for every `learn_*` table, that
 
 ### 5. Host the video
 
-The 35 MB video is over Cloudflare's 25 MiB per-asset limit, so the build strips it
-out (`scripts/strip-oversized-media.mjs`) and production serves it from its own
-hostname. Two ways to do that.
+The video is 34.6 MiB and a single static asset may be 25 MiB, so it cannot ship
+in the bundle. `public/.assetsignore` keeps `media/*` out of the upload — Workers
+reads that file, which is why there is no strip script any more.
 
-**Now: GitHub Pages.** R2 needs a payment method on the Cloudflare account, and
-that waits for Save7's bank details rather than a personal card, so in the meantime
-the file is published from this repository's orphan **`media` branch** via GitHub
-Pages — a different product from the Cloudflare Pages hosting the course. The
-branch already exists and holds the video; publishing it is one setting, and note
-that Pages on a private repository needs a paid GitHub plan. Full instructions,
-including why `raw.githubusercontent.com` cannot be used, are in
-**MEDIA-HOSTING.md**. It ends with one line in `wrangler.jsonc` and a deploy.
-
-**Later: R2.** The better home — free egress, a real CDN, and no soft bandwidth
-limit to think about. Switching is the same single variable.
-
-Neither is urgent for the rest of the site to work. With no host configured,
-`src/lib/media.ts` removes the video path and Module 5 renders the player's "not
-hosted yet" state, listing the chapters and saying plainly that the film is
-finished but not yet uploaded. That is deliberate — a `<video>` pointing at a
-missing file would look like a bug in the site.
-
-When the Cloudflare account is ready for R2 (the bucket below happens to share its
-name with the GitHub media repository; they are unrelated):
+**Supabase Storage, public bucket `learn-media`.** That is the decision on the
+map, and it replaces two earlier plans that are both superseded: **R2** (needs a
+payment method on the Cloudflare account, which was waiting on Save7's bank
+details) and **GitHub Pages from the orphan `media` branch** (needs a paid GitHub
+plan for a private repository). Neither is the route any more. MEDIA-HOSTING.md
+still describes the GitHub Pages route and has not been updated.
 
 ```bash
-npx wrangler r2 bucket create save7-media
+npm run media:upload
 ```
 
-Upload the video:
+It creates the bucket, uploads the file, checks that it comes back as
+`video/mp4` — a wrong content type is exactly how this fails, silently, in a
+`<video>` element — and prints the `MEDIA_BASE_URL` to uncomment in
+`wrangler.jsonc`. It reads the service-role key from the environment; see
+`scripts/load-secrets.mjs`. That key must never be committed or put in
+`wrangler.jsonc`.
+
+Then redeploy, so the Worker picks up the new variable:
 
 ```bash
-npx wrangler r2 object put save7-media/media/journey-of-a-gift.mp4 --file=public/media/journey-of-a-gift.mp4 --remote
+npm run deploy
 ```
 
-Then, in the Cloudflare dashboard, give the bucket a public hostname (R2 → your
-bucket → Settings → Public access; either the r2.dev subdomain or a custom domain
-such as `media.save7.org`). Put that hostname in `wrangler.jsonc` as
-`MEDIA_BASE_URL`, with no trailing slash.
-
-Then redeploy, so the deployment picks up the new variable. Nothing else changes —
-the video path lives in the lesson content already.
-
-**Until one host or the other is configured, Module 5 has no video.** R2's free
-tier covers 10 GB and egress is free, so this file will not cost anything to serve
-— the payment method is only there because R2 requires one to be on file.
+**Until the bucket is serving, Module 5 has no video, and that is a designed
+state rather than a broken one.** With `MEDIA_BASE_URL` unset, `src/lib/media.ts`
+drops the path and the player renders its "not hosted yet" state, listing the
+chapters and saying plainly that the film is finished but not yet uploaded. A
+`<video>` pointing at a missing file would look like a bug in the site. Do not set
+the variable before the object actually serves — that is the one way to get the
+dead player instead of the honest placeholder.
 
 ### 6. Set the Supabase variables
 
-Three values, in `wrangler.jsonc` under `vars`, replacing the `SAVE7_` placeholders:
+Three values, in `wrangler.jsonc` under `vars`:
 
 | Variable | Where it comes from |
 | --- | --- |
@@ -312,7 +388,15 @@ Three values, in `wrangler.jsonc` under `vars`, replacing the `SAVE7_` placehold
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the same page |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | the volunteer portal's Google client id |
 
-**None of these is a secret, and none of them goes in `wrangler pages secret`.**
+**There is one `vars` block now, not two.** Pages needed a separate `env.preview`
+block because it built preview branches as separate deployments with their own
+variables, and an edit that reached only one of them was a real trap — the
+Supabase values once landed in `env.preview` alone, so previews worked and
+production would have thrown on `/login`. Workers previews are **versions of this
+same Worker** and inherit these vars. Do not reintroduce a second block without a
+reason.
+
+**None of these is a secret, and none of them goes in `wrangler secret put`.**
 The anon key is public by design and grants nothing on its own; a Google client id
 appears in every page that uses Google sign-in. Row level security is what protects
 the data — see `verify_learn_isolation()` in step 4.
@@ -322,21 +406,22 @@ cookie: the Supabase cookie is the session, and it carries the JWT that row leve
 security reads. If you are looking for it because an older copy of this guide
 mentioned it, it is gone along with password sign-in.
 
-⚠️ **Never put the service-role key in this file or in the Pages project.** It
-bypasses every policy, and `wrangler.jsonc` is committed to the repository. The app
-does not need it and must not have it.
+⚠️ **Never put the service-role key in this file or in the Worker.** It bypasses
+every policy, and `wrangler.jsonc` is committed to the repository. The app does
+not need it and must not have it.
 
 ### 6b. Let Google and Supabase know the hostname
 
 **Both of these fail silently, and this is the step most likely to be missed.**
 Sign-in has two paths and each one has its own allow-list, held in a different
-console.
+console. Moving to Workers changed the hostname, so both lists need editing again.
 
-**Supabase → Authentication → URL Configuration.** Add the hostname to the redirect
-allow-list, and set it as the Site URL if the course is the primary site for it:
+**Supabase → Authentication → URL Configuration.** Add the hostname to the
+redirect allow-list, and set it as the Site URL if the course is the primary site
+for it:
 
 ```
-https://transplant-alchemy.pages.dev
+https://learn.save7.workers.dev
 https://learn.save7.org
 http://localhost:4327
 ```
@@ -345,37 +430,43 @@ Without this, `signInWithOAuth` — the fallback path — returns the learner to
 refused redirect after they have already approved the Google prompt.
 
 **Google Cloud console → the volunteer portal's OAuth client → Authorised
-JavaScript origins.** Add the same hostnames, **appending rather than replacing**:
-that client is what `volunteers.save7.org` signs in with, and clearing an existing
-entry breaks the portal.
+JavaScript origins.** Add the same hostnames, **appending rather than
+replacing**: that client is what `volunteers.save7.org` signs in with, and
+clearing an existing entry breaks the portal.
 
 Without this, Identity Services still draws a perfectly convincing button and 403s
 an iframe request the moment it is pressed — a failure the page cannot observe, and
 the reason the "Continue with Google" fallback is never hidden.
 
-⚠️ **The registration endpoint has a third allow-list of its own.** `register-learner`
-names its permitted origins in code, currently `learn.save7.org`,
-`transplant-alchemy.pages.dev` and localhost. If your Pages project ends up with a
-different name, that list needs the new hostname and a redeploy — it is not a
-wildcard, deliberately, because that endpoint is the one thing anybody can call
-without a token.
+⚠️ **The registration endpoint has a third allow-list of its own**, in code, and
+it has already been updated — but the function still needs redeploying, which is
+step 3. It is deliberately not a wildcard, because that endpoint is the one thing
+anybody can call without a token.
+
+Per-version preview hostnames are covered by the regex in step 3, so a
+`wrangler versions upload` preview signs in without further edits. The Supabase
+and Google lists are exact strings and are not: a preview hostname pasted into a
+browser will hit the redirect allow-list. That is expected, and the reason to walk
+the journey on the deployed Worker rather than on a version preview.
 
 ### 7. Set the public URL
 
-Done — `wrangler.jsonc` sets both `SITE_URL` and `NEXT_PUBLIC_SITE_URL` to
-`https://transplant-alchemy.zubayyrparak.workers.dev`.
+`wrangler.jsonc` sets both `SITE_URL` and `NEXT_PUBLIC_SITE_URL` to
+`https://learn.save7.workers.dev`.
 
-That is the pages.dev hostname rather than `learn.save7.org`, deliberately: it
-is the one that resolves today, so a certificate issued now carries a link that
-works. Pointing it at the intended domain before that domain exists would print
-dead links onto real certificates, which cannot be corrected after the fact
-without reissuing them.
+That is the `workers.dev` hostname rather than `learn.save7.org`, deliberately:
+it is the one that will answer as soon as the Worker is deployed, whereas
+`learn.save7.org` still points at the old Pages project and cannot be moved
+without the decision in step 9. A certificate issued now should carry a link that
+works. Pointing this at the intended domain before that domain reaches this Worker
+would print dead links onto real certificates, which cannot be corrected after the
+fact without reissuing them.
 
 `SITE_URL` is the one that takes effect. Next inlines `NEXT_PUBLIC_` variables
 into the bundle when it builds, and on Cloudflare the build happens before deploy
 variables are applied, so a public variable would freeze whatever the build
 machine had. `SITE_URL` is read at runtime, which means changing the domain is a
-config change and a redeploy, not a rebuild.
+config change and a deploy, not a rebuild.
 
 **Changing the domain later is this one line and a deploy, with no rebuild:**
 
@@ -383,13 +474,14 @@ config change and a redeploy, not a rebuild.
 npx wrangler deploy
 ```
 
-`SITE_URL` is read at runtime, so the built bundle does not depend on it. Verified
-by doing exactly that: the variable was changed and deployed without rebuilding,
-and a certificate on production then printed the new host.
+This was verified on the Pages build by doing exactly that — the variable was
+changed and deployed without rebuilding, and a certificate on production then
+printed the new host. The mechanism is the same on Workers, but it has not been
+repeated here, because nothing has been deployed yet.
 
 ### 8. Deploy
 
-If you connected GitHub, push instead — Cloudflare builds and deploys:
+If you connected Workers Builds, push instead — Cloudflare builds and deploys:
 
 ```bash
 git push
@@ -398,43 +490,71 @@ git push
 Or deploy straight from this machine:
 
 ```bash
-npm run pages:deploy
+npm run deploy
 ```
+
+That runs `opennextjs-cloudflare build` and then the upload. To put a version up
+without promoting it to the live hostname:
+
+```bash
+npx wrangler versions upload
+```
+
+which prints a `<version-prefix>-learn.save7.workers.dev` URL. That is the
+hostname the CORS regex in step 3 exists for.
 
 ### 9. Attach your domain
 
-**No nameserver move is needed.** Earlier versions of this guide said otherwise, and
-that was right at the time: the course was a Cloudflare **Worker**, and a Worker can
-only answer on a hostname whose zone is in the Cloudflare account. On **Pages**, a
-custom domain on a *subdomain* works with external DNS.
+**This is where Workers differs from Pages, and the difference is not small.**
 
-DNS for `save7.org` stays at **xneelo**. Nothing about email, the SPF and DMARC
-records, or the apex on Vercel changes — which removes the whole class of risk the
-migration plan was written to manage.
+An earlier version of this guide said no nameserver move was needed. That was
+correct for **Pages**, which will serve a custom domain on a subdomain with the
+zone left at an external provider. **Workers reinstates the requirement**, and the
+single-CNAME plan recorded here and in DNS-MIGRATION.md — *Gilbert repoints one
+CNAME at xneelo* — **does not work**. Checked against Cloudflare's documentation
+on 22 September 2026:
 
-**Order matters**, and reversing it breaks resolution:
+- A **Workers Custom Domain** needs an active Cloudflare zone, and Cloudflare is
+  explicit that you cannot create one
+  "on a hostname with an existing CNAME DNS record or on a zone you do not own"
+  ([docs](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)).
+  Both halves bite here: the zone is at xneelo, and `learn.save7.org` *is* an
+  existing CNAME today.
+- A **Workers Route** needs an active zone plus a proxied, orange-clouded record
+  on Cloudflare
+  ([docs](https://developers.cloudflare.com/workers/configuration/routing/routes/)).
+- **Partial (CNAME) zone setup**, which would let Cloudflare serve one hostname
+  while xneelo keeps the zone, is a **Business or Enterprise** feature
+  ([docs](https://developers.cloudflare.com/dns/zone-setups/partial-setup/)).
+  Not available on Free.
+- **Subdomain setup / delegation** is **Enterprise** only
+  ([docs](https://developers.cloudflare.com/dns/zone-setups/subdomain-setup/)).
 
-1. **Cloudflare first.** Workers & Pages → `transplant-alchemy` → Custom domains →
-   Set up a custom domain → `learn.save7.org`. Cloudflare's docs: adding the CNAME
-   *before* associating the domain here "will result in your domain failing to
-   resolve".
-2. **Then xneelo.** konsoleH → DNS zone for `save7.org` → Add DNS record: type
-   **CNAME**, host **`learn`** (xneelo appends the domain), points to
-   **`transplant-alchemy.pages.dev`**, TTL 300 while testing. **No A record** —
-   Pages needs the CNAME so it can change its own IPs.
-3. Wait for validation and the certificate. `dig +short learn.save7.org` shows
-   propagation.
+This project has a zero budget, so that leaves two free routes, and choosing
+between them is **not a decision this repository can make**:
 
-`SITE_URL` and `NEXT_PUBLIC_SITE_URL` are already set to `https://learn.save7.org`
-in `wrangler.jsonc`, so **deploy only after the domain resolves** — certificate
-verification links are built from it, and a dead link printed on a real certificate
-is worse than an ugly hostname. Previews deliberately keep the `pages.dev` alias.
+1. **Move the `save7.org` zone's nameservers to Cloudflare.** Free, and the
+   normal way to do this. But it is a whole-zone move: every record — mail, SPF,
+   DMARC, the apex on Vercel, `os.save7.org`, `volunteers.save7.org` — moves with
+   it. That makes it **Gilbert's decision, not ours**, and DNS-MIGRATION.md holds
+   the captured zone and the procedure.
+2. **Cloudflare for SaaS custom hostnames.** Available on Free (100 hostnames
+   included, then $0.10 each) and a Worker can be the origin
+   ([docs](https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/plans/)).
+   It does not need `save7.org` on Cloudflare — but it does need **some other
+   domain** whose nameservers point at Cloudflare to act as the SaaS zone.
+   Whether Save7 has a spare domain is not known here.
 
-Then the two allow-lists in step 6b need `https://learn.save7.org` as well.
+**Nothing is blocked while this is open.** Once the Worker is deployed,
+`https://learn.save7.workers.dev` serves the whole course, sign-in included, and
+the end-to-end journey can be walked there. `SITE_URL` already names it, so
+certificates issued in the meantime carry a link that works. Moving to
+`learn.save7.org` later is a `wrangler.jsonc` edit and a deploy, not a rebuild.
 
-The apex `save7.org` would still need a nameserver move, and DNS-MIGRATION.md keeps
-that procedure and the captured zone for that case.
+DNS-MIGRATION.md is the document for this. Read it before touching anything at
+xneelo.
 
+---
 
 ## Changing the database schema after launch
 
@@ -466,28 +586,34 @@ Two ways, and the first is better.
 ### Through the repository (recommended)
 
 Connect Workers Builds to the GitHub repository (see
-[Deploying from GitHub](#deploying-from-github-recommended)). Deploys then run under
-your Cloudflare account, triggered by merges to `main`.
+[Deploying from GitHub](#deploying-from-github-recommended)). Deploys then run
+under your Cloudflare account, triggered by merges to `main`.
 
-Once that is set up, a collaborator with **Write access on GitHub** can change where
-the course lives without ever holding your Cloudflare credentials:
+Once that is set up, a collaborator with **Write access on GitHub** can change
+where the course lives without ever holding your Cloudflare credentials:
 
 1. Uncomment the `routes` block in `wrangler.jsonc` and set the hostname
 2. Set `SITE_URL` and `NEXT_PUBLIC_SITE_URL` to the same origin
 3. Open a pull request
 
-You review it, merge it, and the deploy attaches the domain and issues the
-certificate. The change is visible, reversible, and recorded — which clicking in a
-dashboard is not. They cannot see learner data or touch the database — that lives on
-the Supabase project, which this repository has no privileged access to.
+You review it, merge it, and the deploy attaches the domain. The change is
+visible, reversible, and recorded — which clicking in a dashboard is not. They
+cannot see learner data or touch the database; that lives on the Supabase project,
+which this repository has no privileged access to.
 
-**This is the whole reason the hostname is configuration rather than a dashboard
-setting.** `SITE_URL` is read at runtime, so no rebuild is involved either.
+**That route only exists because the course is a Worker again.** A Pages custom
+domain could only be attached in the dashboard. On Workers the hostname is
+declarable in `wrangler.jsonc`, which is the whole reason the hostname is
+configuration rather than a dashboard setting. `SITE_URL` is read at runtime, so
+no rebuild is involved either.
+
+It presupposes the zone is on Cloudflare. Until then the `routes` block claims a
+hostname this Worker does not serve, which is why it is commented out.
 
 ### Through the Cloudflare account
 
-Only if they genuinely need dashboard access — enabling R2, reading logs, managing
-DNS records directly:
+Only if they genuinely need dashboard access — reading logs, managing DNS records
+directly, connecting Workers Builds:
 
 Cloudflare dashboard → **Manage Account** → **Members** → **Invite**. Grant the
 narrowest role that fits, rather than Super Administrator:
@@ -495,8 +621,8 @@ narrowest role that fits, rather than Super Administrator:
 | They need to | Role |
 |---|---|
 | Deploy Workers, attach domains | Workers Admin |
-| Manage DNS for save7.org | DNS |
-| Enable and manage R2 | Workers Admin (covers R2) |
+| Manage DNS for save7.org, once the zone is there | DNS |
+| Manage R2 or other storage | Workers Admin |
 | Everything except billing and member management | Administrator |
 
 Super Administrator can remove you, change billing, and delete the account. There is
@@ -510,11 +636,11 @@ that the Supabase project also holds the organisation's books.
 
 ### The part neither option solves
 
-`learn.save7.org` cannot be attached by anyone — you, a collaborator, or me — until
-the apex `save7.org` is on Cloudflare, which needs the registrar login at **xneelo**
-to change nameservers. `learn.save7.org` does **not** need it — a Pages custom
-domain on a subdomain works with the zone left at xneelo, which is what step 9 now
-describes.
+`learn.save7.org` cannot be pointed at this Worker by anyone — you, a
+collaborator, or me — while the zone is authoritative at xneelo. That is not a
+permissions problem inside Cloudflare; it is the platform requirement in step 9.
+Whoever holds the registrar and zone access at xneelo, and whoever gets to decide
+that every other `save7.org` record moves, is the person this is waiting on.
 
 ---
 
@@ -527,16 +653,16 @@ deleted and reinserted would take every answer ever recorded against it, and the
 improvement figures with them.
 
 1. Edit the files in `prisma/content/`
-2. `npm run content:emit` — regenerates `save7-os/supabase/migrations/0094_learn_content.sql`
+2. `npm run content:emit` — regenerates the content migration
 3. `cd ../save7-os && supabase db push`
+
+The generated migration upserts on stable authoring keys. It never touches learner
+accounts, attempts, progress or certificates, and it never resets a review decision
+already recorded — so signing off a claim survives every future deploy.
 
 The admin reseed endpoint is gone. It re-seeded the course from the running app,
 which is not possible now that content arrives as SQL — the trade is that a content
 change is slower and is reviewable in a pull request.
-
-That endpoint upserts on stable authoring keys. It never touches learner accounts,
-attempts, progress or certificates, and it never resets a review decision you have
-already recorded — so signing off a claim survives every future deploy.
 
 ---
 
@@ -589,17 +715,17 @@ change and is one setting to remove afterwards.
 |---|---|
 | Workers | Free tier covers 100,000 requests/day. Paid is $5/month. |
 | Supabase | Shared with the OS and the volunteer portal, so the course adds no new bill. |
-| R2 | Free tier covers 10 GB stored and unlimited egress via your domain. The video is 35 MB. |
+| Supabase Storage | The video is one 34.6 MiB object in the shared project. Check that project's plan allowance rather than trusting a number here. |
+| Cloudflare for SaaS, if that route is taken | 100 custom hostnames included on Free, $0.10 each after. |
+| DNS on Cloudflare, if the zone moves | Free. |
 
 For an awareness course, expect this to run at no cost, or $5/month if you exceed
 the Workers free tier.
 
-**On password hashing:** bcrypt at cost 12 takes roughly 200 ms of CPU per sign-in,
-which is far more than a typical request. Registration was tested on the deployed
-Worker and **worked**, so this is not a blocker — but it is the one operation with
-any real CPU cost, so if sign-ups ever start failing while the rest of the site is
-fine, that is where to look. The Workers Paid plan ($5/month) raises the CPU
-ceiling substantially.
+The one CPU-heavy operation this app used to have is gone with password sign-in:
+bcrypt at cost 12 spent roughly 200 ms per sign-in, and nothing now hashes
+anything. Sign-in is a Google credential verified by Supabase, and the Worker's own
+work is a handful of HTTPS calls.
 
 ---
 
@@ -619,18 +745,28 @@ the same project as the organisation's books. There is no seeded admin to hide
 behind.
 
 ```bash
-npm run pages:dev
+npm run preview
 ```
 
-Builds and runs the actual Pages worker against Supabase — the real runtime rather
-than `next dev`. Slower, but it is the truth.
+Builds the Worker and runs it on **workerd** with the configuration from
+`wrangler.jsonc` — the real runtime rather than `next dev`. Slower, but it is the
+truth, and while nothing is deployed it is the closest thing to production that
+exists.
 
 Other useful commands:
 
 ```bash
 npm run content:emit     # regenerate the migration that loads the course
+npm run cf:build         # the full Workers bundle
+npm run cf:types         # regenerate worker-configuration.d.ts from wrangler.jsonc
 npm run typecheck        # tsc --noEmit
 npm run lint             # eslint
+```
+
+Before claiming anything works:
+
+```bash
+npm run typecheck && npm run lint && npm run cf:build
 ```
 
 **There is no journey suite any more.** `npm run verify` drove a learner through
@@ -638,3 +774,11 @@ the whole course against the local SQLite file and asserted 53 behaviours; it wa
 removed with the database it depended on. Until it is rewritten against Supabase,
 the assessment-integrity rules are covered only by the structural probes inside the
 migrations — so changes to marking deserve manual walking through.
+
+One thing `npm run cf:build` will catch that `next dev` will not: a rendering route
+missing `export const dynamic = "force-dynamic"`. OpenNext runs on the Node runtime,
+where Next will happily prerender a route at build time and bake in whatever
+configuration the build machine had. All 22 routes carry the directive for that
+reason — it replaced `export const runtime = "edge"`, which OpenNext does not
+support, and it is load-bearing rather than cosmetic. This was found by the build
+failing on a missing Supabase URL while prerendering `/login`.

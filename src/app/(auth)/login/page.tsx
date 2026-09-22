@@ -6,7 +6,10 @@ import { Display, Eyebrow } from "@/components/ui/primitives";
 import { getSession } from "@/lib/auth";
 import { publicConfig } from "@/lib/supabase/config";
 
-export const runtime = "edge";
+// Rendered per request, never prerendered: this route reads runtime configuration
+// (Supabase URL and key, SITE_URL) which Cloudflare applies at deploy time. A
+// prerender would bake whatever the build machine had. See src/lib/supabase/config.ts.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Sign in" };
 

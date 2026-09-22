@@ -5,10 +5,11 @@
 Save7's organ-donation course, replacing their Google Classroom.
 
 > **Read [HANDOVER.md](HANDOVER.md) first if you have not worked on this before.**
-> The app moved from Workers + D1 + password sign-in to Cloudflare Pages + the shared
-> Save7 Supabase project + Google sign-in. Most of what enforces correctness is now
-> SQL in another repository, and HANDOVER.md is the map: the invariants, the traps
-> that already cost a cycle, and what is unfinished.
+> The app moved from Workers + D1 + password sign-in to the shared Save7 Supabase
+> project + Google sign-in, and — after a detour through Cloudflare Pages — back to
+> Cloudflare Workers. Most of what enforces correctness is now SQL in another
+> repository, and HANDOVER.md is the map: the invariants, the traps that already
+> cost a cycle, and what is unfinished.
 
 Read README.md for what the course is and DEPLOY.md for how it ships. This file is
 the short list of things that are easy to break without noticing.
@@ -97,23 +98,32 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   (`learn_issue_certificate`), enrolment (`learn_claim_me`). `learn_level_progress`
   and `learn_course_progress` have no write policy for anybody, deliberately: a
   client that can write its own percentage makes the dashboard fiction.
-- **Next is pinned to exactly 15.5.2.** `@cloudflare/next-on-pages` peers at
-  `<=15.5.2`; 15.5.23 exists and the adapter refuses it. `PageProps<"/route">` is a
-  Next 16 global, shimmed in `src/types/next-15-page-props.d.ts` — delete that file
-  when the app returns to 16.
-- **Every rendering route needs `export const runtime = "edge"`.** The adapter
-  refuses a route that renders on the Node runtime.
+- **Next is no longer pinned.** `@opennextjs/cloudflare` peers at
+  `>=15.5.24 <16 || >=16.3.3`, which is a floor rather than a ceiling, so security
+  patches can be taken as they land. The floor is not arbitrary: it is where the
+  September 2026 AVIF image-optimization RCE (GHSA-2xp9-vwfh-vxw4, CVSS 9.5) was
+  fixed. **Do not drop below it.**
+- **Every rendering route needs `export const dynamic = "force-dynamic"`**, and the
+  reason is not the adapter. On the Node runtime Next will happily prerender these
+  routes at build time and bake in whatever configuration the build machine had —
+  which is exactly the `NEXT_PUBLIC_*` trap below, arriving by a different door.
+  The edge runtime used to prevent this as a side effect; now it is stated.
 - **A lesson slug is unique only within its module.** `intro`, `check` and
   `complete` each occur once per module, thirteen times over. Anything identifying a
   lesson needs the module too — that is why `viewLessonAction` takes both.
 - **No `src/proxy.ts` / middleware.** Every protected page does its own session
   check and passes its own `returnTo`. Don't reintroduce middleware.
 - **`/media/*` is excluded from the deploy** (`public/.assetsignore`): the
-  35 MB video exceeds the 25 MiB per-file asset limit. `src/lib/media.ts` handles
-  three states, including "deployed with no bucket configured", where it drops the
-  path so the player shows its placeholder instead of a dead `<video>`.
+  35 MB video exceeds the 25 MiB per-file asset limit, which is the same on Workers
+  as it was on Pages — re-checked, not assumed. Workers **honours** that file, which
+  Pages did not, so the post-build strip script Pages needed is gone.
+  `src/lib/media.ts` handles three states, including "deployed with no bucket
+  configured", where it drops the path so the player shows its placeholder instead
+  of a dead `<video>`.
 - **`SITE_URL`, not `NEXT_PUBLIC_SITE_URL`.** Next inlines public variables at build
   time; Cloudflare applies vars at deploy time. Certificate links are built from it.
+  One `vars` block in `wrangler.jsonc` now, not two — Pages needed a separate
+  `env.preview`, and an edit reaching only one of them was a real trap.
 - **There is no admin account to create.** Admin is `app_is_staff()` — a `people`
   row with an `app_role` on the Supabase project. A revoked staff member loses the
   dashboards immediately rather than when a token expires.
@@ -139,7 +149,7 @@ The single source of truth is `save7-os/supabase/migrations/`, applied with
 ## Before you say it works
 
 ```
-npm run typecheck && npm run lint && npm run pages:build
+npm run typecheck && npm run lint && npm run cf:build
 ```
 
 **The end-to-end journey suite is gone.** It drove a learner through the whole
@@ -150,8 +160,8 @@ the migrations and checked by nothing that runs on every change.
 
 **Treat that as the standing risk when touching `src/lib/` or any `learn_*`
 function.** Walk the journey manually: register, baseline, a module, the level
-assessment, the certificate, the admin dashboards. `npm run pages:dev` runs the real
-Pages worker, which is the only thing that catches runtime-specific breakage.
+assessment, the certificate, the admin dashboards. `npm run preview` runs the real
+Worker on workerd, which is the only thing that catches runtime-specific breakage.
 
 ## Design
 

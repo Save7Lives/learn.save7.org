@@ -6,7 +6,10 @@ import { Display, Eyebrow } from "@/components/ui/primitives";
 import { getSession } from "@/lib/auth";
 import { publicConfig } from "@/lib/supabase/config";
 
-export const runtime = "edge";
+// Rendered per request, never prerendered: this route reads runtime configuration
+// (Supabase URL and key, SITE_URL) which Cloudflare applies at deploy time. A
+// prerender would bake whatever the build machine had. See src/lib/supabase/config.ts.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Register" };
 
@@ -19,8 +22,8 @@ export default async function RegisterPage() {
       <Eyebrow>Transplant Alchemy 101</Eyebrow>
       <Display className="mt-3">Register</Display>
       <p className="mt-4 text-ink/70">
-        You only need your name and an email. There is no password — you sign in with Google
-        afterwards, using the address you give here.
+        You need your name, an email and your date of birth — this course is 18+ only. There
+        is no password — you sign in with Google afterwards, using the address you give here.
       </p>
 
       <div className="mt-8">

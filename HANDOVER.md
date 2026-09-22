@@ -1,4 +1,4 @@
-# Handover — the Supabase and Cloudflare Pages rebuild
+# Handover — the Supabase rebuild, and the port back to Workers
 
 **Read this before changing anything.** It records what this app became, the
 invariants that are load-bearing, the traps that already cost a debugging cycle,
@@ -8,11 +8,11 @@ State at the time of writing:
 
 | | |
 | --- | --- |
-| This repo | `zzubyr7x/transplant-alchemy`, `main` at `f4489af` |
+| This repo | `zzubyr7x/learn.save7.org` (renamed from `transplant-alchemy`), `main` at `245a8b3` |
 | Backend repo | `gilbertlieb/save7-os`, `main` at `f387ff3` |
 | Supabase project | `zbaoziisqroqxfwcnhlb` — shared with the OS and the volunteer portal |
 | Migrations applied | `0091`–`0098` in `save7-os/supabase/migrations/` |
-| Pages project | `transplant-alchemy`, production branch `main` |
+| Worker | `learn`, on the `admin@save7.org` Cloudflare account |
 | Branch `supabase-auth` | Identical to `main` — merged, kept only as a marker |
 
 ---
@@ -20,9 +20,10 @@ State at the time of writing:
 ## 1. What changed, in one paragraph
 
 This was a Next 16 app on Cloudflare Workers with its own SQLite/D1 database and
-its own email-and-password sign-in. It is now a Next **15.5.2** app on Cloudflare
-**Pages**, reading the **shared Save7 Supabase project**, with **Google sign-in**
-via the same flow `volunteers.save7.org` uses. The volunteer portal's forty
+its own email-and-password sign-in. It became a Next 15.5.2 app on Cloudflare Pages,
+and is now a Next **16.3.6** app back on Cloudflare **Workers** via
+`@opennextjs/cloudflare` — reading the **shared Save7 Supabase project**, with
+**Google sign-in** via the same flow `volunteers.save7.org` uses. The volunteer portal's forty
 hard-coded gate questions were merged into the course's question bank, so there is
 one bank rather than two. D1, drizzle, `better-sqlite3`, bcrypt and the local seed
 are gone entirely.
@@ -30,7 +31,9 @@ are gone entirely.
 Four decisions drove all of it, and all four were the user's, made explicitly:
 
 1. **Pages, not Workers** — even after being shown that the Pages adapter caps
-   Next at 15.5.2 and that 15.5.2 carries an unpatched critical advisory (§6).
+   Next at 15.5.2 and that 15.5.2 carried an unpatched critical advisory.
+   **This one has since been reversed** (§6): the app is back on Workers, the
+   version cap is gone, and Next is patched.
 2. **The shared Supabase project, not a second one** — so a volunteer has one
    identity across all three sites and the portal can show course progress.
 3. **The public may take the course** — which required widening who may hold an
@@ -122,29 +125,35 @@ why `viewLessonAction` takes both — resolving the module from the lesson is no
 longer possible.
 
 **`NEXT_PUBLIC_*` is inlined at build time; Cloudflare vars apply at runtime.** A
-client component reading `process.env.NEXT_PUBLIC_SUPABASE_URL` on Pages gets
+client component reading `process.env.NEXT_PUBLIC_SUPABASE_URL` on Cloudflare gets
 `undefined` and sign-in dies in the browser with nothing server-side to see. The
 config is read on the server in `src/lib/supabase/config.ts` and passed to the two
 client components as props. **Do not "simplify" that back to a direct read.**
 
-**Pages ignores `public/.assetsignore`.** It copies it into the output as an asset
-and then refuses the deploy: `journey-of-a-gift.mp4` is 34.6 MiB against a 25 MiB
-per-file cap. `scripts/strip-oversized-media.mjs` runs after the build and removes
-it; it refuses to delete anything outside `media/` and exits non-zero instead.
+**The 25 MiB per-file asset cap is the same on Workers as on Pages** — checked
+against Cloudflare's limits page during the port rather than assumed to have
+improved. `journey-of-a-gift.mp4` is 34.6 MiB and still cannot ship in the bundle.
+What *did* change is the mechanism: Pages ignored `public/.assetsignore` and needed
+a post-build strip script; **Workers honours it**, verified by serving the built
+output and watching `/media/journey-of-a-gift.mp4` 404 while `/favicon.ico` served.
+The strip script is gone.
 
-**Every `wrangler pages deploy` also publishes a per-commit subdomain.**
-`<commit>.transplant-alchemy.pages.dev` is the URL the deploy prints and a person
-opens. `register-learner`'s CORS allowlist named only the production alias, so
-registration failed with "Could not reach Save7" — which is what a blocked
-preflight looks like from inside the page, indistinguishable from a dead network.
-The allowlist now matches `([a-z0-9-]+\.)?transplant-alchemy\.pages\.dev` and
-deliberately **not** `*.pages.dev`.
+**A version upload publishes a per-version hostname.** `wrangler versions upload`
+prints `<version-prefix>-learn.save7.workers.dev`, and that is the URL a person
+opens. The Pages equivalent of this was missed once and registration failed with
+"Could not reach Save7" — what a blocked preflight looks like from inside the page,
+indistinguishable from a dead network. `register-learner`'s CORS allowlist now
+matches `([a-z0-9]+-)?learn\.save7\.workers\.dev` and deliberately **not**
+`*.workers.dev`. Note the shape: a Workers preview hyphenates onto the same label,
+where the Pages one added a subdomain.
 
-**Comments in `wrangler.jsonc` break naive edits.** Filling the Supabase values
-reached only `env.preview`, because the production `vars` block has comment lines
-between its entries and an exact-string match missed. Previews worked and
-production would have thrown on `/login`. Assert both blocks match after editing
-that file.
+**`wrangler.jsonc` used to have two `vars` blocks, and an edit once reached only
+one.** Filling the Supabase values hit `env.preview` alone, because the production
+block has comment lines between its entries and an exact-string match missed;
+previews worked and production would have thrown on `/login`. The Workers config
+has a single `vars` block — Workers previews are versions of the same Worker and
+inherit it — so the trap is retired rather than merely documented. Do not
+reintroduce a second block without a reason.
 
 **A verifier caught the course before the course caught itself.** 0092 was refused
 on first push by `verify_vol_views()` because the new `vol_*` view did not require
@@ -159,11 +168,11 @@ There is no local database and no journey suite, so these are the checks that
 exist. All of them are safe to run.
 
 ```bash
-npm run typecheck && npm run lint && npm run pages:build
+npm run typecheck && npm run lint && npm run cf:build
 ```
 
 ```bash
-npm run pages:dev        # the real Pages worker, config from wrangler.jsonc
+npm run preview          # the real Worker on workerd, config from wrangler.jsonc
 ```
 
 The anon key is in `.env` and in `wrangler.jsonc`. These probes confirm the
@@ -194,12 +203,17 @@ exercises the rules end to end. Rewriting it needs a service-role key and a
 disposable learner. **Treat any change to `src/lib/` or a `learn_*` function as
 unverified until walked by hand.**
 
-**Next 15.5.2 carries an unpatched critical advisory** — RCE in the React flight
-protocol, and Server Actions source code exposure — fixed only in 16.3.0. The Pages
-adapter (`@cloudflare/next-on-pages`) peers at `<= 15.5.2`, so no version is both
-Pages-compatible and patched. The user was shown this three times and chose Pages.
-Do not silently upgrade Next; it breaks the build target. Do not silently downgrade
-the concern either.
+**The Next version problem is resolved, and the old account of it was wrong.**
+This section used to say the flight-protocol RCE and the Server Actions exposure
+were "fixed only in 16.3.0". Checked against the advisory records during the port:
+the flight-protocol RCE (GHSA-9qr9-h5gf-34mp, CVSS 10.0) was fixed in **15.5.7**,
+and the Server Actions exposure (GHSA-w37m-7fhw-fmv9) is **Moderate**, fixed in
+15.5.8 — both were patch bumps, not a major upgrade. The advisory that actually
+justified moving landed later: **GHSA-2xp9-vwfh-vxw4**, an AVIF image-optimization
+RCE at CVSS 9.5, published 2026-09-08, affecting everything up to 15.5.23 and
+16.0.0–16.3.2. The app is now on **16.3.6**, which carries no open critical or high
+advisory, and `@opennextjs/cloudflare` sets a version **floor** rather than a
+ceiling, so the next patch can simply be taken.
 
 **0095 widened who may hold an account** on the project holding the organisation's
 books, from staff, funders and volunteers to anyone who registers for a public
@@ -237,8 +251,10 @@ current sequence rather than reusing that file's number.
 
 **Outstanding operational steps**, none of which a session can do alone: the
 Supabase Auth redirect allowlist and the Google client's JavaScript origins (both
-fail silently — see DEPLOY.md step 6b), R2 for the 35 MB video, and the DNS move
-that `learn.save7.org` needs (DNS-MIGRATION.md).
+fail silently — see DEPLOY.md step 6b), hosting the 35 MB video on **Supabase
+Storage** (public bucket `learn-media` — the map chose this over R2), connecting
+Cloudflare Workers Builds to this repository, and the DNS move that
+`learn.save7.org` needs (DNS-MIGRATION.md).
 
 ---
 
@@ -246,7 +262,8 @@ that `learn.save7.org` needs (DNS-MIGRATION.md).
 
 - Do not add a service-role key to this app, or a policy on `learn_choices`.
 - Do not reintroduce an ORM, D1, `better-sqlite3`, or a local database.
-- Do not upgrade Next past 15.5.2 while Pages is the target.
+- Do not drop Next below `@opennextjs/cloudflare`'s floor (`>=15.5.24 <16 ||
+  >=16.3.3`) to make something build. That floor is where a CVSS 9.5 RCE is fixed.
 - Do not write a migration without a probe. There is no local Postgres; a migration
   that raises rolls itself back, which is the only safety net.
 - Do not deploy code that reads new columns before the migration is applied.
@@ -256,6 +273,10 @@ that `learn.save7.org` needs (DNS-MIGRATION.md).
 - Do not assume this repository is the only session editing it. Part of the Pages
   conversion in `main` was authored by a different session working concurrently in
   the same tree; check `git status` before assuming the working tree is yours.
+- Do not remove `export const dynamic = "force-dynamic"` from a route because "it
+  reads cookies anyway, so it is dynamic already". The configuration read happens
+  *before* the first cookie read, so Next tries to prerender and the build dies on
+  a missing Supabase URL — which is how this was found.
 
 ---
 

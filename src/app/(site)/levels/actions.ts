@@ -67,8 +67,7 @@ export async function completeModuleAction(
   // No revalidatePath. Every route in this app reads cookies for the session, so
   // all of them are dynamic and none has a server-side cached entry to
   // invalidate; its only real effect here would be clearing the client's router
-  // cache, and the redirect below already re-renders on the server. On
-  // @cloudflare/next-on-pages on-demand revalidation is unsupported anyway.
+  // cache, and the redirect below already re-renders on the server.
   //
   // Outside the try above, deliberately: redirect() signals by throwing, so
   // catching it would turn a successful completion into an error message.

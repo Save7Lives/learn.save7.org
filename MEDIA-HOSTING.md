@@ -1,77 +1,113 @@
 # Hosting the Module 5 video
 
-`journey-of-a-gift.mp4` is 35 MB. Cloudflare Pages refuses any single asset over
-25 MiB, so the build strips the file out (`scripts/strip-oversized-media.mjs`) and
-production fetches it from elsewhere. R2 is the intended long-term home, but it
-needs a payment method on the Cloudflare account, so GitHub serves it meanwhile.
+`journey-of-a-gift.mp4` is 34.6 MiB. A Cloudflare Worker refuses any single static
+asset over 25 MiB, so the film cannot ship inside the deploy and production fetches
+it from elsewhere. Its home is **Supabase Storage**, public bucket `learn-media`,
+named to the app by the `MEDIA_BASE_URL` var.
 
-Moving between hosts is one environment variable. No code changes.
+Moving between hosts is that one variable. No code changes, and no rebuild — it is
+read at runtime.
 
-> Two different products called Pages appear below. **Cloudflare Pages** hosts the
-> course. **GitHub Pages** hosts this one video file. They are unrelated.
+## The cap did not change when the platform did
 
-## Where the file is
+The app was on Cloudflare Pages for a period and is now a Worker. The 25 MiB
+per-file asset cap is **the same on Workers as it was on Pages** — checked against
+Cloudflare's limits page during the port rather than assumed to have improved. The
+file is still too big by roughly 10 MiB.
 
-The video has been committed to this repository since the first commit, at
-`public/media/journey-of-a-gift.mp4` — that is what lets local development play it
-with no setup. It is *also* on the orphan **`media` branch**, at
-`media/journey-of-a-gift.mp4`, which is the copy GitHub Pages serves. Both point at
-the same git blob, so the branch costs no extra space.
+What *did* change is the mechanism for keeping it out:
 
-The branch is an orphan — no shared history, no source code — because a GitHub
-Pages site is public. Publishing from `main` would publish the course's source;
-publishing from `media` exposes only the film, which is meant to be seen.
+| | Pages | Workers |
+| --- | --- | --- |
+| `public/.assetsignore` | ignored | **honoured** |
+| Keeping the video out of the upload | a post-build strip script | that one file |
 
-## Turning it on
+`scripts/strip-oversized-media.mjs` existed only because Pages ignored the ignore
+file. It is deleted. The Workers behaviour was verified rather than trusted: the
+built output was served and `/media/journey-of-a-gift.mp4` returned 404 while
+`/favicon.ico` returned 200.
 
-**Settings → Pages → Build and deployment → Deploy from a branch**, branch
-`media`, folder `/ (root)`. First publish takes a minute or two.
+The video stays committed at `public/media/journey-of-a-gift.mp4`, which is what
+lets local development play it with no setup.
 
-**This repository is private, and GitHub Pages on a private repository requires a
-paid plan** (Pro, Team or Enterprise). On a free personal account the Pages
-settings will refuse. If that is what you see, two ways forward:
+## Uploading it
 
-- upgrade the account to GitHub Pro, or
-- push the `media` branch to a small **public** repository instead and publish
-  Pages from there. Same file, same layout, same variable — only the hostname
-  changes. The course repository stays private either way.
+`scripts/upload-media.mjs` creates the bucket, uploads the file, checks the
+content type that comes back, and prints the value to put in `MEDIA_BASE_URL`:
 
-Then confirm it is really serving video before pointing the course at it:
-
-```
-curl -sI https://zzubyr7x.github.io/transplant-alchemy/media/journey-of-a-gift.mp4 \
-  | grep -i "content-type\|content-length"
+```bash
+npm run media:upload
 ```
 
-It must say `content-type: video/mp4`. `text/html` means Pages has not finished
-publishing, or the path is wrong.
+**It needs a Supabase secret key**, because creating a bucket is not something the
+anon key can do. The script reads it from `.env.secrets`, which is git-ignored —
+`SUPABASE_SECRET_KEY` (the newer `sb_secret_...` form, preferred) or the legacy
+`SUPABASE_SERVICE_ROLE_KEY`. Either bypasses row level security entirely, so it
+belongs in that file and nowhere else: never in `wrangler.jsonc`, never in `.env`,
+never in a commit.
 
-Finally, uncomment `MEDIA_BASE_URL` in `wrangler.jsonc` and deploy. It is read at
-runtime, so it needs a deploy but not a rebuild.
+Note the bucket name before you run it. `wrangler.jsonc` is written for
+`learn-media`; the script's own default is `course-media`, overridable with
+`MEDIA_BUCKET`. **These two have not been reconciled** — pick one deliberately and
+make the var match what the upload actually created, or the player will point at a
+bucket that is not there.
 
-## Use GitHub Pages, not raw.githubusercontent.com
+Then uncomment `MEDIA_BASE_URL` in `wrangler.jsonc` and `npm run deploy`. Set it
+only once the object really answers: pointing the player at a URL that does not
+serve is the one way to get a dead `<video>` instead of the honest placeholder.
 
-This matters, because raw is the obvious thing to try and it does not work.
-Measured on 23 August 2026:
+## What any host has to do
+
+Three requirements, and a host that fails the first one fails silently:
+
+- **`content-type: video/mp4`.** Not negotiable — see the trap below.
+- **HTTP range requests.** Seeking, and the chapter list beside the player, both
+  depend on them. A host that answers `200` to a `Range:` request instead of `206`
+  forces a full download before playback.
+- **CDN caching.** The audience is South African and mostly on phones; a 35 MB file
+  served from a single origin is a poor experience on a mobile connection.
+
+Confirm all of it before pointing the course at a host:
+
+```bash
+curl -sI "$MEDIA_BASE_URL/media/journey-of-a-gift.mp4" | grep -i "content-type\|content-length\|accept-ranges"
+```
+
+## `raw.githubusercontent.com` is not a valid host
+
+This is worth stating because raw URLs are the obvious thing to reach for and they
+do not work. Measured on 23 August 2026:
 
 | Host | Content-Type | Ranges | Plays in `<video>`? |
 | ---- | ------------ | ------ | ------------------- |
 | `raw.githubusercontent.com` | `application/octet-stream` + `x-content-type-options: nosniff` | yes | **No** |
-| GitHub Pages (`*.github.io`) | `video/mp4` | yes | Yes |
 
 `nosniff` tells the browser not to second-guess the declared type, so an
 `application/octet-stream` response is treated as a file to download rather than a
 video to play. The `<video>` element fails silently — no error, just a dead player.
-GitHub Pages serves the same bytes with the correct type.
+That failure mode is the reason this section exists: the bytes arrive, the range
+requests work, and nothing plays.
 
-Raw URLs are unusable for a second reason anyway: this repository is private, and
-private raw URLs return 404 to anyone not signed in. Authenticating from a
-learner's browser would mean putting a GitHub token in the page.
+A second reason applies regardless: this repository is private, and private raw
+URLs return 404 to anyone not signed in. Authenticating from a learner's browser
+would mean putting a GitHub token in the page.
 
-Two other routes were considered and not used: **release assets** are served with
-download semantics rather than inline playback (untested here, so confirm before
-relying on it), and **jsDelivr** caps per-file size well below 35 MB and serves
-public repositories only.
+## Routes that were considered and are not the plan
+
+Both of these appear in older notes and commits. Neither is current:
+
+- **R2** was the original intention — free egress and a real CDN — but it needs a
+  payment method on the Cloudflare account. Superseded.
+- **GitHub Pages**, from an orphan `media` branch, was the interim route while R2
+  was blocked. Superseded. GitHub also asks that Pages not be used as a general
+  media CDN, and its documented soft limits (a 1 GB site, roughly 100 GB of
+  bandwidth a month) are thin cover for a film that might be linked from social
+  media.
+
+Supabase Storage won because the project already exists, it is the backend anyway,
+and a public bucket serves correct content types and ranges. One thing to check
+rather than assume: the project's plan. The free tier's monthly egress allowance is
+modest against a 35 MB file, so watch it once the course has learners.
 
 ## What one variable fixes
 
@@ -81,24 +117,10 @@ public repositories only.
 - the "Opens here" resource link on the same module
 
 Both resolve through `mediaUrl()` in `src/lib/media.ts`, which joins the base to
-the `/media/...` path stored in the lesson content. With the variable unset, that
-function deliberately drops the path so the player shows its "not hosted yet" state
-instead of a `<video>` that fails — see the comment at the top of that file.
-
-## Honest limits
-
-GitHub asks that Pages not be used as a general media CDN. Its documented soft
-limits are a 1 GB site and roughly 100 GB of bandwidth a month — about 2,800
-complete plays of a 35 MB file. Comfortable for a course being introduced to a few
-hundred learners; not a sound place to be if the film is ever linked from social
-media.
-
-Two better homes, when either becomes available:
-
-- **R2**, the original plan: free egress, a real CDN, one variable away.
-- **Supabase Storage**, now that Supabase is the backend anyway — a public bucket
-  serves correct content types and ranges. Check the project's plan first: the free
-  tier's monthly egress allowance is well below GitHub Pages'.
+the `/media/...` path stored in the lesson content. It handles three states,
+including "deployed with no bucket configured" — where it deliberately drops the
+path, so the player shows its "not hosted yet" state instead of a `<video>` that
+fails without saying so. See the comment at the top of that file.
 
 ## Still outstanding for Module 5
 

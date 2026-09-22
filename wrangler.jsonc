@@ -1,46 +1,66 @@
 /**
- * Cloudflare **Pages** configuration for Transplant Alchemy 101.
+ * Cloudflare **Workers** configuration for Transplant Alchemy 101.
  *
- * This was a Workers config until the move to Pages. What changed and why:
+ * This was a Pages config until the port back to Workers. What changed and why:
  *
- *   * `main` / `assets` are gone. Pages serves `.vercel/output/static`, which
- *     `@cloudflare/next-on-pages` produces, with the app itself in
- *     `_worker.js` inside it. `pages_build_output_dir` is what points at it.
- *   * `alias` is gone. It was a Workers bundler feature; on Pages the bundling is
- *     done by the adapter, and the Node-only driver is kept out of the graph by
- *     the src/lib/db.ts / src/lib/db-node.ts split instead.
- *   * **`routes` is gone, and this is a real loss.** A Workers config could
- *     declare `learn.save7.org` here, so changing where the course lives was a
- *     reviewable pull request. Pages custom domains cannot be declared in
- *     configuration — they are attached in the dashboard, or with
- *     `wrangler pages domain add`. See DEPLOY.md.
+ *   * `pages_build_output_dir` is gone. `@opennextjs/cloudflare` produces a real
+ *     Worker at `.open-next/worker.js` with the static files beside it in
+ *     `.open-next/assets`, so `main` and `assets` point at those directly.
+ *   * **`routes` is back, and that is a mixed blessing.** Pages custom domains
+ *     could only be attached in the dashboard; on Workers the hostname is
+ *     declarable here, so moving the course becomes a reviewable pull request.
+ *     But Workers also *requires* the zone to be on Cloudflare, which Pages did
+ *     not — so `learn.save7.org` is now harder to attach, not easier. The route
+ *     stays commented out until that is resolved; see DNS-MIGRATION.md.
+ *   * **The `env.preview` block is gone.** It existed because Pages builds preview
+ *     branches as separate deployments with their own vars. Workers previews are
+ *     versions of this same Worker (`wrangler versions upload`) and inherit these
+ *     vars, so there is one `vars` block now — which also retires the trap in
+ *     HANDOVER.md §4, where an edit reached only one of the two.
  *
- * Deploy with `npm run pages:deploy`, which builds and then uploads.
+ * Deploy with `npm run deploy`, which builds and then uploads.
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "transplant-alchemy",
-  "pages_build_output_dir": ".vercel/output/static",
+  "name": "learn",
+  "main": ".open-next/worker.js",
   "compatibility_date": "2026-08-01",
 
-  // Required by the adapter: the Next server needs Node built-ins (crypto,
-  // buffer, async_hooks) even on the edge runtime.
-  "compatibility_flags": ["nodejs_compat"],
+  // `nodejs_compat` is required by the adapter: the Next server needs Node
+  // built-ins (crypto, buffer, async_hooks). `global_fetch_strictly_public` is
+  // OpenNext's recommendation — it sends a fetch of this Worker's own hostname
+  // out through the public internet rather than looping it back internally,
+  // which is what Next's server-side fetches of its own routes expect.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  // Workers logs are free and this app leans on them: a failed progress write
+  // reports something deliberately vague to the learner and puts the real cause
+  // here (see completeModuleAction in src/app/(site)/levels/actions.ts).
+  "observability": {
+    "enabled": true
+  },
 
   "vars": {
     // The public origin, used to build certificate verification links. Tracks
     // what actually resolves rather than what is intended — a dead link printed
     // on a real certificate is worse than an ugly hostname.
     //
-    // `learn.save7.org` is attached as a Pages custom domain with the zone still at
-    // xneelo — a subdomain needs one CNAME there and no nameserver move. See
-    // DNS-MIGRATION.md.
+    // This is the hostname that will answer once this Worker is first deployed.
     //
-    // **Deploy this only once the domain resolves.** Certificate verification links
-    // are built from SITE_URL, so pointing it at a hostname that does not answer
-    // yet prints dead links on real certificates.
-    "SITE_URL": "https://learn.save7.org",
-    "NEXT_PUBLIC_SITE_URL": "https://learn.save7.org",
+    // It is **not** `learn.save7.org`, and getting there is no longer the one-line
+    // CNAME edit the earlier plan assumed: a Workers custom domain requires the
+    // zone to be active on Cloudflare, and `save7.org` is authoritative at xneelo.
+    // That is an open decision — see DNS-MIGRATION.md.
+    //
+    // **Changing it later is this one line and `npm run deploy`, with no
+    // rebuild** — it is read at runtime, not inlined at build time.
+    "SITE_URL": "https://learn.save7.workers.dev",
+    "NEXT_PUBLIC_SITE_URL": "https://learn.save7.workers.dev",
 
     // ── Supabase ──────────────────────────────────────────────────────────────
     // The backend: the same project os.save7.org and volunteers.save7.org use,
@@ -60,43 +80,32 @@
     "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "572341141393-cv3lctdv0tlp489u357g8jnqsmumv4f0.apps.googleusercontent.com"
 
     // ── Module 5 video ────────────────────────────────────────────────────────
-    // Where the 35 MB film is served from. The build strips it out of the upload
-    // (scripts/strip-oversized-media.mjs), so with this unset src/lib/media.ts
-    // drops the path and Module 5 shows the player's "not hosted yet" state
+    // Where the 35 MB film is served from. Workers caps a single static asset at
+    // 25 MiB — the same cap Pages had, re-checked rather than assumed — so
+    // public/.assetsignore keeps it out of the upload and src/lib/media.ts drops
+    // the path when this is unset, showing the player's "not hosted yet" state
     // rather than a <video> that silently fails.
     //
-    // Uncomment once GitHub Pages is publishing this repository's `media` branch
-    // -- GitHub Pages, not the Cloudflare Pages this course runs on. Confirm the
-    // URL answers with content-type video/mp4 first: setting this before it serves
-    // is the one way to get a dead player instead of the honest placeholder.
-    // See MEDIA-HOSTING.md.
+    // The map settled Supabase Storage (public bucket `learn-media`) as the home
+    // for it, not R2. Uncomment once the object is uploaded and answers with
+    // content-type video/mp4 — setting this before it serves is the one way to
+    // get a dead player instead of the honest placeholder.
     //
-    // "MEDIA_BASE_URL": "https://zzubyr7x.github.io/transplant-alchemy"
-    //
-    // R2 remains the intended long-term home; same line, bucket hostname instead.
-  },
-
-  // Preview deployments get the same bindings and their own origin. Without this
-  // block a preview build runs with no vars at all and prints links to nowhere.
-  "env": {
-    "preview": {
-      "vars": {
-        // Previews keep the pages.dev alias deliberately: a preview deployment
-        // printing production certificate links would be claiming a hostname it is
-        // not serving, and per-deployment hostnames cannot be known in advance.
-        "SITE_URL": "https://transplant-alchemy.pages.dev",
-        "NEXT_PUBLIC_SITE_URL": "https://transplant-alchemy.pages.dev",
-        "NEXT_PUBLIC_SUPABASE_URL": "https://zbaoziisqroqxfwcnhlb.supabase.co",
-        "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpiYW96aWlzcXJvcXhmd2NuaGxiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMTczMjIsImV4cCI6MjEwMTU5MzMyMn0.O_oFqf4kSZZoxDToiwstoFGGqHlQz5PTHO3FAtnHoKI",
-        "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "572341141393-cv3lctdv0tlp489u357g8jnqsmumv4f0.apps.googleusercontent.com"
-      }
-    }
+    // "MEDIA_BASE_URL": "https://zbaoziisqroqxfwcnhlb.supabase.co/storage/v1/object/public/learn-media"
   }
+
+  // Attach the real hostname here once `save7.org` is reachable from this account
+  // — which is the open question in DNS-MIGRATION.md, not a scheduled step.
+  // Declaring it before then would claim a name this Worker cannot serve, and
+  // Cloudflare refuses a custom domain on a hostname that already has a CNAME
+  // (which `learn.save7.org` does: it points at the old Pages 503 page).
+  //
+  // "routes": [{ "pattern": "learn.save7.org", "custom_domain": true }]
 
   // There is deliberately **no secret for this project.** Sign-in is a Google
   // account verified by Supabase, so the app mints no session of its own and needs
-  // no signing key. The three values above are all public by design.
+  // no signing key. The values above are all public by design.
   //
-  // The service-role key must never be added here or as a Pages secret: it bypasses
-  // every row level security policy, and this file is committed.
+  // The service-role key must never be added here or as a Worker secret: it
+  // bypasses every row level security policy, and this file is committed.
 }

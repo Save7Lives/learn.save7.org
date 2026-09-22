@@ -8,15 +8,10 @@ import { CertificateActions } from "@/components/certificate/CertificateActions"
 import { Badge, ButtonLink, Card, Display, Eyebrow } from "@/components/ui/primitives";
 import { Save7Logo } from "@/components/ui/Save7Logo";
 
-/**
- * Edge runtime, required by Cloudflare Pages.
- *
- * `@cloudflare/next-on-pages` refuses to build a route that renders on the
- * Node runtime — every server-rendered route on Pages runs on workerd. This is
- * the whole reason the app is pinned to Next 15.5.2: the adapter supports no
- * higher, and OpenNext (which does not need this) supports no lower.
- */
-export const runtime = "edge";
+// Rendered per request, never prerendered: this route reads runtime configuration
+// (Supabase URL and key, SITE_URL) which Cloudflare applies at deploy time. A
+// prerender would bake whatever the build machine had. See src/lib/supabase/config.ts.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(
   props: PageProps<"/certificate/[publicId]">,
@@ -70,7 +65,6 @@ export default async function CertificatePage(
       </div>
     );
   }
-
 
   const issuedAt = cert.issuedAt.toLocaleDateString("en-ZA", {
     day: "numeric",

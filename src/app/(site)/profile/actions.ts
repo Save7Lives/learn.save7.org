@@ -28,8 +28,7 @@ export async function updateProfileAction(
   // server-rendered, so those need to re-render rather than show the old name.
   // The form calls router.refresh() for that. revalidatePath() would be the other
   // way round, but this route is dynamic — it reads the session cookie — so there
-  // is no cached entry for it to invalidate, and on @cloudflare/next-on-pages
-  // on-demand revalidation is unsupported regardless.
+  // is no cached entry for it to invalidate.
 
   return { savedName: result.name };
 }

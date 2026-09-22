@@ -1,8 +1,9 @@
 /**
  * Publish the Module 5 video to Supabase Storage.
  *
- * The film is 35 MB. Cloudflare Pages refuses any asset over 25 MiB, so the build
- * strips it out and the player fetches it from a host named by MEDIA_BASE_URL.
+ * The film is 35 MB. Cloudflare caps a static asset at 25 MiB — the same on Workers
+ * as it was on Pages — so public/.assetsignore keeps it out of the upload and the
+ * player fetches it from the host named by MEDIA_BASE_URL.
  * Supabase Storage is that host: it serves the correct content type, supports the
  * range requests seeking needs, and the project already exists.
  *
@@ -32,7 +33,10 @@ const url = (process.env.SUPABASE_URL ?? "").replace(/\/$/, "");
 // JWT would happily work and leak everything.
 const key =
   process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
-const BUCKET = process.env.MEDIA_BUCKET ?? "course-media";
+// `learn-media`, not `course-media`: the map settled this bucket name, and
+// wrangler.jsonc's MEDIA_BASE_URL is written for it. A mismatch here uploads the
+// file somewhere the app will never look for it.
+const BUCKET = process.env.MEDIA_BUCKET ?? "learn-media";
 const LOCAL = "public/media/journey-of-a-gift.mp4";
 const REMOTE = "media/journey-of-a-gift.mp4";
 

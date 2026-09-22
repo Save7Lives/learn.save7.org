@@ -1,21 +1,10 @@
-import { dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 import { defineConfig, globalIgnores } from "eslint/config";
-import { FlatCompat } from "@eslint/eslintrc";
-
-/**
- * eslint-config-next 15 has no flat-config entry points.
- *
- * Next 16 ships `eslint-config-next/core-web-vitals` and
- * `eslint-config-next/typescript` as flat configs, which is what this file used
- * to import. Version 15 — the ceiling imposed by the Pages adapter — publishes
- * only the eslintrc-style shareable config, so it is loaded through FlatCompat.
- * Restore the direct imports when the app returns to Next 16.
- */
-const compat = new FlatCompat({ baseDirectory: dirname(fileURLToPath(import.meta.url)) });
+import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
+import nextTypescript from "eslint-config-next/typescript";
 
 const eslintConfig = defineConfig([
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  nextCoreWebVitals,
+  nextTypescript,
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
@@ -28,8 +17,6 @@ const eslintConfig = defineConfig([
     ".open-next/**",
     // Wrangler build scratch.
     ".wrangler/**",
-    // The Pages adapter's build output: a bundled copy of the whole app.
-    ".vercel/**",
     // Archived artefacts from the Prisma era, kept for reference only.
     "docs/**",
   ]),

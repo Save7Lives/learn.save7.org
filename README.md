@@ -66,10 +66,21 @@ which posts to the `register-learner` Edge Function.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm run content:emit` | Regenerate the Supabase migration that loads the course |
-| `npm run pages:build` | Build for Cloudflare Pages (`.vercel/output/static`) |
-| `npm run pages:dev` | Build and serve the real Pages worker locally |
-| `npm run pages:deploy` | Build and deploy to Cloudflare Pages |
+| `npm run content:apply` | Apply that migration to the Supabase project |
+| `npm run cf:build` | Build the Worker (`.open-next/` — `worker.js` plus `assets/`) |
+| `npm run preview` | Build, then run the real Worker locally on workerd |
+| `npm run deploy` | Build and deploy the `learn` Worker |
+| `npm run cf:types` | Regenerate the Workers binding types (`wrangler types`) |
+| `npm run media:upload` | Publish the Module 5 video to Supabase Storage |
 | `npm run brand:generate` | Re-embed the Save7 logo used on certificates |
+
+`npm run preview` is the only check that exercises the runtime the course actually
+ships on; `npm run dev` runs on Node and will not surface workerd-specific
+breakage. The gate before claiming something works is:
+
+```bash
+npm run typecheck && npm run lint && npm run cf:build
+```
 
 ---
 
@@ -96,9 +107,18 @@ takeaways → check your understanding → study guide → further reading → c
 
 ## Architecture
 
-Next.js 15.5.2 (App Router) · React 19 · TypeScript · Tailwind CSS v4 ·
-Supabase (Postgres) · deployed to Cloudflare Pages via
-`@cloudflare/next-on-pages` — see [DEPLOY.md](DEPLOY.md).
+Next.js 16.3.6 (App Router) · React 19 · TypeScript · Tailwind CSS v4 ·
+Supabase (Postgres) · deployed as a Cloudflare **Worker** via
+`@opennextjs/cloudflare` — see [DEPLOY.md](DEPLOY.md).
+
+The Worker is named `learn`, on the `admin@save7.org` Cloudflare account, and
+answers at `https://learn.save7.workers.dev`. It was briefly on Cloudflare Pages;
+the detour is recorded in [HANDOVER.md](HANDOVER.md) §1 and §6, along with why it
+was reversed. **Next is no longer pinned.** The Pages adapter capped it at 15.5.2;
+`@opennextjs/cloudflare` sets a floor instead (`>=15.5.24 <16 || >=16.3.3`), so
+security patches can be taken as they land. That floor is where the AVIF
+image-optimization RCE (GHSA-2xp9-vwfh-vxw4, CVSS 9.5, published 2026-09-08) was
+fixed. 16.3.6 carries no open critical or high advisory.
 
 **Why Supabase and not its own database.** The course was built on its own
 SQLite/D1 database with its own password login, and the volunteer portal held a
@@ -272,11 +292,18 @@ list beside the player labels rather than seeks.
 ## Deploying
 
 **[DEPLOY.md](DEPLOY.md) is the guide.** It covers the setup end to end: applying
-the Supabase migrations, deploying the `register-learner` function, putting the
-the video, setting the Pages variables, attaching the domain, and how to push
+the Supabase migrations, deploying the `register-learner` function, hosting the
+video, setting the Worker's `vars`, the domain question, and how to push
 content corrections after launch without touching learner data.
 
-Two things are worth knowing before the first deploy:
+Three things are worth knowing before the first deploy:
+
+**The video is not in the bundle.** Workers caps a single static asset at 25 MiB —
+the same cap Pages had, re-checked against Cloudflare's limits page during the port
+rather than assumed to have improved — and `journey-of-a-gift.mp4` is 34.6 MiB.
+`public/.assetsignore` keeps it out of the upload, which Workers honours where Pages
+did not, and it is served from `MEDIA_BASE_URL` instead. See
+[MEDIA-HOSTING.md](MEDIA-HOSTING.md).
 
 **Content corrections are a migration now, not a button.** The old build had an
 admin route that re-seeded the course from the running app. Content is now applied

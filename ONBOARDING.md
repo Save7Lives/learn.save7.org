@@ -2,8 +2,14 @@
 
 Save7's organ-donation course, replacing their Google Classroom.
 
-Next.js 15.5.2 · React 19 · Tailwind v4 · Supabase (Postgres) · deployed to
-Cloudflare Pages.
+Next.js 16.3.6 · React 19 · Tailwind v4 · Supabase (Postgres) · deployed as a
+Cloudflare Worker (`learn`, serving at `https://learn.save7.workers.dev`) via
+`@opennextjs/cloudflare`.
+
+It spent a period on Cloudflare Pages and has been ported back to Workers. Old
+notes, branches and commit messages mention `@cloudflare/next-on-pages`,
+`.vercel/output/static` and `npm run pages:*` — all of those are gone.
+HANDOVER.md §1 and §6 record why the detour happened and why it was reversed.
 
 ## Get it running
 
@@ -62,7 +68,7 @@ visible "Pending Save7 review" badge and appears in `/admin/content-review` for
 Save7 to sign off. **Never invent a citation, statistic or legal provision**, and
 never clear a review item in code — those are Save7's decisions to record.
 
-There are currently **14 launch-blocking review items**, mostly Module 9 (the law)
+There are currently **13 launch-blocking review items**, mostly Module 9 (the law)
 and the Module 12 FACTS sequence. Clearing them needs a person with authority, not
 a code change.
 
@@ -72,26 +78,33 @@ a code change.
   Components read `Lesson.payloadJson`. Never hardcode course copy into a component.
 - **Interactive components** — `src/components/interactive/`, each driven entirely
   by its lesson payload.
-- **Data layer** — `src/db/schema.ts` (Drizzle) and `src/lib/` (one file per
-  concern: `quiz.ts`, `course.ts`, `progress.ts`, `certificates.ts`, `auth.ts`).
-- **Scripts** — `scripts/`, including the verification suite.
+- **Data layer** — `src/db/rows.ts` (the shape of every row this app reads) and
+  `src/lib/` (one file per concern: `quiz.ts`, `course.ts`, `progress.ts`,
+  `certificates.ts`, `auth.ts`). There is no ORM and no schema file here: the
+  schema lives in `save7-os` as migrations, and the app talks to Supabase over
+  HTTPS carrying the learner's own JWT.
+- **Scripts** — `scripts/`, including content emit/apply and the media upload.
 
 ## Before you say it works
 
 ```bash
-npm run verify
+npm run typecheck && npm run lint && npm run cf:build
 ```
 
-Drives a real learner through the entire journey against the database and asserts
-53 behaviours, including every assessment-integrity guarantee. Run it after
-touching anything in `src/lib/`.
+That is the gate. There is **no test suite.** The 53-assertion journey suite drove
+a learner through baseline → modules → assessment → certificate → analytics, and it
+was deleted with the local SQLite database it asserted against. Nothing equivalent
+runs against Supabase yet, so anything you change in `src/lib/` or in a `learn_*`
+function is unverified until you walk it by hand. HANDOVER.md §6 is blunt about
+this being the largest hole in the repo.
 
 ```bash
-npm run cf:preview
+npm run preview
 ```
 
-Runs the actual Pages worker against Supabase. Slower than `npm run dev`, and the only
-thing that catches Cloudflare-specific breakage.
+Builds and runs the **real Worker** on workerd against Supabase. Slower than
+`npm run dev`, which runs on Node, and the only thing that catches
+runtime-specific breakage before a deploy does.
 
 ## How changes ship
 

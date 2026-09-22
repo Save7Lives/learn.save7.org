@@ -31,6 +31,5 @@ export async function setReviewStatusAction(
   // No revalidatePath: every route here reads cookies for the session, so all of
   // them are dynamic and none has a server-side cached entry to invalidate — its
   // only real effect would be clearing the client's router cache, which the
-  // caller now does explicitly. On @cloudflare/next-on-pages on-demand
-  // revalidation is unsupported in any case.
+  // caller now does explicitly.
 }
