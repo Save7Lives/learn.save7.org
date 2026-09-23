@@ -108,6 +108,12 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   routes at build time and bake in whatever configuration the build machine had —
   which is exactly the `NEXT_PUBLIC_*` trap below, arriving by a different door.
   The edge runtime used to prevent this as a side effect; now it is stated.
+- **`typecheck` runs `next typegen` first, and that is not padding.** `PageProps<>`
+  and `LayoutProps<>` are *generated* from the route tree into `.next/types`, so on
+  a fresh clone — or any CI checkout — `tsc --noEmit` alone fails with "Cannot find
+  name 'PageProps'" on ten call sites. It passes locally only when a previous build
+  happened to leave `.next` behind, which is how this reached CI unnoticed. Do not
+  reduce the script back to bare `tsc`.
 - **A lesson slug is unique only within its module.** `intro`, `check` and
   `complete` each occur once per module, thirteen times over. Anything identifying a
   lesson needs the module too — that is why `viewLessonAction` takes both.
