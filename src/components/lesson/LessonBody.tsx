@@ -159,13 +159,27 @@ export function LessonBody({
     );
   }
 
+  /* Since #33, a study guide and a reading list are Markdown prose in the lesson
+     itself (content/<level>/<stage>/*.md). The payload and resources-table forms
+     below are the prior build's, kept as the fallback for a lesson without prose. */
   if (lesson.kind === "STUDY_GUIDE") {
+    if (prose) return prose;
     return (
       <StudyGuide payload={parsePayload<StudyGuidePayload>(lesson.payloadJson)} />
     );
   }
 
   if (lesson.kind === "FURTHER_READING") {
+    if (prose) {
+      // No empty-state box under written prose: it would suggest a gap that isn't there.
+      return resources.length > 0 ? (
+        <Wrapped prose={prose}>
+          <ResourceList payload={null} resources={resources} />
+        </Wrapped>
+      ) : (
+        prose
+      );
+    }
     return <ResourceList payload={null} resources={resources} />;
   }
 

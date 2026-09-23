@@ -1,5 +1,5 @@
 /**
- * Write the whole course into a Supabase migration.
+ * Write the course into a Supabase migration.
  *
  * The backend is Supabase now, and Save7 applies schema and content with
  * `supabase db push`. So the course is loaded the same way everything else on that
@@ -7,32 +7,71 @@
  * environment — rather than by a script holding a service-role key, which would
  * mean the content of the course depended on who ran what and when.
  *
- * The authoring files under prisma/content stay the source of truth. This reads
- * them and emits SQL; nothing here decides anything about the course.
+ * The authoring files stay the source of truth; this reads them and emits SQL, and
+ * nothing here decides anything about the course:
  *
- * Run: npx tsx scripts/emit-supabase-content.ts [path-to-save7-os]
+ *   - `prisma/content/structure.ts` — Levels, Stages and their lessons (#33)
+ *   - `content/<level>/<stage>/*.md` — lesson prose, via `markdown.ts`
+ *   - `prisma/content/quiz-*.ts`     — Stage Quiz banks, 15 per Stage (#8)
+ *   - `prisma/content/questions-gate.ts` — the volunteer gate's forty items
+ *   - `prisma/content/resources.ts`  — the course-wide reading list
+ *
+ * **A Stage is emitted only once it is finished** — every prose lesson written and
+ * its bank present. Levels are written ahead of their Stages; an unfinished Stage
+ * is simply absent, never shipped as a stub. That is what lets the per-Level
+ * content tickets land independently: finishing a Stage and re-running this is the
+ * whole of publishing it. A Stage with prose but no bank, or a bank but stub prose,
+ * is a half-finished state and fails loudly rather than shipping either half.
+ *
+ * **This generator never deletes.** Every statement is an upsert on the authoring
+ * key. A question row deleted and reinserted would take every answer ever recorded
+ * against it, and the improvement figures with them. The one-off content reset in
+ * #47 (save7-os 0112) was hand-written for exactly that reason: the refusal to
+ * delete is a safety property worth keeping here permanently, not a capability to
+ * grow for one day's convenience.
+ *
+ * Run: npx tsx scripts/emit-supabase-content.ts [path-to-save7-os] [filename] [--only=course|gate]
+ *
+ *   --only=course  levels, Stages, lessons, Stage Quizzes, reading list
+ *   --only=gate    the forty volunteer-gate items and their review rows
+ *   (default)      both
  */
 import { readdirSync, writeFileSync } from "node:fs";
 
-import { beginnerLevel } from "../prisma/content/level-beginner";
-import { intermediateLevel } from "../prisma/content/level-intermediate";
-import { advancedLevel } from "../prisma/content/level-advanced";
-import { resourceSeeds } from "../prisma/content/resources";
-import { questionSeeds } from "../prisma/content/questions";
+import { loadLesson } from "../prisma/content/markdown";
+import { assertBankIsWellFormed, type StageQuizBanks } from "../prisma/content/quiz";
+import { beginnerStageQuizBanks } from "../prisma/content/quiz-beginner";
 import { gateQuestions } from "../prisma/content/questions-gate";
-import { deriveReviewItems } from "../prisma/content/review";
+import { resourceSeeds } from "../prisma/content/resources";
+import { courseStructure, type LevelStructure, type StageSeed } from "../prisma/content/structure";
+import type { ReviewSeed } from "../prisma/content/types";
 
-const OS = process.argv[2] ?? "../save7-os";
+/** Every Stage Quiz bank written so far. Each Level's content ticket adds its own. */
+const stageQuizBanks: StageQuizBanks = {
+  ...beginnerStageQuizBanks,
+};
+
+const flags = process.argv.slice(2).filter((a) => a.startsWith("--"));
+const positional = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+
+const only = flags.find((f) => f.startsWith("--only="))?.slice("--only=".length) ?? "all";
+if (!["all", "course", "gate"].includes(only)) {
+  throw new Error(`--only must be course or gate, not ${only}`);
+}
+const emitCourse = only !== "gate";
+const emitGate = only !== "course";
+
+const OS = positional[0] ?? "../save7-os";
 
 /**
  * Where to write.
  *
  * **A content change after the first deploy needs a new migration, not an edit to
  * the old one.** Supabase records a migration as applied by its version prefix, so
- * rewriting `0094_learn_content.sql` changes the repository and nothing on the
- * live project — the file is recorded as done and is never re-run. That mistake is
- * silent: the generator reports the right counts, the diff looks substantial, and
- * the database keeps serving the old content.
+ * rewriting an applied file changes the repository and nothing on the live project
+ * — the file is recorded as done and is never re-run. That mistake is silent: the
+ * generator reports the right counts, the diff looks substantial, and the database
+ * keeps serving the old content.
  *
  * So the default is the next free number in the migrations directory. Pass an
  * explicit filename as the second argument to overwrite a specific one, which is
@@ -48,25 +87,16 @@ function nextMigrationPath(): string {
   return `${dir}/${version}_learn_content.sql`;
 }
 
-const OUT = process.argv[3]
-  ? `${OS}/supabase/migrations/${process.argv[3]}`
-  : nextMigrationPath();
+const OUT = positional[1] ? `${OS}/supabase/migrations/${positional[1]}` : nextMigrationPath();
 
 // A second copy, committed to this repository.
 //
 // The migration's home is save7-os, which is where `supabase db push` runs from.
 // But whoever edits the course content is working here, and the generated SQL is
 // the only artefact that carries a content change to learners — so a copy lives
-// here too, and is committed. It means the current content can be applied by
-// anyone with database access (including through the Supabase SQL editor) without
-// first having a save7-os checkout, and it makes content changes visible in this
-// repository's diffs.
-// Named after whichever migration was emitted, not hardcoded: pinning it to 0094
-// meant the committed copy claimed to be a migration that had already been applied
-// and would never run again.
+// here too, and is committed. It makes content changes visible in this
+// repository's diffs. Named after whichever migration was emitted, not hardcoded.
 const LOCAL_OUT = `prisma/supabase/${OUT.split("/").pop()}`;
-
-const levels = [beginnerLevel, intermediateLevel, advancedLevel];
 
 /** SQL literal. Never interpolate anything into this file without going through it. */
 function q(v: string | number | boolean | null | undefined): string {
@@ -79,40 +109,66 @@ function q(v: string | number | boolean | null | undefined): string {
 /** Course questions carry no option key of their own; the gate's are historical. */
 const LETTERS = "abcdefghij";
 
-const out: string[] = [];
-const counts = { levels: 0, modules: 0, lessons: 0, resources: 0, questions: 0, choices: 0, review: 0 };
+// ── which Stages are finished ───────────────────────────────────────────────
+assertBankIsWellFormed(stageQuizBanks);
 
-out.push(`-- The course content: three levels, their modules and lessons, the reading list,
--- the question bank and the content-review register.
+type ReadyStage = { level: LevelStructure; stage: StageSeed; bodies: Map<string, string> };
+
+function readiness(level: LevelStructure, stage: StageSeed): ReadyStage | null {
+  const bodies = new Map<string, string>();
+  let stubs = 0;
+  for (const lesson of stage.lessons) {
+    if (!lesson.bodyPath) continue;
+    const loaded = loadLesson(lesson.bodyPath);
+    if (loaded.frontMatter.slug !== lesson.slug || loaded.frontMatter.stage !== stage.slug) {
+      throw new Error(`${lesson.bodyPath}: front matter does not match structure.ts`);
+    }
+    if (loaded.isStub) stubs++;
+    bodies.set(lesson.slug, loaded.bodyMarkdown);
+  }
+  const hasBank = stage.slug in stageQuizBanks;
+  const proseDone = stubs === 0;
+
+  if (proseDone && hasBank) return { level, stage, bodies };
+  if (!proseDone && !hasBank) return null;
+  throw new Error(
+    proseDone
+      ? `${stage.slug}: prose is written but it has no Stage Quiz bank`
+      : `${stage.slug}: has a Stage Quiz bank but ${stubs} prose lesson(s) are still stubs`,
+  );
+}
+
+const ready = courseStructure.flatMap((level) =>
+  level.stages.map((stage) => readiness(level, stage)).filter((r): r is ReadyStage => r !== null),
+);
+const readySlugs = new Set(ready.map((r) => r.stage.slug));
+
+const out: string[] = [];
+const counts = { levels: 0, stages: 0, lessons: 0, resources: 0, stageQuiz: 0, gate: 0, choices: 0, review: 0 };
+const review: ReviewSeed[] = [];
+
+out.push(`-- The course content, emitted from the authoring files (${only === "all" ? "course and gate" : only}).
 --
--- Re-emitted whenever the authoring files change. Every statement is an upsert
--- keyed on the authoring identifier, so this is safe to apply over an existing
--- course: rows are updated in place and nothing is deleted. A question row deleted
--- and reinserted would take every answer ever recorded against it, and the
--- knowledge-improvement figures with them.
---
--- GENERATED by scripts/emit-supabase-content.ts in the transplant-alchemy repo,
--- from the authoring files under prisma/content. Do not hand-edit: edit the
--- content there and regenerate, or the next regeneration silently reverts you.
+-- GENERATED by scripts/emit-supabase-content.ts in the learn.save7.org repo. Do not
+-- hand-edit: edit the content there and regenerate, or the next regeneration
+-- silently reverts you.
 --
 -- Every statement is an upsert keyed on the authoring identifier — a level's slug,
--- a question's key — so re-running this after a content change updates rows in
--- place. That matters more here than idempotence usually does: a question row that
--- was deleted and reinserted would take every answer ever recorded against it with
--- it, and the improvement figures with those.
+-- a Stage's slug, a lesson's (module_slug, slug), a question's authoring key — so
+-- this is safe to apply over an existing course: rows are updated in place and
+-- nothing is deleted. A question row deleted and reinserted would take every
+-- answer ever recorded against it, and the improvement figures with them.
 --
--- The forty gate questions are in here too, with the option keys the volunteer
--- portal has always sent, so historical volunteer_quiz_attempts.answers keep
--- resolving against them.
+-- Stages are emitted only once finished: ${[...readySlugs].join(", ") || "none yet"}.
 
 begin;
-
 `);
 
-// ── levels, modules, lessons ────────────────────────────────────────────────
-for (const [levelIndex, level] of levels.entries()) {
-  counts.levels++;
-  out.push(`insert into learn_levels (
+// ── levels, Stages, lessons ────────────────────────────────────────────────
+if (emitCourse) {
+  for (const [levelIndex, level] of courseStructure.entries()) {
+    counts.levels++;
+    out.push(`insert into learn_levels (
   slug, position, title, tier, strapline, goal, est_min_minutes, est_max_minutes,
   accent_token, certificate_title, certificate_code, pass_mark_pct
 ) values (
@@ -128,16 +184,17 @@ for (const [levelIndex, level] of levels.entries()) {
   certificate_code = excluded.certificate_code, pass_mark_pct = excluded.pass_mark_pct,
   updated_at = now();
 `);
+  }
 
-  for (const [moduleIndex, mod] of level.modules.entries()) {
-    counts.modules++;
+  // The domain says Stage; the schema says module (#26). The mapping is here only.
+  for (const { level, stage, bodies } of ready) {
+    counts.stages++;
     out.push(`insert into learn_modules (
   slug, level_slug, position, title, number, core_question, intro_markdown,
   est_minutes, is_mandatory
 ) values (
-  ${q(mod.slug)}, ${q(level.slug)}, ${moduleIndex}, ${q(mod.title)}, ${mod.number},
-  ${q(mod.coreQuestion)}, ${q(mod.introMarkdown)}, ${mod.estMinutes},
-  ${q(mod.isMandatory ?? true)}
+  ${q(stage.slug)}, ${q(level.slug)}, ${stage.number - 1}, ${q(stage.title)}, ${stage.number},
+  ${q(stage.coreQuestion)}, '', ${stage.estMinutes}, true
 ) on conflict (slug) do update set
   level_slug = excluded.level_slug, position = excluded.position,
   title = excluded.title, number = excluded.number,
@@ -146,28 +203,28 @@ for (const [levelIndex, level] of levels.entries()) {
   updated_at = now();
 `);
 
-    for (const [lessonIndex, lesson] of mod.lessons.entries()) {
+    for (const [lessonIndex, lesson] of stage.lessons.entries()) {
       counts.lessons++;
       out.push(`insert into learn_lessons (
   slug, module_slug, position, title, kind, body_markdown, component_key, payload
 ) values (
-  ${q(lesson.slug)}, ${q(mod.slug)}, ${lessonIndex}, ${q(lesson.title)}, ${q(lesson.kind)},
-  ${q(lesson.bodyMarkdown)}, ${q(lesson.componentKey)},
-  ${lesson.payload === undefined ? "NULL" : `${q(JSON.stringify(lesson.payload))}::jsonb`}
+  ${q(lesson.slug)}, ${q(stage.slug)}, ${lessonIndex}, ${q(lesson.title)}, ${q(lesson.kind)},
+  ${q(bodies.get(lesson.slug))}, NULL, NULL
 ) on conflict (module_slug, slug) do update set
-  position = excluded.position,
-  title = excluded.title, kind = excluded.kind,
+  position = excluded.position, title = excluded.title, kind = excluded.kind,
   body_markdown = excluded.body_markdown, component_key = excluded.component_key,
   payload = excluded.payload, updated_at = now();
 `);
     }
   }
-}
 
-// ── the reading list ────────────────────────────────────────────────────────
-for (const [index, r] of resourceSeeds.entries()) {
-  counts.resources++;
-  out.push(`insert into learn_resources (
+  // ── the reading list ──────────────────────────────────────────────────────
+  // Course-wide entries, plus any keyed to a finished Stage. Entries keyed to the
+  // prior build's thirteen modules have no Stage to hang off and are not emitted.
+  const resources = resourceSeeds.filter((r) => r.moduleSlug === null || readySlugs.has(r.moduleSlug));
+  for (const [index, r] of resources.entries()) {
+    counts.resources++;
+    out.push(`insert into learn_resources (
   slug, module_slug, title, description, kind, is_required, source, author,
   external_url, file_path, licence_note, is_stub, position
 ) values (
@@ -182,6 +239,20 @@ for (const [index, r] of resourceSeeds.entries()) {
   file_path = excluded.file_path, licence_note = excluded.licence_note,
   is_stub = excluded.is_stub, position = excluded.position;
 `);
+    if (r.isStub || r.verifiedAgainst) {
+      review.push({
+        entityType: "RESOURCE",
+        entityRef: `resource:${r.key}`,
+        location: r.moduleSlug ? `Resource · ${r.moduleSlug}` : "Resource · course-wide",
+        claim: r.isStub ? `Incomplete citation: "${r.title}"` : `Citation: "${r.title}"`,
+        category: "MEDICAL",
+        severity: 3,
+        status: r.isStub ? "NEEDS_VERIFICATION" : "APPROVED",
+        sourceHint: r.verifiedAgainst ?? "Awaiting Save7's reference list.",
+        notes: r.verifiedAgainst ? `Checked against: ${r.verifiedAgainst}` : undefined,
+      });
+    }
+  }
 }
 
 /** One question and its options, course or gate. */
@@ -198,12 +269,10 @@ function emitQuestion(
     explanation: string;
     topicTag: string;
     difficulty: number;
-    pairKey: string | null;
     position: number;
   },
   choices: Array<{ optionKey: string; position: number; text: string; isCorrect: boolean; feedback: string | null }>,
 ) {
-  counts.questions++;
   out.push(`insert into learn_questions (
   authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
   explanation, topic_tag, difficulty, pair_key, position
@@ -211,7 +280,7 @@ function emitQuestion(
   ${q(key)}, ${q(fields.scope)}, ${q(fields.kind)}, ${q(fields.gate)},
   ${q(fields.levelSlug)}, ${q(fields.moduleSlug)}, ${q(fields.prompt)},
   ${q(fields.scenario)}, ${q(fields.explanation)}, ${q(fields.topicTag)},
-  ${fields.difficulty}, ${q(fields.pairKey)}, ${fields.position}
+  ${fields.difficulty}, NULL, ${fields.position}
 ) on conflict (authoring_key) do update set
   scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
   level_slug = excluded.level_slug, module_slug = excluded.module_slug,
@@ -233,84 +302,105 @@ select id, ${q(c.optionKey)}, ${c.position}, ${q(c.text)}, ${q(c.isCorrect)}, ${
   }
 }
 
-for (const [index, qs] of questionSeeds.entries()) {
-  emitQuestion(
-    qs.key,
-    {
-      scope: qs.scope,
-      kind: qs.kind,
-      gate: null,
-      levelSlug: qs.levelSlug ?? null,
-      moduleSlug: qs.moduleSlug ?? null,
-      prompt: qs.prompt,
-      scenario: qs.scenario ?? null,
-      explanation: qs.explanation,
-      topicTag: qs.topicTag,
-      difficulty: qs.difficulty ?? 1,
-      pairKey: qs.pairKey ?? null,
-      position: index,
-    },
-    qs.choices.map((c, i) => ({
-      optionKey: LETTERS[i],
-      position: i,
-      text: c.text,
-      isCorrect: c.isCorrect ?? false,
-      feedback: c.feedback ?? null,
-    })),
-  );
+// ── Stage Quizzes ──────────────────────────────────────────────────────────
+// Scope POST: #26/#41 settled that the two attempt-shaped scopes left are Stage
+// Quizzes (POST) and inline checks (CHECK). Both level_slug and module_slug are
+// set — the level because learn_attempts is level-keyed today, the Stage because
+// the Blueprint draws five of fifteen *per Stage*.
+const LEGAL_TOPICS = new Set(["law", "costs", "consent", "determination-of-death"]);
+
+if (emitCourse) {
+  for (const { level, stage } of ready) {
+    for (const [index, item] of stageQuizBanks[stage.slug].entries()) {
+      counts.stageQuiz++;
+      emitQuestion(
+        item.key,
+        {
+          scope: "POST",
+          kind: "SINGLE",
+          gate: null,
+          levelSlug: level.slug,
+          moduleSlug: stage.slug,
+          prompt: item.prompt,
+          scenario: item.scenario ?? null,
+          explanation: item.explanation,
+          topicTag: item.topicTag,
+          difficulty: item.difficulty,
+          position: index,
+        },
+        item.choices.map((c, i) => ({
+          optionKey: LETTERS[i],
+          position: i,
+          text: c.text,
+          isCorrect: c.isCorrect ?? false,
+          feedback: c.feedback ?? null,
+        })),
+      );
+      review.push({
+        entityType: "QUESTION",
+        entityRef: `question:${item.key}`,
+        location: `${level.title} · Stage ${stage.number}, ${stage.title} · Stage Quiz`,
+        claim: item.prompt,
+        category:
+          item.topicTag === "sa-shortage" ? "STATISTIC" : LEGAL_TOPICS.has(item.topicTag) ? "LEGAL" : "MEDICAL",
+        severity: 2,
+        status: item.verifiedAgainst ? "APPROVED" : "NEEDS_VERIFICATION",
+        sourceHint: item.verifiedAgainst ?? "No source is recorded against this item.",
+        notes: item.verifiedAgainst ? `Keyed answer and explanation checked against: ${item.verifiedAgainst}` : undefined,
+      });
+    }
+  }
 }
 
-for (const g of gateQuestions) {
-  emitQuestion(
-    g.key,
-    {
-      scope: "GATE",
-      kind: g.kind,
-      gate: g.gate,
-      levelSlug: null,
-      moduleSlug: null,
-      prompt: g.prompt,
-      scenario: null,
-      explanation: g.explanation,
-      topicTag: g.topicTag,
-      difficulty: 1,
-      pairKey: null,
-      position: g.position,
-    },
-    g.choices.map((c) => ({
-      optionKey: c.optionKey,
-      position: c.position,
-      text: c.text,
-      isCorrect: c.isCorrect ?? false,
-      feedback: null,
-    })),
-  );
+// ── the volunteer gate ─────────────────────────────────────────────────────
+// Imported from the portal, with the option keys it has always sent, so historical
+// volunteer_quiz_attempts.answers keep resolving against them.
+if (emitGate) {
+  for (const g of gateQuestions) {
+    counts.gate++;
+    emitQuestion(
+      g.key,
+      {
+        scope: "GATE",
+        kind: g.kind,
+        gate: g.gate,
+        levelSlug: null,
+        moduleSlug: null,
+        prompt: g.prompt,
+        scenario: null,
+        explanation: g.explanation,
+        topicTag: g.topicTag,
+        difficulty: 1,
+        position: g.position,
+      },
+      g.choices.map((c) => ({
+        optionKey: c.optionKey,
+        position: c.position,
+        text: c.text,
+        isCorrect: c.isCorrect ?? false,
+        feedback: null,
+      })),
+    );
+    // The clinical items assert figures, so they enter the register. entity_ref is
+    // the bare key, unprefixed, to keep matching the rows already live.
+    if (g.gate === "clinical") {
+      review.push({
+        entityType: "QUESTION",
+        entityRef: g.key,
+        location: `volunteer gate · clinical · question ${g.position}`,
+        claim: g.prompt,
+        category: "MEDICAL",
+        severity: 3,
+        status: g.verifiedAgainst ? "APPROVED" : "NEEDS_VERIFICATION",
+        sourceHint:
+          g.verifiedAgainst ?? "Imported from the volunteer portal's generated quiz. No source was supplied with it.",
+        notes: g.verifiedAgainst ? `Keyed answer and explanation checked against: ${g.verifiedAgainst}` : undefined,
+      });
+    }
+  }
 }
 
 // ── the content-review register ─────────────────────────────────────────────
-// Derived from the content by the same function the seed uses, plus the twenty
-// clinical gate items, which assert figures no supplied source backs.
-const review = [
-  ...deriveReviewItems(),
-  ...gateQuestions
-    .filter((g) => g.gate === "clinical")
-    .map((g) => ({
-      entityType: "QUESTION" as const,
-      entityRef: g.key,
-      location: `volunteer gate · clinical · question ${g.position}`,
-      claim: g.prompt,
-      category: "MEDICAL" as const,
-      severity: 3 as const,
-      status: g.verifiedAgainst ? ("APPROVED" as const) : ("NEEDS_VERIFICATION" as const),
-      sourceHint:
-        g.verifiedAgainst ??
-        "Imported from the volunteer portal's generated quiz. No source was supplied with it.",
-      notes: g.verifiedAgainst
-        ? `Keyed answer and explanation checked against: ${g.verifiedAgainst}`
-        : (undefined as string | undefined),
-    })),
-];
-
 for (const item of review) {
   counts.review++;
   out.push(`insert into learn_review_items (
@@ -337,27 +427,54 @@ for (const item of review) {
 // ── the probe ───────────────────────────────────────────────────────────────
 // Counted at generation time and asserted at apply time. A migration that loads
 // content silently short is worse than one that fails: the course would simply be
-// missing a module and nothing would say so.
+// missing a Stage and nothing would say so.
+const probe: string[] = [];
+if (emitCourse) {
+  const slugList = [...readySlugs].map((s) => q(s)).join(", ");
+  probe.push(`  select count(*) into n from learn_levels;
+  if n <> ${counts.levels} then raise exception 'expected ${counts.levels} levels, found %', n; end if;
+
+  /* Exactly the finished Stages, and nothing else. A module left over from an
+     earlier outline would still be navigable, and still gate its Level's
+     certificate, so its presence is a failure rather than a curiosity. */
+  select count(*) into n from learn_modules;
+  if n <> ${counts.stages} then raise exception 'expected ${counts.stages} Stages, found %', n; end if;
+  select count(*) into n from learn_modules where slug not in (${slugList || "''"});
+  if n <> 0 then raise exception '% module(s) are not finished Stages', n; end if;
+
+  select count(*) into n from learn_lessons;
+  if n <> ${counts.lessons} then raise exception 'expected ${counts.lessons} lessons, found %', n; end if;
+
+  /* No drafting brief and no stub text reaches a learner. markdown.ts strips
+     comments before emitting; this is the check that it did. */
+  select count(*) into n from learn_lessons
+   where strpos(body_markdown, '<!--') > 0 or strpos(body_markdown, '_Not yet written._') > 0;
+  if n <> 0 then raise exception '% lesson(s) carry a drafting brief or stub text', n; end if;
+
+  /* Fifteen per Stage, per the Blueprint — and no POST item outside a finished
+     Stage, since a level-keyed POST attempt marks every POST row in its level. */
+  select count(*) into n from learn_questions where scope = 'POST';
+  if n <> ${counts.stageQuiz} then raise exception 'expected ${counts.stageQuiz} Stage Quiz questions, found %', n; end if;
+  select count(*) into n from (
+    select module_slug from learn_questions where scope = 'POST'
+     group by module_slug having count(*) <> 15 or module_slug is null
+  ) bad;
+  if n <> 0 then raise exception '% Stage Quiz bank(s) do not hold exactly 15 questions', n; end if;`);
+}
+if (emitGate) {
+  probe.push(`  select count(*) into n from learn_questions where scope = 'GATE';
+  if n <> ${counts.gate} then raise exception 'expected ${counts.gate} gate questions, found %', n; end if;`);
+}
+
 out.push(`do $$
 declare n int;
 begin
-  select count(*) into n from learn_levels;
-  if n <> ${counts.levels} then raise exception 'expected ${counts.levels} levels, found %', n; end if;
-  select count(*) into n from learn_modules;
-  if n <> ${counts.modules} then raise exception 'expected ${counts.modules} modules, found %', n; end if;
-  select count(*) into n from learn_lessons;
-  if n <> ${counts.lessons} then raise exception 'expected ${counts.lessons} lessons, found %', n; end if;
-  select count(*) into n from learn_resources;
-  if n <> ${counts.resources} then raise exception 'expected ${counts.resources} resources, found %', n; end if;
-  select count(*) into n from learn_questions;
-  if n <> ${counts.questions} then raise exception 'expected ${counts.questions} questions, found %', n; end if;
-  select count(*) into n from learn_questions where scope = 'GATE';
-  if n <> 40 then raise exception 'expected 40 gate questions, found %', n; end if;
+${probe.join("\n\n")}
 
   /* Every question must have exactly one right answer, except a MULTI, which has
      more than one. A question with none is unanswerable and a SINGLE with two is
-     unmarkable — and learn_mark() compares sets, so it would simply mark everyone
-     wrong rather than fail loudly. */
+     unmarkable — and learn_submit_attempt() compares sets, so it would simply mark
+     everyone wrong rather than fail loudly. */
   select count(*) into n
     from learn_questions q
     left join learn_choices c on c.question_id = q.id and c.is_correct

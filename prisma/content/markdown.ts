@@ -78,14 +78,46 @@ function stripComments(body: string): string {
   return body.replace(/<!--[\s\S]*?-->/g, "").trim();
 }
 
+/**
+ * Refuse Markdown the app cannot render.
+ *
+ * `src/components/lesson/Markdown.tsx` is deliberately tiny — it escapes
+ * everything, then re-allows paragraphs, **bold**, *italic*, `code`, https
+ * links, blockquotes, flat lists and ##/### headings, because a full pipeline
+ * plus a sanitiser would be a large XSS surface. Anything else reaches the
+ * learner as literal characters: a table becomes rows of pipes, `---` a line of
+ * dashes, `<https://…>` escaped angle brackets. #47 found all three in its own
+ * first draft, so this fails the load rather than trusting a reviewer to spot
+ * them.
+ */
+const UNRENDERABLE: Array<[string, RegExp]> = [
+  ["a table row", /^\s*\|/m],
+  ["a horizontal rule", /^\s*(-{3,}|\*{3,}|_{3,})\s*$/m],
+  ["an angle-bracket autolink", /<https?:\/\//],
+  ["a link that is not https", /\]\((?!https:\/\/)[^)]*\)/],
+  ["a nested list item", /^[ \t]+([-*]|\d+\.)\s/m],
+  ["a heading other than ## or ###", /^(#|#{4,})\s/m],
+  ["emphasis nested inside bold", /\*\*[^*\n]*\*[^*\n]+\*[^*\n]*\*\*/],
+];
+
+function assertRenderable(body: string, path: string): void {
+  for (const [what, pattern] of UNRENDERABLE) {
+    const match = body.match(pattern);
+    if (match) {
+      throw new Error(
+        `${path}: contains ${what} (${JSON.stringify(match[0].trim().slice(0, 40))}), which the lesson renderer shows as raw text. See content/README.md.`,
+      );
+    }
+  }
+}
+
 export function loadLesson(bodyPath: string, repoRoot = process.cwd()): LoadedLesson {
   const path = join(repoRoot, bodyPath);
   const [frontMatter, body] = parseFrontMatter(readFileSync(path, "utf8"), bodyPath);
-  return {
-    frontMatter,
-    bodyMarkdown: stripComments(body),
-    isStub: body.includes(STUB_MARKER),
-  };
+  const bodyMarkdown = stripComments(body);
+  const isStub = body.includes(STUB_MARKER);
+  if (!isStub) assertRenderable(bodyMarkdown, bodyPath);
+  return { frontMatter, bodyMarkdown, isStub };
 }
 
 /** Every prose lesson in the Course, with the stubs still flagged. */

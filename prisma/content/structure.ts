@@ -103,7 +103,7 @@ export const beginnerLevel: LevelStructure = {
       number: 2,
       title: "Busting the Myths",
       coreQuestion: "Which widely-held beliefs about donation are false, and what is actually true?",
-      estMinutes: 12,
+      estMinutes: 15,
       lessons: [
         { slug: "intro", title: "Why this matters", kind: "INTRO", bodyPath: "content/beginner/busting-the-myths/intro.md" },
         { slug: "the-twelve-myths", title: "The twelve myths", kind: "PRIMARY", bodyPath: "content/beginner/busting-the-myths/the-twelve-myths.md" },
