@@ -1,3 +1,23 @@
+/* -----------------------------------------------------------------------------
+ * SUPERSEDED — salvage source only. Not the structure of the Course.
+ *
+ * The Course's structure is `./structure.ts`: three Levels, eleven Stages,
+ * settled in wayfinder ticket #33 against CURRICULUM-ASSESSMENT-SPEC.md. The
+ * thirteen modules below are the prior build's outline, which #26 established is
+ * a *different curriculum*, not a relabeling — so none of their slugs carry over
+ * and none of this is emitted as-is.
+ *
+ * It is kept, unedited, because ~9,000-10,000 of its ~20,800 authored words map
+ * cleanly onto one of the eleven Stages. Each Stage's `intro.md` under `content/`
+ * names which lessons here to draw on, what to cut, and what must be written from
+ * scratch. The per-Level content tickets consume this file; when the last one
+ * closes, delete it.
+ *
+ * Three whole modules have no home in the eleven Stages and were ruled out of
+ * scope in #33: `transplant-landscape`, `life-after-donation` and
+ * `become-a-save7-advocate`.
+ * -------------------------------------------------------------------------- */
+
 import { type LevelSeed } from "./types";
 
 /**
