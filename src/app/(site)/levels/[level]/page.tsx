@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/authz";
 import { getBaselineState, getPathwayForUser, getLevelBySlug, getModuleStatuses } from "@/lib/course";
+import { issueCertificateIfEarned } from "@/lib/certificates";
+import { getStageQuizStates } from "@/lib/quiz";
 import {
   Badge,
   ButtonLink,
@@ -44,13 +46,23 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
   const tier = level.tier as LevelTier;
   const meta = TIER_META[tier];
   const progress = level.progress!;
-  const contentDone = progress.modulesComplete === progress.modulesTotal;
+  const allPassed = progress.modulesTotal > 0 && progress.stagesPassed === progress.modulesTotal;
 
-  // Which modules this learner has finished.
-  const statusByModule = await getModuleStatuses(
-    user.id,
-    level.modules.map((m) => m.id),
-  );
+  // Which Stages this learner has read, and where they stand on each Stage Quiz.
+  const [statusByModule, quizByModule] = await Promise.all([
+    getModuleStatuses(
+      user.id,
+      level.modules.map((m) => m.id),
+    ),
+    getStageQuizStates(level.modules.map((m) => m.id)),
+  ]);
+
+  // Normally issued the moment the last Stage Quiz is passed. Issued here as well,
+  // idempotently, so a learner whose pass landed but whose certificate call did
+  // not is never left with a finished Level and nothing to show for it.
+  const certificatePublicId =
+    progress.certificatePublicId ??
+    (allPassed ? ((await issueCertificateIfEarned(user.id, level.id))?.publicId ?? null) : null);
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
@@ -71,7 +83,7 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
             {meta.label}
           </Badge>
           {progress.status === "COMPLETE" ? <Badge tone="correct">Complete</Badge> : null}
-          {progress.certificatePublicId ? (
+          {certificatePublicId ? (
             <Badge tone="pink">Certificate earned</Badge>
           ) : null}
         </div>
@@ -89,14 +101,14 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
       <Card className="mt-8 p-5">
         <div className="mb-2 flex items-baseline justify-between text-sm">
           <span className="font-semibold text-ink">
-            {progress.modulesComplete} of {progress.modulesTotal} modules complete
+            {progress.stagesPassed} of {progress.modulesTotal} Stage Quizzes passed
           </span>
           <span className="text-sand-500">{progress.percentComplete}%</span>
         </div>
         <ProgressBar
           value={progress.percentComplete}
           label={`${level.title} progress`}
-          tone={contentDone ? "teal" : "pink"}
+          tone={allPassed ? "teal" : "pink"}
         />
       </Card>
 
@@ -104,8 +116,11 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
       <ol className="mt-8 space-y-3">
         {level.modules.map((mod) => {
           const status = statusByModule.get(mod.id);
-          const isDone = status === "COMPLETE";
-          const isStarted = status === "IN_PROGRESS";
+          const quiz = quizByModule.get(mod.id);
+          // The tick is for the Stage Quiz, which is what the Certificate counts.
+          const isDone = quiz?.passedAt != null;
+          const isStarted = !isDone && (status !== undefined || quiz?.latest != null);
+          const quizFailed = !isDone && quiz?.latest != null;
 
           return (
             <Card as="li" key={mod.slug} className="p-0">
@@ -130,7 +145,13 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
                 <span className="flex-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="font-bold text-ink">{mod.title}</span>
-                    {isStarted ? <Badge tone="pink">In progress</Badge> : null}
+                    {isDone ? (
+                      <Badge tone="correct">Quiz passed</Badge>
+                    ) : quizFailed ? (
+                      <Badge tone="review">Quiz not passed yet</Badge>
+                    ) : isStarted ? (
+                      <Badge tone="pink">In progress</Badge>
+                    ) : null}
                   </span>
                   <span className="mt-1 block text-sm text-sand-600">
                     {mod.coreQuestion}
@@ -149,66 +170,39 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
         })}
       </ol>
 
-      {/* --- Assessment ---------------------------------------------------- */}
+      {/* --- Certificate --------------------------------------------------- */}
       <Card
         className={cx(
           "mt-8 p-6",
-          contentDone ? "border-pink-200 bg-pink-50/40" : "bg-sand-100/60",
+          allPassed ? "border-pink-200 bg-pink-50/40" : "bg-sand-100/60",
         )}
       >
-        <Eyebrow>Assessment</Eyebrow>
+        <Eyebrow>Certificate</Eyebrow>
         <Display as="h2" className="mt-3 text-title text-ink">
-          {level.certificateTitle} assessment
+          {level.certificateTitle} certificate
         </Display>
 
-        {contentDone ? (
+        {certificatePublicId ? (
           <>
             <p className="mt-3 text-sand-700">
-              You&apos;ve finished all {progress.modulesTotal} modules. The assessment
-              takes a few minutes, and passing it at {level.passMarkPct}% earns your
-              certificate. You can retake it as many times as you like.
+              You&apos;ve passed every Stage Quiz in {level.title}.
             </p>
-            {progress.postScorePct !== null ? (
-              <p className="mt-3 text-sm text-sand-600">
-                Your recorded score:{" "}
-                <strong className="text-ink">{progress.postScorePct}%</strong>
-                {progress.bestScorePct !== null &&
-                progress.bestScorePct !== progress.postScorePct
-                  ? ` · best so far ${progress.bestScorePct}%`
-                  : ""}
-              </p>
-            ) : null}
-
             <div className="mt-5 flex flex-wrap gap-3">
-              <ButtonLink href={`/assessment/${levelSlug}`} size="lg">
-                {progress.postScorePct === null
-                  ? "Start the assessment"
-                  : "Retake the assessment"}
+              <ButtonLink href={`/certificate/${certificatePublicId}`} size="lg">
+                View my certificate
               </ButtonLink>
-              {progress.certificatePublicId ? (
-                <ButtonLink
-                  href={`/certificate/${progress.certificatePublicId}`}
-                  size="lg"
-                  variant="outline"
-                >
-                  View my certificate
-                </ButtonLink>
-              ) : null}
-              {progress.postScorePct !== null ? (
-                <ButtonLink
-                  href={`/assessment/${levelSlug}/results`}
-                  size="lg"
-                  variant="outline"
-                >
-                  See my results
-                </ButtonLink>
-              ) : null}
             </div>
           </>
+        ) : allPassed ? (
+          <p className="mt-3 text-sand-700">
+            You&apos;ve passed every Stage Quiz, but we couldn&apos;t issue your certificate just
+            now. Refresh this page to try again.
+          </p>
         ) : (
           <p className="mt-3 text-sand-600">
-            Complete all {progress.modulesTotal} modules to unlock the assessment.{" "}
-            {progress.modulesTotal - progress.modulesComplete} to go.
+            Pass the Stage Quiz in each of the {progress.modulesTotal} modules to earn it. Each
+            one is in its module&apos;s Check step: {progress.modulesTotal - progress.stagesPassed}{" "}
+            to go.
           </p>
         )}
       </Card>

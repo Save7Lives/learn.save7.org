@@ -161,7 +161,10 @@ export type ModuleProgressRow = {
   seconds_spent: number;
   started_at: string;
   updated_at: string;
+  /** "Finished reading" — resume and the partial figure read it; nothing completes on it. */
   completed_at: string | null;
+  /** First pass of this Stage's quiz (0113). Never cleared once set. */
+  quiz_passed_at: string | null;
 };
 
 export type LevelProgressRow = {
@@ -169,7 +172,6 @@ export type LevelProgressRow = {
   level_slug: string;
   status: ProgressStatus;
   percent_complete: number;
-  best_score: number | null;
   started_at: string;
   updated_at: string;
   completed_at: string | null;
@@ -182,8 +184,6 @@ export type CourseProgressRow = {
   baseline_score: number | null;
   baseline_total: number | null;
   baseline_done_at: string | null;
-  final_score: number | null;
-  final_total: number | null;
   started_at: string;
   completed_at: string | null;
   updated_at: string;

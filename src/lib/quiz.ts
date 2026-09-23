@@ -5,9 +5,8 @@ import type { QuestionKind, QuizScope } from "./constants";
 import type { OptionRow, QuestionRow } from "@/db/rows";
 
 /**
- * The quiz engine, used by all three kinds of assessment: the one-time baseline,
- * the per-level post assessment, and the inline "check your understanding" blocks
- * inside modules.
+ * The quiz engine, used by the Baseline, the per-Stage Stage Quizzes, and the
+ * inline "check your understanding" blocks inside Stages.
  *
  * Two invariants hold throughout, and both are now enforced by the database
  * rather than by this file being careful:
@@ -129,10 +128,6 @@ export async function getBaselineQuestions(): Promise<ClientQuestion[]> {
   return readQuestions("PRE");
 }
 
-export async function getPostQuestions(levelId: string): Promise<ClientQuestion[]> {
-  return readQuestions("POST", { levelSlug: levelId });
-}
-
 export async function getCheckQuestions(moduleId: string): Promise<ClientQuestion[]> {
   return readQuestions("CHECK", { moduleSlug: moduleId });
 }
@@ -195,6 +190,10 @@ export type GradedAnswer = {
 export type AttemptResult = {
   attemptId: string;
   attemptNo: number;
+  /** Set for a Stage Quiz: whether this attempt reached the pass mark. */
+  passed: boolean | null;
+  moduleSlug: string | null;
+  levelSlug: string | null;
   scoreRaw: number;
   scoreMax: number;
   scorePct: number;
@@ -206,6 +205,9 @@ type DetailPayload = {
   error?: string;
   attempt_id: string;
   attempt_no: number;
+  passed?: boolean | null;
+  module_slug?: string | null;
+  level_slug?: string | null;
   score_raw: number;
   score_max: number;
   score_pct: number;
@@ -231,6 +233,9 @@ function mapDetail(payload: DetailPayload): AttemptResult {
   return {
     attemptId: payload.attempt_id,
     attemptNo: payload.attempt_no,
+    passed: payload.passed ?? null,
+    moduleSlug: payload.module_slug ?? null,
+    levelSlug: payload.level_slug ?? null,
     scoreRaw: payload.score_raw,
     scoreMax: payload.score_max,
     scorePct: payload.score_pct,
@@ -330,6 +335,136 @@ export async function getAttemptMeta(
 
   const row = data as { scope: QuizScope; level_slug: string | null } | null;
   return row ? { scope: row.scope, levelSlug: row.level_slug } : null;
+}
+
+// --- Stage Quizzes ----------------------------------------------------------
+
+/**
+ * Open, or resume, the learner's Stage Quiz for one Stage.
+ *
+ * The five questions are drawn by `learn_start_stage_quiz()` (migration 0113),
+ * not here: which five, and the rule that a retry avoids the previous paper, are
+ * decided where the attempt is recorded, and resuming returns the same five so a
+ * refresh cannot re-roll them. This only reads the drawn questions back, in the
+ * order they were drawn.
+ */
+export async function startStageQuiz(
+  stageSlug: string,
+): Promise<{ attempt: AttemptRef; questions: ClientQuestion[] }> {
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase.rpc("learn_start_stage_quiz", {
+    p_stage: stageSlug,
+  });
+
+  if (error) throw new Error(`Could not start the Stage Quiz: ${error.message}`);
+
+  const result = data as { id: string; attempt_no: number; question_ids: string[] };
+  const questions = await readQuestionsById(result.question_ids);
+
+  return { attempt: { id: result.id, attemptNo: result.attempt_no }, questions };
+}
+
+/** Questions by id, in the order given — a Stage Quiz paper is shown as drawn. */
+async function readQuestionsById(ids: string[]): Promise<ClientQuestion[]> {
+  if (ids.length === 0) return [];
+  const supabase = await supabaseServer();
+
+  const [{ data: questionData }, { data: optionData }] = await Promise.all([
+    supabase.from("learn_questions_pub").select(QUESTION_COLUMNS).in("id", ids),
+    supabase
+      .from("learn_options_pub")
+      .select("question_id, option_key, position, text")
+      .in("question_id", ids)
+      .order("position"),
+  ]);
+
+  const optionsByQuestion = new Map<string, ClientChoice[]>();
+  for (const option of (optionData ?? []) as unknown as OptionRow[]) {
+    const list = optionsByQuestion.get(option.question_id) ?? [];
+    list.push({ id: option.option_key, text: option.text });
+    optionsByQuestion.set(option.question_id, list);
+  }
+
+  const byId = new Map(
+    ((questionData ?? []) as unknown as QuestionFields[]).map((row) => [row.id, row]),
+  );
+
+  return ids.flatMap((id) => {
+    const row = byId.get(id);
+    if (!row) return [];
+    return [
+      {
+        id: row.id,
+        kind: row.kind as QuestionKind,
+        prompt: row.prompt,
+        scenario: row.scenario,
+        topicTag: row.topic_tag,
+        choices: optionsByQuestion.get(row.id) ?? [],
+      },
+    ];
+  });
+}
+
+/**
+ * Where a learner stands on one Stage Quiz: the Progress Record's latest-only
+ * view (#16). Every attempt is kept in the database; this is the latest marked
+ * one, any open one, and when the Stage was first passed — which, once set, a
+ * later practice attempt cannot undo.
+ */
+export type StageQuizState = {
+  passedAt: string | null;
+  latest: {
+    attemptId: string;
+    attemptNo: number;
+    scoreRaw: number;
+    scoreMax: number;
+    passed: boolean;
+  } | null;
+  openAttemptId: string | null;
+};
+
+export async function getStageQuizStates(
+  stageSlugs: string[],
+): Promise<Map<string, StageQuizState>> {
+  if (stageSlugs.length === 0) return new Map();
+  const supabase = await supabaseServer();
+
+  const { data } = await supabase
+    .from("learn_my_stage_quizzes")
+    .select(
+      "module_slug, quiz_passed_at, latest_attempt_id, latest_attempt_no, score_raw, score_max, passed, open_attempt_id",
+    )
+    .in("module_slug", stageSlugs);
+
+  const rows = (data ?? []) as unknown as Array<{
+    module_slug: string;
+    quiz_passed_at: string | null;
+    latest_attempt_id: string | null;
+    latest_attempt_no: number | null;
+    score_raw: number | null;
+    score_max: number | null;
+    passed: boolean | null;
+    open_attempt_id: string | null;
+  }>;
+
+  return new Map(
+    rows.map((r) => [
+      r.module_slug,
+      {
+        passedAt: r.quiz_passed_at,
+        latest: r.latest_attempt_id
+          ? {
+              attemptId: r.latest_attempt_id,
+              attemptNo: r.latest_attempt_no ?? 1,
+              scoreRaw: r.score_raw ?? 0,
+              scoreMax: r.score_max ?? 0,
+              passed: r.passed === true,
+            }
+          : null,
+        openAttemptId: r.open_attempt_id,
+      },
+    ]),
+  );
 }
 
 // --- Inline checks ----------------------------------------------------------

@@ -57,10 +57,7 @@ export async function submitAssessmentAction(
     redirect("/assessment/pre/done");
   }
 
-  // Without a level there is no results page to show — an empty segment would
-  // build "/assessment//results" and land the learner on a 404 after an
-  // assessment they actually completed.
-  redirect(
-    attempt?.levelSlug ? `/assessment/${attempt.levelSlug}/results` : "/dashboard",
-  );
+  // Stage Quizzes are submitted inline through submitStageQuizAction, so nothing
+  // Level-wide reaches here any more (#57). The Level page is the safe landing.
+  redirect(attempt?.levelSlug ? `/levels/${attempt.levelSlug}` : "/dashboard");
 }

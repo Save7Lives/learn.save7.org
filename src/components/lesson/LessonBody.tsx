@@ -13,7 +13,6 @@ import type {
   TakeawayListPayload,
   TeamRosterPayload,
 } from "@/lib/lesson-payloads";
-import type { ClientQuestion } from "@/lib/quiz";
 
 import { ChapterVideo } from "@/components/interactive/ChapterVideo";
 import { ComparePanel } from "@/components/interactive/ComparePanel";
@@ -21,7 +20,6 @@ import { EligibilityMatrix } from "@/components/interactive/EligibilityMatrix";
 import { MythFlip } from "@/components/interactive/MythFlip";
 import { OrganExplorer } from "@/components/interactive/OrganExplorer";
 import { PathwayJourney } from "@/components/interactive/PathwayJourney";
-import { QuizBlock } from "@/components/interactive/QuizBlock";
 import { ResourceList, type ResourceRow } from "@/components/interactive/ResourceList";
 import { ScenarioDialogue } from "@/components/interactive/ScenarioDialogue";
 import { TakeawayList } from "@/components/interactive/TakeawayList";
@@ -52,12 +50,13 @@ export type LessonRow = {
  */
 export function LessonBody({
   lesson,
-  questions,
+  stageQuiz,
   resources,
   moduleContext,
 }: {
   lesson: LessonRow;
-  questions: ClientQuestion[];
+  /** The CHECK step's Stage Quiz, built by the Stage page, which holds the learner's state. */
+  stageQuiz?: React.ReactNode;
   resources: ResourceRow[];
   /** Only needed by the COMPLETE step, which is generated from module data. */
   moduleContext?: ModuleCompleteContext;
@@ -151,12 +150,11 @@ export function LessonBody({
   }
 
   // Lessons without a component: the study guide, and plain prose steps.
+  /* The CHECK step is the Stage Quiz (#57). The inline check-your-understanding
+     block it used to hold (QuizBlock, CHECK-scope questions) has no content since
+     #33, and whether any interactive component returns is #58's question. */
   if (lesson.kind === "CHECK") {
-    return (
-      <Wrapped prose={prose}>
-        <QuizBlock questions={questions} />
-      </Wrapped>
-    );
+    return <Wrapped prose={prose}>{stageQuiz ?? null}</Wrapped>;
   }
 
   /* Since #33, a study guide and a reading list are Markdown prose in the lesson

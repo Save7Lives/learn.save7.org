@@ -171,14 +171,7 @@ export default async function DashboardPage() {
 
                     <p className="mt-1 text-sm text-sand-600">
                       {p?.modulesComplete ?? 0} of {p?.modulesTotal ?? 0} modules
-                      {p?.postScorePct !== null && p?.postScorePct !== undefined
-                        ? ` · assessment ${p.postScorePct}%`
-                        : ""}
-                      {p?.bestScorePct !== null &&
-                      p?.bestScorePct !== undefined &&
-                      p.bestScorePct !== p.postScorePct
-                        ? ` (best ${p.bestScorePct}%)`
-                        : ""}
+                      {` · ${p?.stagesPassed ?? 0} of ${p?.modulesTotal ?? 0} Stage Quizzes passed`}
                     </p>
 
                     <div className="mt-3 max-w-md">

@@ -9,10 +9,12 @@ export type ModuleCompleteContext = {
   nextModuleTitle: string | null;
   levelTitle: string;
   levelSlug: string;
-  /** True when this is the last module in the level, so the assessment is next. */
+  /** True when this is the last module in the level. */
   isLastInLevel: boolean;
   certificateTitle: string;
   alreadyComplete: boolean;
+  /** Whether this Stage's quiz has been passed — what the Certificate counts. */
+  quizPassed: boolean;
 };
 
 /**
@@ -41,6 +43,7 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
     isLastInLevel,
     certificateTitle,
     alreadyComplete,
+    quizPassed,
   } = context;
 
   return (
@@ -96,14 +99,24 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
           </p>
         )}
 
+        {/* Reading a Stage and passing its quiz are separate: only the quiz counts
+            towards the Certificate (#16), so say so here rather than let "complete"
+            imply it. */}
+        {!quizPassed ? (
+          <p className="mt-3 text-sm text-sand-600">
+            You haven&apos;t passed this Stage&apos;s quiz yet. It&apos;s in the Check step,
+            and passing every Stage Quiz in {levelTitle} earns the{" "}
+            <strong className="text-ink">&ldquo;{certificateTitle}&rdquo;</strong> certificate.
+          </p>
+        ) : null}
+
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {isLastInLevel ? (
             <>
               <Badge tone="pink">Last module in {levelTitle}</Badge>
               <p className="text-sm text-sand-600">
-                Completing this unlocks the assessment — pass it and you earn the{" "}
-                <strong className="text-ink">&ldquo;{certificateTitle}&rdquo;</strong>{" "}
-                certificate.
+                Your certificate is on the {levelTitle} page once every Stage Quiz in it is
+                passed.
               </p>
             </>
           ) : nextModuleTitle ? (

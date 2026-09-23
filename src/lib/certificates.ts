@@ -5,12 +5,10 @@ import { supabaseServer } from "./supabase/server";
 /**
  * Certificates.
  *
- * Two rules govern issuance, and both are now enforced in the database rather
- * than here, because `learn_certificates` has no insert policy — a client that
- * could write the table could award itself one:
- *
- *   1. Every mandatory module in the level must be complete.
- *   2. The learner must have reached the level's pass mark on some attempt.
+ * One rule governs issuance: every Stage Quiz in the Level passed (#8). It is
+ * enforced in the database, by `learn_issue_certificate()` (migration 0113),
+ * because `learn_certificates` has no insert policy — a client that could write
+ * the table could award itself one. Reading a Stage is not part of it.
  *
  * The learner's name and the award title are *snapshotted* onto the certificate.
  * Renaming an account later must not silently rewrite a certificate someone has
@@ -27,7 +25,8 @@ export type IssuedCertificate = {
   awardTitleSnapshot: string;
   learnerNameSnapshot: string;
   issuedAt: Date;
-  scorePct: number;
+  /** Null since 0113: the Blueprint has no Level score to put on a Certificate. */
+  scorePct: number | null;
 };
 
 /**
@@ -60,7 +59,7 @@ export async function issueCertificateIfEarned(
     awardTitleSnapshot: row.award_title_snapshot ?? "",
     learnerNameSnapshot: row.learner_name_snapshot,
     issuedAt: new Date(row.issued_at),
-    scorePct: row.score_pct ?? 0,
+    scorePct: row.score_pct,
   };
 }
 

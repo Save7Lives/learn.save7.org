@@ -2,13 +2,20 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/authz";
 import { getBaselineState, getModuleForUser } from "@/lib/course";
-import { getCheckQuestions } from "@/lib/quiz";
+import { getStageQuizStates } from "@/lib/quiz";
 import { ModuleRunner, type RunnerLesson } from "@/components/lesson/ModuleRunner";
 import { LessonBody } from "@/components/lesson/LessonBody";
+import { StageQuiz } from "@/components/quiz/StageQuiz";
 import { TIER_META } from "@/components/ui/primitives";
 import type { LevelTier } from "@/lib/constants";
 import { mediaUrl, resolvePayloadMedia } from "@/lib/media";
-import { completeModuleAction, viewLessonAction } from "../../../actions";
+import {
+  completeModuleAction,
+  readStageQuizAction,
+  startStageQuizAction,
+  submitStageQuizAction,
+  viewLessonAction,
+} from "../../../actions";
 
 // Rendered per request, never prerendered: this route reads runtime configuration
 // (Supabase URL and key, SITE_URL) which Cloudflare applies at deploy time. A
@@ -41,9 +48,21 @@ export default async function ModulePage(
   const { level, module: mod, siblings, progress } = data;
   const tier = level.tier as LevelTier;
 
-  // Inline check questions are fetched here and rendered on the server, so the
-  // answer key is never serialised into the client bundle.
-  const checkQuestions = await getCheckQuestions(mod.id);
+  // The CHECK step is this Stage's quiz. Only where the learner stands is read
+  // here; the paper is drawn when they open it, so visiting a Stage never starts
+  // an attempt.
+  const quizState = (await getStageQuizStates([mod.id])).get(mod.id) ?? null;
+  const stageQuiz = (
+    <StageQuiz
+      stageSlug={mod.id}
+      passMarkPct={level.passMarkPct}
+      certificateTitle={level.certificateTitle}
+      initialState={quizState}
+      onStart={startStageQuizAction}
+      onSubmit={submitStageQuizAction}
+      onReview={readStageQuizAction}
+    />
+  );
 
   const resources = mod.resources.map((r) => ({
     id: r.id,
@@ -89,6 +108,7 @@ export default async function ModulePage(
     isLastInLevel: nextSibling === null,
     certificateTitle: level.certificateTitle,
     alreadyComplete: progress?.status === "COMPLETE",
+    quizPassed: quizState?.passedAt != null,
   };
 
   const lessons: RunnerLesson[] = mod.lessons.map((lesson) => ({
@@ -99,7 +119,7 @@ export default async function ModulePage(
     content: (
       <LessonBody
         lesson={{ ...lesson, payloadJson: resolvePayloadMedia(lesson.payloadJson) }}
-        questions={lesson.kind === "CHECK" ? checkQuestions : []}
+        stageQuiz={lesson.kind === "CHECK" ? stageQuiz : undefined}
         resources={resources}
         moduleContext={lesson.kind === "COMPLETE" ? moduleContext : undefined}
       />

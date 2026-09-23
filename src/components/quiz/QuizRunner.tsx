@@ -5,8 +5,7 @@ import { Badge, Button, Card, Display, cx } from "@/components/ui/primitives";
 import type { ClientQuestion } from "@/lib/quiz";
 
 /**
- * The assessment runner, used for both the baseline and the per-level post
- * assessments.
+ * The assessment runner, used for the Baseline and for each Stage Quiz.
  *
  * One question at a time rather than a long scrolling form. On a phone a
  * twelve-question form is a wall; one question per screen keeps the reading
@@ -21,7 +20,12 @@ export type QuizRunnerProps = {
   /** Framing shown before the first question. */
   intro?: string;
   submitLabel?: string;
-  /** Server action that grades the attempt and redirects. */
+  /** The review step's heading level: h2 when the runner sits inside a lesson page. */
+  headingAs?: "h1" | "h2";
+  /**
+   * Grades the attempt. A page-level quiz passes a server action that redirects;
+   * an inline one passes a function that stores the result and returns nothing.
+   */
   onSubmit: (attemptId: string, payload: string) => Promise<{ error?: string } | void>;
 };
 
@@ -33,6 +37,7 @@ export function QuizRunner({
   title,
   intro,
   submitLabel = "Submit answers",
+  headingAs = "h1",
   onSubmit,
 }: QuizRunnerProps) {
   const [index, setIndex] = useState(0);
@@ -83,7 +88,7 @@ export function QuizRunner({
   if (reviewing) {
     return (
       <div className="mx-auto max-w-2xl">
-        <Display as="h1" className="text-title text-ink">
+        <Display as={headingAs} className="text-title text-ink">
           Check before you submit
         </Display>
         <p className="mt-3 text-sand-600">

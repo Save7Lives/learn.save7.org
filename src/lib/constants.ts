@@ -58,6 +58,13 @@ export const RESOURCE_TYPE_LABELS: Record<ResourceType, string> = {
 };
 
 export const QUIZ_SCOPES = ["PRE", "POST", "CHECK"] as const;
+
+/**
+ * Questions on one Stage Quiz paper (#8's Blueprint: 5 drawn from a Stage's 15).
+ * The draw itself is `learn_start_stage_quiz()`'s; this is for copy shown before
+ * a paper exists.
+ */
+export const STAGE_QUIZ_SIZE = 5;
 export type QuizScope = (typeof QUIZ_SCOPES)[number];
 
 export const QUESTION_KINDS = ["SINGLE", "MULTI", "TRUE_FALSE", "SCENARIO"] as const;

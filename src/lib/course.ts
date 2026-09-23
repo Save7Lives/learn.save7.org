@@ -165,13 +165,11 @@ export async function getPathway() {
 export type LevelProgressSummary = {
   status: ProgressStatus;
   percentComplete: number;
+  /** Stages marked read. Drives "resume where you left off", and nothing else. */
   modulesComplete: number;
   modulesTotal: number;
-  /** Post-assessment result on the recorded (first) attempt, if taken. */
-  postScorePct: number | null;
-  /** Highest post-assessment score across all attempts. */
-  bestScorePct: number | null;
-  passed: boolean;
+  /** Stages whose Stage Quiz is passed. This is what completes the Level (#16). */
+  stagesPassed: number;
   certificatePublicId: string | null;
   /** The module to resume at, or the first module if not started. */
   nextModuleSlug: string | null;
@@ -206,24 +204,16 @@ export async function getPathwayForUser(userId: string | null) {
   }
 
   const supabase = await supabaseServer();
-  const [moduleRows, levelRows, attemptRows, certificateRows] = await Promise.all([
+  const [moduleRows, levelRows, certificateRows] = await Promise.all([
     supabase
       .from("learn_module_progress")
-      .select("module_slug, status, updated_at")
+      .select("module_slug, status, quiz_passed_at, updated_at")
       .eq("learner_id", userId),
 
     supabase
       .from("learn_level_progress")
       .select("level_slug, status, percent_complete")
       .eq("learner_id", userId),
-
-    supabase
-      .from("learn_attempts")
-      .select("level_slug, score_pct, attempt_no")
-      .eq("learner_id", userId)
-      .eq("scope", "POST")
-      .not("submitted_at", "is", null)
-      .order("attempt_no"),
 
     supabase
       .from("learn_certificates")
@@ -234,20 +224,19 @@ export async function getPathwayForUser(userId: string | null) {
 
   const progressRows = (moduleRows.data ?? []) as Pick<
     ModuleProgressRow,
-    "module_slug" | "status" | "updated_at"
+    "module_slug" | "status" | "quiz_passed_at" | "updated_at"
   >[];
   const levelProgressRows = (levelRows.data ?? []) as Pick<
     LevelProgressRow,
     "level_slug" | "status" | "percent_complete"
   >[];
-  const attempts = (attemptRows.data ?? []) as Pick<
-    { level_slug: string | null; score_pct: number | null; attempt_no: number },
-    "level_slug" | "score_pct" | "attempt_no"
-  >[];
   const certs = (certificateRows.data ?? []) as Pick<CertificateRow, "level_slug" | "code">[];
 
   const completeModuleIds = new Set(
     progressRows.filter((m) => m.status === "COMPLETE").map((m) => m.module_slug),
+  );
+  const passedModuleIds = new Set(
+    progressRows.filter((m) => m.quiz_passed_at !== null).map((m) => m.module_slug),
   );
   const startedModuleIds = new Set(progressRows.map((m) => m.module_slug));
   const levelProgressByLevel = new Map(levelProgressRows.map((l) => [l.level_slug, l]));
@@ -257,26 +246,24 @@ export async function getPathwayForUser(userId: string | null) {
     const mandatory = level.modules.filter((m) => m.isMandatory);
     const modulesTotal = mandatory.length;
     const modulesComplete = mandatory.filter((m) => completeModuleIds.has(m.id)).length;
+    const stagesPassed = mandatory.filter((m) => passedModuleIds.has(m.id)).length;
 
-    const levelAttempts = attempts.filter((a) => a.level_slug === level.id);
-    // attempt 1 is the recorded measure — retakes must not inflate analytics.
-    const recorded = levelAttempts.find((a) => a.attempt_no === 1)?.score_pct ?? null;
-    const best = levelAttempts.length
-      ? Math.max(...levelAttempts.map((a) => a.score_pct ?? 0))
-      : null;
-
+    // Stage Quizzes passed, not Stages read: that is what completes a Level, and
+    // learn_refresh_progress() (0113) stores the same figure. Computed here too
+    // for a learner with no level row yet.
     const lp = levelProgressByLevel.get(level.id);
     const percentComplete =
-      modulesTotal === 0 ? 0 : Math.round((modulesComplete / modulesTotal) * 100);
+      modulesTotal === 0 ? 0 : Math.round((stagesPassed / modulesTotal) * 100);
 
     // Resume at the first incomplete module; if all are done, stay on the last.
     const firstIncomplete = level.modules.find((m) => !completeModuleIds.has(m.id));
     const nextModuleSlug =
       firstIncomplete?.slug ?? level.modules[level.modules.length - 1]?.slug ?? null;
 
-    const started = level.modules.some((m) => startedModuleIds.has(m.id));
+    // A failed Stage Quiz writes no Stage row, only the Level's, so either counts.
+    const started = level.modules.some((m) => startedModuleIds.has(m.id)) || lp !== undefined;
     const status: ProgressStatus =
-      modulesTotal > 0 && modulesComplete === modulesTotal
+      modulesTotal > 0 && stagesPassed === modulesTotal
         ? "COMPLETE"
         : started
           ? "IN_PROGRESS"
@@ -289,9 +276,7 @@ export async function getPathwayForUser(userId: string | null) {
         percentComplete: lp?.percent_complete ?? percentComplete,
         modulesComplete,
         modulesTotal,
-        postScorePct: recorded,
-        bestScorePct: best,
-        passed: (best ?? 0) >= level.passMarkPct,
+        stagesPassed,
         certificatePublicId: certByLevel.get(level.id) ?? null,
         nextModuleSlug,
       },
