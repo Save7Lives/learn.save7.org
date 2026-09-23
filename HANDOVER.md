@@ -175,20 +175,51 @@ npm run typecheck && npm run lint && npm run cf:build
 npm run preview          # the real Worker on workerd, config from wrangler.jsonc
 ```
 
-The anon key is in `.env` and in `wrangler.jsonc`. These probes confirm the
-isolation holds against the live project — the first should return the course row,
-and the rest should return nothing:
+The anon key is in `.env` and in `wrangler.jsonc`, and it is public by design, so
+every probe below is safe to run from anywhere. They confirm the isolation holds
+against the live project.
+
+**`verify_learn_isolation()` does not need database credentials.** It is reachable
+over PostgREST as the anon role, which matters because `SUPABASE_DB_URL` is empty
+in most checkouts and this was previously treated as a blocker:
+
+```bash
+curl -s -X POST "$URL/rest/v1/rpc/verify_learn_isolation" \
+  -H "apikey: $KEY" -H "Authorization: Bearer $KEY" \
+  -H "Content-Type: application/json" -d '{}'
+```
+
+Passing looks like: `"learn_* RLS on, learn_choices has no policy, no view names
+is_correct, anon has no direct read"`. Anything else is a failure, not a variation.
+
+Then the table probes — the first returns the course row, the rest must not return
+data:
 
 ```bash
 curl -s "$URL/rest/v1/learn_course?select=slug" -H "apikey: $KEY" -H "Authorization: Bearer $KEY"
 ```
 
-Expected: `learn_levels` → `[]` (RLS denies rows), `learn_options_pub` →
-`permission denied for view`, `learn_questions` → 401, `learners` → `[]`,
-`learn_submit_attempt` → 401.
+Expected: `learn_course` → the course row; `learn_levels`, `learn_modules`,
+`learn_lessons`, `learners`, `learn_certificates`, `learn_events` and `people` →
+`[]` (RLS denies the rows); `learn_options_pub` → `permission denied for view`;
+`learn_questions` and `learn_choices` → 401 `42501`; `learn_submit_attempt` → 404
+`PGRST202`.
 
-In the database: `select verify_learn_isolation();` and, for anything touching a
-`vol_*` view, `select verify_vol_views();`.
+Two things that look like findings and are not:
+
+- **Probe with `select=*`, not `select=id`.** PostgREST resolves column names
+  before it checks privileges, so `?select=id` on a denied table answers
+  `column ... does not exist` (400) and hides the actual denial.
+- **`learn_submit_attempt` answers 404 `PGRST202`, not 401.** The probe calls it
+  with no arguments and no such overload exists, so PostgREST rejects it on
+  signature before reaching permissions. The denial is real either way; the status
+  code is an artefact of the probe's shape.
+
+Last confirmed green: **2026-09-23**, against the deployed Worker, all of the above
+matching.
+
+For anything touching a `vol_*` view, `select verify_vol_views();` in the database
+as well — that one has no RPC route.
 
 ---
 
@@ -214,6 +245,14 @@ RCE at CVSS 9.5, published 2026-09-08, affecting everything up to 15.5.23 and
 16.0.0–16.3.2. The app is now on **16.3.6**, which carries no open critical or high
 advisory, and `@opennextjs/cloudflare` sets a version **floor** rather than a
 ceiling, so the next patch can simply be taken.
+
+**Re-confirmed at deploy time, 2026-09-23**, rather than carried over from this
+file: 16.3.6 is what npm serves as `latest`, so there is nothing newer to take.
+Both criticals affecting the 16 line — GHSA-2xp9-vwfh-vxw4 (CVSS 9.5) and
+GHSA-p293-qw3h-jr36 (CVSS 9.0, Windows-hosted servers) — are fixed in 16.3.3, and
+the only High touching 16.x, GHSA-6gpp-xcg3-4w24 (Middleware/Proxy bypass), in
+16.2.11; this app has no middleware in any case. `npm audit --omit=dev` reports
+zero. Re-run that check rather than trusting this paragraph — it is a snapshot.
 
 **0095 widened who may hold an account** on the project holding the organisation's
 books, from staff, funders and volunteers to anyone who registers for a public

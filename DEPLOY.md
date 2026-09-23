@@ -19,42 +19,46 @@ is the largest change in this document.
 
 Four things. None of them is waiting on code.
 
-### 1. The Worker has never been deployed
+### 1. The Worker is deployed; two console allow-lists are outstanding
 
-Checked on 22 September 2026 rather than assumed:
+Deployed **23 September 2026** by `admin@save7.org`, one version serving 100% of
+traffic. Checked rather than assumed:
 
 ```bash
 npx wrangler deployments list --name learn
+curl -s -o /dev/null -w "%{http_code}\n" https://learn.save7.workers.dev/
 ```
 
-```
-✘ This Worker does not exist on your account. [code: 10007]
-```
+The site answers `200` and renders. Runtime configuration is reaching it from
+`wrangler.jsonc` and not from a build-time inline — the Supabase URL and the Google
+client id both appear in `/login`, which is the trap in §2 of HANDOVER working
+correctly. Protected routes redirect: `/dashboard` and `/admin` both `307` to
+`/login?next=…`. `/media/*` is `404` and `/favicon.ico` is `200`, so `.assetsignore`
+is doing its job.
 
-`https://learn.save7.workers.dev` agrees: it answers `404` with body
-`error code: 1042`, the same response `nope-does-not-exist.save7.workers.dev`
-gives. So the port back to Workers is complete in the repository and has never
-been uploaded. **Until the first deploy, that hostname serves nothing** — do not
-read it as a staging site that is already up.
+`register-learner` now carries the Workers allow-list (`save7-os` `da07e83`,
+deployed 23 September). Verified in both directions: `learn.save7.workers.dev` and
+a hyphenated preview hostname are allowed; `evil.workers.dev`,
+`other.save7.workers.dev`, `learn.save7.workers.dev.evil.com` and plain-`http://`
+are all refused.
 
-Nothing about development is blocked by that. `npm run dev` runs against the live
-Supabase project, and `npm run preview` builds and runs the **real Worker on
-workerd**, which is the only local thing that catches runtime-specific breakage.
-The end-to-end journey can be walked on either.
+**What is still outstanding is two allow-lists that live in consoles**, covered by
+step 6b. Both must be done, and they gate different code paths, so doing one leaves
+a broken route:
 
-Two ways to clear it, either is fine:
+- **Google Cloud console → the volunteer portal's OAuth client → Authorised
+  JavaScript origins.** Gates `signInWithIdToken`, which `GoogleSignIn.tsx`
+  prefers. **Append** `https://learn.save7.workers.dev`; never replace the list,
+  it is shared with volunteers.save7.org.
+- **Supabase → Authentication → URL Configuration → Redirect URLs.** Gates the
+  `signInWithOAuth` fallback, which uses
+  `redirectTo: window.location.origin + pathname`.
 
-- **Fastest, no credentials to arrange.** From a checkout on a machine logged in
-  to the `admin@save7.org` Cloudflare account (`npx wrangler whoami` confirms —
-  account `cab9730a43ee3fb2e8aaf3d36a25cb8d`): `npm run deploy`. One command,
-  builds and uploads.
-- **Durable.** Connect **Cloudflare Workers Builds** to the repository, so a push
-  to `main` deploys itself — see
-  [Deploying from GitHub](#deploying-from-github-recommended). No repository
-  secrets are involved either way; Workers Builds holds its own credential.
-
-Finish steps 2 to 7 before the first deploy, or the site goes up unable to reach
-its database.
+These are deploy-time configuration that no build, typecheck or lint can catch, and
+**they fail silently** — in the browser a missing entry reads as "Could not reach
+Save7", which looks like an outage rather than a missing allow-list entry. The same
+was true of the `register-learner` allow-list before it was fixed. When a journey
+step fails on the live site, check these before suspecting the code.
 
 ### 2. `learn.save7.org` currently serves the holding page, from somewhere else
 
@@ -128,11 +132,11 @@ committed, put in `wrangler.jsonc`, or pasted into a chat.
 | Build target | Cloudflare **Workers**, via `@opennextjs/cloudflare` 1.20.6 |
 | Framework | Next **16.3.6**, React 19.2.8 |
 | Worker | `learn`, on the `admin@save7.org` account (`cab9730a43ee3fb2e8aaf3d36a25cb8d`) |
-| Hostname once deployed | `https://learn.save7.workers.dev` — the account's workers.dev subdomain is `save7` |
+| Hostname | `https://learn.save7.workers.dev` — live, deployed 2026-09-23 09:18 UTC. The account's workers.dev subdomain is `save7` |
 | Backend | The Save7 Supabase project — the same one the OS and the volunteer portal use |
 | Database migrations | `save7-os/supabase/migrations/0091`–`0098` |
 | Sign-in | Google, verified by Supabase. No passwords, no `AUTH_SECRET` |
-| Registration endpoint | `register-learner`, needs redeploying for the new allow-list — step 3 |
+| Registration endpoint | `register-learner` deployed 2026-09-23 with the Workers allow-list, verified allowing the live and preview hostnames and refusing four near-miss origins |
 | **Video** | **Not hosted.** Supabase Storage, bucket `learn-media` — step 5 |
 | Custom domain | Not attached, and **no longer a single CNAME edit** — step 9 |
 
@@ -152,16 +156,17 @@ as they land. The floor is where the September 2026 AVIF image-optimization RCE
 | Runs on `workerd` | `npm run preview` — the real runtime, not an emulator |
 | Type and lint | `tsc --noEmit` and `eslint` clean |
 | `.assetsignore` is honoured | Served the built output: the video 404s, `/favicon.ico` serves |
-| Answer-key isolation | Enforced by the database: `learn_choices` has no policy, and `verify_learn_isolation()` asserts it |
+| Answer-key isolation | Run against the live project 2026-09-23: `verify_learn_isolation()` passes, `learn_choices` and `learn_questions` both deny with 401, `learn_options_pub` denies and does not carry `is_correct`. HANDOVER §5 has the commands — no database credentials needed |
+| Production smoke test | 2026-09-23 against `learn.save7.workers.dev`: `/`, `/login`, `/register`, `/privacy` and `/certificate/[publicId]` all `200`; `/dashboard` and `/admin` `307` to `/login?next=…`; runtime vars reaching the page from `wrangler.jsonc` |
 | Content load | 0094's probe asserts all six counts and the one-correct-answer invariant |
 
 **Not verified, and you should know it before launch:**
 
 | | |
 |---|---|
-| Anything on production | The Worker does not exist yet. Every claim below about deployed behaviour is about what the configuration says, not what a live site has done. |
+| Anything behind sign-in | The smoke test above is unauthenticated. Nothing past the login wall has been exercised on the live site, and registration is currently blocked by the stale `register-learner` allow-list. |
 | The end-to-end journey | The 53-assertion suite drove the old SQLite database and was removed with it. Nothing equivalent runs against Supabase yet. |
-| Google sign-in on production | The flow is the volunteer portal's, unchanged, but it has not been walked on a `workers.dev` hostname |
+| Google sign-in on production | The flow is the volunteer portal's, unchanged, but it has not been walked on a `workers.dev` hostname. Both paths need an allow-list entry added by hand: `signInWithIdToken` needs the Google **Authorised JavaScript origins**, and the `signInWithOAuth` fallback needs Supabase's **Redirect URLs** — step 6b covers both |
 | Marking against real data | The rules moved into SQL functions whose probes are structural, not behavioural |
 | Workers Builds | The connection has never been made. The settings in the next section are what the configuration implies, not what a build has run. |
 
