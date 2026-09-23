@@ -14,8 +14,8 @@ HANDOVER.md §1 and §6 record why the detour happened and why it was reversed.
 ## Get it running
 
 ```bash
-git clone git@github.com:zzubyr7x/transplant-alchemy.git
-cd transplant-alchemy
+git clone git@github.com:zzubyr7x/learn.save7.org.git
+cd learn.save7.org
 npm install
 npm run dev
 ```
