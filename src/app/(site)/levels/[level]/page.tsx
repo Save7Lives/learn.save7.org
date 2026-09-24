@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/authz";
-import { getBaselineState, getPathwayForUser, getLevelBySlug, getModuleStatuses } from "@/lib/course";
+import { getBaselineState } from "@/lib/baseline";
+import { getPathwayForUser, getLevelBySlug, getModuleStatuses } from "@/lib/course";
 import { issueCertificateIfEarned } from "@/lib/certificates";
 import { getStageQuizStates } from "@/lib/quiz";
 import {
@@ -36,6 +37,8 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
   const { level: levelSlug } = await props.params;
   const user = await requireUser(`/levels/${levelSlug}`);
 
+  // Stage content waits for the first Baseline Sitting: a "before" taken after
+  // reading is not a before (#54). No score gates anything, and no later Sitting.
   const baseline = await getBaselineState(user.id);
   if (!baseline.completed) redirect("/assessment/pre");
 
@@ -191,6 +194,11 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
               <ButtonLink href={`/certificate/${certificatePublicId}`} size="lg">
                 View my certificate
               </ButtonLink>
+              {baseline.due !== null ? (
+                <ButtonLink href="/assessment/pre" size="lg" variant="outline">
+                  See what you&apos;ve learned: baseline sitting {baseline.due}
+                </ButtonLink>
+              ) : null}
             </div>
           </>
         ) : allPassed ? (

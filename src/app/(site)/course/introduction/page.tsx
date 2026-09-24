@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
-import { getBaselineState, getPathway } from "@/lib/course";
+import { getBaselineState } from "@/lib/baseline";
+import { getPathway } from "@/lib/course";
 import {
   Badge,
   ButtonLink,
@@ -157,12 +158,16 @@ export default async function IntroductionPage() {
                 "Clinical and academic sources for anyone who wants them. The course is complete without opening a single one.",
               ],
               [
-                "A pre-course assessment",
-                "Twelve short, non-technical questions before you start. This is a baseline, not a test — there is no pass mark and nobody is judged on it.",
+                "A baseline assessment",
+                "Twenty short questions before you start. This is a baseline, not a test — there is no pass mark and nobody is judged on it.",
               ],
               [
-                "A post-course assessment",
-                "At the end of each level, so you can see what changed.",
+                "The same baseline, again",
+                "After each level you finish, so you can see what changed. It is optional, and it never affects a certificate.",
+              ],
+              [
+                "A Stage Quiz in every module",
+                "Five questions, with unlimited retries. Passing every Stage Quiz in a level earns its certificate.",
               ],
               [
                 "A certificate of completion",
@@ -259,8 +264,9 @@ export default async function IntroductionPage() {
             ) : (
               <>
                 <p className="mt-4 text-sand-600">
-                  Start with the baseline assessment. Twelve questions, no pass mark, and
-                  it is what makes your knowledge improvement measurable at the end.
+                  Start with the baseline assessment. Twenty questions, no pass mark, and
+                  it is what makes your knowledge improvement measurable. The levels open
+                  as soon as it&apos;s done.
                 </p>
                 <div className="mt-6">
                   <ButtonLink href="/assessment/pre" size="lg">

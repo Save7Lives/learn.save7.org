@@ -1,0 +1,1439 @@
+-- The Baseline's twenty questions in, the prior build's twelve out
+--
+-- ── WHAT THIS DOES ───────────────────────────────────────────────────────────
+-- #50 wrote the Baseline Assessment bank the Blueprint specifies: twenty fixed-form
+-- questions, 8 Beginner (3/3/2), 6 Intermediate (2/2/1/1) and 6 Advanced
+-- (2/2/1/1), each carrying its Level. It never reached production. #50 handed the
+-- emit to #47, and #47's reset (0112) deliberately left the PRE rows alone, so
+-- production still holds the prior build's twelve `pre-*` items: every one keyed
+-- 'a', and none carrying a Level. #54 builds the app's Baseline flow, and lands the
+-- bank that flow needs:
+--
+--   1. Sweep the twelve legacy PRE questions (their options cascade) and their
+--      review-register rows.
+--   2. Insert the twenty-question bank, keyed `baseline-*`, with level_slug set and
+--      module_slug null.
+--
+-- Both halves are in one transaction because learn_submit_baseline_sitting()
+-- (0110) marks every PRE row. With the new bank alone, every sitting would be
+-- thirty-two questions with a twelve-point 'unassigned' bucket. With the sweep
+-- alone, the first sitting would be a hard error at signup.
+--
+-- ── WHY THIS ONE IS HAND-WRITTEN, AND SAFE EXACTLY ONCE ──────────────────────
+-- scripts/emit-supabase-content.ts never deletes, and that stays true. The sweep
+-- below is written by hand, once, as 0112's was, and the body after it is the
+-- generator's --only=baseline output, unedited.
+--
+-- A sitting stores no answers, only its marks (0110), so deleting a Baseline
+-- question destroys no learner's record. What it does change is the paper. The
+-- Baseline is fixed-form so that four sittings can be compared, and a learner whose
+-- first sitting was the old twelve could never be compared with a later sitting on
+-- the new twenty. So the guard refuses if anyone has sat the Baseline at all. Today
+-- nobody can have: the app's Baseline page has failed for every learner since 0110
+-- retired the attempt path it called, and it is rebuilt in the same change as this
+-- migration. Once someone has sat it, editing a prompt or its options changes the
+-- paper under everyone who already has.
+--
+-- ── WHAT THIS DOES NOT TOUCH ─────────────────────────────────────────────────
+--   - learn_start_baseline_sitting() and learn_submit_baseline_sitting(). They
+--     already group by level_slug (0110), so the per-Level breakdown starts working
+--     with no change to either. #53 is due to redefine both to add the 18+ gate,
+--     and they are left exactly as 0111 left them for it.
+--   - Stage Quiz (POST), inline check (CHECK) and volunteer gate (GATE) rows.
+--     They are counted before the sweep and again after it.
+
+begin;
+
+-- ── the guard ─────────────────────────────────────────────────────────────────
+do $$
+declare n int;
+begin
+  select count(*) into n from learn_baseline_sittings;
+  if n <> 0 then
+    raise exception 'learn_baseline_sittings holds % row(s): someone has sat the Baseline, and replacing its questions now would make their later sittings a different paper. Do not apply this migration.', n;
+  end if;
+  select count(*) into n
+    from learn_answers a join learn_questions q on q.id = a.question_id
+   where q.scope = 'PRE';
+  if n <> 0 then
+    raise exception 'learn_answers holds % row(s) against a PRE question, which the sweep would cascade away. Do not apply this migration.', n;
+  end if;
+end $$;
+
+-- ── what the sweep promises to leave alone, counted before it runs ────────────
+create temporary table _baseline_untouched on commit drop as
+  select scope::text as scope, count(*) as n
+    from learn_questions
+   where scope <> 'PRE'
+   group by scope;
+
+-- ── the sweep ─────────────────────────────────────────────────────────────────
+do $$
+declare n int;
+begin
+  /* Every PRE row that is not in the new bank: the prior build's pre-01 to pre-12.
+     Named by what they are not, rather than listed by key, so a row this file
+     does not know about cannot survive into the new paper. Options cascade (0091). */
+  delete from learn_questions where scope = 'PRE' and authoring_key not like 'baseline-%';
+  get diagnostics n = row_count;
+  raise notice 'swept % legacy Baseline question(s)', n;
+
+  /* Their review rows. entity_ref is text, not a foreign key, so nothing cascades
+     here; the same rule 0112 used. */
+  delete from learn_review_items r
+   where r.entity_type = 'QUESTION' and r.entity_ref like 'question:%'
+     and not exists (select 1 from learn_questions q
+                      where 'question:' || q.authoring_key = r.entity_ref);
+  get diagnostics n = row_count;
+  raise notice 'swept % review row(s) for questions that no longer exist', n;
+end $$;
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Everything below is scripts/emit-supabase-content.ts --only=baseline, unedited
+-- apart from its own header and transaction markers, which this file supplies.
+-- ════════════════════════════════════════════════════════════════════════════
+
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-b1-01', 'PRE', 'SINGLE', NULL,
+  'beginner', NULL, 'Why do people need organ transplants?',
+  NULL, 'Transplantation is not an enhancement or a preference. When an organ fails completely, treatment can often buy time, but for some conditions a transplant is the only option that remains.', 'who-needs-organs',
+  1, NULL, 0
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'To boost an organ that is still working normally', false, 'Transplantation is not an enhancement — it replaces an organ that has failed.'
+  from learn_questions where authoring_key = 'baseline-b1-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'Their organ has failed and cannot be repaired', true, 'Correct. This is what end-stage organ failure means.'
+  from learn_questions where authoring_key = 'baseline-b1-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'Because they prefer a transplant to taking medication', false, 'A transplant is not a preference. It is what remains when other treatment can no longer sustain the organ.'
+  from learn_questions where authoring_key = 'baseline-b1-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'Only after injuries from a serious accident', false, 'Accidents are one route to organ failure, but most people waiting have a long-term illness.'
+  from learn_questions where authoring_key = 'baseline-b1-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-b1-02', 'PRE', 'SINGLE', NULL,
+  'beginner', NULL, 'South Africa has many people waiting for organs but relatively few transplants. What is the main reason?',
+  NULL, 'The shortage is a pathway problem. Potential donations are lost between a potential donor and a recipient — above all when a potential donor is never referred, or when a family is not asked or declines — rather than for surgical or legal reasons.', 'loss-points',
+  1, NULL, 1
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'South Africa lacks the surgical skill to carry out transplants', false, 'South Africa has a long transplant history. Surgical capability is not the main constraint.'
+  from learn_questions where authoring_key = 'baseline-b1-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'Very few people die in circumstances where donating their organs is possible', false, 'Potential donors exist. The problem is what happens to them along the way.'
+  from learn_questions where authoring_key = 'baseline-b1-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'South African law prohibits most kinds of organ donation', false, 'Donation is lawful in South Africa, under Chapter 8 of the National Health Act.'
+  from learn_questions where authoring_key = 'baseline-b1-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'Donations are lost along the way, mostly at referral or consent', true, 'Correct. Most of the loss points are human, not medical.'
+  from learn_questions where authoring_key = 'baseline-b1-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-b1-03', 'PRE', 'SINGLE', NULL,
+  'beginner', NULL, 'How many people can a single deceased donor help?',
+  NULL, 'One donor''s organs can save up to seven lives, and their tissue — corneas, skin, bone, tendons and heart valves — can help up to fifty more.', 'scale-of-impact',
+  1, NULL, 2
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'Up to seven through organs, and up to fifty more through tissue', true, 'Correct. Tissue donation is the part most people leave out.'
+  from learn_questions where authoring_key = 'baseline-b1-03'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'One — each donor''s organs go to a single recipient', false, 'Different organs go to different recipients. One donor can help many people.'
+  from learn_questions where authoring_key = 'baseline-b1-03'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'Up to seven, but only through organs, as tissue cannot be donated', false, 'Tissue can be donated, and it helps far more people than organs do.'
+  from learn_questions where authoring_key = 'baseline-b1-03'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'Two at most, because only the kidneys can be transplanted', false, 'Hearts, livers, lungs and pancreases are transplanted too, as well as tissue.'
+  from learn_questions where authoring_key = 'baseline-b1-03'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-b2-01', 'PRE', 'SINGLE', NULL,
+  'beginner', NULL, 'A friend says: "If I''m registered as a donor, doctors won''t try as hard to save me." What is the strongest factual answer?',
+  NULL, 'The doctors who determine death must be independent of the transplant team. That is not a custom — the regulations under the National Health Act require it, and require two doctors. Pointing at a structural safeguard answers this fear far better than vouching for doctors'' character.', 'independent-teams',
+  1, NULL, 3
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'Doctors take an oath to do their best for every patient, so they would never do that', false, 'An appeal to character. It does not explain what actually prevents the conflict, and it invites argument.'
+  from learn_questions where authoring_key = 'baseline-b2-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'Hospitals are never told who is a registered donor', false, 'Do not offer a reassurance you cannot support. The honest answer is the independence of the teams.'
+  from learn_questions where authoring_key = 'baseline-b2-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'Doctors who determine death must be independent of the transplant team', true, 'Correct. A legal safeguard is far more reassuring than an assurance about good intentions.'
+  from learn_questions where authoring_key = 'baseline-b2-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'It would be illegal, so it never happens', false, 'Legality alone does not explain the safeguard, and it sidesteps the fear being expressed.'
+  from learn_questions where authoring_key = 'baseline-b2-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-b2-02', 'PRE', 'SINGLE', NULL,
+  'beginner', NULL, 'Someone in their late sixties asks whether they are "too old" to be a donor. What is the accurate answer?',
+  NULL, 'Age alone does not rule anyone out. Suitability is assessed by medical professionals at the time — it is not something a member of the public, or the donor, can decide in advance.', 'eligibility',
+  1, NULL, 4
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'Not on age alone — suitability is assessed at the time', true, 'Correct. This is the accurate answer, and the one that keeps a potential donor from ruling themselves out.'
+  from learn_questions where authoring_key = 'baseline-b2-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'Yes — donors have to be younger than sixty-five', false, 'There is no such cut-off. A confident exclusion rule can remove a potential donor for good.'
+  from learn_questions where authoring_key = 'baseline-b2-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'Age makes no difference at all to whether their organs can be used', false, 'An overcorrection. Age is part of the medical assessment; it just does not decide it on its own.'
+  from learn_questions where authoring_key = 'baseline-b2-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'Only their corneas could be used at that age', false, 'This invents a rule. Suitability is assessed individually.'
+  from learn_questions where authoring_key = 'baseline-b2-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-b2-03', 'PRE', 'SINGLE', NULL,
+  'beginner', NULL, 'A family worries that donation would rule out an open-casket funeral. What is accurate?',
+  NULL, 'Organs and tissue are recovered with great care by surgeons and trained staff, and the process does not change the way the body looks. An open-casket funeral remains possible.', 'appearance',
+  1, NULL, 5
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'Donation leaves visible damage, so the coffin has to stay closed', false, 'This is the myth. Recovery does not change the way the body looks.'
+  from learn_questions where authoring_key = 'baseline-b2-03'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'The body can be viewed only if just the corneas were donated', false, 'Appearance is preserved whatever is donated.'
+  from learn_questions where authoring_key = 'baseline-b2-03'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'The family has to choose between donation and an open casket', false, 'There is no such choice to make. Donation does not change the way the body looks.'
+  from learn_questions where authoring_key = 'baseline-b2-03'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'The body is treated with care and its appearance is preserved', true, 'Correct. An open-casket funeral is still possible.'
+  from learn_questions where authoring_key = 'baseline-b2-03'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-b3-01', 'PRE', 'SINGLE', NULL,
+  'beginner', NULL, 'You have registered as an organ donor. What else most improves the chance that your wishes are followed?',
+  NULL, 'Registering records your wish. Telling your family is what makes it actionable, because a family that has never heard it is asked to guess at the worst moment of their lives.', 'telling-family',
+  1, NULL, 6
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'Carrying a donor card with you at all times', false, 'Helpful, but a card cannot have a conversation with your family on your behalf.'
+  from learn_questions where authoring_key = 'baseline-b3-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'Telling your family what you want', true, 'Correct. This single act is what Save7 exists to encourage.'
+  from learn_questions where authoring_key = 'baseline-b3-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'Registering a second time to be sure', false, 'Registering again adds nothing. Talking to your family does.'
+  from learn_questions where authoring_key = 'baseline-b3-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'Nothing — registering is enough on its own', false, 'Your family is still asked. A family that does not know your wishes has to guess.'
+  from learn_questions where authoring_key = 'baseline-b3-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-b3-02', 'PRE', 'SINGLE', NULL,
+  'beginner', NULL, 'Which of these is donated as tissue rather than as an organ?',
+  NULL, 'Organs are the heart, liver, pancreas, kidneys and lungs. Tissue — corneas, skin, bone, tendons and heart valves — is donated separately, and helps far more people.', 'organ-vs-tissue',
+  1, NULL, 7
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'A kidney', false, 'A kidney is an organ.'
+  from learn_questions where authoring_key = 'baseline-b3-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'A liver', false, 'The liver is an organ.'
+  from learn_questions where authoring_key = 'baseline-b3-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'A cornea', true, 'Correct. Corneas are tissue, and restore sight.'
+  from learn_questions where authoring_key = 'baseline-b3-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'A heart', false, 'The heart is an organ — though its valves can be donated as tissue.'
+  from learn_questions where authoring_key = 'baseline-b3-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-i1-01', 'PRE', 'SINGLE', NULL,
+  'intermediate', NULL, 'How can death be determined in South Africa?',
+  NULL, 'South Africa recognises two ways of determining death: by neurological criteria, which is brain death, and by circulatory criteria. Both are death, not a stage of dying.', 'determining-death',
+  2, NULL, 8
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'Only by the heart stopping — brain death is not treated as death', false, 'Brain death is death, determined by neurological criteria.'
+  from learn_questions where authoring_key = 'baseline-i1-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'Only by brain death — a stopped heart is not enough on its own', false, 'Death can also be determined by circulatory criteria.'
+  from learn_questions where authoring_key = 'baseline-i1-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'By the family, once they agree that life-sustaining treatment should end', false, 'A family''s decision about treatment is not a determination of death. Death is determined by doctors, against defined criteria.'
+  from learn_questions where authoring_key = 'baseline-i1-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'By neurological criteria (brain death) or by circulatory criteria', true, 'Correct.'
+  from learn_questions where authoring_key = 'baseline-i1-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-i1-02', 'PRE', 'SINGLE', NULL,
+  'intermediate', NULL, 'How can someone be declared dead while their heart is still beating?',
+  NULL, 'A ventilator supplies oxygen the person can no longer take in for themselves, which lets the heart keep beating for a time after death has been determined by neurological criteria. That is why a family at the bedside sees a warm body and a beating heart — and why their disbelief is a reasonable human response.', 'determining-death',
+  2, NULL, 9
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'A ventilator supplies the oxygen they can no longer take in themselves', true, 'Correct, and this is the explanation you will most often be asked for.'
+  from learn_questions where authoring_key = 'baseline-i1-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'The declaration is provisional and may be reversed later', false, 'Determination of death is not provisional. It follows a defined process with deliberate safeguards.'
+  from learn_questions where authoring_key = 'baseline-i1-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'They are in a deep coma, which the law treats as death', false, 'A coma is not death — recovery from a coma is possible. Brain death is a different thing.'
+  from learn_questions where authoring_key = 'baseline-i1-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'It cannot happen — a beating heart always means the person is alive', false, 'This is exactly the misconception that stops donation conversations.'
+  from learn_questions where authoring_key = 'baseline-i1-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-i2-01', 'PRE', 'SINGLE', NULL,
+  'intermediate', NULL, 'A registered organ donor dies in circumstances where donation is possible. What happens next?',
+  NULL, 'Registering with the Organ Donor Foundation records a wish; it does not authorise donation on its own. The family is still approached, and in practice a refusal is respected.', 'what-registration-does',
+  2, NULL, 10
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'Donation goes ahead automatically, because they registered', false, 'Registration records a wish. It does not mean organs are donated automatically.'
+  from learn_questions where authoring_key = 'baseline-i2-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'The Organ Donor Foundation reviews the case and decides whether to proceed', false, 'The ODF runs awareness and the register. It is not a medical or allocation body, and it makes no bedside decisions.'
+  from learn_questions where authoring_key = 'baseline-i2-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'The family is still asked, and in practice a refusal is respected', true, 'Correct — which is why telling your family matters as much as registering.'
+  from learn_questions where authoring_key = 'baseline-i2-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'The hospital decides alone, without involving the family', false, 'The family is approached in every case.'
+  from learn_questions where authoring_key = 'baseline-i2-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-i2-02', 'PRE', 'SINGLE', NULL,
+  'intermediate', NULL, 'Why do interpreters matter when a family is asked about donation?',
+  NULL, 'Consent that is not understood is not informed consent. An interpreter is part of what makes a family''s decision valid, not a courtesy for their comfort.', 'consent-understood',
+  2, NULL, 11
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'They make the conversation quicker', false, 'Their purpose is a valid decision, not speed.'
+  from learn_questions where authoring_key = 'baseline-i2-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'Consent that is not understood is not informed consent', true, 'Correct — an interpreter is a consent safeguard, not a convenience.'
+  from learn_questions where authoring_key = 'baseline-i2-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'They are needed only for families from outside South Africa', false, 'South Africa has many languages. Interpretation is routinely needed.'
+  from learn_questions where authoring_key = 'baseline-i2-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'They are unnecessary if a relative can translate', false, 'Relying on a grieving relative to interpret a consent conversation is not a safeguard.'
+  from learn_questions where authoring_key = 'baseline-i2-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-i3-01', 'PRE', 'SINGLE', NULL,
+  'intermediate', NULL, 'What does South African law say about paying for donated organs or tissue?',
+  NULL, 'Under section 60 of the National Health Act, it is an offence to sell or trade in tissue — which in the Act includes organs — and an offence for a donor to receive any reward beyond reimbursement of reasonable costs. That applies to living donors as much as to deceased donation.', 'no-trade',
+  2, NULL, 12
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'Trading is an offence; a donor may only be reimbursed reasonable costs', true, 'Correct. Section 60 of the National Health Act.'
+  from learn_questions where authoring_key = 'baseline-i3-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'Payment is allowed if the donor''s family agrees to it', false, 'Family agreement does not make payment lawful. Trading in tissue is an offence.'
+  from learn_questions where authoring_key = 'baseline-i3-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'Payment is allowed for a living donor, but never for donation after death', false, 'The prohibition covers living donors too. A living donor may be reimbursed reasonable costs, and nothing more.'
+  from learn_questions where authoring_key = 'baseline-i3-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'The law is silent, so each hospital sets its own rules', false, 'The National Health Act addresses it directly, in section 60.'
+  from learn_questions where authoring_key = 'baseline-i3-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-i4-01', 'PRE', 'SINGLE', NULL,
+  'intermediate', NULL, 'South Africa uses an opt-in system: donation needs explicit consent. What does the evidence suggest about switching to opt-out ("presumed consent")?',
+  NULL, 'Reviews of the international evidence find little difference between opt-in and opt-out systems for increasing donor numbers when the switch is made on its own. What moves the numbers is addressing the barriers along the donation pathway — referral, family support, trained staff — with or without a change of system.', 'consent-model',
+  2, NULL, 13
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'Switching on its own would reliably raise donation rates within a few years', false, 'The evidence finds little difference between the systems when the switch is made in isolation.'
+  from learn_questions where authoring_key = 'baseline-i4-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'Families would no longer need to be approached', false, 'Families are approached under opt-out systems too.'
+  from learn_questions where authoring_key = 'baseline-i4-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'Hospitals would no longer need to identify and refer donors', false, 'Identification and referral are where many donations are lost, whatever the consent system.'
+  from learn_questions where authoring_key = 'baseline-i4-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'Alone, it is unlikely to help unless other barriers are addressed', true, 'Correct.'
+  from learn_questions where authoring_key = 'baseline-i4-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-a1-01', 'PRE', 'SINGLE', NULL,
+  'advanced', NULL, 'When should the transplant coordinator be contacted about a potential donor?',
+  NULL, 'Before the family is told about end-of-life decisions. Contacting the coordinator first lets the team check feasibility, the national priority list and ODF registration, and plan the conversation — rather than raising donation prematurely, or not at all.', 'coordinator-timing',
+  3, NULL, 14
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'Only after the family has agreed to donation', false, 'By then the conversation has already happened without the person best placed to support it.'
+  from learn_questions where authoring_key = 'baseline-a1-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'Only once death is certified and the family has been told', false, 'Too late to plan the approach. The coordinator is contacted before the family is told.'
+  from learn_questions where authoring_key = 'baseline-a1-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'Before the family is told about end-of-life decisions', true, 'Correct. Early contact is what makes a planned approach possible.'
+  from learn_questions where authoring_key = 'baseline-a1-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'Only if the patient was a registered donor', false, 'Every potential donor is referred. Registration status is one of the things the coordinator checks.'
+  from learn_questions where authoring_key = 'baseline-a1-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-a1-02', 'PRE', 'SINGLE', NULL,
+  'advanced', NULL, 'Which organisation exists to educate, develop and support transplant coordinators in South Africa?',
+  NULL, 'The South African Transplant Coordinators Society (SATCS), founded in 2017 as a special-interest group of the Southern African Transplantation Society. It sets a Code of Conduct for coordinators and produced the Red File that hospitals use as a reference.', 'satcs',
+  3, NULL, 15
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'The Organ Donor Foundation (ODF)', false, 'The ODF runs public awareness and the donor register. It is not the coordinators'' professional body.'
+  from learn_questions where authoring_key = 'baseline-a1-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'The South African Transplant Coordinators Society (SATCS)', true, 'Correct.'
+  from learn_questions where authoring_key = 'baseline-a1-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'The Health Professions Council of South Africa (HPCSA)', false, 'The HPCSA registers and regulates health practitioners generally. It is not a body for coordinators.'
+  from learn_questions where authoring_key = 'baseline-a1-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'The Ministerial Advisory Committee on Organ Transplantation', false, 'The Committee, established in 2024, advises the Minister. It does not train or support coordinators.'
+  from learn_questions where authoring_key = 'baseline-a1-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-a2-01', 'PRE', 'SINGLE', NULL,
+  'advanced', NULL, 'Why is the conversation about a patient''s death kept separate from the conversation about donation?',
+  NULL, 'So the family can understand and accept that death has happened, or is going to, before donation is raised. A request made before that point is heard as a request to give up on the patient.', 'decoupling',
+  3, NULL, 16
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'So the family can understand and accept the death before donation is raised', true, 'Correct. This is the first principle of the approach.'
+  from learn_questions where authoring_key = 'baseline-a2-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'So the transplant team can prepare the family''s decision in advance', false, 'The family''s decision is theirs. Separating the conversations protects it; it does not steer it.'
+  from learn_questions where authoring_key = 'baseline-a2-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'Because the law forbids raising donation on the day of death', false, 'No such rule exists. The separation is a matter of good practice, not timing law.'
+  from learn_questions where authoring_key = 'baseline-a2-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'So the treating doctor never has to take part in the donation conversation', false, 'The treating doctor and the coordinator deliver the approach together.'
+  from learn_questions where authoring_key = 'baseline-a2-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-a2-02', 'PRE', 'SINGLE', NULL,
+  'advanced', NULL, 'What is the most helpful response?',
+  'Brain death has been confirmed. The family say: "We can''t be the ones who decide to switch off the machine."', 'The family believe the ventilator is keeping their loved one alive, and that they are being asked to end a life. They are not: death has already been determined. Correcting that, gently, comes before anything is said about donation.', 'switch-off-misconception',
+  3, NULL, 17
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'Move straight on to asking whether they would consider donation', false, 'Donation cannot be discussed while the family believe they are being asked to end a life.'
+  from learn_questions where authoring_key = 'baseline-a2-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'Explain that donation is what the patient would have wanted', false, 'This presumes the answer, and leaves the misconception untouched.'
+  from learn_questions where authoring_key = 'baseline-a2-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'Tell them the machine can stay on for as long as they need, so there is no rush', false, 'Not accurate — accommodation after death is ordinarily limited to about a day — and it confirms the belief that the machine is keeping the person alive.'
+  from learn_questions where authoring_key = 'baseline-a2-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'Explain that the person has already died, so no one is ending a life', true, 'Correct. The misconception has to be addressed first.'
+  from learn_questions where authoring_key = 'baseline-a2-02'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-a3-01', 'PRE', 'SINGLE', NULL,
+  'advanced', NULL, 'When a patient can no longer decide for themselves, what should guide the person deciding on their behalf?',
+  NULL, 'The patient''s own wishes where they are known — an advance directive, or what they said while they could — and, where they are not, the patient''s best interests. It is the patient''s decision being made by someone else, not the decision-maker''s own.', 'surrogate-decisions',
+  3, NULL, 18
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'What the decision-maker would choose for themselves', false, 'The decision is being made for the patient. The decision-maker''s own preference is not the test.'
+  from learn_questions where authoring_key = 'baseline-a3-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'Whatever the treating doctors recommend', false, 'Doctors advise; they do not decide in the patient''s place.'
+  from learn_questions where authoring_key = 'baseline-a3-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'The patient''s known wishes, or else their best interests', true, 'Correct.'
+  from learn_questions where authoring_key = 'baseline-a3-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'Whatever most of the family agrees on after discussing it together', false, 'A family majority is not the test. The patient''s own wishes and interests are.'
+  from learn_questions where authoring_key = 'baseline-a3-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_questions (
+  authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
+  explanation, topic_tag, difficulty, pair_key, position
+) values (
+  'baseline-a4-01', 'PRE', 'SINGLE', NULL,
+  'advanced', NULL, 'A ward team assumes a family''s faith will forbid donation, and decides not to raise it. What does good practice say?',
+  NULL, 'Every family is offered the conversation. Assumptions about a family''s ethnic, cultural or spiritual background must never be used to skip it, and a faith representative or chaplain can be brought in to support the family.', 'equity',
+  3, NULL, 19
+) on conflict (authoring_key) do update set
+  scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
+  level_slug = excluded.level_slug, module_slug = excluded.module_slug,
+  prompt = excluded.prompt, scenario = excluded.scenario,
+  explanation = excluded.explanation, topic_tag = excluded.topic_tag,
+  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
+  position = excluded.position, updated_at = now();
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'a', 0, 'That is appropriate — it spares the family an upsetting question', false, 'It takes the decision away from the family on the strength of an assumption.'
+  from learn_questions where authoring_key = 'baseline-a4-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'b', 1, 'Offer every family the conversation, with faith support if wanted', true, 'Correct. No community is excluded from being asked.'
+  from learn_questions where authoring_key = 'baseline-a4-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'c', 2, 'Raise it only if the family brings up donation first', false, 'Few families raise it themselves. Waiting excludes them just as surely.'
+  from learn_questions where authoring_key = 'baseline-a4-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_choices (question_id, option_key, position, text, is_correct, feedback)
+select id, 'd', 3, 'Ask a relative privately what their religion allows before deciding', false, 'This still puts the team''s assumption ahead of the family''s own decision.'
+  from learn_questions where authoring_key = 'baseline-a4-01'
+ on conflict (question_id, option_key) do update set
+  position = excluded.position, text = excluded.text,
+  is_correct = excluded.is_correct, feedback = excluded.feedback;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-b1-01', 'Baseline · Beginner · Stage 1, Why Donation Matters', 'Why do people need organ transplants?',
+  'MEDICAL', 2, 'APPROVED',
+  'Organ Donor Foundation of South Africa, FAQs (odf.org.za/faqs/, checked 23 September 2026): the heart, liver and pancreas can save three lives and the kidneys and lungs help up to four more, so one donor can save seven lives; up to fifty people can be helped by donating corneas, skin, bone, tendons and heart valves; recovery ''does not change the way the body looks''; donors are urged to discuss their decision with their family', 'Keyed answer and explanation checked against: Organ Donor Foundation of South Africa, FAQs (odf.org.za/faqs/, checked 23 September 2026): the heart, liver and pancreas can save three lives and the kidneys and lungs help up to four more, so one donor can save seven lives; up to fifty people can be helped by donating corneas, skin, bone, tendons and heart valves; recovery ''does not change the way the body looks''; donors are urged to discuss their decision with their family'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-b1-02', 'Baseline · Beginner · Stage 1, Why Donation Matters', 'South Africa has many people waiting for organs but relatively few transplants. What is the main reason?',
+  'MEDICAL', 2, 'APPROVED',
+  'de Jager et al., ''Increasing deceased organ donor numbers in Johannesburg, South Africa: 18-month results of the Wits Transplant Procurement Model'', SAMJ 2019;109(9):626-631 (DOI 10.7196/SAMJ.2019.v109i9.14313): the model''s two phases target the two points where potential donations were being lost — referral and family consent', 'Keyed answer and explanation checked against: de Jager et al., ''Increasing deceased organ donor numbers in Johannesburg, South Africa: 18-month results of the Wits Transplant Procurement Model'', SAMJ 2019;109(9):626-631 (DOI 10.7196/SAMJ.2019.v109i9.14313): the model''s two phases target the two points where potential donations were being lost — referral and family consent'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-b1-03', 'Baseline · Beginner · Stage 1, Why Donation Matters', 'How many people can a single deceased donor help?',
+  'STATISTIC', 2, 'APPROVED',
+  'Organ Donor Foundation of South Africa, FAQs (odf.org.za/faqs/, checked 23 September 2026): the heart, liver and pancreas can save three lives and the kidneys and lungs help up to four more, so one donor can save seven lives; up to fifty people can be helped by donating corneas, skin, bone, tendons and heart valves; recovery ''does not change the way the body looks''; donors are urged to discuss their decision with their family', 'Keyed answer and explanation checked against: Organ Donor Foundation of South Africa, FAQs (odf.org.za/faqs/, checked 23 September 2026): the heart, liver and pancreas can save three lives and the kidneys and lungs help up to four more, so one donor can save seven lives; up to fifty people can be helped by donating corneas, skin, bone, tendons and heart valves; recovery ''does not change the way the body looks''; donors are urged to discuss their decision with their family'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-b2-01', 'Baseline · Beginner · Stage 2, Busting the Myths', 'A friend says: "If I''m registered as a donor, doctors won''t try as hard to save me." What is the strongest factual answer?',
+  'LEGAL', 2, 'APPROVED',
+  'Regulation 9 (''Establishment of death'') of GN R180, Government Gazette 35099 of 2 March 2012, made under the National Health Act 61 of 2003: death shall be established by at least two medical practitioners, one of whom shall have been practising for at least five years after registration, and none of whom shall transplant tissue removed from that person or take part in such transplantation', 'Keyed answer and explanation checked against: Regulation 9 (''Establishment of death'') of GN R180, Government Gazette 35099 of 2 March 2012, made under the National Health Act 61 of 2003: death shall be established by at least two medical practitioners, one of whom shall have been practising for at least five years after registration, and none of whom shall transplant tissue removed from that person or take part in such transplantation'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-b2-02', 'Baseline · Beginner · Stage 2, Busting the Myths', 'Someone in their late sixties asks whether they are "too old" to be a donor. What is the accurate answer?',
+  'MEDICAL', 2, 'APPROVED',
+  'Gauteng Department of Health, quoted by SAnews, ''Save a life: register as an organ and tissue donor'', 29 August 2026: age alone or the presence of certain medical conditions does not automatically prevent a person from becoming a donor, and suitability is carefully assessed by medical professionals at the appropriate time', 'Keyed answer and explanation checked against: Gauteng Department of Health, quoted by SAnews, ''Save a life: register as an organ and tissue donor'', 29 August 2026: age alone or the presence of certain medical conditions does not automatically prevent a person from becoming a donor, and suitability is carefully assessed by medical professionals at the appropriate time'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-b2-03', 'Baseline · Beginner · Stage 2, Busting the Myths', 'A family worries that donation would rule out an open-casket funeral. What is accurate?',
+  'MEDICAL', 2, 'APPROVED',
+  'Organ Donor Foundation of South Africa, FAQs (odf.org.za/faqs/, checked 23 September 2026): the heart, liver and pancreas can save three lives and the kidneys and lungs help up to four more, so one donor can save seven lives; up to fifty people can be helped by donating corneas, skin, bone, tendons and heart valves; recovery ''does not change the way the body looks''; donors are urged to discuss their decision with their family', 'Keyed answer and explanation checked against: Organ Donor Foundation of South Africa, FAQs (odf.org.za/faqs/, checked 23 September 2026): the heart, liver and pancreas can save three lives and the kidneys and lungs help up to four more, so one donor can save seven lives; up to fifty people can be helped by donating corneas, skin, bone, tendons and heart valves; recovery ''does not change the way the body looks''; donors are urged to discuss their decision with their family'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-b3-01', 'Baseline · Beginner · Stage 3, How Donation Actually Works', 'You have registered as an organ donor. What else most improves the chance that your wishes are followed?',
+  'LEGAL', 2, 'APPROVED',
+  'Organ Donor Foundation of South Africa, FAQs (odf.org.za/faqs/, checked 23 September 2026): the heart, liver and pancreas can save three lives and the kidneys and lungs help up to four more, so one donor can save seven lives; up to fifty people can be helped by donating corneas, skin, bone, tendons and heart valves; recovery ''does not change the way the body looks''; donors are urged to discuss their decision with their family', 'Keyed answer and explanation checked against: Organ Donor Foundation of South Africa, FAQs (odf.org.za/faqs/, checked 23 September 2026): the heart, liver and pancreas can save three lives and the kidneys and lungs help up to four more, so one donor can save seven lives; up to fifty people can be helped by donating corneas, skin, bone, tendons and heart valves; recovery ''does not change the way the body looks''; donors are urged to discuss their decision with their family'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-b3-02', 'Baseline · Beginner · Stage 3, How Donation Actually Works', 'Which of these is donated as tissue rather than as an organ?',
+  'MEDICAL', 2, 'APPROVED',
+  'Organ Donor Foundation of South Africa, FAQs (odf.org.za/faqs/): organs (heart, liver, pancreas, kidneys, lungs) are distinguished from tissue (corneas, skin, bone, tendons, heart valves); Centre for Tissue Engineering (South African tissue bank) donor criteria', 'Keyed answer and explanation checked against: Organ Donor Foundation of South Africa, FAQs (odf.org.za/faqs/): organs (heart, liver, pancreas, kidneys, lungs) are distinguished from tissue (corneas, skin, bone, tendons, heart valves); Centre for Tissue Engineering (South African tissue bank) donor criteria'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-i1-01', 'Baseline · Intermediate · Stage 1, How Donation Happens: The Process', 'How can death be determined in South Africa?',
+  'MEDICAL', 2, 'APPROVED',
+  'Thomson D, et al. South African guidelines on the determination of death. S Afr J Crit Care 2021;37(1b):41-54, DOI 10.7196/SAJCC.2021v37i1b.466 (also S Afr Med J 2021;111(4b):367-380): death is determined either by neurological criteria (brain death) or by circulatory criteria; brain death is determined only once conditions that mimic it, including sedation, have been excluded; mechanical ventilation maintains oxygenation, and so the heartbeat, after brain death', 'Keyed answer and explanation checked against: Thomson D, et al. South African guidelines on the determination of death. S Afr J Crit Care 2021;37(1b):41-54, DOI 10.7196/SAJCC.2021v37i1b.466 (also S Afr Med J 2021;111(4b):367-380): death is determined either by neurological criteria (brain death) or by circulatory criteria; brain death is determined only once conditions that mimic it, including sedation, have been excluded; mechanical ventilation maintains oxygenation, and so the heartbeat, after brain death'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-i1-02', 'Baseline · Intermediate · Stage 1, How Donation Happens: The Process', 'How can someone be declared dead while their heart is still beating?',
+  'MEDICAL', 2, 'APPROVED',
+  'Thomson D, et al. South African guidelines on the determination of death. S Afr J Crit Care 2021;37(1b):41-54, DOI 10.7196/SAJCC.2021v37i1b.466 (also S Afr Med J 2021;111(4b):367-380): death is determined either by neurological criteria (brain death) or by circulatory criteria; brain death is determined only once conditions that mimic it, including sedation, have been excluded; mechanical ventilation maintains oxygenation, and so the heartbeat, after brain death', 'Keyed answer and explanation checked against: Thomson D, et al. South African guidelines on the determination of death. S Afr J Crit Care 2021;37(1b):41-54, DOI 10.7196/SAJCC.2021v37i1b.466 (also S Afr Med J 2021;111(4b):367-380): death is determined either by neurological criteria (brain death) or by circulatory criteria; brain death is determined only once conditions that mimic it, including sedation, have been excluded; mechanical ventilation maintains oxygenation, and so the heartbeat, after brain death'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-i2-01', 'Baseline · Intermediate · Stage 2, Consent: Whose Decision and How', 'A registered organ donor dies in circumstances where donation is possible. What happens next?',
+  'LEGAL', 2, 'APPROVED',
+  'SATS/SATCS Red File (Document H in the Source Corpus), p.11: registering with the Organ Donor Foundation ''does not mean that the donor''s organs will automatically be donated at the time of death'', and next-of-kin consent is still required; p.8: the ODF is an awareness, education and registry body, not a medical or allocation body. National Health Act 61 of 2003 s 62(1)-(2), checked against the consolidated text, read with the Red File p.11. The gap between the statute and hospital practice — families are approached in every case and a refusal is respected — is documented in Slabbert & Venter, ''Autonomy in organ donations v family consent: A South African legislative context'', De Jure, 2019', 'Keyed answer and explanation checked against: SATS/SATCS Red File (Document H in the Source Corpus), p.11: registering with the Organ Donor Foundation ''does not mean that the donor''s organs will automatically be donated at the time of death'', and next-of-kin consent is still required; p.8: the ODF is an awareness, education and registry body, not a medical or allocation body. National Health Act 61 of 2003 s 62(1)-(2), checked against the consolidated text, read with the Red File p.11. The gap between the statute and hospital practice — families are approached in every case and a refusal is respected — is documented in Slabbert & Venter, ''Autonomy in organ donations v family consent: A South African legislative context'', De Jure, 2019'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-i2-02', 'Baseline · Intermediate · Stage 2, Consent: Whose Decision and How', 'Why do interpreters matter when a family is asked about donation?',
+  'LEGAL', 2, 'APPROVED',
+  'HPCSA Booklet 4, ''Seeking Patients'' Informed Consent: The Ethical Considerations'' (rev. December 2021): consent is informed only where the information given is sufficient and is understood by the person giving it, applied to third-party consent by a patient''s representatives', 'Keyed answer and explanation checked against: HPCSA Booklet 4, ''Seeking Patients'' Informed Consent: The Ethical Considerations'' (rev. December 2021): consent is informed only where the information given is sufficient and is understood by the person giving it, applied to third-party consent by a patient''s representatives'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-i3-01', 'Baseline · Intermediate · Stage 3, The South African Legal Framework', 'What does South African law say about paying for donated organs or tissue?',
+  'LEGAL', 2, 'APPROVED',
+  'National Health Act 61 of 2003 s 60(4)-(5), checked against the consolidated text: it is an offence for a donor to receive any financial or other reward for a donation, except reimbursement of reasonable costs incurred to provide it, and an offence to sell or trade in tissue except as Chapter 8 provides — punishable by a fine, up to five years'' imprisonment, or both. Section 1 defines ''tissue'' to include an organ', 'Keyed answer and explanation checked against: National Health Act 61 of 2003 s 60(4)-(5), checked against the consolidated text: it is an offence for a donor to receive any financial or other reward for a donation, except reimbursement of reasonable costs incurred to provide it, and an offence to sell or trade in tissue except as Chapter 8 provides — punishable by a fine, up to five years'' imprisonment, or both. Section 1 defines ''tissue'' to include an organ'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-i4-01', 'Baseline · Intermediate · Stage 4, Ethics of Donation and End-of-Life Care', 'South Africa uses an opt-in system: donation needs explicit consent. What does the evidence suggest about switching to opt-out ("presumed consent")?',
+  'LEGAL', 2, 'APPROVED',
+  'National Health Act 61 of 2003 s 62(1)-(2) for the opt-in position: donation rests on the person''s own donation or, failing that, the family''s, in a fixed order. Evidence on switching: Etheredge HR (Wits Donald Gordon Medical Centre; Steve Biko Centre for Bioethics), ''Assessing Global Organ Donation Policies: Opt-In vs Opt-Out'', Risk Manag Healthc Policy 2021;14:1985-1998, DOI 10.2147/RMHP.S270234 — there is little difference between the two systems for increasing donor numbers when used in isolation, and barriers must be addressed at several levels alongside any switch', 'Keyed answer and explanation checked against: National Health Act 61 of 2003 s 62(1)-(2) for the opt-in position: donation rests on the person''s own donation or, failing that, the family''s, in a fixed order. Evidence on switching: Etheredge HR (Wits Donald Gordon Medical Centre; Steve Biko Centre for Bioethics), ''Assessing Global Organ Donation Policies: Opt-In vs Opt-Out'', Risk Manag Healthc Policy 2021;14:1985-1998, DOI 10.2147/RMHP.S270234 — there is little difference between the two systems for increasing donor numbers when used in isolation, and barriers must be addressed at several levels alongside any switch'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-a1-01', 'Baseline · Advanced · Stage 1, The Transplant/Donation Coordinator''s Role', 'When should the transplant coordinator be contacted about a potential donor?',
+  'MEDICAL', 2, 'APPROVED',
+  'Western Cape Government Health circular H84/2025 (policy on deceased organ and tissue donation), §1 (the transplant coordinator is a specialist nurse in organ donation) and §5 (the coordinator is contacted before end-of-life discussions with the family, so feasibility, the national priority list and ODF registration can be checked first); corroborated by the SATS Red File (Document H), p.5', 'Keyed answer and explanation checked against: Western Cape Government Health circular H84/2025 (policy on deceased organ and tissue donation), §1 (the transplant coordinator is a specialist nurse in organ donation) and §5 (the coordinator is contacted before end-of-life discussions with the family, so feasibility, the national priority list and ODF registration can be checked first); corroborated by the SATS Red File (Document H), p.5'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-a1-02', 'Baseline · Advanced · Stage 1, The Transplant/Donation Coordinator''s Role', 'Which organisation exists to educate, develop and support transplant coordinators in South Africa?',
+  'MEDICAL', 2, 'APPROVED',
+  'SATS/SATCS Red File (Document H), ''Who we are'', p.2: the South African Transplant Coordinators Society, founded 30 June 2017 as a special-interest group of the Southern African Transplantation Society, exists ''to educate, develop and support all transplant coordinators in South Africa'' under a Code of Conduct', 'Keyed answer and explanation checked against: SATS/SATCS Red File (Document H), ''Who we are'', p.2: the South African Transplant Coordinators Society, founded 30 June 2017 as a special-interest group of the Southern African Transplantation Society, exists ''to educate, develop and support all transplant coordinators in South Africa'' under a Code of Conduct'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-a2-01', 'Baseline · Advanced · Stage 2, Having the Donation Conversation', 'Why is the conversation about a patient''s death kept separate from the conversation about donation?',
+  'MEDICAL', 2, 'APPROVED',
+  '📌 SA-adapted from UK NHSBT guidance. Wits Transplant FACTS protocol (Family Approach to Consent for Transplant Strategy), reproduced in the SATS Red File (Document H) §8.1: Steps 2-4 separate the death conversation from the donation conversation, so the family understands and accepts the death before donation is raised; the treating doctor and the coordinator deliver the approach together; the troubleshooting section covers a family who believe they are being asked to ''switch off the machine''', 'Keyed answer and explanation checked against: 📌 SA-adapted from UK NHSBT guidance. Wits Transplant FACTS protocol (Family Approach to Consent for Transplant Strategy), reproduced in the SATS Red File (Document H) §8.1: Steps 2-4 separate the death conversation from the donation conversation, so the family understands and accepts the death before donation is raised; the treating doctor and the coordinator deliver the approach together; the troubleshooting section covers a family who believe they are being asked to ''switch off the machine'''
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-a2-02', 'Baseline · Advanced · Stage 2, Having the Donation Conversation', 'What is the most helpful response?',
+  'MEDICAL', 2, 'APPROVED',
+  '📌 SA-adapted from UK NHSBT guidance. Wits Transplant FACTS protocol (Family Approach to Consent for Transplant Strategy), reproduced in the SATS Red File (Document H) §8.1: Steps 2-4 separate the death conversation from the donation conversation, so the family understands and accepts the death before donation is raised; the treating doctor and the coordinator deliver the approach together; the troubleshooting section covers a family who believe they are being asked to ''switch off the machine''. Thomson D, et al. South African guidelines on the determination of death. S Afr J Crit Care 2021;37(1b):41-54: family accommodation — a brief period of continued support after death is determined — is ordinarily capped at 24 hours', 'Keyed answer and explanation checked against: 📌 SA-adapted from UK NHSBT guidance. Wits Transplant FACTS protocol (Family Approach to Consent for Transplant Strategy), reproduced in the SATS Red File (Document H) §8.1: Steps 2-4 separate the death conversation from the donation conversation, so the family understands and accepts the death before donation is raised; the treating doctor and the coordinator deliver the approach together; the troubleshooting section covers a family who believe they are being asked to ''switch off the machine''. Thomson D, et al. South African guidelines on the determination of death. S Afr J Crit Care 2021;37(1b):41-54: family accommodation — a brief period of continued support after death is determined — is ordinarily capped at 24 hours'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-a3-01', 'Baseline · Advanced · Stage 3, Consent and End-of-Life Ethics, In Depth', 'When a patient can no longer decide for themselves, what should guide the person deciding on their behalf?',
+  'LEGAL', 2, 'APPROVED',
+  'HPCSA Booklet 4, ''Seeking Patients'' Informed Consent: The Ethical Considerations'' (rev. December 2021), on third-party and surrogate consent; HPCSA ''Ethical Guidelines on Palliative Care'' (2019), on advance directives and the best-interests test where a patient cannot decide — both reproduced in the Excellence in Deceased Donation course manual, pp.86-119', 'Keyed answer and explanation checked against: HPCSA Booklet 4, ''Seeking Patients'' Informed Consent: The Ethical Considerations'' (rev. December 2021), on third-party and surrogate consent; HPCSA ''Ethical Guidelines on Palliative Care'' (2019), on advance directives and the best-interests test where a patient cannot decide — both reproduced in the Excellence in Deceased Donation course manual, pp.86-119'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+insert into learn_review_items (
+  entity_type, entity_ref, location, claim, category, severity, status, source_hint, notes
+) values (
+  'QUESTION', 'question:baseline-a4-01', 'Baseline · Advanced · Stage 4, Public Advocacy: Equity, Media, and Community Trust', 'A ward team assumes a family''s faith will forbid donation, and decides not to raise it. What does good practice say?',
+  'MEDICAL', 2, 'APPROVED',
+  'Western Cape Government Health circular H84/2025 (policy on deceased organ and tissue donation), §18 ''Equality and diversity'': no community is excluded from being offered donation, assumptions about a family''s ethnic, cultural or spiritual background must never be used to skip the conversation, and a faith representative or hospital chaplain may be brought in to support it', 'Keyed answer and explanation checked against: Western Cape Government Health circular H84/2025 (policy on deceased organ and tissue donation), §18 ''Equality and diversity'': no community is excluded from being offered donation, assumptions about a family''s ethnic, cultural or spiritual background must never be used to skip the conversation, and a faith representative or hospital chaplain may be brought in to support it'
+) on conflict (entity_type, entity_ref, claim) do update set
+  location = excluded.location, category = excluded.category,
+  severity = excluded.severity, source_hint = excluded.source_hint,
+  notes = excluded.notes,
+  -- Only ever promotes an item that is still outstanding. A decision a human has
+  -- already recorded -- approved, or rejected -- survives every regeneration,
+  -- because silently reverting somebody's sign-off is worse than leaving a stale
+  -- row behind.
+  status = case
+    when learn_review_items.status = 'NEEDS_VERIFICATION' then excluded.status
+    else learn_review_items.status
+  end;
+
+do $$
+declare n int;
+begin
+  /* Exactly this bank, and nothing else. learn_submit_baseline_sitting() marks
+     every PRE row, so a leftover would silently lengthen every sitting. */
+  select count(*) into n from learn_questions where scope = 'PRE';
+  if n <> 20 then raise exception 'expected 20 Baseline questions, found %', n; end if;
+  select count(*) into n from learn_questions where scope = 'PRE' and authoring_key not in ('baseline-b1-01', 'baseline-b1-02', 'baseline-b1-03', 'baseline-b2-01', 'baseline-b2-02', 'baseline-b2-03', 'baseline-b3-01', 'baseline-b3-02', 'baseline-i1-01', 'baseline-i1-02', 'baseline-i2-01', 'baseline-i2-02', 'baseline-i3-01', 'baseline-i4-01', 'baseline-a1-01', 'baseline-a1-02', 'baseline-a2-01', 'baseline-a2-02', 'baseline-a3-01', 'baseline-a4-01');
+  if n <> 0 then raise exception '% PRE question(s) are not in the Baseline bank', n; end if;
+
+  /* The per-Level breakdown groups on level_slug: a null one scores into
+     'unassigned', which the Blueprint's three numbers have no place for. */
+  select count(*) into n from learn_questions where scope = 'PRE' and level_slug = 'beginner';
+  if n <> 8 then raise exception 'expected 8 beginner Baseline questions, found %', n; end if;
+  select count(*) into n from learn_questions where scope = 'PRE' and level_slug = 'intermediate';
+  if n <> 6 then raise exception 'expected 6 intermediate Baseline questions, found %', n; end if;
+  select count(*) into n from learn_questions where scope = 'PRE' and level_slug = 'advanced';
+  if n <> 6 then raise exception 'expected 6 advanced Baseline questions, found %', n; end if;
+  select count(*) into n from learn_questions
+   where scope = 'PRE' and (level_slug is null or module_slug is not null or kind <> 'SINGLE');
+  if n <> 0 then raise exception '% Baseline question(s) lack a Level, carry a Stage, or are not single-answer', n; end if;
+
+  /* One fixed order, so every sitting is the same paper. */
+  select count(distinct position) into n from learn_questions where scope = 'PRE';
+  if n <> 20 then raise exception 'Baseline positions are not distinct'; end if;
+  select count(*) into n from (
+    select question_id from learn_choices c join learn_questions q on q.id = c.question_id
+     where q.scope = 'PRE' group by question_id having count(*) <> 4
+  ) bad;
+  if n <> 0 then raise exception '% Baseline question(s) do not have exactly four options', n; end if;
+
+  /* Every question must have exactly one right answer, except a MULTI, which has
+     more than one. A question with none is unanswerable and a SINGLE with two is
+     unmarkable — and learn_submit_attempt() compares sets, so it would simply mark
+     everyone wrong rather than fail loudly. */
+  select count(*) into n
+    from learn_questions q
+    left join learn_choices c on c.question_id = q.id and c.is_correct
+   where q.kind <> 'MULTI'
+   group by q.id having count(c.id) <> 1
+   limit 1;
+  if n is not null then raise exception 'a non-MULTI question does not have exactly one correct answer'; end if;
+end $$;
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- End of generated content. The sweep's own probe follows.
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- ── the sweep's probe ─────────────────────────────────────────────────────────
+-- The generator's probe above checks what was loaded. This one checks what the
+-- sweep promised: that no legacy row or review row survived, and that it touched
+-- no other scope.
+do $$
+declare
+  n    int;
+  kept record;
+begin
+  for kept in select * from _baseline_untouched loop
+    select count(*) into n from learn_questions where scope::text = kept.scope;
+    if n <> kept.n then
+      raise exception '% rows changed from % to % — the sweep touched a scope it promised to leave alone',
+        kept.scope, kept.n, n;
+    end if;
+  end loop;
+
+  select count(*) into n from learn_review_items
+   where entity_type = 'QUESTION' and entity_ref like 'question:pre-%';
+  if n <> 0 then raise exception '% review row(s) still describe the legacy Baseline', n; end if;
+
+  select count(*) into n from learn_review_items r
+   where r.entity_type = 'QUESTION' and r.entity_ref like 'question:baseline-%'
+     and r.status <> 'APPROVED';
+  if n <> 0 then raise exception '% Baseline question(s) entered the register unsourced', n; end if;
+
+  /* The guard's premise, re-checked at the end of the same transaction. */
+  select count(*) into n from learn_baseline_sittings;
+  if n <> 0 then raise exception 'learn_baseline_sittings is no longer empty'; end if;
+end $$;
+
+select verify_learn_isolation();
+
+commit;

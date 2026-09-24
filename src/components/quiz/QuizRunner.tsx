@@ -8,7 +8,7 @@ import type { ClientQuestion } from "@/lib/quiz";
  * The assessment runner, used for the Baseline and for each Stage Quiz.
  *
  * One question at a time rather than a long scrolling form. On a phone a
- * twelve-question form is a wall; one question per screen keeps the reading
+ * twenty-question form is a wall; one question per screen keeps the reading
  * measure short and makes progress legible. A review step before submitting means
  * nobody submits by accident, and unanswered questions are easy to find.
  */

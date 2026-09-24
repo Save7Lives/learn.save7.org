@@ -97,7 +97,9 @@ export function RegisterForm({ config }: { config: PublicSupabaseConfig }) {
         <p className="text-ink">
           You&apos;re registered. Sign in with that same Google account to start the course.
         </p>
-        <ButtonLink href="/login">Sign in with Google</ButtonLink>
+        {/* Straight into the first Baseline Sitting, as #15 decided: it is the
+            "before", and Stage content waits for it. */}
+        <ButtonLink href="/login?next=/assessment/pre">Sign in with Google</ButtonLink>
       </div>
     );
   }

@@ -15,15 +15,18 @@ import type { OptionRow, QuestionRow } from "@/db/rows";
  *    `learn_choices.is_correct` has no read path for any role; questions are read
  *    from `learn_options_pub`, which does not carry the column. It is not stripped
  *    on the way out — it is unreadable, so a forgotten mapping step cannot leak it.
- * 2. **Grading happens on the server.** It happens in `learn_submit_attempt()` and
- *    `learn_grade_check()`, which are security definer functions holding the only
- *    read path to the key. This app cannot grade even if it tried.
+ * 2. **Grading happens on the server.** It happens in `learn_submit_attempt()`,
+ *    `learn_grade_check()` and `learn_submit_baseline_sitting()`, which are
+ *    security definer functions holding the only read path to the key. This app
+ *    cannot grade even if it tried.
  *
  * What is left here is the shape the pages expect: `ClientQuestion`, `AttemptRef`,
  * `AttemptResult`. The functions are thin because the logic they used to hold —
  * loading the expected questions server-side, treating unanswered as incorrect,
- * exact set matching, idempotent resubmission, the baseline being once-only — is
- * in migration 0097, stated there in the same terms.
+ * exact set matching, idempotent resubmission — is in migration 0097, stated there
+ * in the same terms. The Baseline is not an attempt at all since 0110: its
+ * Sittings are read and written in `baseline.ts`, and only its questions come
+ * from here.
  *
  * ── ON CHOICE IDS ───────────────────────────────────────────────────────────
  * A choice's `id` is its **option key** — 'a', 'b', 'c', 'd'. It is stable under
@@ -124,6 +127,11 @@ export function gradeSelection(
 
 // --- Reading questions ------------------------------------------------------
 
+/**
+ * The Baseline paper: every PRE question, in its one fixed order, with options in
+ * authored order. Never shuffled, so every Sitting is the same paper. Scoped to
+ * PRE by `readQuestions`, so the volunteer gate's GATE items can never appear.
+ */
 export async function getBaselineQuestions(): Promise<ClientQuestion[]> {
   return readQuestions("PRE");
 }
@@ -135,34 +143,6 @@ export async function getCheckQuestions(moduleId: string): Promise<ClientQuestio
 // --- Attempts ---------------------------------------------------------------
 
 export type AttemptRef = { id: string; attemptNo: number };
-
-/**
- * Start, or resume, an attempt.
- *
- * The baseline is special: it may only ever be taken once, so an existing
- * submitted PRE attempt is returned rather than a new one being created. A learner
- * who could retake the baseline could manufacture an improvement. That rule is
- * enforced in `learn_start_attempt()`, not here.
- */
-export async function startAttempt(
-  userId: string,
-  kind: QuizScope,
-  levelId: string | null,
-): Promise<{ attempt: AttemptRef; alreadySubmitted: boolean }> {
-  const supabase = await supabaseServer();
-  const { data, error } = await supabase.rpc("learn_start_attempt", {
-    p_scope: kind,
-    p_level: levelId,
-  });
-
-  if (error) throw new Error(`Could not start the assessment: ${error.message}`);
-
-  const result = data as { id: string; attempt_no: number; already_submitted: boolean };
-  return {
-    attempt: { id: result.id, attemptNo: result.attempt_no },
-    alreadySubmitted: result.already_submitted,
-  };
-}
 
 export type SubmittedAnswer = {
   questionId: string;
@@ -316,26 +296,6 @@ export async function readAttemptResult(
   return mapDetail(payload);
 }
 
-/**
- * What an attempt was for: its scope and its level.
- *
- * Used by the submit action to log the right event and route to the right place.
- * Row level security scopes it to the caller, so an attempt id belonging to
- * somebody else reads as absent rather than as somebody else's.
- */
-export async function getAttemptMeta(
-  attemptId: string,
-): Promise<{ scope: QuizScope; levelSlug: string | null } | null> {
-  const supabase = await supabaseServer();
-  const { data } = await supabase
-    .from("learn_attempts")
-    .select("scope, level_slug")
-    .eq("id", attemptId)
-    .maybeSingle();
-
-  const row = data as { scope: QuizScope; level_slug: string | null } | null;
-  return row ? { scope: row.scope, levelSlug: row.level_slug } : null;
-}
 
 // --- Stage Quizzes ----------------------------------------------------------
 

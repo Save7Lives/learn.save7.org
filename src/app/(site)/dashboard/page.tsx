@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/authz";
-import { getBaselineState, getPathwayForUser, getLearnerCertificates } from "@/lib/course";
-import { getCourseImpact } from "@/lib/impact";
+import { getBaselineState } from "@/lib/baseline";
+import { getPathwayForUser, getLearnerCertificates } from "@/lib/course";
+import { BaselineResults } from "@/components/course/BaselineResults";
 import {
   Badge,
   ButtonLink,
@@ -25,12 +26,16 @@ export const metadata: Metadata = { title: "My progress" };
 export default async function DashboardPage() {
   const user = await requireUser("/dashboard");
 
-  const [{ levels }, baseline, impact, certificates] = await Promise.all([
+  const [{ levels }, baseline, certificates] = await Promise.all([
     getPathwayForUser(user.id),
     getBaselineState(user.id),
-    getCourseImpact(user.id),
     getLearnerCertificates(user.id),
   ]);
+
+  // Improvement is derived, never stored: the latest later Sitting against the
+  // first, the same comparison learn_my_progress makes.
+  const before = baseline.first;
+  const after = baseline.latestLater;
 
   const modulesComplete = levels.reduce(
     (sum, l) => sum + (l.progress?.modulesComplete ?? 0),
@@ -60,8 +65,9 @@ export default async function DashboardPage() {
             Start with the baseline
           </Display>
           <p className="mt-3 text-sand-700">
-            Twelve short questions before you begin. There is no pass mark — it just
-            means we can show you what changed by the end.
+            Twenty short questions before you begin. There is no pass mark — it is the
+            &ldquo;before&rdquo; that shows what you learn, so the levels open once
+            it&apos;s done.
           </p>
           <div className="mt-5">
             <ButtonLink href="/assessment/pre" size="lg">
@@ -71,29 +77,40 @@ export default async function DashboardPage() {
         </Card>
       ) : null}
 
+      {/* --- A later Sitting: offered, never required ---------------------- */}
+      {baseline.completed && baseline.due !== null ? (
+        <Card className="mt-8 border-pink-200 bg-pink-50/50 p-6">
+          <Display as="h2" className="text-title text-ink">
+            See what you&apos;ve learned
+          </Display>
+          <p className="mt-3 text-sand-700">
+            You&apos;ve finished a level since your last baseline. Sit the same twenty
+            questions again to see how your scores have moved. It&apos;s optional, and it
+            doesn&apos;t affect your certificates.
+          </p>
+          <div className="mt-5">
+            <ButtonLink href="/assessment/pre" size="lg">
+              Take sitting {baseline.due}
+            </ButtonLink>
+          </div>
+        </Card>
+      ) : null}
+
       {/* --- Knowledge impact --------------------------------------------- */}
-      {baseline.completed ? (
+      {before ? (
         <Card className="mt-8 overflow-hidden">
           <div className="grid sm:grid-cols-4">
+            <Stat label="Before the course" value={`${before.totalPct}%`} sub="Baseline, at signup" />
             <Stat
-              label="Before the course"
-              value={baseline.scorePct !== null ? `${baseline.scorePct}%` : "—"}
-              sub="Baseline assessment"
-            />
-            <Stat
-              label="After the course"
-              value={impact.afterPct !== null ? `${impact.afterPct}%` : "—"}
-              sub={
-                impact.levelsAssessed > 0
-                  ? `Average of ${impact.levelsAssessed} level${impact.levelsAssessed === 1 ? "" : "s"}`
-                  : "No assessment yet"
-              }
+              label="Latest baseline"
+              value={after ? `${after.totalPct}%` : "—"}
+              sub={after ? `Sitting ${after.sittingNo} of 4` : "After your first level"}
             />
             <Stat
               label="Improvement"
               value={
-                impact.pointChange !== null
-                  ? `${impact.pointChange >= 0 ? "+" : ""}${impact.pointChange}`
+                after
+                  ? `${after.totalPct - before.totalPct >= 0 ? "+" : ""}${after.totalPct - before.totalPct}`
                   : "—"
               }
               sub="percentage points"
@@ -104,6 +121,9 @@ export default async function DashboardPage() {
               value={`${modulesComplete}/${modulesTotal}`}
               sub={`${levels.length} levels available`}
             />
+          </div>
+          <div className="border-t border-sand-200 px-5 py-4">
+            <BaselineResults state={baseline} />
           </div>
         </Card>
       ) : null}

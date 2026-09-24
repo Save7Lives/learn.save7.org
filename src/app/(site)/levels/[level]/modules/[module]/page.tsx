@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/authz";
-import { getBaselineState, getModuleForUser } from "@/lib/course";
+import { getBaselineState } from "@/lib/baseline";
+import { getModuleForUser } from "@/lib/course";
 import { getStageQuizStates } from "@/lib/quiz";
 import { ModuleRunner, type RunnerLesson } from "@/components/lesson/ModuleRunner";
 import { LessonBody } from "@/components/lesson/LessonBody";
@@ -37,8 +38,9 @@ export default async function ModulePage(
   const { level: levelSlug, module: moduleSlug } = await props.params;
   const user = await requireUser(`/levels/${levelSlug}/modules/${moduleSlug}`);
 
-  // The baseline is a gate: without it there is nothing to measure improvement
-  // against, which is the whole point of the assessment design.
+  // The first Baseline Sitting is a gate: a "before" taken after reading a Stage
+  // is not a before, and without it there is nothing to measure improvement
+  // against (#54). Its score gates nothing, and no later Sitting is required.
   const baseline = await getBaselineState(user.id);
   if (!baseline.completed) redirect("/assessment/pre");
 

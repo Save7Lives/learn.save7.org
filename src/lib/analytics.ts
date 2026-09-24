@@ -1,6 +1,7 @@
 import "server-only";
 
 import { supabaseServer } from "./supabase/server";
+import { SITTING_COLUMNS, levelImprovement, mapSitting, type Sitting } from "./baseline";
 
 
 /**
@@ -12,9 +13,17 @@ import { supabaseServer } from "./supabase/server";
  * per-learner behavioural profile, no funnel of individual actions, and no
  * ranking of learners against each other.
  *
- * Only `attemptNo === 1` counts toward reported improvement. If retakes were
- * included, Save7's headline "learning gain" would drift upward every time a
- * learner tried again, which would make the platform's central claim unfalsifiable.
+ * **Knowledge movement is the Baseline's** (#54). Every Sitting is the same twenty
+ * questions, so the change between a learner's first Sitting and a later one is
+ * like against like, which a Stage Quiz score never was: a Stage Quiz is five
+ * questions from one Stage. The Baseline is capped at four Sittings on a fixed
+ * schedule, so there are no retakes to inflate it.
+ *
+ * The Stage Quiz figures that remain here (`averagePostPct`, `passRatePct`,
+ * `postDistribution`) still read POST `attempt_no = 1` as a Level score, which
+ * stopped being true when #57 made each POST attempt one Stage's five-question
+ * paper. They are the map's open admin-indicator audit against #18, and are left
+ * for it rather than guessed at here.
  */
 
 function mean(values: number[]): number | null {
@@ -24,7 +33,7 @@ function mean(values: number[]): number | null {
 
 export type LearnerSummary = {
   registered: number;
-  /** Started the baseline or any module. */
+  /** Sat the first Baseline, which is what opens the course. */
   active: number;
   /** Completed at least one level. */
   completedAnyLevel: number;
@@ -50,7 +59,7 @@ export async function getLearnerSummary(): Promise<LearnerSummary> {
         .from("learners")
         .select("id", { count: "exact", head: true })
         .gte("created_at", thirtyDaysAgo),
-      supabase.from("learn_attempts").select("learner_id").eq("scope", "PRE"),
+      supabase.from("learn_baseline_sittings").select("learner_id").eq("sitting_no", 1),
       supabase
         .from("learn_level_progress")
         .select("learner_id, level_slug")
@@ -62,8 +71,8 @@ export async function getLearnerSummary(): Promise<LearnerSummary> {
   const registeredLast30Days = recentResult.count ?? 0;
   const levelsTotal = levelResult.count ?? 0;
 
-  // PostgREST has no DISTINCT, so the set is built here. One row per learner is
-  // what "started the baseline" means.
+  // One Sitting 1 per learner, by the table's unique constraint; the set is kept
+  // anyway so this does not quietly depend on it.
   const withBaseline = new Set(
     ((baselineResult.data ?? []) as unknown as Array<{ learner_id: string }>).map(
       (a) => a.learner_id,
@@ -102,8 +111,14 @@ export async function getLearnerSummary(): Promise<LearnerSummary> {
 }
 
 export type KnowledgeSummary = {
+  /** Sitting 1, the "before". */
   averageBaselinePct: number | null;
   baselineCount: number;
+  /** Each learner's latest Sitting after the first, among those who have one. */
+  averageLatestPct: number | null;
+  resatCount: number;
+  /** Latest later Sitting minus Sitting 1, averaged over the same learners. */
+  averageImprovement: number | null;
   perLevel: Array<{
     levelId: string;
     slug: string;
@@ -111,11 +126,14 @@ export type KnowledgeSummary = {
     tier: string;
     averagePostPct: number | null;
     postCount: number;
-    /** Average point change for learners who took both. */
+    /** Average change in this Level's Baseline sub-score, from Sitting 1 to the
+     *  first Sitting after the Level was completed (CONTEXT.md, Improvement). */
     averagePointChange: number | null;
+    /** Learners with both of those Sittings. */
+    improvementCount: number;
     passRatePct: number | null;
   }>;
-  /** Baseline score distribution, for a histogram. */
+  /** Sitting 1 score distribution, for a histogram. */
   baselineDistribution: Array<{ bucket: string; count: number }>;
   postDistribution: Array<{ bucket: string; count: number }>;
 };
@@ -138,12 +156,16 @@ function distribute(scores: number[]): Array<{ bucket: string; count: number }> 
 export async function getKnowledgeSummary(): Promise<KnowledgeSummary> {
   const supabase = await supabaseServer();
 
-  const [preResult, levelResult, postResult] = await Promise.all([
+  const [sittingResult, completionResult, levelResult, postResult] = await Promise.all([
     supabase
-      .from("learn_attempts")
-      .select("learner_id, score_pct")
-      .eq("scope", "PRE")
-      .not("submitted_at", "is", null),
+      .from("learn_baseline_sittings")
+      .select(`learner_id, ${SITTING_COLUMNS}`)
+      .order("sitting_no"),
+
+    supabase
+      .from("learn_level_progress")
+      .select("learner_id, level_slug, completed_at")
+      .not("completed_at", "is", null),
 
     supabase
       .from("learn_levels")
@@ -157,10 +179,24 @@ export async function getKnowledgeSummary(): Promise<KnowledgeSummary> {
       .not("submitted_at", "is", null),
   ]);
 
-  const preAttempts = ((preResult.data ?? []) as unknown as Array<{
+  // Each learner's Sittings, oldest first.
+  const sittingsByUser = new Map<string, Sitting[]>();
+  for (const row of (sittingResult.data ?? []) as unknown as Array<
+    { learner_id: string } & Parameters<typeof mapSitting>[0]
+  >) {
+    const list = sittingsByUser.get(row.learner_id) ?? [];
+    list.push(mapSitting(row));
+    sittingsByUser.set(row.learner_id, list);
+  }
+
+  const completedAt = new Map<string, Date>();
+  for (const row of (completionResult.data ?? []) as unknown as Array<{
     learner_id: string;
-    score_pct: number | null;
-  }>).map((a) => ({ userId: a.learner_id, scorePct: a.score_pct }));
+    level_slug: string;
+    completed_at: string;
+  }>) {
+    completedAt.set(`${row.learner_id}:${row.level_slug}`, new Date(row.completed_at));
+  }
 
   const levels = ((levelResult.data ?? []) as unknown as Array<{
     slug: string;
@@ -187,10 +223,18 @@ export async function getKnowledgeSummary(): Promise<KnowledgeSummary> {
     attemptNo: a.attempt_no,
   }));
 
-  const baselineByUser = new Map(
-    preAttempts.map((a) => [a.userId, a.scorePct ?? 0]),
-  );
-  const baselineScores = [...baselineByUser.values()];
+  const baselineScores: number[] = [];
+  const latestScores: number[] = [];
+  const overallChanges: number[] = [];
+  for (const sittings of sittingsByUser.values()) {
+    const first = sittings.find((s) => s.sittingNo === 1);
+    if (!first) continue;
+    baselineScores.push(first.totalPct);
+    const latest = sittings.filter((s) => s.sittingNo > 1).at(-1);
+    if (!latest) continue;
+    latestScores.push(latest.totalPct);
+    overallChanges.push(latest.totalPct - first.totalPct);
+  }
 
   const perLevel = levels.map((level) => {
     const recorded = postAttempts.filter(
@@ -198,10 +242,13 @@ export async function getKnowledgeSummary(): Promise<KnowledgeSummary> {
     );
     const scores = recorded.map((a) => a.scorePct ?? 0);
 
-    // Point change only for learners who have both measurements.
-    const changes = recorded
-      .filter((a) => baselineByUser.has(a.userId))
-      .map((a) => (a.scorePct ?? 0) - (baselineByUser.get(a.userId) ?? 0));
+    // Baseline Improvement on this Level's sub-score, for learners who have both
+    // Sittings it needs.
+    const changes = [...sittingsByUser].flatMap(([userId, sittings]) => {
+      const done = completedAt.get(`${userId}:${level.slug}`) ?? null;
+      const improvement = levelImprovement(sittings, level.slug, done);
+      return improvement ? [improvement.change] : [];
+    });
 
     // Pass rate uses the best attempt, because that is what earns a certificate.
     const allForLevel = postAttempts.filter((a) => a.levelId === level.id);
@@ -220,6 +267,7 @@ export async function getKnowledgeSummary(): Promise<KnowledgeSummary> {
       averagePostPct: mean(scores),
       postCount: scores.length,
       averagePointChange: mean(changes),
+      improvementCount: changes.length,
       passRatePct:
         bestByUser.size > 0 ? Math.round((passed / bestByUser.size) * 100) : null,
     };
@@ -228,6 +276,9 @@ export async function getKnowledgeSummary(): Promise<KnowledgeSummary> {
   return {
     averageBaselinePct: mean(baselineScores),
     baselineCount: baselineScores.length,
+    averageLatestPct: mean(latestScores),
+    resatCount: latestScores.length,
+    averageImprovement: mean(overallChanges),
     perLevel,
     baselineDistribution: distribute(baselineScores),
     postDistribution: distribute(

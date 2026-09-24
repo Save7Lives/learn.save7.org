@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
-import { getPathwayForUser, getBaselineState } from "@/lib/course";
+import { getBaselineState } from "@/lib/baseline";
+import { getPathwayForUser } from "@/lib/course";
 import { LevelCard } from "@/components/course/LevelCard";
 import { Badge, ButtonLink, Display, Eyebrow } from "@/components/ui/primitives";
 
@@ -74,8 +75,8 @@ export default async function HomePage() {
 
           {session && baseline && !baseline.completed ? (
             <p className="mt-6 text-sm text-cream/60">
-              Before your first module we&apos;ll ask you 12 quick questions, so we can
-              show you how much you&apos;ve learned by the end.
+              Before your first module we&apos;ll ask you 20 quick questions, and the same
+              20 again after each level, so you can see how much you&apos;ve learned.
             </p>
           ) : null}
         </div>
@@ -140,7 +141,7 @@ export default async function HomePage() {
               },
               {
                 title: "Before and after assessment",
-                body: "A short baseline quiz, then a post-course assessment, so you can see exactly how much you have learned.",
+                body: "A short baseline quiz at the start, and the same quiz again after each level, so you can see exactly how much you have learned.",
               },
             ].map((item) => (
               <div key={item.title}>

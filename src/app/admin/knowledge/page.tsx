@@ -28,7 +28,7 @@ export default async function KnowledgePage() {
     <>
       <PageTitle
         title="Knowledge impact"
-        description="Only each learner's first attempt counts toward these figures. Including retakes would make the reported learning gain drift upward over time and turn the platform's central claim into something unfalsifiable."
+        description="Learning gain is measured on the baseline: the same twenty questions at signup and after each level, at most four sittings, so a retake cannot inflate it. The Stage Quiz columns are first attempts only."
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -39,7 +39,7 @@ export default async function KnowledgePage() {
               ? `${knowledge.averageBaselinePct}%`
               : "—"
           }
-          sub={`${knowledge.baselineCount} baselines recorded`}
+          sub={`${knowledge.baselineCount} first sittings recorded`}
         />
         <StatCard
           label="Levels assessed"
@@ -49,13 +49,11 @@ export default async function KnowledgePage() {
         <StatCard
           label="Average improvement"
           value={
-            assessed.length > 0
-              ? `${Math.round(
-                  assessed.reduce((s, l) => s + (l.averagePointChange ?? 0), 0) /
-                    assessed.length,
-                )} pp`
+            knowledge.averageImprovement !== null
+              ? `${knowledge.averageImprovement >= 0 ? "+" : ""}${knowledge.averageImprovement} pp`
               : "—"
           }
+          sub={`First sitting to latest, ${knowledge.resatCount} learners`}
           tone="pink"
         />
       </div>
@@ -63,7 +61,7 @@ export default async function KnowledgePage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Section
           title="Baseline score distribution"
-          description="Where learners are before the course. A left-heavy shape is the expected and desirable pattern."
+          description="Where learners are before the course, from each learner's first sitting. A left-heavy shape is the expected and desirable pattern."
         >
           <BarChart
             data={knowledge.baselineDistribution.map((b) => ({
@@ -92,7 +90,7 @@ export default async function KnowledgePage() {
 
       <Section
         title="By level"
-        description="Average score, improvement against the baseline, and the share of learners reaching the pass mark on their best attempt."
+        description="Stage Quiz first attempts and pass rate, beside the change in each level's baseline sub-score from the first sitting to the sitting after that level."
         className="mt-4"
       >
         <DataTable
@@ -101,7 +99,7 @@ export default async function KnowledgePage() {
             "Level",
             "Assessed",
             "Average score",
-            "Average change",
+            "Baseline change",
             "Pass rate",
           ]}
           rows={knowledge.perLevel.map((l) => [

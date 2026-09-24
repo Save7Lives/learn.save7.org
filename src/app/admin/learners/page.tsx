@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getLearnerSummary } from "@/lib/analytics";
+import { percent } from "@/lib/baseline";
 import { supabaseServer } from "@/lib/supabase/server";
 import { DataTable, PageTitle, Section, StatCard } from "@/components/admin/AdminUi";
 import { Badge } from "@/components/ui/primitives";
@@ -16,14 +17,16 @@ export default async function LearnersPage() {
 
   const supabase = await supabaseServer();
 
-  /* Each learner with their submitted attempts, live certificates and completed
-     modules, embedded through the foreign keys on those three tables. Staff-only:
-     the select policies on all four admit `app_is_staff()`, and a learner reading
-     the same query sees one row — their own. */
+  /* Each learner with their Baseline Sittings, submitted attempts, live
+     certificates and completed modules, embedded through the foreign keys on those
+     four tables. Staff-only: the select policies on all five admit
+     `app_is_staff()`, and a learner reading the same query sees one row — their
+     own. */
   const { data: learnerRows } = await supabase
     .from("learners")
     .select(
       "id, name, created_at, last_seen_at, " +
+        "learn_baseline_sittings(sitting_no, total_score, total_max), " +
         "learn_attempts(scope, score_pct, attempt_no, level_slug, submitted_at), " +
         "learn_certificates(code, award_title, revoked_at), " +
         "learn_module_progress(module_slug, status)",
@@ -36,6 +39,11 @@ export default async function LearnersPage() {
     name: string;
     created_at: string;
     last_seen_at: string | null;
+    learn_baseline_sittings: Array<{
+      sitting_no: number;
+      total_score: number;
+      total_max: number;
+    }> | null;
     learn_attempts: Array<{
       scope: string;
       score_pct: number | null;
@@ -54,6 +62,9 @@ export default async function LearnersPage() {
     name: l.name,
     createdAt: new Date(l.created_at),
     lastSeenAt: l.last_seen_at ? new Date(l.last_seen_at) : null,
+    sittings: (l.learn_baseline_sittings ?? [])
+      .map((s) => ({ sittingNo: s.sitting_no, pct: percent(s.total_score, s.total_max) }))
+      .sort((a, b) => a.sittingNo - b.sittingNo),
     // Filtered here rather than in the query: PostgREST cannot filter an embedded
     // resource without also dropping parents that have none, which would hide
     // every learner who has not attempted anything yet.
@@ -91,7 +102,7 @@ export default async function LearnersPage() {
           value={summary.registered}
           sub={`${summary.registeredLast30Days} in the last 30 days`}
         />
-        <StatCard label="Active" value={summary.active} sub="Completed the baseline" />
+        <StatCard label="Active" value={summary.active} sub="Sat the first baseline" />
         <StatCard
           label="Finished a level"
           value={summary.completedAnyLevel}
@@ -123,7 +134,8 @@ export default async function LearnersPage() {
             "Certificates",
           ]}
           rows={learners.map((learner) => {
-            const pre = learner.attempts.find((a) => a.kind === "PRE");
+            // Every Sitting in order, first to latest: the before-and-after in one cell.
+            const baseline = learner.sittings.map((s) => `${s.pct}%`).join(" → ");
             const posts = learner.attempts.filter(
               (a) => a.kind === "POST" && a.attemptNo === 1,
             );
@@ -134,7 +146,13 @@ export default async function LearnersPage() {
               <span key="d" className="whitespace-nowrap text-xs text-sand-500">
                 {learner.createdAt.toLocaleDateString("en-ZA")}
               </span>,
-              pre ? `${pre.scorePct}%` : <span key="b" className="text-sand-400">Not taken</span>,
+              baseline ? (
+                <span key="b" className="whitespace-nowrap">
+                  {baseline}
+                </span>
+              ) : (
+                <span key="b" className="text-sand-400">Not taken</span>
+              ),
               posts.length > 0 ? (
                 <span key="p">
                   {posts.map((p) => `${p.scorePct}%`).join(" · ")}

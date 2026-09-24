@@ -286,43 +286,6 @@ export async function getPathwayForUser(userId: string | null) {
   return { course, levels: annotated };
 }
 
-/** Whether the learner has completed the one-time baseline assessment. */
-export async function getBaselineState(userId: string) {
-  const supabase = await supabaseServer();
-
-  const { data } = await supabase
-    .from("learn_attempts")
-    .select("id, submitted_at, score_pct, score_raw, score_max")
-    .eq("learner_id", userId)
-    .eq("scope", "PRE")
-    // Earliest attempt: the baseline is taken once, and the first sitting is the
-    // one that counts.
-    .order("started_at")
-    .limit(1);
-
-  const attempt = (data ?? [])[0] as
-    | Pick<
-        {
-          id: string;
-          submitted_at: string | null;
-          score_pct: number | null;
-          score_raw: number | null;
-          score_max: number | null;
-        },
-        "id" | "submitted_at" | "score_pct" | "score_raw" | "score_max"
-      >
-    | undefined;
-
-  return {
-    /** An unsubmitted attempt means they started and can resume it. */
-    inProgressAttemptId: attempt && !attempt.submitted_at ? attempt.id : null,
-    completed: Boolean(attempt?.submitted_at),
-    scorePct: attempt?.submitted_at ? attempt.score_pct : null,
-    scoreRaw: attempt?.submitted_at ? attempt.score_raw : null,
-    scoreMax: attempt?.submitted_at ? attempt.score_max : null,
-  };
-}
-
 /** A single module with its lessons, plus this learner's position in it. */
 export async function getModuleForUser(
   userId: string | null,

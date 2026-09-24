@@ -26,7 +26,9 @@
  * **Because the function reads every PRE row, the prior build's twelve `pre-*`
  * rows must be swept from production when this bank lands** — otherwise the
  * Baseline silently becomes thirty-two questions with a twelve-point
- * `'unassigned'` bucket. That sweep belongs to #47's one-off reset migration.
+ * `'unassigned'` bucket. #47's reset left them alone, so the sweep is #54's:
+ * save7-os 0116, hand-written ahead of this bank's emitted rows, and safe only
+ * while no learner has sat the Baseline.
  *
  * Depth, per the Blueprint:
  *
@@ -68,8 +70,10 @@ export type BaselineChoice = {
 
 export type BaselineQuestion = {
   /** Permanent authoring key — `baseline-<level initial><stage number>-<n>`.
-   *  Never reused, never renumbered: it is the upsert key, and a sitting's
-   *  answers hang off the row it names. */
+   *  Never reused, never renumbered: it is the upsert key. A sitting keeps no
+   *  answers, only its marks, so what makes an edit here dangerous once anyone
+   *  has sat the Baseline is comparability, not lost records: a changed item
+   *  makes later sittings a different paper from the first. */
   key: string;
   /** Level slug — written to `learn_questions.level_slug`, which is what the
    *  per-Level breakdown groups on. */
@@ -87,7 +91,7 @@ export type BaselineQuestion = {
    *  without one enters the content-review register as outstanding. */
   verifiedAgainst?: string;
   /** The prior build's authoring key, where this item was recycled from one.
-   *  Provenance only — the old row is swept by #47's reset migration. */
+   *  Provenance only — the old row is swept by save7-os 0116 (#54). */
   recycledFrom?: string;
   choices: [BaselineChoice, BaselineChoice, BaselineChoice, BaselineChoice];
 };

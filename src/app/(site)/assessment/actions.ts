@@ -2,18 +2,26 @@
 
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/authz";
-import { getAttemptMeta, submitAttempt, type SubmittedAnswer } from "@/lib/quiz";
+import { getBaselineState, submitBaselineSitting } from "@/lib/baseline";
+import type { SubmittedAnswer } from "@/lib/quiz";
 import { recordEvent } from "@/lib/progress";
 
 /**
- * Grade a submitted assessment.
+ * Record one Baseline Sitting.
+ *
+ * `sittingNo` is the Sitting the page was rendered for, passed through the
+ * runner's attempt-id slot. It is checked against what is owed *now*, because
+ * `learn_submit_baseline_sitting()` is not idempotent: a second tab, or a form
+ * submitted twice, would otherwise record the same answers as the next Sitting
+ * and spend one of the learner's four. A Sitting that is no longer owed lands on
+ * the results instead.
  *
  * The payload arrives as a JSON string so the client component can stay a plain
- * function call rather than a form encoding. It is parsed defensively — the
- * grader ignores anything that is not a known question of this attempt anyway.
+ * function call rather than a form encoding. It is parsed defensively; the
+ * function marks the bank it reads for itself, so anything outside it is ignored.
  */
-export async function submitAssessmentAction(
-  attemptId: string,
+export async function submitBaselineSittingAction(
+  sittingNo: string,
   payload: string,
 ): Promise<{ error?: string } | void> {
   const user = await requireUser();
@@ -37,27 +45,19 @@ export async function submitAssessmentAction(
     return { error: "We couldn't read your answers. Please try submitting again." };
   }
 
-  const result = await submitAttempt(user.id, attemptId, answers);
-  if ("error" in result) return { error: result.error };
+  const { due } = await getBaselineState(user.id);
+  if (due === null || String(due) !== sittingNo) redirect("/assessment/pre/done");
 
-  const attempt = await getAttemptMeta(attemptId);
+  const result = await submitBaselineSitting(answers);
+  if ("error" in result) return { error: result.error };
 
   await recordEvent(user.id, "quiz_submit", {
     metaJson: JSON.stringify({
-      kind: attempt?.scope,
-      level: attempt?.levelSlug ?? null,
-      scorePct: result.scorePct,
+      kind: "BASELINE",
+      sitting: result.sittingNo,
+      scorePct: result.totalPct,
     }),
   });
 
-  if (attempt?.scope === "PRE") {
-    // The baseline-done marker is written by learn_submit_attempt(), in the same
-    // statement that records the score — so it cannot be set for an attempt that
-    // did not actually grade, and there is nothing to write here.
-    redirect("/assessment/pre/done");
-  }
-
-  // Stage Quizzes are submitted inline through submitStageQuizAction, so nothing
-  // Level-wide reaches here any more (#57). The Level page is the safe landing.
-  redirect(attempt?.levelSlug ? `/levels/${attempt.levelSlug}` : "/dashboard");
+  redirect("/assessment/pre/done");
 }

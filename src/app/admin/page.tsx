@@ -26,14 +26,7 @@ export default async function AdminOverviewPage() {
     getReviewSummary(),
   ]);
 
-  const assessedLevels = knowledge.perLevel.filter((l) => l.postCount > 0);
-  const averageGain =
-    assessedLevels.length > 0
-      ? Math.round(
-          assessedLevels.reduce((sum, l) => sum + (l.averagePointChange ?? 0), 0) /
-            assessedLevels.length,
-        )
-      : null;
+  const averageGain = knowledge.averageImprovement;
 
   // Biggest drop-off: where the most learners started and did not finish.
   const dropOff = [...engagement].sort((a, b) => b.dropped - a.dropped)[0] ?? null;
@@ -54,24 +47,17 @@ export default async function AdminOverviewPage() {
               ? `${knowledge.averageBaselinePct}%`
               : "—"
           }
-          sub={`${knowledge.baselineCount} learners assessed`}
+          sub={`${knowledge.baselineCount} learners, first sitting`}
         />
         <StatCard
-          label="Average after"
-          value={
-            assessedLevels.length > 0
-              ? `${Math.round(
-                  assessedLevels.reduce((s, l) => s + (l.averagePostPct ?? 0), 0) /
-                    assessedLevels.length,
-                )}%`
-              : "—"
-          }
-          sub="Across assessed levels"
+          label="Average latest baseline"
+          value={knowledge.averageLatestPct !== null ? `${knowledge.averageLatestPct}%` : "—"}
+          sub={`${knowledge.resatCount} learners have re-sat it`}
         />
         <StatCard
           label="Average improvement"
           value={averageGain !== null ? `${averageGain >= 0 ? "+" : ""}${averageGain}` : "—"}
-          sub="percentage points"
+          sub="percentage points, first sitting to latest"
           tone="pink"
         />
         <StatCard
@@ -92,7 +78,7 @@ export default async function AdminOverviewPage() {
         <StatCard
           label="Active"
           value={learners.active}
-          sub="Completed the baseline"
+          sub="Sat the first baseline"
         />
         <StatCard
           label="Finished a level"
@@ -128,19 +114,19 @@ export default async function AdminOverviewPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Section
           title="Improvement by level"
-          description="Average percentage-point change between the baseline and each level's first assessment."
+          description="Average change in each level's baseline sub-score, from the first sitting to the sitting after that level."
         >
           <BarChart
             data={knowledge.perLevel.map((l) => ({
               label: l.title,
               value: l.averagePointChange,
               sub:
-                l.postCount > 0
-                  ? `${l.postCount} assessed · average score ${l.averagePostPct}% · pass rate ${l.passRatePct}%`
-                  : "Not yet assessed",
+                l.improvementCount > 0
+                  ? `${l.improvementCount} learner${l.improvementCount === 1 ? "" : "s"} re-sat after this level`
+                  : "Nobody has re-sat after this level yet",
             }))}
             valueSuffix=" pp"
-            emptyMessage="No level assessments submitted yet."
+            emptyMessage="No baseline sittings after a level yet."
           />
         </Section>
 
