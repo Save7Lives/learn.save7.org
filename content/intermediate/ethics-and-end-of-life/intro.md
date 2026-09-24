@@ -6,46 +6,15 @@ stage: ethics-and-end-of-life
 level: intermediate
 ---
 
-_Not yet written._ This file is a stub created by ticket #33. It is deliberately empty rather than filled with unverified text — see the drafting brief below.
+The law sets the minimum: who must consent, who must certify death, what may not be sold. It does not answer the harder questions, and those are the ones people really want to talk about.
 
-<!-- DRAFTING BRIEF — from CURRICULUM-ASSESSMENT-SPEC.md, Stage 4 of Intermediate Level.
-     Delete this block once the lesson is written. -->
+*If they stop treatment, are they doing it to get the organs? Why can't the family have more time? Why doesn't South Africa just make everyone a donor? Who gets the organs, and is it fair?*
 
-<!--
+Each of these is a fair question, and a glib answer to any of them does more damage than no answer. This Stage works through four areas where ethics goes beyond the legal minimum:
 
-- Withdrawal-of-treatment ethics as it relates to DCD, sourced from
-  **HPCSA Booklet 7** (Withholding/Withdrawing Treatment, rev. Sept 2025),
-  not Booklet 17 (Palliative Care) as the course manual itself cites
-- Family accommodation, second opinions, and dignity in dying
-- The opt-in vs. presumed-consent debate — why South Africa hasn't moved
-  to opt-out, and what the evidence actually says would help
-- Equity and scarcity: waitlist vs. transplant-rate reality,
-  extended-criteria donors
-- **Learning objective:** Discuss the ethical tensions in donation and
-  end-of-life care — consent-model debate, family dynamics, and
-  scarcity/equity — beyond the legal minimum.
+- **Withdrawing treatment**, and why that decision must stand entirely apart from donation.
+- **The family at the end of life**: time to accept a death, the right to a second opinion, and dying with dignity.
+- **Opt-in or opt-out**: what the evidence actually says about changing South Africa's consent model.
+- **Scarcity and fairness**: the gap between the waiting list and the transplants performed, who has access, and the use of organs from donors who are less than ideal.
 
-**Course manual note:** 📌 the *Excellence in Deceased Donation* course
-manual's process framework (OTA/DonateLife/ANZICS "Elements 1–5",
-DBD/DCD critical-pathway framing) is Australian-derived and is kept
-visibly separated from SA-specific fact wherever it's used above.
-
-**`7 Lives in 7 Steps.pdf`: excluded from the Course entirely.** It's a
-hospital-staff ICU clinical/operational algorithm (GCS-based donor
-identification, brainstem death testing, a scripted family-counseling
-gate, transplant-coordinator hotlines, medico-legal form branching), not
-explanatory content fit for either Level's audience. Document H and the
-SAJCC guideline already ground Stage 1's process content at the right
-depth.
-
-## Salvage (from #33)
-
-**PARTIAL — the weakest Intermediate Stage.** ~500 reusable words, scattered.
-
-- Sources: `the-law`/`palliative-context` (~60w), `what-does-death-mean` accommodation step (~70w), `art-of-the-conversation`/`hard-conversations` scenario s3 (~250w), `who-can-donate` extended-criteria material (~150w).
-- Withdrawal-of-treatment ethics exists but is ~60 words and **cites the wrong booklet** — `palliative-context` points at HPCSA Booklet 17; the spec calls for Booklet 7. The substance (the withdrawal decision is made on its own merits, separately from donation) is right and worth keeping.
-- Family accommodation is properly defined. Second opinions and dignity-in-dying are absent as topics.
-- **Write from scratch:** the opt-in vs presumed-consent debate. Neither "opt-out" nor "presumed consent" occurs anywhere in the three content files.
-- Equity and scarcity: the *conversation* is strong (scenario s3, "people like us don't get organs") and extended-criteria donors are named, but the waitlist-vs-transplant-rate numbers are missing — the same gap as Beginner Stage 1.
-
--->
+The sources are South African where they exist: the HPCSA's guidance on withholding and withdrawing treatment, the national determination-of-death guidelines, provincial policy and the transplant community's own national strategy. Where the evidence comes from elsewhere, and on the consent-model question much of it does, it is marked 📌 so you do not mistake it for South African fact.

@@ -6,31 +6,16 @@ stage: sa-legal-framework
 level: intermediate
 ---
 
-_Not yet written._ This file is a stub created by ticket #33. It is deliberately empty rather than filled with unverified text — see the drafting brief below.
+Advocates get asked legal questions all the time. *Is it legal to sell a kidney? Who certifies death? Does it cost the family anything? Has the law changed?*
 
-<!-- DRAFTING BRIEF — from CURRICULUM-ASSESSMENT-SPEC.md, Stage 3 of Intermediate Level.
-     Delete this block once the lesson is written. -->
+Several widely repeated "legal facts" about donation in South Africa are wrong. Some are out of date, some belong to an Act repealed in 2003, and some were never law at all. This Stage states what the law actually says, and marks the places where common material gets it wrong.
 
-<!--
+Before starting, learn to separate three kinds of statement, because they get tangled together whenever donation is discussed:
 
-- National Health Act 61/2003, Chapter 8, and its Regulations — what the
-  law actually requires
-- Certification-of-death legal requirements (two doctors, independence
-  from transplant team, HPCSA registration)
-- No cost to the donor's family/estate; prohibition on organ trade
-- Recent developments: 2024–2025 regulatory and governance updates
-  (Ministerial Advisory Committee; regulation amendments, most recently
-  28 Feb 2025)
-- **Learning objective:** State what South African law (NHA 61/2003 Ch.8)
-  actually requires and prohibits around organ/tissue donation, including
-  recent regulatory developments.
+- **Legal requirement:** what the law demands. *At least two doctors must establish death, and neither may take part in the transplant.*
+- **Clinical guidance:** what good practice recommends. *The two doctors should ideally test together.*
+- **Practice:** what actually happens. *Hospitals approach the family in every case, and the family is not billed for the donation.*
 
-## Salvage (from #33)
+All three can be true at once, and they are not the same kind of true. When you speak publicly, say which one you are giving.
 
-**REUSABLE on 3 of 4 bullets — the single best match in the corpus.** ~2,400 words in `the-law` (`legal-framework` 1,711w, `takeaways` 256w, `study-guide` 708w).
-
-- It over-delivers rather than under-delivers: it distinguishes NHA 61/2003 Ch.8 from **GN R180 of 2 March 2012** (most operational detail lives in the regulation, and citing "Chapter 8" for a regulation rule is called out as a common error), quotes **Regulation 9 verbatim**, corrects the widespread "neither may be an intern" claim as appearing nowhere in the regulation, and flags the corneal-donation exception.
-- Costs and trade are handled more carefully than the spec bullet: neither the Act nor the regulations allocate donation costs, so "no cost" is ODF/tissue-bank practice. s60 is the anti-trafficking rule.
-- **Write from scratch:** 2024-2025 developments (Ministerial Advisory Committee, the 28 Feb 2025 amendments). Nothing in the corpus is dated later than the 2012 regulations, so this bullet needs fresh primary sourcing.
-
--->
+One caution stands throughout. A course is not legal advice, and law changes: new regulations were published for comment as recently as September 2026. If a point here is ever load-bearing for a real decision, check the current text, and if you are asked something this Stage does not cover, refer the question rather than reconstructing an answer.

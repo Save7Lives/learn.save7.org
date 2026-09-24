@@ -41,6 +41,7 @@ import { readdirSync, writeFileSync } from "node:fs";
 import { loadLesson } from "../prisma/content/markdown";
 import { assertBankIsWellFormed, type StageQuizBanks } from "../prisma/content/quiz";
 import { beginnerStageQuizBanks } from "../prisma/content/quiz-beginner";
+import { intermediateStageQuizBanks } from "../prisma/content/quiz-intermediate";
 import { gateQuestions } from "../prisma/content/questions-gate";
 import { resourceSeeds } from "../prisma/content/resources";
 import { courseStructure, type LevelStructure, type StageSeed } from "../prisma/content/structure";
@@ -49,6 +50,7 @@ import type { ReviewSeed } from "../prisma/content/types";
 /** Every Stage Quiz bank written so far. Each Level's content ticket adds its own. */
 const stageQuizBanks: StageQuizBanks = {
   ...beginnerStageQuizBanks,
+  ...intermediateStageQuizBanks,
 };
 
 const flags = process.argv.slice(2).filter((a) => a.startsWith("--"));
