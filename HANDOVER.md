@@ -53,7 +53,8 @@ matter any more, by design. Anything a client must not be able to assert is a
 | --- | --- | --- |
 | `learn_submit_attempt` | 0097 | Grading needs the answer key, which has no read path |
 | `learn_grade_check` | 0097 | Same, for the inline checks |
-| `learn_start_attempt` | 0097 | The baseline may be taken once; resume must not mint a new attempt |
+| `learn_start_attempt` | 0097 | Resume must not mint a new attempt; refuses the Baseline since 0110 |
+| `learn_submit_baseline_sitting` | 0110 | Marks a Baseline Sitting from the bank, never the payload; written once, capped at four |
 | `learn_complete_module` | 0096 | Level and course percentages are derived, not claimed |
 | `learn_view_lesson` | 0096 | Same row, so the completed-lesson set stays a set |
 | `learn_issue_certificate` | 0098 | Two gates must be checked where they cannot be skipped |
@@ -87,12 +88,17 @@ into a data leak. **Never introduce one here.**
 
 ## 3. Invariants that will silently corrupt data if broken
 
-- **Only `attempt_no = 1` counts toward reported improvement.** Retakes are allowed
-  for certificates and must never feed the impact numbers, or the platform's
-  central claim becomes unfalsifiable.
-- **The baseline is written once.** `learn_submit_attempt` coalesces the baseline
-  columns rather than overwriting them. A learner who could re-sit the first paper
-  after the course could manufacture their own improvement.
+- **Improvement is the Baseline's, and nothing else feeds it** (#54). It is Sitting
+  1 against a later Sitting of the same twenty questions. Stage Quiz retakes are
+  unlimited for certificates and must never feed the impact numbers, or the
+  platform's central claim becomes unfalsifiable. Some admin Stage Quiz columns
+  still read POST `attempt_no = 1` as a Level score; see `analytics.ts`.
+- **A Sitting is written once, and the bank is frozen once anyone has sat it.**
+  `learn_baseline_sittings` has no insert or update policy, and a CHECK plus a
+  UNIQUE cap it at four. Editing a Baseline question's prompt or options after a
+  first Sitting exists makes every later Sitting a different paper, silently.
+  save7-os 0116 refuses to replace the bank once a Sitting exists; any later
+  change to `questions-baseline.ts` needs the same care.
 - **Content upserts on the authoring key.** A question row deleted and reinserted
   takes every answer ever recorded against it, and the improvement figures with
   them. The generated migration never deletes.
