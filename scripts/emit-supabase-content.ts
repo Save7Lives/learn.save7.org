@@ -42,6 +42,7 @@ import { loadLesson } from "../prisma/content/markdown";
 import { assertBankIsWellFormed, type StageQuizBanks } from "../prisma/content/quiz";
 import { beginnerStageQuizBanks } from "../prisma/content/quiz-beginner";
 import { intermediateStageQuizBanks } from "../prisma/content/quiz-intermediate";
+import { advancedStageQuizBanks } from "../prisma/content/quiz-advanced";
 import { gateQuestions } from "../prisma/content/questions-gate";
 import { resourceSeeds } from "../prisma/content/resources";
 import { courseStructure, type LevelStructure, type StageSeed } from "../prisma/content/structure";
@@ -51,6 +52,7 @@ import type { ReviewSeed } from "../prisma/content/types";
 const stageQuizBanks: StageQuizBanks = {
   ...beginnerStageQuizBanks,
   ...intermediateStageQuizBanks,
+  ...advancedStageQuizBanks,
 };
 
 const flags = process.argv.slice(2).filter((a) => a.startsWith("--"));

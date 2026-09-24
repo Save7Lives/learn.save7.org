@@ -6,36 +6,10 @@ stage: public-advocacy
 level: advanced
 ---
 
-_Not yet written._ This file is a stub created by ticket #33. It is deliberately empty rather than filled with unverified text — see the drafting brief below.
+The first three Stages of this Level were about one family at a time: who is called, how the conversation goes, and what makes consent valid. This Stage turns to the public, where advocates do most of their work, and where three things decide whether donation keeps the public's trust.
 
-<!-- DRAFTING BRIEF — from CURRICULUM-ASSESSMENT-SPEC.md, Stage 4 of Advanced Level.
-     Delete this block once the lesson is written. -->
+**Who gets asked.** A donation system that quietly offers the conversation to some families and not others is not fair, and eventually is not trusted. South African policy says plainly that no community is to be excluded.
 
-<!--
+**What gets said.** Donation stories are powerful, and they are also about real people in the worst week of their lives. South African law sets firm limits on identifying donors, their families and recipients, and those limits bind anyone who speaks in public, including volunteers and advocates.
 
-- Equity/cultural-sensitivity obligations (no community excluded)
-- Donor-family privacy/media protocol
-- ODF's ULUNTU campaign as a case study, at framing depth (no campaign
-  toolkit exists in the Source Corpus — deeper ODF/SATS outreach is a
-  possible future task, not part of this spec)
-- **Objectives:** (1) explain equity obligations in who's offered the
-  conversation; (2) describe the media/privacy protocol; (3) analyze
-  ULUNTU as a culturally-attuned advocacy case study.
-
-**Stage order:** A → B → C → D — procedural on-ramp (role, then
-conversation) before ethics depth (C), advocacy (D) last. Kept at 4
-Stages rather than merged to 3: A and B have genuinely distinct
-objectives despite source overlap.
-
-`The_Journey_of_a_Gift.mp4` was assigned to Beginner Level, not Advanced,
-so it contributes nothing here.
-
-## Salvage (from #33)
-
-**PARTIAL — 1 of 3 bullets.** ~500 reusable words, all on equity.
-
-- Sources: `art-of-the-conversation` scenario s3 (~250w), `why-are-we-losing-organs` `cultural` loss point (~60w), `having-the-conversation` scenario s3 (~200w).
-- Equity and cultural sensitivity are genuinely well written and stated as a rule: never assume a background means donation shouldn't be raised, because the assumption itself is part of the inequity.
-- **Write from scratch:** donor-family privacy and the media protocol — neither "media" nor "privacy" occurs in any of the three content files. And ULUNTU: the ODF appears only as the awareness/database body, with no campaign material anywhere.
-
--->
+**How advocacy reaches people who don't trust the system.** The Organ Donor Foundation's ULUNTU campaign is a South African attempt to do exactly that. This Stage studies it as a case, at the depth the available sources allow and no further.

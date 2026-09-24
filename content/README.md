@@ -116,4 +116,4 @@ only because no learner had yet answered a question.
 |---|---|---|---|
 | Beginner | Written | 45 of 45 | [#47](https://github.com/zzubyr7x/learn.save7.org-map/issues/47) |
 | Intermediate | Written | 60 of 60 | [#48](https://github.com/zzubyr7x/learn.save7.org-map/issues/48) |
-| Advanced | Stubs | — | [#49](https://github.com/zzubyr7x/learn.save7.org-map/issues/49) |
+| Advanced | Written | 60 of 60 | [#49](https://github.com/zzubyr7x/learn.save7.org-map/issues/49) |

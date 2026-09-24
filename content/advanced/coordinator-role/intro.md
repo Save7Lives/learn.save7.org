@@ -6,27 +6,10 @@ stage: coordinator-role
 level: advanced
 ---
 
-_Not yet written._ This file is a stub created by ticket #33. It is deliberately empty rather than filled with unverified text — see the drafting brief below.
+Ask most people who makes organ donation happen and they will name the surgeons. The person they will not name is the one almost everything else depends on: the **transplant coordinator**.
 
-<!-- DRAFTING BRIEF — from CURRICULUM-ASSESSMENT-SPEC.md, Stage 1 of Advanced Level.
-     Delete this block once the lesson is written. -->
+The coordinator is usually the first specialist called and the last one to leave. They establish, with the transplant team, whether donation is possible at all. They plan the approach to the family, lead the conversation in which donation is raised, secure every authorisation the law requires, run the logistics of recovery, look after the family afterwards, and review what went wrong when a donation that could have happened didn't.
 
-<!--
+This Stage is about that role, and about the one point of timing that decides more outcomes than any other: **the coordinator is brought in before the family is told, not after.** The Western Cape's 2025 donation policy names the problem it exists to fix as "marked variability" in whether families are offered donation at all. Much of that variability is settled before a coordinator is ever called.
 
-- TC/SNOD definition; when brought in (before family told, not after)
-- End-to-end duties (screening → planning → conversation →
-  authorisation/logistics → aftercare → audit)
-- SATCS as professional body
-- **Objectives:** (1) define role, explain early-engagement timing;
-  (2) describe end-to-end duties across the pathway; (3) identify SATCS
-  as governing body.
-
-## Salvage (from #33)
-
-**PARTIAL.** ~350 reusable words in `who-makes-it-happen`/`meet-the-team` (`transplant-coordinator`, `tissue-coordinator`, `satcs`) plus `study-guide` s1/s3, and the `referral` step of `journey-of-a-gift`/`the-full-journey`.
-
-- The early-engagement timing bullet is already there in one precise sentence: the first discussion with the coordinator happens *before* end-of-life matters are raised with the family. That is exactly the spec's "before family told, not after".
-- SATCS as professional body is covered, with its Red File authorship.
-- **Half the duty chain is missing.** Screening, donor management, coordination and the family conversation are covered; **authorisation/logistics, aftercare and audit are not** (aftercare appears only inside the FACTS stage f8). "SNOD" never appears in the corpus.
-
--->
+Advanced Level builds on Beginner and Intermediate. How death is determined, who may consent and in what order, and what the National Health Act requires are all taught there. This Stage uses them rather than teaching them again.
