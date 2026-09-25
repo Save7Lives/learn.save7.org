@@ -86,7 +86,7 @@ export default async function ProfilePage() {
             <dt className="font-semibold text-ink">Your information</dt>
             <dd className="mt-0.5 text-sand-600">
               {profile.popiaConsentAt
-                ? "You agreed that Save7 may store your name, email and course progress."
+                ? "You agreed that Save7 may store your name, email, date of birth and course progress."
                 : "No consent is recorded on this account."}{" "}
               <Link href="/privacy" className="font-semibold text-pink-600 underline">
                 How we handle your information

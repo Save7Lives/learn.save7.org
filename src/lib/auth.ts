@@ -27,12 +27,24 @@ import type { UserRole } from "./constants";
  *     would mean the app's idea of who you are could drift from the database's.
  */
 
+/**
+ * What is still to ask before the course opens to this learner.
+ *
+ * `register-learner` asks both at once, so a registered learner arrives
+ * `"complete"`. `learn_claim_me()` asks neither, because it enrols staff,
+ * volunteers and stakeholders on sign-in with no form in front of it (#44). Date
+ * of birth comes first, as it does at registration, so a minor is refused before
+ * being asked to agree to anything.
+ */
+export type EnrolmentStep = "date-of-birth" | "consent" | "complete";
+
 export type SessionUser = {
   /** The `learners` row id — what every progress and attempt row keys on. */
   id: string;
   email: string;
   name: string;
   role: UserRole;
+  enrolment: EnrolmentStep;
 };
 
 /**
@@ -61,7 +73,7 @@ export async function getSession(): Promise<SessionUser | null> {
 
   const { data: learner } = await supabase
     .from("learners")
-    .select("id, email, name")
+    .select("id, email, name, date_of_birth, popia_consent_at")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -76,6 +88,7 @@ export async function getSession(): Promise<SessionUser | null> {
       email: user.email ?? "",
       name: (user.user_metadata?.full_name as string) ?? user.email ?? "Save7 staff",
       role: "ADMIN",
+      enrolment: "complete",
     };
   }
 
@@ -86,6 +99,11 @@ export async function getSession(): Promise<SessionUser | null> {
     email: learner.email,
     name: learner.name,
     role: isStaff ? "ADMIN" : "LEARNER",
+    enrolment: !learner.date_of_birth
+      ? "date-of-birth"
+      : !learner.popia_consent_at
+        ? "consent"
+        : "complete",
   };
 }
 
@@ -110,6 +128,37 @@ export async function claimLearner(
 
   if (error) return { ok: false, error: error.message };
   return { ok: true, id: data as string };
+}
+
+/**
+ * Record the signed-in learner's date of birth, once.
+ *
+ * `learn_record_date_of_birth()` makes the decision, computed against today the
+ * same way `register-learner` does. `ofAge: false` means they are under 18 and
+ * **their `learners` row is already gone**, with the date never stored. The
+ * caller must end the session: `learn_claim_me()` would enrol them again on the
+ * next page load, and they would be asked again in a loop.
+ */
+export async function recordDateOfBirth(
+  isoDate: string,
+): Promise<{ ok: true; ofAge: boolean } | { ok: false; error: string }> {
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase.rpc("learn_record_date_of_birth", { p_dob: isoDate });
+
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, ofAge: data === true };
+}
+
+/**
+ * Record the signed-in learner's POPIA consent, once. Idempotent in the database:
+ * a second call keeps the first timestamp.
+ */
+export async function recordConsent(): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await supabaseServer();
+  const { error } = await supabase.rpc("learn_record_popia_consent");
+
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
 }
 
 /** Ends the session everywhere, not just in this tab. */

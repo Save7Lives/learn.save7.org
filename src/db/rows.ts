@@ -25,6 +25,7 @@ export type LearnerRow = {
   last_name: string | null;
   name: string;
   volunteer_id: string | null;
+  date_of_birth: string | null;
   popia_consent_at: string | null;
   active: boolean;
   created_at: string;

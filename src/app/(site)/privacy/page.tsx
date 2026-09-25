@@ -60,7 +60,7 @@ export default function PrivacyPage() {
                 ["Your email address", "To sign you in. It is your account identifier."],
                 [
                   "Your date of birth",
-                  "This course is 18+ only. We check your age when you register, and keep the date rather than just a yes/no so that check can be reviewed later.",
+                  "This course is 18+ only. We check your age when you register, or before you start if you signed in without registering, and keep the date rather than just a yes/no so that check can be reviewed later. If you are under 18 we keep neither the date nor your enrolment.",
                 ],
                 [
                   "Your password",
@@ -169,7 +169,7 @@ export default function PrivacyPage() {
           <li>ask what information we hold about you, and get a copy;</li>
           <li>have anything inaccurate corrected;</li>
           <li>have your information deleted;</li>
-          <li>withdraw the consent you gave when you registered;</li>
+          <li>withdraw the consent you gave;</li>
           <li>complain to the Information Regulator if you are not satisfied.</li>
         </ul>
         <p className="mt-5 text-sand-600">
@@ -183,8 +183,9 @@ export default function PrivacyPage() {
           Consent
         </Display>
         <p className="mt-4 text-sand-600">
-          We record the moment you consented, when you tick the box at registration. We do
-          not treat visiting the site, or ignoring a banner, as consent.
+          We record the moment you consented, when you tick the box at registration or, if
+          you signed in without registering, on the screen that asks before you start. We
+          do not treat visiting the site, or ignoring a banner, as consent.
         </p>
       </section>
 

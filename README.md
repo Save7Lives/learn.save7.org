@@ -145,6 +145,8 @@ security-definer function in the database, not code here:
 | `learn_issue_certificate` | Both gates must be checked where they cannot be skipped |
 | `learn_verify_certificate` | A verifier has no account, so RLS cannot serve them |
 | `learn_claim_me` | `learners` has no insert policy, on purpose |
+| `learn_record_date_of_birth` | An under-18 date deletes the row it would be written to, and is never stored |
+| `learn_record_popia_consent` | Consent is written once, and never moved |
 
 ```
 src/

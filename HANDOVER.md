@@ -61,9 +61,18 @@ matter any more, by design. Anything a client must not be able to assert is a
 | `learn_verify_certificate` | 0098 | A verifier has no account, so RLS cannot serve them |
 | `learn_set_name` | 0098 | Renaming touches live certificates, which have no update policy |
 | `learn_claim_me` | 0095 | `learners` has no insert policy, on purpose |
+| `learn_record_popia_consent` | 0111 | Consent is written once and never moved; the column has no client grant |
+| `learn_record_date_of_birth` | 0117 | An under-18 date deletes the row and is never stored; an adult date never moves |
 
 If a feature seems to need one of these behaviours in TypeScript, that is the
 signal to write SQL, not to add a policy.
+
+**Every progress writer refuses a learner whose row lacks an adult date of birth
+or a consent** (`app_learner_of_age()`, `app_learner_consented()`; 0111, 0117).
+`learn_claim_me()` enrols staff, volunteers and stakeholders without asking
+either, so `requireUser()` sends such a learner to `/enrol` first. An under-18
+answer there ends the session on `/enrol/refused` rather than asking again,
+because `learn_claim_me()` would re-enrol them on the next load.
 
 ### The answer key
 
