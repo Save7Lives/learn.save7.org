@@ -16,8 +16,12 @@ export const metadata: Metadata = {
  * Plain-language privacy notice.
  *
  * Written to be read rather than to be legally impenetrable. It states exactly
- * which fields exist, because the honest answer is short: a name, an email, and
- * course progress.
+ * which fields exist, because the honest answer is short: a name, an email, a date
+ * of birth, and course progress.
+ *
+ * Every row is checked against what save7-os stores (learners, learn_*,
+ * learn_events, learner_registrations) and what Supabase Auth keeps for a Google
+ * sign-in. A row added here needs the same check.
  *
  * This is a factual description of what the application does, not legal advice —
  * Save7 should have it reviewed before launch, which the note at the bottom says.
@@ -30,9 +34,9 @@ export default function PrivacyPage() {
         Your information
       </Display>
       <p className="mt-6 text-lg text-sand-700">
-        Short version: we store your name, your email address, and how you are getting on
-        with the course. Nothing else. We do not sell it, we do not track you around the
-        internet, and you can ask us to delete it.
+        Short version: we store your name, your email address, your date of birth, and how
+        you are getting on with the course. We do not sell it, we do not track you around
+        the internet, and you can ask us to delete it.
       </p>
 
       <section className="mt-14">
@@ -63,24 +67,44 @@ export default function PrivacyPage() {
                   "This course is 18+ only. We check your age when you register, or before you start if you signed in without registering, and keep the date rather than just a yes/no so that check can be reviewed later. If you are under 18 we keep neither the date nor your enrolment.",
                 ],
                 [
-                  "Your password",
-                  "Stored only as a bcrypt hash. We cannot read it, and neither can anyone with database access.",
+                  "Your Google sign-in",
+                  "You sign in with Google, so this site has no password of yours to store: Google checks it, and we never see it. When you sign in, Google gives our sign-in service your email address, your Google account ID, and the name and profile photo link on your Google account, and that service keeps a copy. Like most sign-in services, it also records the internet address and browser of each signed-in session.",
                 ],
                 [
-                  "Which modules you have completed",
+                  "When you joined, and when you last signed in",
+                  "Shown to Save7 staff alongside your progress.",
+                ],
+                [
+                  "Which lessons and Stages you have read",
                   "So you can stop and pick up where you left off.",
                 ],
                 [
-                  "Your quiz answers and scores",
-                  "To show you what you have learned, and to tell Save7 whether the course is working.",
+                  "Your Stage Quiz answers and scores",
+                  "Every attempt is kept, with the options you chose. To show you what you have learned, to issue a Level's certificate once you have passed every Stage Quiz in it, and to tell Save7 whether the course is working.",
                 ],
                 [
-                  "Time spent in a module",
-                  "So Save7 can see which modules are too long or unclear.",
+                  "Your Baseline scores",
+                  "Up to four sittings, each kept as a score per Level and a total, never your answers. So you and Save7 can see how much you have learned since you started.",
+                ],
+                [
+                  "Time spent on each Stage",
+                  "So Save7 can see which Stages are too long or unclear.",
+                ],
+                [
+                  "A log of what you do in the course",
+                  "Which lessons you open, which Levels you start, which Stages you finish, which quizzes you start and submit, and when you change your name (not the name itself), each with the time, linked to your account. So Save7 can see how the course is being used.",
                 ],
                 [
                   "Your certificates",
                   "So they can be re-issued if you lose them, and verified by anyone you show them to.",
+                ],
+                [
+                  "If you are a Save7 volunteer",
+                  "The link between your course record and your volunteer record, made from the email address you sign in with. So your progress can show in the Save7 volunteer portal and count towards your vetting.",
+                ],
+                [
+                  "A record of each registration attempt",
+                  "Whether it was accepted and, if not, why. Your email address and the internet address the attempt came from are kept only as salted hashes, which are enough to count repeated attempts but are not a copy of either address. So the registration form can turn away floods of fake sign-ups.",
                 ],
               ].map(([what, why]) => (
                 <tr key={what} className="border-b border-sand-200">
@@ -106,9 +130,11 @@ export default function PrivacyPage() {
             This is a course, not a registry.
           </li>
           <li>
-            <strong>No IP addresses and no device fingerprints.</strong> The analytics that
-            record which lessons are being used store no IP address and no browser or device
-            details.
+            <strong>No IP addresses or device details in the course analytics.</strong> The
+            log that records which lessons are being used stores no IP address and no browser
+            or device details. The only places an internet address is kept are the two in the
+            table above: the sign-in service&apos;s session record, and the hashed
+            registration record.
           </li>
           <li>
             <strong>No third-party trackers.</strong> There are no advertising pixels,
@@ -128,14 +154,29 @@ export default function PrivacyPage() {
         </Display>
         <div className="prose-save7 mt-5">
           <p>
-            Save7 staff can see aggregate figures — average scores, how many people
-            finished a level, which questions most people get wrong. That is the whole
-            purpose of measuring: to find out whether people are actually learning, and to
-            fix the parts of the course that are not working.
+            Save7 staff can see each Student&apos;s course record: your name, when you
+            joined and last signed in, your Baseline and Stage Quiz results, which Stages
+            you have read, your certificates, and the log of what you have done in the
+            course. They use it to support Students, and to work out figures across
+            everyone taking the course: average scores, how many people finished a Level,
+            which questions most people get wrong. That is the purpose of measuring: to find
+            out whether people are actually learning, and to fix the parts of the course
+            that are not working.
           </p>
           <p>
-            Your individual answers are not circulated, discussed, or used to assess you as
-            a person. The course has no leaderboard and no ranking, deliberately.
+            If you are a Save7 volunteer, your course progress also shows in the Save7
+            volunteer portal, and it counts towards your vetting: you cannot be approved for
+            volunteer work until you have finished the first two Levels, which means passing
+            every Stage Quiz in them, unless a Save7 staff member records that you were
+            already trained. Apart from that, your individual answers are not circulated,
+            discussed, or used to assess you as a person. The course has no leaderboard and
+            no ranking, deliberately.
+          </p>
+          <p>
+            In future, Save7 may give a separate Save7 platform for volunteers one answer
+            about you: whether the Levels you have completed meet its eligibility rule, when
+            that was worked out, and which version of the rule was used. Never your scores,
+            your Baseline results or your answers.
           </p>
         </div>
       </section>
