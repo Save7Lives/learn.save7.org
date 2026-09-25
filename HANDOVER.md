@@ -310,6 +310,15 @@ supersedes `prisma/supabase/0102_learn_content.sql`, which was emitted in August
 never copied into save7-os. Save7-os's 0102 slot went to Gilbert's own migration, so
 that file could never apply, and it is deleted.
 
+**`0120_learn_gate_content.sql` follows it** (learn.save7.org-map#46), in the same
+gate-only shape, with three corrections Save7 decided. `c7`'s distractor `d` was
+"Previous laser eye surgery", which the Red File lists as a cornea exclusion, so it is
+now a condition that does not exclude. `b11` no longer calls witnessed phone consent a
+legal requirement: it is practice, as `b2` already said. `b20` gains the Weill 2015
+citation it lacked, and its answer no longer joins two separate listing criteria with
+"and". The `basics` citations now name the Red File page they were checked against.
+`c9` is unchanged: its source prints LVEF `<`20%, not the `≤` that #38 asked for.
+
 **Outstanding operational steps**, none of which a session can do alone: the
 Supabase Auth redirect allowlist and the Google client's JavaScript origins (both
 fail silently — see DEPLOY.md step 6b), hosting the 35 MB video on **Supabase

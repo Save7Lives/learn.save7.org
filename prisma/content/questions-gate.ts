@@ -30,6 +30,11 @@ import type { GateQuestionSeed } from "./types";
  * standard published listing criteria", which cleared the register while citing
  * nothing — and under that cover `c12` and `c13` drifted onto figures from a document
  * nobody held, away from the Weill 2015 consensus they were eventually cited to.
+ *
+ * The twenty `basics` items have **no register row** (the emitter registers only
+ * `clinical` items), so their `verifiedAgainst` records a check rather than clearing
+ * one. They are held to the same standard anyway (learn.save7.org-map#46): each names
+ * the document, and page, its answer was checked against, which for most is the Red File.
  */
 export const gateQuestions: GateQuestionSeed[] = [
   {
@@ -148,14 +153,14 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-clinical",
     position: 7,
     prompt: "Which medical condition strictly excludes a patient from cornea tissue donation?",
-    explanation: "Corneas can be donated despite cataracts or poor eyesight. South African tissue banks list HIV and tuberculosis as contraindications, along with the blood cancers leukaemia and lymphoma and previous laser eye surgery. Note that leukaemia is a cancer, not an infection — the two are separate categories of exclusion.",
+    explanation: "Corneas can be donated despite cataracts or poor eyesight, and after a death from natural causes such as heart disease or stroke. South African tissue banks list HIV and tuberculosis as contraindications, along with the blood cancers leukaemia and lymphoma and previous laser eye surgery. Note that leukaemia is a cancer, not an infection — the two are separate categories of exclusion.",
     verifiedAgainst:
-      "SATCS Organ and Tissue Donation Reference File (Red File), p.21 — cornea selection criteria and exclusions",
+      "SATCS Organ and Tissue Donation Reference File (Red File), p.21 — cornea selection criteria and exclusions, including death from natural causes such as heart disease or stroke as no bar; full exclusion list p.41",
     choices: [
       { optionKey: "a", position: 0, text: "HIV or tuberculosis, and blood cancers such as leukaemia or lymphoma", isCorrect: true },
       { optionKey: "b", position: 1, text: "Cataracts" },
       { optionKey: "c", position: 2, text: "Poor eyesight requiring corrective lenses" },
-      { optionKey: "d", position: 3, text: "Previous laser eye surgery" },
+      { optionKey: "d", position: 3, text: "A history of heart disease or stroke" },
     ],
   },
   {
@@ -438,7 +443,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "Can a deceased person donate their corneas if they wore thick eyeglasses or had cataracts?",
     explanation: "Common vision problems or cataracts affect the lens or refractive focus, not the corneal tissue itself, so these individuals can still donate corneas.",
     verifiedAgainst:
-      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
+      "SATCS Organ and Tissue Donation Reference File (Red File), p.21 — cataracts and poor eyesight do not prevent cornea donation, stated verbatim",
     choices: [
       { optionKey: "a", position: 0, text: "Yes, cataracts or poor eyesight do not prevent cornea donation.", isCorrect: true },
       { optionKey: "b", position: 1, text: "No, only people with perfect 20/20 vision can donate corneas." },
@@ -474,7 +479,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "What is the primary role of the Organ Donor Foundation (ODF) in South Africa?",
     explanation: "The ODF is a non-profit that promotes public education and awareness and keeps a register of people who have signed up. It does not perform procurement or allocation. Note the limit of that register: South Africa has no legally operative national donor registry that a transplant team queries at the bedside, which is precisely why telling your family matters as much as signing up.",
     verifiedAgainst:
-      "Organ Donor Foundation published donor information and FAQs",
+      "SATCS Organ and Tissue Donation Reference File (Red File), p.8 — the ODF's objectives, and that it is not a medical organisation and not responsible for procurement or allocation; p.11 — registering does not mean organs are automatically donated",
     choices: [
       { optionKey: "a", position: 0, text: "Public awareness and education, and keeping a register of people who have signed up as donors", isCorrect: true },
       { optionKey: "b", position: 1, text: "Performing organ extraction surgeries" },
@@ -492,7 +497,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "What tissue can a living patient choose to donate during a routine hip replacement surgery?",
     explanation: "Patients undergoing hip replacements can elect to donate the removed femoral head (bone), which is otherwise discarded as medical waste.",
     verifiedAgainst:
-      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
+      "SATCS Organ and Tissue Donation Reference File (Red File), p.16 — femoral head donation by a patient undergoing hip replacement",
     choices: [
       { optionKey: "a", position: 0, text: "The femoral head (bone tissue)", isCorrect: true },
       { optionKey: "b", position: 1, text: "Skin tissue" },
@@ -528,7 +533,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "Which type of donation is described as less complex and can take place regardless of the manner of death?",
     explanation: "Tissue donation (bone, skin, corneas) is less logistically complex than organ donation because tissue can be retrieved hours after circulatory death.",
     verifiedAgainst:
-      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
+      "SATCS Organ and Tissue Donation Reference File (Red File), p.21 — tissue donation is far less complex than organ donation and can in most cases take place irrespective of the cause of death",
     choices: [
       { optionKey: "a", position: 0, text: "Tissue donation (e.g. corneas, bone, skin)", isCorrect: true },
       { optionKey: "b", position: 1, text: "Heart transplantation" },
@@ -546,7 +551,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "What is the upper age limit for donating tissues like bone, skin, and ligaments?",
     explanation: "Healthy individuals aged between 16 and 80 years can donate bone, skin, and ligaments.",
     verifiedAgainst:
-      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
+      "SATCS Organ and Tissue Donation Reference File (Red File), p.21 — skin, bone, ligaments and tendons: any healthy individual between the ages of 16 and 80 years",
     choices: [
       { optionKey: "a", position: 0, text: "Up to 80 years", isCorrect: true },
       { optionKey: "b", position: 1, text: "Up to 30 years" },
@@ -579,10 +584,10 @@ export const gateQuestions: GateQuestionSeed[] = [
     kind: "SINGLE",
     topicTag: "gate-basics",
     position: 11,
-    prompt: "If family consent for organ donation is given over the phone, what is required to make it legal?",
-    explanation: "Legislation allows telephonic consent from next of kin provided it is properly witnessed.",
+    prompt: "If family consent for organ donation is given over the phone, what does South African practice require?",
+    explanation: "The Red File records that consent from the next of kin is obtained in writing or by telephone, with two witnesses for organ and deceased tissue donation (one for living tissue donation). That witnessing is professional practice rather than a provision of the National Health Act, which sets who may consent, not the form a relative\u2019s consent must take.",
     verifiedAgainst:
-      "National Health Act 61 of 2003 read directly, plus Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1)",
+      "SATCS Organ and Tissue Donation Reference File (Red File), p.19 — consent in writing or telephonically, two witnesses for organ and deceased tissue donation; that the Act does not prescribe the form, per the same reading as b2",
     choices: [
       { optionKey: "a", position: 0, text: "The phone call must be verified with witnesses present.", isCorrect: true },
       { optionKey: "b", position: 1, text: "No verification is needed as long as it is recorded." },
@@ -600,7 +605,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "Which misconception frequently causes families to refuse organ donation?",
     explanation: "Families often mistakenly believe they are deciding to turn off life support, causing guilt that prevents consent. In reality, brain death means death has already occurred.",
     verifiedAgainst:
-      "de Jager et al. SAMJ 2019;109(9):626-631, and Regulation 9 for the independence of the death determination",
+      "SATCS Organ and Tissue Donation Reference File (Red File), Wits Transplant FACTS excerpt p.23 — Troubleshooting, Scenario 1: the family believes it must decide to switch off the life support machines",
     choices: [
       { optionKey: "a", position: 0, text: "Believing they are being asked to personally decide to 'switch off the machines'", isCorrect: true },
       { optionKey: "b", position: 1, text: "Knowing that donation is completely free of charge" },
@@ -618,7 +623,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "What support personnel assist families during the FACTS consent communication process?",
     explanation: "The FACTS (Family Approach to Consent for Transplant Strategy) process utilises trauma counsellors, translators, and faith representatives to support families.",
     verifiedAgainst:
-      "de Jager et al. SAMJ 2019;109(9):626-631, and Regulation 9 for the independence of the death determination",
+      "SATCS Organ and Tissue Donation Reference File (Red File), Wits Transplant FACTS excerpt p.13 — the approaching team: trauma counsellor if available, translator and faith representative if applicable",
     choices: [
       { optionKey: "a", position: 0, text: "Trauma counsellors, translators, and faith representatives", isCorrect: true },
       { optionKey: "b", position: 1, text: "Hospital financial officers and medical insurance brokers" },
@@ -636,7 +641,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "Can a person with a history of hypertension or diabetes ever be considered for organ donation?",
     explanation: "To address organ scarcity, organs from donors with comorbidities like hypertension or diabetes are evaluated on a case-by-case basis.",
     verifiedAgainst:
-      "Organ Donor Foundation donor information; Groote Schuur HIV-positive donor programme; Centre for Tissue Engineering criteria",
+      "SATCS Organ and Tissue Donation Reference File (Red File), p.20 — extended selection criteria, with organs from donors with comorbidities such as hypertension and diabetes assessed individually",
     choices: [
       { optionKey: "a", position: 0, text: "Yes, under Extended/Marginal Criteria evaluated case-by-case.", isCorrect: true },
       { optionKey: "b", position: 1, text: "No, high blood pressure immediately disqualifies all organs." },
@@ -654,7 +659,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "What is required if a potential donor dies as a result of a motor vehicle accident?",
     explanation: "A motor vehicle accident is an unnatural death, so it must go for a medico-legal post-mortem and organ recovery needs the forensic pathologist\u2019s authorisation in addition to consent. The older term for this role, \u201cdistrict surgeon\u201d, is out of date — it is now the Forensic Pathology Service.",
     verifiedAgainst:
-      "National Health Act 61 of 2003 read directly, plus Regulation 9 of GN R180 of 2 March 2012 via Thomson & Labuschaigne, SAJBL 2024;17(1)",
+      "SATCS Organ and Tissue Donation Reference File (Red File), pp.18-19 — consent from the forensic pathologist as well as the family where death was unnatural, e.g. a motor vehicle accident",
     choices: [
       { optionKey: "a", position: 0, text: "Authorisation from the forensic pathologist, alongside consent", isCorrect: true },
       { optionKey: "b", position: 1, text: "Special permission from the high court magistrate" },
@@ -672,7 +677,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "Which professional organisation trains specialised transplant coordinators in South Africa?",
     explanation: "Transplant coordinators are specially trained professionals belonging to the South African Transplant Coordinators Society (SATCS).",
     verifiedAgainst:
-      "de Jager et al. SAMJ 2019;109(9):626-631, and Regulation 9 for the independence of the death determination",
+      "de Jager et al. SAMJ 2019;109(9):626-631",
     choices: [
       { optionKey: "a", position: 0, text: "South African Transplant Coordinators Society (SATCS)", isCorrect: true },
       { optionKey: "b", position: 1, text: "Health Professions Council of South Africa (HPCSA)" },
@@ -690,7 +695,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "Why would heart valves be rejected for tissue donation following a fatal car crash?",
     explanation: "Heart valves are explicitly excluded from tissue donation if the cause of death involved trauma to the heart.",
     verifiedAgainst:
-      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
+      "SATCS Organ and Tissue Donation Reference File (Red File), p.21 — heart valves cannot be donated if death was caused by trauma to the heart",
     choices: [
       { optionKey: "a", position: 0, text: "If the cause of death involved direct heart trauma", isCorrect: true },
       { optionKey: "b", position: 1, text: "Because heart valves can never be donated after accidents" },
@@ -708,7 +713,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "What frequent administrative breakdown prevents potential organ donation from happening?",
     explanation: "A major factor leading to organ loss is the lack of referral — primary hospital staff often fail to alert coordinators when clinical triggers occur.",
     verifiedAgainst:
-      "de Jager et al. SAMJ 2019;109(9):626-631, and Regulation 9 for the independence of the death determination",
+      "de Jager et al. SAMJ 2019;109(9):626-631",
     choices: [
       { optionKey: "a", position: 0, text: "Medical teams failing to notify coordinators when clinical triggers occur", isCorrect: true },
       { optionKey: "b", position: 1, text: "Transplant coordinators taking too long to answer calls" },
@@ -726,7 +731,7 @@ export const gateQuestions: GateQuestionSeed[] = [
     prompt: "What is the age range for donating corneas?",
     explanation: "Corneas can be donated by individuals aged 6 to 65 years (and up to 70 years in suitable cases).",
     verifiedAgainst:
-      "Centre for Tissue Engineering (SA tissue bank) published donor criteria",
+      "SATCS Organ and Tissue Donation Reference File (Red File), p.21 — cornea donors between the ages of 6 and 65 years, and up to 70 in certain cases, stated verbatim",
     choices: [
       { optionKey: "a", position: 0, text: "Ages 6 to 65 years (up to 70 years)", isCorrect: true },
       { optionKey: "b", position: 1, text: "Ages 18 to 30 years only" },
@@ -742,11 +747,11 @@ export const gateQuestions: GateQuestionSeed[] = [
     topicTag: "gate-basics",
     position: 20,
     prompt: "What clinical indicator in Cystic Fibrosis (CF) signals that a patient needs a lung transplant?",
-    explanation: "Cystic fibrosis indicates lung transplantation when the patient experiences chronic respiratory failure (hypoxia/hypercapnia) alongside a rapidly falling FEV1.",
+    explanation: "The ISHLT consensus gives these as separate criteria for listing a patient with cystic fibrosis for lung transplantation: chronic respiratory failure, with low blood oxygen (hypoxia) or raised carbon dioxide (hypercapnia), and rapid decline in lung function. They are listed separately, not as a pair a patient must meet together.",
     verifiedAgainst:
-      "Reviewed 23 August 2026 against standard published listing criteria for this organ; thresholds left as stated because they match established practice",
+      "Weill D, Benden C, Corris PA, et al. A consensus document for the selection of lung transplant candidates: 2014 (ISHLT). J Heart Lung Transplant 2015;34(1):1-15 — cystic fibrosis 'Timing of listing' criteria: chronic respiratory failure with hypoxia (PaO2 <8 kPa) or hypercapnia (PaCO2 >6.6 kPa), and rapid lung function decline",
     choices: [
-      { optionKey: "a", position: 0, text: "Chronic respiratory failure with hypoxia/hypercapnia and a rapidly falling FEV1", isCorrect: true },
+      { optionKey: "a", position: 0, text: "Chronic respiratory failure with hypoxia or hypercapnia, or a rapidly falling FEV1", isCorrect: true },
       { optionKey: "b", position: 1, text: "Mild seasonal cough with normal arterial blood gases" },
       { optionKey: "c", position: 2, text: "FEV1 remaining stable above 80% predicted" },
       { optionKey: "d", position: 3, text: "An isolated sinus infection without lung involvement" },
