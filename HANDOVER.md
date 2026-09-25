@@ -60,7 +60,7 @@ matter any more, by design. Anything a client must not be able to assert is a
 | `learn_issue_certificate` | 0098 | Two gates must be checked where they cannot be skipped |
 | `learn_verify_certificate` | 0098 | A verifier has no account, so RLS cannot serve them |
 | `learn_set_name` | 0098 | Renaming touches live certificates, which have no update policy |
-| `learn_claim_me` | 0095 | `learners` has no insert policy, on purpose |
+| `learn_claim_me` | 0095 | `learners` has no insert policy, on purpose; since 0119 Google's name seeds a new row only, never an existing one |
 | `learn_record_popia_consent` | 0111 | Consent is written once and never moved; the column has no client grant |
 | `learn_record_date_of_birth` | 0117 | An under-18 date deletes the row and is never stored; an adult date never moves |
 
