@@ -11,7 +11,7 @@
  * this. Run it as:
  *
  *   SUPABASE_DB_URL='postgresql://...' node scripts/apply-content.mjs \
- *     prisma/supabase/0102_learn_content.sql
+ *     prisma/supabase/0118_learn_gate_content.sql
  *
  * Safe to run more than once: every statement in the generated file is an upsert
  * keyed on the authoring identifier, so re-running updates rows in place rather

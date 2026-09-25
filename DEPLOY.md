@@ -17,7 +17,7 @@ is the largest change in this document.
 
 ## Outstanding right now, and who can clear it
 
-Four things. None of them is waiting on code.
+Three things. None of them is waiting on code.
 
 ### 1. The Worker is deployed; two console allow-lists are outstanding
 
@@ -87,24 +87,7 @@ before anybody expects a deploy to change what the public sees:
 which matches where it is deployed and **not** where the course now lives. Taking
 it down is a Pages operation on that account, not a Workers one.
 
-### 3. The content corrections are not in the database
-
-Course content lives in Supabase, not in the bundle, so deploying does nothing for
-it.
-
-`prisma/supabase/0102_learn_content.sql` was emitted in August and never copied
-into `save7-os`, whose `0102` slot Gilbert has since taken for his own migration.
-**Do not reuse that file's number.** Re-emit against the current sequence:
-
-- **Proper route:** `npm run content:emit`, then copy the generated file into
-  `save7-os/supabase/migrations/` under the next free number, then
-  `supabase db push`.
-- **Without that checkout:** `npm run content:apply` — see
-  `scripts/apply-content.mjs`. It takes the connection string from the
-  environment, runs the file in one transaction, records the migration so a later
-  `db push` skips it, and prints the row counts. Idempotent, so a re-run is safe.
-
-### 4. The video has nowhere to live
+### 3. The video has nowhere to live
 
 `journey-of-a-gift.mp4` is **34.6 MiB** against a **25 MiB per-file static-asset
 cap**. That cap is the same on Workers as it was on Pages — re-checked against
@@ -658,7 +641,11 @@ deleted and reinserted would take every answer ever recorded against it, and the
 improvement figures with them.
 
 1. Edit the files in `prisma/content/`
-2. `npm run content:emit` — regenerates the content migration
+2. `npm run content:emit` — writes the content migration at the next free number
+   in `../save7-os/supabase/migrations/`, plus a copy in `prisma/supabase/`. To
+   emit one part alone, pass `--only=course`, `--only=baseline` or `--only=gate`
+   (e.g. `npm run content:emit -- --only=gate`, which is how save7-os `0118` was
+   made).
 3. `cd ../save7-os && supabase db push`
 
 The generated migration upserts on stable authoring keys. It never touches learner

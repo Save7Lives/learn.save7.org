@@ -276,19 +276,25 @@ through a throttled endpoint — but the blast radius of a future RLS mistake on
 OS table is now larger. That reasoning is in the migration header; read it before
 touching `auth_enforce_save7_domain()`.
 
-**The gate is in the bank but not rendered here.** The forty questions are rows
-with `scope = 'GATE'`, and the volunteer portal still asks them from its own
-generated file. Nothing in this app shows them yet. **If it ever does, it must
-shuffle options per render** — the correct answer is option `'a'` in all forty, and
-this app renders choices by stored order. The portal survives it by shuffling.
+**The gate is in the bank but nothing asks it.** The forty questions are rows with
+`scope = 'GATE'`. The deployed volunteer portal no longer asks them: it gates on
+finished Levels, and nothing calls `volunteer_mark_gate()` (save7-os `0103`), the
+function that marks them. Nothing in this app shows them either. **If anything ever
+does, it must shuffle options per render.** The correct answer is option `'a'` in
+all forty, and this app renders choices by stored order. The old portal quiz
+survived that by shuffling.
 
 **The twenty clinical gate questions are cited, and Save7 has signed them off.** The
 claim that they assert figures "no supplied source backs" was audited and did not
 hold (learn.save7.org-map#34): nine already carried real citations, five more were
 stated verbatim by papers already in `public/resources/`, and there is no HPCSA
 question at all. Save7 signed off all twenty in #38, and #42 attached a named primary
-source to each in `prisma/content/questions-gate.ts`, so the register rows clear on
-the next content emit — which derives `APPROVED` from `verifiedAgainst`.
+source to each in `prisma/content/questions-gate.ts`. The live register rows were
+already `APPROVED` before that, because `0101` promoted them on the August
+non-citations described below. The emit replaces their `source_hint` and `notes`
+with the named sources, but it **never demotes a recorded status**. So changing an
+item's source can't un-approve it. Demoting an item is a staff action in the
+register, not an emit.
 
 That does not retire the rule in §7. What cleared these was a recorded human sign-off,
 not an agent's reading. Eight had previously been cleared by a `verifiedAgainst` string
@@ -297,11 +303,12 @@ criteria"), and behind that cover two of them (`c12`, `c13`) drifted onto figure
 a document nobody held. **A citation that does not name a document you can open is not
 a citation**, and it clears the register just as effectively as a real one.
 
-**The corrected content is authored but not applied.** `prisma/supabase/0102_learn_content.sql`
-was emitted in August and never copied into save7-os, whose 0102 slot Gilbert then took
-for his own migration. Everything in it — plus #42's citations — is still unapplied, so
-the live `learn_questions` GATE rows remain the pre-August text. Re-emit against the
-current sequence rather than reusing that file's number.
+**The corrected content is applied as save7-os `0118_learn_gate_content.sql`**
+(learn.save7.org-map#45). It is the generator's `--only=gate` output, and it touches
+the forty GATE rows and the twenty clinical register rows and nothing else. It
+supersedes `prisma/supabase/0102_learn_content.sql`, which was emitted in August and
+never copied into save7-os. Save7-os's 0102 slot went to Gilbert's own migration, so
+that file could never apply, and it is deleted.
 
 **Outstanding operational steps**, none of which a session can do alone: the
 Supabase Auth redirect allowlist and the Google client's JavaScript origins (both
