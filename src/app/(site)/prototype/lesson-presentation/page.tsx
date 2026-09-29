@@ -264,7 +264,7 @@ const META: Record<Variant, { name: string; changedStep: string; notes: string[]
     notes: [
       "Authoring: pipe tables and a `::video[journey-of-a-gift]` line, written straight into the Markdown.",
       "The renderer grows by two block types, both still escape-first. The directive names a film from a fixed list, never a URL.",
-      "The film sits mid-lesson, after the four routes. Try a phone width: 4-column tables scroll sideways.",
+      "The film sits mid-lesson, after the four routes. At phone width each table row becomes a labelled card, so nothing scrolls sideways.",
     ],
   },
   C: {

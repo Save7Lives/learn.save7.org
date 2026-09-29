@@ -61,24 +61,34 @@ function isTable(block: string): boolean {
 
 function table(block: string): string {
   const [head, , ...body] = block.trim().split("\n");
-  const th = cells(head)
+  const headers = cells(head);
+  const th = headers
     .map(
       (c) =>
         `<th scope="col" class="border-b-2 border-sand-300 p-3 text-left align-bottom text-sm font-bold text-ink">${inline(c)}</th>`,
     )
     .join("");
+  // Below `sm` each row becomes a card: the row header on top, then every cell
+  // labelled with its column header, so a 4-column table never scrolls sideways
+  // on a phone. The label is escaped like everything else and read from a
+  // data attribute, so it adds no markup.
   const rows = body
     .map((line) => {
       const [first, ...rest] = cells(line);
       return (
-        `<tr class="border-b border-sand-200">` +
-        `<th scope="row" class="p-3 text-left align-top text-sm font-bold text-ink">${inline(first)}</th>` +
-        rest.map((c) => `<td class="p-3 align-top text-sm text-sand-700">${inline(c)}</td>`).join("") +
+        `<tr class="mb-3 block rounded-card border border-sand-200 bg-white p-4 sm:mb-0 sm:table-row sm:rounded-none sm:border-0 sm:border-b sm:bg-transparent sm:p-0">` +
+        `<th scope="row" class="block pb-2 text-left align-top text-sm font-bold text-ink sm:table-cell sm:p-3">${inline(first)}</th>` +
+        rest
+          .map(
+            (c, i) =>
+              `<td data-label="${escapeHtml(headers[i + 1] ?? "")}" class="block py-1 align-top text-sm text-sand-700 before:block before:text-xs before:font-bold before:uppercase before:tracking-wider before:text-sand-500 before:content-[attr(data-label)] sm:table-cell sm:p-3 sm:before:content-none">${inline(c)}</td>`,
+          )
+          .join("") +
         `</tr>`
       );
     })
     .join("");
-  return `<div class="not-prose -mx-5 overflow-x-auto px-5 sm:mx-0 sm:px-0"><table class="w-full min-w-[34rem] border-collapse"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  return `<table class="block w-full border-collapse sm:table"><thead class="hidden sm:table-header-group"><tr>${th}</tr></thead><tbody class="block sm:table-row-group">${rows}</tbody></table>`;
 }
 
 function block(trimmed: string): string {
