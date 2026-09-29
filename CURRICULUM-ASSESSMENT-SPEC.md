@@ -85,6 +85,11 @@ by passing every Stage Quiz in that Level (see [Assessment Blueprint](#assessmen
 **Video assignment:** `The_Journey_of_a_Gift.mp4` is an explainer (not a
 testimonial) and is assigned here, reinforcing all three Stages above
 rather than anchoring a standalone "human-story" Stage.
+It plays at the top of Stage 3, with captions and a transcript. ⚠️ **The
+film predates three corrections above (#58):** it says 65+ for tissue
+(this spec: fifty), a "state pathologist" (the Forensic Pathology
+Service), and no cost "by law" (in practice). A note beside the player
+says so, because two of them are Stage Quiz items.
 
 **Cut:** `7 Lives in 7 Steps.pdf` — it's a clinical ICU/hospital-staff
 decision algorithm, not general-public content. Only its "7 lives" tagline
