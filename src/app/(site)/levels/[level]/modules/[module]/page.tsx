@@ -9,7 +9,6 @@ import { LessonBody } from "@/components/lesson/LessonBody";
 import { StageQuiz } from "@/components/quiz/StageQuiz";
 import { TIER_META } from "@/components/ui/primitives";
 import type { LevelTier } from "@/lib/constants";
-import { mediaUrl, resolvePayloadMedia } from "@/lib/media";
 import {
   completeModuleAction,
   readStageQuizAction,
@@ -66,44 +65,14 @@ export default async function ModulePage(
     />
   );
 
-  const resources = mod.resources.map((r) => ({
-    id: r.id,
-    title: r.title,
-    description: r.description,
-    type: r.type,
-    isRequired: r.isRequired,
-    source: r.source,
-    author: r.author,
-    externalUrl: r.externalUrl,
-    filePath: mediaUrl(r.filePath),
-    licenceNote: r.licenceNote,
-    isStub: r.isStub,
-  }));
-
   const currentIndex = siblings.findIndex((s) => s.slug === moduleSlug);
   const nextSibling = siblings[currentIndex + 1] ?? null;
 
   // The completion step is generated from the module's own data rather than
   // authored per module, so it can never drift from the content above it.
-  const takeawayLesson = mod.lessons.find((l) => l.kind === "TAKEAWAYS");
-  const takeaways = (() => {
-    if (!takeawayLesson?.payloadJson) return [];
-    try {
-      const parsed = JSON.parse(takeawayLesson.payloadJson) as {
-        takeaways?: Array<{ text?: string }>;
-      };
-      return (parsed.takeaways ?? [])
-        .map((t) => t.text)
-        .filter((t): t is string => typeof t === "string" && t.length > 0);
-    } catch {
-      return [];
-    }
-  })();
-
   const moduleContext = {
     moduleTitle: mod.title,
     coreQuestion: mod.coreQuestion,
-    takeaways,
     nextModuleTitle: nextSibling?.title ?? null,
     levelTitle: level.title,
     levelSlug,
@@ -120,9 +89,8 @@ export default async function ModulePage(
     kind: lesson.kind,
     content: (
       <LessonBody
-        lesson={{ ...lesson, payloadJson: resolvePayloadMedia(lesson.payloadJson) }}
+        lesson={lesson}
         stageQuiz={lesson.kind === "CHECK" ? stageQuiz : undefined}
-        resources={resources}
         moduleContext={lesson.kind === "COMPLETE" ? moduleContext : undefined}
       />
     ),

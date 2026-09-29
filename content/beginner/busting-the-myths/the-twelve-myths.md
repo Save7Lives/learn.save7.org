@@ -94,11 +94,16 @@ Some specifics worth knowing:
 
 - **Donors with conditions such as high blood pressure, diabetes or HIV can still be considered**, because each organ is assessed on its own.
 - **South Africa led the world on HIV.** In 2008, Groote Schuur Hospital in Cape Town began transplanting kidneys from HIV-positive donors into HIV-positive recipients — the first programme of its kind. Five years on, about three in four of those recipients were alive.
+
 **With cancer, the answer depends on what is being donated.**
 
-- *Corneas:* most cancers do not prevent cornea donation, because the cornea has no blood vessels to carry cancer cells. Leukaemia and lymphoma do.
-- *Skin, bone and heart valves:* a history of cancer rules these out.
-- *Organs:* assessed case by case. A primary brain tumour can even be the cause of death of an organ donor. 📌 UK clinical guidance — South Africa has no national guideline of its own on this — sorts cancers by how likely they are to pass to a recipient, from minimal risk to unacceptable. Active cancer that has spread beyond its organ rules donation out. Many small, low-grade or long-treated cancers do not. Anything not listed is decided case by case, and always weighed against the risk of a patient dying while they wait.
+| What is donated | A history of cancer |
+|---|---|
+| Corneas | Most cancers do not prevent cornea donation, because the cornea has no blood vessels to carry cancer cells. Leukaemia and lymphoma do. |
+| Skin, bone and heart valves | Rules these out |
+| Organs | Assessed case by case. A primary brain tumour can even be the cause of death of an organ donor. |
+
+For organs, 📌 UK clinical guidance — South Africa has no national guideline of its own on this — sorts cancers by how likely they are to pass to a recipient, from minimal risk to unacceptable. Active cancer that has spread beyond its organ rules donation out. Many small, low-grade or long-treated cancers do not. Anything not listed is decided case by case, and always weighed against the risk of a patient dying while they wait.
 
 Why are the rules for tissue stricter than for organs, when you might expect the reverse? 📌 Because the calculation is different. A donated liver may be the only thing standing between a recipient and death, so a small risk can be worth taking. A tissue graft usually improves someone's life rather than saving it, so the acceptable risk is lower.
 

@@ -46,13 +46,46 @@ pipeline plus a sanitiser would be a large XSS surface. Write only:
 - paragraphs, `**bold**`, `*italic*`, `` `code` ``
 - links as `[text](https://…)` — https only
 - `> ` blockquotes
-- flat `- ` and `1. ` lists, one item per line
+- flat `- ` and `1. ` lists, one item per line, with a blank line after the list
 - `##` and `###` headings
+- pipe tables, as below
 
-Anything else reaches the learner as literal characters: a table becomes rows of
-pipes, `---` a line of dashes, `<https://…>` escaped angle brackets, and italics
-inside bold break the bold. `loadLesson()` refuses all of these, so a lesson
-that uses one fails the generator rather than shipping broken.
+Anything else reaches the learner as literal characters: `---` a line of dashes,
+`<https://…>` escaped angle brackets, a malformed table rows of pipes, and
+italics inside bold break the bold. A line directly under a list, with no blank
+line between, is dropped altogether. `loadLesson()` refuses all of these, so a
+lesson that uses one fails the generator rather than shipping broken.
+
+### Tables
+
+Use a table only for a real comparison: the same few facts, in words, about each
+of several things. Most of this audience reads on a phone, where each row becomes
+a card and each cell gets its own labelled line. So a table of one fact per row is
+just a list with borders, and a grid of short numbers (a figure per year, a count
+per organ) becomes several screens of cards. Keep those as lists.
+
+```
+| Route | When | Who consents |
+|---|---|---|
+| Living donation | While the donor is alive and well | The donor |
+| Tissue donation | Irrespective of the manner of death | Next of kin |
+```
+
+- The table is its own block, with a blank line before and after, and every line
+  starts with `|`.
+- Row one is the header and row two is the `---` separator. `:` alignment marks
+  are accepted and ignored.
+- Every row has as many cells as the header. A `|` inside a cell splits it, so
+  there is no way to put one in.
+- The first cell of each row names the row. Leave the header's first cell empty
+  for a two-sided comparison (`| | Organs | Tissue |`).
+- Cells take the same inline Markdown as a paragraph: bold, italic, code and https
+  links.
+- Below 640px each row is a card, with every cell labelled by its column header.
+  Keep headers short, because they are repeated in every card.
+
+`src/lib/markdown-table.ts` parses a table for both the loader and the renderer,
+so a table the generator accepts is a table on the page.
 
 ## The seven-part spine
 

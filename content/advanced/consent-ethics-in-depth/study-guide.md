@@ -31,10 +31,12 @@ A contrary direction ends the question. Asking what the person wanted can settle
 
 ## The four differences between the lists
 
-- A written mandate counts under section 7 and has no place in section 62.
-- Section 7 puts a parent before an adult child; section 62 puts a major child before a parent.
-- Section 7 ranks a spouse and a partner together; section 62 ranks the spouse first.
-- A grandparent appears only in section 7; a guardian only in section 62.
+| | Section 7 | Section 62 |
+|---|---|---|
+| A written mandate | Counts | Has no place |
+| Parent and child | A parent before an adult child | A major child before a parent |
+| Spouse and partner | Ranked together | The spouse ranks first |
+| Grandparent and guardian | A grandparent appears, a guardian does not | A guardian appears, a grandparent does not |
 
 ## Advance directives
 

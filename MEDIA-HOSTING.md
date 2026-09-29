@@ -111,13 +111,12 @@ modest against a 35 MB file, so watch it once the course has learners.
 
 ## What one variable fixes
 
-`MEDIA_BASE_URL` covers both places the file appears:
+`MEDIA_BASE_URL` covers every place the file appears. The prior build had two, the
+Module 5 `ChapterVideo` player and an "Opens here" resource link, and both were
+deleted in wayfinder #60. The Stage 3 film's new player is wayfinder #61.
 
-- the Module 5 player (`ChapterVideo`, from the lesson payload)
-- the "Opens here" resource link on the same module
-
-Both resolve through `mediaUrl()` in `src/lib/media.ts`, which joins the base to
-the `/media/...` path stored in the lesson content. It handles three states,
+Media paths resolve through `mediaUrl()` in `src/lib/media.ts`, which joins the
+base to the `/media/...` path. It handles three states,
 including "deployed with no bucket configured" — where it deliberately drops the
 path, so the player shows its "not hosted yet" state instead of a `<video>` that
 fails without saying so. See the comment at the top of that file.

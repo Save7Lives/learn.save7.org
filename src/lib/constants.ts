@@ -47,16 +47,6 @@ export const RESOURCE_TYPES = [
 ] as const;
 export type ResourceType = (typeof RESOURCE_TYPES)[number];
 
-export const RESOURCE_TYPE_LABELS: Record<ResourceType, string> = {
-  VIDEO: "Video",
-  AUDIO: "Audio",
-  PDF: "PDF",
-  ARTICLE: "Article",
-  WEBSITE: "Website",
-  ACADEMIC_PAPER: "Academic paper",
-  INFOGRAPHIC: "Infographic",
-};
-
 export const QUIZ_SCOPES = ["PRE", "POST", "CHECK"] as const;
 
 /**
@@ -102,22 +92,6 @@ export const EVENT_TYPES = [
   "profile_update",
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
-
-/** Interactive components a lesson may render. Keys live in Lesson.componentKey. */
-export const COMPONENT_KEYS = [
-  "OrganExplorer",
-  "PathwayJourney",
-  "MythFlip",
-  "ScenarioDialogue",
-  "ComparePanel",
-  "TeamRoster",
-  "EligibilityMatrix",
-  "ChapterVideo",
-  "QuizBlock",
-  "TakeawayList",
-  "ResourceList",
-] as const;
-export type ComponentKey = (typeof COMPONENT_KEYS)[number];
 
 /** The one course this deployment ships with. Others are rows, not constants. */
 export const COURSE_SLUG = "transplant-alchemy-101";

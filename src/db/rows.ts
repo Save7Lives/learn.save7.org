@@ -15,7 +15,7 @@
  * in the SQL and one in the code, and the mismatch would only ever surface at
  * runtime.
  */
-import type { LessonKind, LevelTier, ProgressStatus, ResourceType, ReviewStatus, UserRole } from "@/lib/constants";
+import type { LessonKind, LevelTier, ProgressStatus, ReviewStatus, UserRole } from "@/lib/constants";
 
 export type LearnerRow = {
   id: string;
@@ -74,25 +74,6 @@ export type LessonRow = {
   title: string;
   kind: LessonKind;
   body_markdown: string | null;
-  component_key: string | null;
-  payload: unknown;
-};
-
-export type ResourceRow = {
-  slug: string;
-  module_slug: string | null;
-  title: string;
-  description: string | null;
-  kind: ResourceType;
-  is_required: boolean;
-  source: string | null;
-  author: string | null;
-  published_on: string | null;
-  external_url: string | null;
-  file_path: string | null;
-  licence_note: string | null;
-  is_stub: boolean;
-  position: number;
 };
 
 /** PRE and POST are the matched pair; CHECK is in-lesson; GATE is the volunteer gate. */

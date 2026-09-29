@@ -157,8 +157,7 @@ src/
     api/quiz/check   server-side grading for inline checks
     certificate/     public verification, its own bare layout for printing
   components/
-    interactive/     the nine lesson components
-    lesson/          lesson dispatcher + module runner
+    lesson/          lesson body, Markdown renderer, module runner
     quiz/            assessment runner
     ui/              design system primitives
   lib/
@@ -186,24 +185,16 @@ repository, because they belong to the project that serves them.
 
 ### Content is data, not code
 
-A lesson is a database row naming a component (`componentKey`) and carrying that
-component's entire content as JSON (`payloadJson`), typed in
-`src/lib/lesson-payloads.ts`. Nothing a learner reads is hardcoded in React, so a
-CMS is an additive change rather than a rewrite — a CMS would edit `payloadJson`.
+A lesson's prose is Markdown in `content/<level>/<stage>/`.
+`scripts/emit-supabase-content.ts` writes it into `learn_lessons.body_markdown`,
+and `src/components/lesson/Markdown.tsx` renders it. Nothing a learner reads is
+hardcoded in React. The renderer is small and escape-first, because it is an XSS
+boundary. `content/README.md` lists what it accepts, tables included.
 
-The nine interactive components:
-
-| Component | Used by | What it does |
-| --- | --- | --- |
-| `OrganExplorer` | M1 | What can be donated, and who needs it |
-| `PathwayJourney` | M2, M5, M6, M9, M11 | The donor pathway, with **loss points** |
-| `MythFlip` | M2 | Myth / fact / *why people believe it* |
-| `ScenarioDialogue` | M4, M12 | Conversation practice with real objections |
-| `ComparePanel` | M3, M6, M8, M10 | Side-by-side comparison (brain death vs coma) |
-| `TeamRoster` | M7 | Meet the transplant team |
-| `EligibilityMatrix` | M8, M10 | "Does this rule me out?" |
-| `ChapterVideo` | M5 | *The Journey of a Gift*, with chapters |
-| `QuizBlock` | every module | Inline check your understanding |
+The prior build's interactive components (`OrganExplorer`, `MythFlip`,
+`ChapterVideo` and eight more), each fed by a JSON payload on its lesson row, were
+deleted in wayfinder #60. No lesson had used one since the prose moved to
+Markdown, and git keeps them.
 
 ### Assessment integrity
 
@@ -350,8 +341,8 @@ Documented rather than half-built:
   chatbot. The resource metadata needed to build it is already in the schema.
 - **Full CMS authoring UI** — the data model already supports it; see *Content is
   data, not code* above.
-- **Video engagement analytics** — needs the video asset first. The hooks are in
-  `ChapterVideo`.
+- **Video engagement analytics** — needs the video asset and its player first
+  (wayfinder #61).
 
 ---
 

@@ -190,6 +190,79 @@ body {
   color: var(--color-ink);
 }
 
+/* Tables (Markdown.tsx). A plain table from `sm` up. Below it, each body row is a
+   card: the row header on top, then every cell under its column header, which
+   comes from the cell's data-label. The header row is hidden there because each
+   cell now carries its own label. */
+.prose-save7 table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.prose-save7 th,
+.prose-save7 td {
+  text-align: left;
+  vertical-align: top;
+}
+.prose-save7 th {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+.prose-save7 td {
+  color: var(--color-sand-700);
+}
+
+@media (width < 40rem) {
+  .prose-save7 table,
+  .prose-save7 tbody,
+  .prose-save7 tr,
+  .prose-save7 th,
+  .prose-save7 td {
+    display: block;
+  }
+  .prose-save7 thead {
+    display: none;
+  }
+  .prose-save7 tbody tr {
+    border: 1px solid var(--color-sand-200);
+    border-radius: var(--radius-card);
+    background: #fff;
+    padding: 1rem;
+  }
+  .prose-save7 tbody tr + tr {
+    margin-top: 0.75rem;
+  }
+  .prose-save7 tbody th {
+    padding-bottom: 0.25rem;
+  }
+  .prose-save7 td {
+    padding-top: 0.5rem;
+  }
+  .prose-save7 td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-sand-500);
+  }
+}
+
+@media (width >= 40rem) {
+  .prose-save7 th,
+  .prose-save7 td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--color-sand-200);
+  }
+  .prose-save7 thead th {
+    border-bottom: 2px solid var(--color-sand-300);
+    vertical-align: bottom;
+    font-size: 0.875rem;
+  }
+}
+
 /* --- Accessibility ------------------------------------------------------- */
 
 /* A single, unmistakable focus treatment everywhere. Keyboard learners must

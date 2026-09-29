@@ -8,17 +8,12 @@ level: beginner
 
 ## Organ versus tissue
 
-**Organs** — kidneys, liver, heart, lungs, pancreas.
-
-- Recovered in a clinical setting only, in practice an intensive care unit
-- Circulation must have been maintained, and transplantation follows within hours
-- Not stored: matched and transplanted immediately
-
-**Tissue** — corneas, bone and ligaments, skin, heart valves.
-
-- Recovered in a far wider range of settings, including after transfer to a mortuary
-- Possible irrespective of the manner of death, and considerably later — hours or even days
-- Can be stored and used later
+| | Organs | Tissue |
+|---|---|---|
+| What | Kidneys, liver, heart, lungs, pancreas | Corneas, bone and ligaments, skin, heart valves |
+| Where recovered | In a clinical setting only, in practice an intensive care unit | In a far wider range of settings, including after transfer to a mortuary |
+| Timing | Circulation must have been maintained, and transplantation follows within hours | Possible irrespective of the manner of death, and considerably later — hours or even days |
+| Storage | Not stored: matched and transplanted immediately | Can be stored and used later |
 
 ## The four routes to donation
 

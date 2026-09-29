@@ -21,9 +21,8 @@
  *   1. base set                  → rewrite offloaded paths to the bucket
  *   2. base unset, off Workers   → same-origin; /public serves the file (local dev)
  *   3. base unset, on Workers    → the file is not deployed and cannot be served,
- *                                  so the path is removed and the payload marked
- *                                  pending, which makes the player fall back to
- *                                  its placeholder instead of a dead <video>.
+ *                                  so `mediaUrl()` returns null, and the caller
+ *                                  shows a placeholder instead of a dead <video>.
  *
  * State 3 exists because no media host is configured yet. Leaving the path in place
  * would render a player that silently fails — worse than saying plainly that the
@@ -71,55 +70,4 @@ export function mediaUrl(path: string | null | undefined): string | null {
   const base = mediaBase();
   if (base) return `${base}${path}`;
   return offloadedFilesAreServed() ? path : null;
-}
-
-/**
- * Rewrite media paths inside a stored lesson payload.
- *
- * Payloads are opaque JSON authored in prisma/content, so this walks for the
- * known media keys rather than requiring every component to resolve its own URLs.
- */
-export function resolvePayloadMedia(payloadJson: string | null): string | null {
-  if (!payloadJson) return null;
-
-  const base = mediaBase();
-  const served = offloadedFilesAreServed();
-  // Nothing to do: local development, where /public serves the file as authored.
-  if (!base && served) return payloadJson;
-
-  const MEDIA_KEYS = new Set(["src", "captionsSrc", "poster", "filePath"]);
-  let removedMedia = false;
-
-  const resolve = (value: string): string | null => {
-    if (!isOffloaded(value)) return value;
-    if (base) return `${base}${value}`;
-    removedMedia = true;
-    return null;
-  };
-
-  const walk = (node: unknown): unknown => {
-    if (Array.isArray(node)) return node.map(walk);
-    if (!node || typeof node !== "object") return node;
-
-    return Object.fromEntries(
-      Object.entries(node as Record<string, unknown>).map(([key, value]) => [
-        key,
-        MEDIA_KEYS.has(key) && typeof value === "string" ? resolve(value) : walk(value),
-      ]),
-    );
-  };
-
-  try {
-    const resolved = walk(JSON.parse(payloadJson));
-
-    // Tell the component why its file is missing, so it can say so on screen.
-    // `awaitingAsset` is the flag the players already key on; `mediaPending`
-    // distinguishes "not hosted yet" from "Save7 has not supplied it".
-    if (removedMedia && resolved && typeof resolved === "object" && !Array.isArray(resolved)) {
-      return JSON.stringify({ ...resolved, awaitingAsset: true, mediaPending: true });
-    }
-    return JSON.stringify(resolved);
-  } catch {
-    return payloadJson;
-  }
 }

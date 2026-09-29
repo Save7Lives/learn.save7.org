@@ -58,11 +58,13 @@ claim ships as authoritative unless it is sourced.**
 
 ## Content is data, not code
 
-Lesson text lives in `prisma/content/level-*.ts`. Components read the lesson's
-payload. Never hardcode course copy into a component — it puts content outside the
-review register.
+Lesson prose is Markdown in `content/<level>/<stage>/*.md`, and Stage Quiz banks
+are `prisma/content/quiz-*.ts`. `src/components/lesson/Markdown.tsx` renders the
+prose, and `content/README.md` lists the Markdown it accepts, tables included.
+There are no per-lesson components or payloads any more (#60). Never hardcode
+course copy into a component — it puts content outside the review register.
 
-Changing content: edit `prisma/content/`, then `npm run content:emit`, then
+Changing content: edit `content/` or `prisma/content/`, then `npm run content:emit`, then
 `cd ../save7-os && supabase db push`. The generated migration **upserts on the
 authoring key**, which is the important part: a question row deleted and reinserted
 would take every answer ever recorded against it, and the improvement figures with

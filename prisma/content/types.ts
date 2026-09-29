@@ -1,5 +1,4 @@
-import type { LessonKind, LevelTier, ResourceType } from "../../src/lib/constants";
-import type { LessonPayload } from "../../src/lib/lesson-payloads";
+import type { ResourceType } from "../../src/lib/constants";
 
 /**
  * Authoring types for the seed.
@@ -8,42 +7,6 @@ import type { LessonPayload } from "../../src/lib/lesson-payloads";
  * walks this structure and writes it out. Keeping the two separate means the
  * shape Save7 edits stays readable even as the schema grows.
  */
-
-export type LessonSeed = {
-  slug: string;
-  title: string;
-  kind: LessonKind;
-  bodyMarkdown?: string;
-  componentKey?: string;
-  payload?: LessonPayload;
-};
-
-export type ModuleSeed = {
-  slug: string;
-  /** Display number as the learner sees it, e.g. 6 for "Module 6". */
-  number: number;
-  title: string;
-  coreQuestion: string;
-  introMarkdown: string;
-  estMinutes: number;
-  isMandatory?: boolean;
-  lessons: LessonSeed[];
-};
-
-export type LevelSeed = {
-  slug: string;
-  tier: LevelTier;
-  title: string;
-  strapline: string;
-  goal: string;
-  estMinMinutes: number;
-  estMaxMinutes: number;
-  accentToken: string;
-  certificateTitle: string;
-  certificateCode: string;
-  passMarkPct: number;
-  modules: ModuleSeed[];
-};
 
 export type ResourceSeed = {
   /** Stable authoring identifier, used for idempotent re-seeding. */

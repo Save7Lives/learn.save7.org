@@ -4,8 +4,6 @@ import { Badge, Card, Display, Eyebrow } from "@/components/ui/primitives";
 export type ModuleCompleteContext = {
   moduleTitle: string;
   coreQuestion: string;
-  /** Pulled from this module's own takeaways lesson — already written and reviewed. */
-  takeaways: string[];
   nextModuleTitle: string | null;
   levelTitle: string;
   levelSlug: string;
@@ -24,8 +22,8 @@ export type ModuleCompleteContext = {
  * from scrolling, and this is it: a recap, then a deliberate action (the button
  * lives in the runner's footer, immediately below).
  *
- * Everything here is derived from the module's own data — its core question, its
- * takeaways, its position in the level. Nothing is authored per module. That means
+ * Everything here is derived from the module's own data — its core question and
+ * its position in the level. Nothing is authored per module. That means
  * it cannot drift out of sync with the content, and it adds nothing to Save7's
  * review queue, which a thirteenth hand-written summary would.
  *
@@ -36,7 +34,6 @@ export type ModuleCompleteContext = {
 export function ModuleComplete({ context }: { context: ModuleCompleteContext }) {
   const {
     coreQuestion,
-    takeaways,
     nextModuleTitle,
     levelTitle,
     levelSlug,
@@ -58,29 +55,6 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
           only test that matters here.
         </p>
       </Card>
-
-      {takeaways.length > 0 ? (
-        <section className="mt-8">
-          <Display as="h3" className="text-xl text-ink">
-            What you covered
-          </Display>
-          <ul className="mt-4 space-y-2">
-            {takeaways.map((takeaway, i) => (
-              <li key={i} className="flex gap-3 text-sand-700">
-                <span aria-hidden="true" className="mt-1 shrink-0 text-correct">
-                  ✓
-                </span>
-                <span>{takeaway}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-4 text-sm text-sand-500">
-            The{" "}
-            <span className="font-semibold text-sand-600">study guide</span> step has
-            this in writing if you want to keep it.
-          </p>
-        </section>
-      ) : null}
 
       <section className="mt-8 border-t border-sand-200 pt-6">
         <Display as="h3" className="text-xl text-ink">

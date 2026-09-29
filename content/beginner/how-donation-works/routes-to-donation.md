@@ -10,21 +10,24 @@ level: beginner
 
 Almost every confusion about donation starts here, so it is worth getting straight first.
 
-**Organs** — kidneys, liver, heart, lungs, pancreas — have to keep working. They can only be recovered in a hospital, from a patient whose circulation has been maintained, and they must be transplanted within hours. This is why organ donation is only possible from a small number of deaths, in a small number of places.
+| | Organs | Tissue |
+|---|---|---|
+| What | Kidneys, liver, heart, lungs, pancreas | Corneas, bone, ligaments, skin, heart valves |
+| Where it can be recovered | Only in a hospital, from a patient whose circulation has been maintained | Irrespective of the manner of death, in a far wider range of settings, and even after the body has been moved to a mortuary |
+| How long it lasts | Must be transplanted within hours | Can be stored, so it does not have to be matched to a waiting recipient the same day |
 
-**Tissue** — corneas, bone, ligaments, skin, heart valves — does not have to keep working in the same way. It can be recovered irrespective of the manner of death, in a far wider range of settings, and even after the body has been moved to a mortuary. Tissue can be stored, so it does not have to be matched to a waiting recipient the same day.
+Organs have to keep working; tissue does not, in the same way. This is why organ donation is only possible from a small number of deaths, in a small number of places.
 
-That difference is why tissue donation is possible for far more people than most of the public assumes, and why a tissue donation coordinator is a distinct role, specifically trained to counsel next of kin about tissue-only donation.
+That difference is also why tissue donation is possible for far more people than most of the public assumes, and why a tissue donation coordinator is a distinct role, specifically trained to counsel next of kin about tissue-only donation.
 
 ## The four routes
 
-**After brain death (DBD).** A patient on a ventilator is certified brain dead by two independent doctors. Heart, lungs, liver, kidneys and pancreas can be donated, plus tissue. Next of kin give consent.
-
-**After circulatory death (DCD).** Treatment is withdrawn where death is expected, and the heart stops. What can be donated depends on the circumstances and on how quickly recovery can follow. Next of kin give consent.
-
-**Living donation.** While the donor is alive and well, by their own decision: a kidney, or a segment of liver. The donor consents for themselves — the only route where they do.
-
-**Tissue donation.** Irrespective of the manner of death, and much later than organ donation: corneas, bone and ligaments, skin, heart valves. Next of kin give consent.
+| Route | When | What can be donated | Who consents |
+|---|---|---|---|
+| After brain death (DBD) | A patient on a ventilator is certified brain dead by two independent doctors | Heart, lungs, liver, kidneys and pancreas, plus tissue | Next of kin |
+| After circulatory death (DCD) | Treatment is withdrawn where death is expected, and the heart stops | Depends on the circumstances and on how quickly recovery can follow | Next of kin |
+| Living donation | While the donor is alive and well, by their own decision | A kidney, or a segment of liver | **The donor**, for themselves — the only route where they do |
+| Tissue donation | Irrespective of the manner of death, and much later than organ donation | Corneas, bone and ligaments, skin, heart valves | Next of kin |
 
 Most deceased organ donation in South Africa follows one of the first two routes, and **both require consent from next of kin**.
 

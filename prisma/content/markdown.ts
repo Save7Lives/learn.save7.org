@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import type { LessonKind } from "../../src/lib/constants";
+import { hasTableLine, parseTable } from "../../src/lib/markdown-table";
 import { courseStructure, type LevelStructure, type StageSeed } from "./structure";
 
 /**
@@ -83,15 +84,15 @@ function stripComments(body: string): string {
  *
  * `src/components/lesson/Markdown.tsx` is deliberately tiny — it escapes
  * everything, then re-allows paragraphs, **bold**, *italic*, `code`, https
- * links, blockquotes, flat lists and ##/### headings, because a full pipeline
- * plus a sanitiser would be a large XSS surface. Anything else reaches the
- * learner as literal characters: a table becomes rows of pipes, `---` a line of
- * dashes, `<https://…>` escaped angle brackets. #47 found all three in its own
+ * links, blockquotes, flat lists, ##/### headings and pipe tables, because a
+ * full pipeline plus a sanitiser would be a large XSS surface. Anything else
+ * reaches the learner as literal characters: `---` a line of dashes,
+ * `<https://…>` escaped angle brackets, a malformed table rows of pipes. #47
+ * found a rule, an autolink and (before tables were allowed) a table in its own
  * first draft, so this fails the load rather than trusting a reviewer to spot
  * them.
  */
 const UNRENDERABLE: Array<[string, RegExp]> = [
-  ["a table row", /^\s*\|/m],
   ["a horizontal rule", /^\s*(-{3,}|\*{3,}|_{3,})\s*$/m],
   ["an angle-bracket autolink", /<https?:\/\//],
   ["a link that is not https", /\]\((?!https:\/\/)[^)]*\)/],
@@ -106,6 +107,31 @@ function assertRenderable(body: string, path: string): void {
     if (match) {
       throw new Error(
         `${path}: contains ${what} (${JSON.stringify(match[0].trim().slice(0, 40))}), which the lesson renderer shows as raw text. See content/README.md.`,
+      );
+    }
+  }
+
+  for (const block of body.split(/\n{2,}/)) {
+    // A list is its whole block: the renderer keeps only the item lines, so a
+    // line with no blank line between it and the list silently disappears. #60
+    // found a sentence lost this way under myth 11.
+    const lines = block.trim().split("\n");
+    const item = /^[-*]\s/.test(lines[0]) ? /^[-*]\s/ : /^\d+\.\s/.test(lines[0]) ? /^\d+\.\s/ : null;
+    const stray = item && lines.find((line) => !item.test(line.trim()));
+    if (stray) {
+      throw new Error(
+        `${path}: a list swallows the line ${JSON.stringify(stray.trim().slice(0, 40))}, which the lesson renderer drops. Put a blank line between the list and it. See content/README.md.`,
+      );
+    }
+
+    // Tables are allowed, malformed ones are not. The renderer asks parseTable()
+    // the same question, so a table that passes here is a table on the page.
+    if (!hasTableLine(block)) continue;
+    const table = parseTable(block);
+    if ("error" in table) {
+      const firstLine = block.trim().split("\n")[0];
+      throw new Error(
+        `${path}: contains a malformed table (${JSON.stringify(firstLine.slice(0, 40))}): ${table.error}. The lesson renderer would show it as rows of pipes. See content/README.md.`,
       );
     }
   }

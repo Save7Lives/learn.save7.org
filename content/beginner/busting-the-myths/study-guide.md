@@ -31,9 +31,11 @@ level: beginner
 
 **Cancer and illness (myth 11).** The answer depends on what is being donated, and the rules are set out in the SATCS Red File:
 
-- **Solid organs.** A cancer history is assessed case by case, and a primary brain tumour can be the cause of death of an organ donor. HIV is assessed organ by organ — HIV-positive to HIV-positive kidney transplantation began at Groote Schuur in 2008.
-- **Corneas.** Most cancers are acceptable, because the cornea has no blood vessels; leukaemia and lymphoma exclude. HIV and hepatitis B or C exclude.
-- **Skin, bone and heart valves.** A history of cancer excludes, as do HIV and hepatitis B or C.
+| What is donated | A history of cancer | Infection |
+|---|---|---|
+| Solid organs | Assessed case by case, and a primary brain tumour can be the cause of death of an organ donor | HIV is assessed organ by organ — HIV-positive to HIV-positive kidney transplantation began at Groote Schuur in 2008 |
+| Corneas | Most cancers are acceptable, because the cornea has no blood vessels; leukaemia and lymphoma exclude | HIV and hepatitis B or C exclude |
+| Skin, bone and heart valves | Excludes | HIV and hepatitis B or C exclude |
 
 South Africa has no national guideline on organ donors with a cancer history. The 📌 UK guidance (SaBTO) grades cancers from minimal to unacceptable transmission risk, excludes active cancer that has spread, and considers anything outside its tables case by case — always against the risk of a patient dying on the waiting list. Tissue rules are stricter because a tissue graft usually improves life rather than saving it (📌 SaBTO microbiology guidance).
 

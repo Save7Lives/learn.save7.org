@@ -10,7 +10,6 @@ import type {
   LevelRow,
   ModuleProgressRow,
   ModuleRow,
-  ResourceRow,
 } from "@/db/rows";
 
 /**
@@ -78,28 +77,6 @@ function mapLesson(row: LessonRow) {
     title: row.title,
     kind: row.kind,
     bodyMarkdown: row.body_markdown,
-    componentKey: row.component_key,
-    payloadJson: row.payload === null ? null : JSON.stringify(row.payload),
-  };
-}
-
-function mapResource(row: ResourceRow) {
-  return {
-    id: row.slug,
-    authoringKey: row.slug,
-    moduleId: row.module_slug,
-    title: row.title,
-    description: row.description,
-    type: row.kind,
-    isRequired: row.is_required,
-    source: row.source,
-    author: row.author,
-    publishedOn: row.published_on,
-    externalUrl: row.external_url,
-    filePath: row.file_path,
-    licenceNote: row.licence_note,
-    isStub: row.is_stub,
-    order: row.position,
   };
 }
 
@@ -310,18 +287,10 @@ export async function getModuleForUser(
     .maybeSingle<ModuleRow>();
   if (!moduleRow) return null;
 
-  const [lessonResult, resourceResult, siblingResult, progressResult] = await Promise.all([
+  const [lessonResult, siblingResult, progressResult] = await Promise.all([
     supabase
       .from("learn_lessons")
-      .select("slug, module_slug, position, title, kind, body_markdown, component_key, payload")
-      .eq("module_slug", moduleSlug)
-      .order("position"),
-
-    supabase
-      .from("learn_resources")
-      .select(
-        "slug, module_slug, title, description, kind, is_required, source, author, published_on, external_url, file_path, licence_note, is_stub, position",
-      )
+      .select("slug, module_slug, position, title, kind, body_markdown")
       .eq("module_slug", moduleSlug)
       .order("position"),
 
@@ -366,7 +335,6 @@ export async function getModuleForUser(
     module: {
       ...mapModule(moduleRow),
       lessons: ((lessonResult.data ?? []) as LessonRow[]).map(mapLesson),
-      resources: ((resourceResult.data ?? []) as ResourceRow[]).map(mapResource),
     },
     siblings: ((siblingResult.data ?? []) as Pick<ModuleRow, "slug" | "position" | "title">[]).map(
       (row) => ({ slug: row.slug, order: row.position, title: row.title }),
