@@ -42,17 +42,39 @@ project as the organisation's books.
 This is a health and legal subject aimed at the public, so **no medical or legal
 claim ships as authoritative unless it is sourced.**
 
-- **Never invent a citation, statistic, or legal provision.** If a claim cannot be
-  verified, mark it `pendingReview: true` with a `reviewSourceHint` naming where it
-  should be checked. It then renders with a visible "Pending Save7 review" badge and
-  appears in `/admin/content-review`.
-- **Do not clear a review item in code.** Those are Save7's sign-offs to make, in
-  the admin UI. `deriveReviewItems()` in `prisma/content/review.ts` generates the
-  register from the content, and the generated migration upserts, so re-applying
-  content never resets a recorded decision.
-- Module 9 (the law) and Module 10 (clinical criteria) are the highest-risk content.
-  Legal provisions must be checked against the _current consolidated_ National
-  Health Act, not an old study guide.
+- **Never invent a citation, statistic, or legal provision.** Source each claim to
+  a document someone else can open, such as a Source Corpus paper, the Act or a
+  named report, and give the page or section where it has one.
+- **Questions enter the register on every emit.** `scripts/emit-supabase-content.ts`
+  writes a `learn_review_items` row for every Stage Quiz, Baseline and clinical gate
+  item. Once you have checked the keyed answer *and* the explanation, name the
+  document in the item's `verifiedAgainst` (`prisma/content/quiz.ts`, `types.ts`).
+  The emitter then writes the row as `APPROVED`, with that source in its notes. An
+  item without one stays `NEEDS_VERIFICATION`. A reading-list entry is registered
+  only when it is a stub or carries `verifiedAgainst`.
+- **`verifiedAgainst` is a citation.** An attestation such as "Reviewed against
+  standard criteria" names no document, but it approves the item just the same.
+  That is how two gate items drifted onto figures nobody could produce
+  (HANDOVER.md §6).
+- **Rewording a prompt makes a new register row**, because the claim text is part
+  of the upsert key. Re-check the source when you reword. The old row stays behind.
+- **Lesson prose has no review mechanism.** No Markdown lesson enters the register,
+  nothing marks a claim in one as unverified, and nothing records a sign-off. Name
+  each source in the lesson itself or in its Stage's `further-reading.md`, and leave
+  out any claim you cannot source.
+- **Nothing learner-facing reads the register.** An item left `NEEDS_VERIFICATION`
+  still reaches learners, with no badge. (`PendingReview` in
+  `src/components/ui/primitives.tsx` has no callers.) The register is Save7's
+  record of what is sourced. It does not filter what learners see.
+- **Never clear a review item in code.** Save7 records its decisions in
+  `/admin/content-review`, which stores who decided and when. An emitter approval
+  stores neither. So write `verifiedAgainst` only after the check it records, and
+  never set a status from a migration, SQL or an emitter change. The emit promotes
+  only `NEEDS_VERIFICATION` rows, so it never reverts a decision. Un-approving is a
+  staff action.
+- The law and the clinical criteria (determination of death, donor suitability) are
+  the highest-risk content. Legal provisions must be checked against the _current
+  consolidated_ National Health Act, not an old study guide.
 - Avoid simplistic exclusion rules ("you can't donate if you have X"). Suitability
   is individually assessed, and the content says so deliberately.
 

@@ -17,13 +17,20 @@ export const metadata: Metadata = { title: "Content review" };
 /**
  * The content-review register.
  *
- * The register is *generated* from the course content itself — see
- * `deriveReviewItems()` in prisma/seed.ts — so it cannot drift out of date. A claim
- * cannot be added to a lesson without appearing here.
+ * The register is *generated* from the course content: see the `learn_review_items`
+ * upserts in scripts/emit-supabase-content.ts. Every Stage Quiz, Baseline and
+ * clinical gate question lands here on emit, so none can be added without
+ * appearing. It is APPROVED when its `verifiedAgainst` names a source, and
+ * NEEDS_VERIFICATION otherwise. Lesson prose never lands here. It has no review
+ * mechanism.
  *
- * Until an item is approved, learners see a visible "pending Save7 review" badge
- * wherever that claim appears. That is why the count on this page matters: it is not
- * a backlog, it is what the course is currently admitting it does not know.
+ * A decision recorded on this page is the only kind with a name and a date on it
+ * (cleared_by, cleared_at). An emitter approval carries neither, and the emit only
+ * ever promotes an outstanding item, so it never reverts a decision made here.
+ *
+ * Nothing learner-facing reads this table, so an unapproved item reaches learners
+ * without a badge. The needs-verification count is what the course admits it has
+ * not sourced. It does not gate what learners see.
  */
 export default async function ContentReviewPage(
   props: PageProps<"/admin/content-review">,

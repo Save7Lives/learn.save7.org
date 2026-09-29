@@ -62,15 +62,22 @@ If you are using Claude Code, it reads `CLAUDE.md` automatically.
 This is health and legal content aimed at the general public in South Africa.
 **No medical or legal claim ships as authoritative unless it is sourced.**
 
-If you cannot verify a claim, mark it `pendingReview: true` with a
-`reviewSourceHint` saying where it should be checked. It then renders with a
-visible "Pending Save7 review" badge and appears in `/admin/content-review` for
-Save7 to sign off. **Never invent a citation, statistic or legal provision**, and
-never clear a review item in code — those are Save7's decisions to record.
+Source every claim to a document someone else can open, and **never invent a
+citation, statistic or legal provision.** Where the source gets recorded depends
+on where the claim lives:
 
-There are currently **13 launch-blocking review items**, mostly Module 9 (the law)
-and the Module 12 FACTS sequence. Clearing them needs a person with authority, not
-a code change.
+- **A quiz item** (Stage Quiz, Baseline, clinical gate) names its source in
+  `verifiedAgainst`. The content emitter turns that into an approved row in the
+  review register at `/admin/content-review`. An item without one is listed there
+  as needing verification.
+- **Lesson prose** has no review mechanism. Nothing registers it or records a
+  sign-off, so the source goes in the lesson itself. A claim you cannot source
+  stays out.
+
+The register is staff-only. Learners see an unverified item like any other, with
+no badge. **Never clear a review item in code.** Approving and rejecting are
+Save7's decisions, recorded with a name and a date in `/admin/content-review`.
+CLAUDE.md has the details.
 
 ## Where things live
 
