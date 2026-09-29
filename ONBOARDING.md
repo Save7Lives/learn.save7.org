@@ -81,10 +81,13 @@ CLAUDE.md has the details.
 
 ## Where things live
 
-- **Course content** — `prisma/content/level-*.ts`, seeded into the database.
-  Components read `Lesson.payloadJson`. Never hardcode course copy into a component.
-- **Interactive components** — `src/components/interactive/`, each driven entirely
-  by its lesson payload.
+- **Course content**: lesson prose is Markdown in `content/<level>/<stage>/*.md`,
+  and `content/README.md` says what that Markdown may contain. Questions and the
+  reading list are TypeScript in `prisma/content/`, and `structure.ts` there fixes
+  the Levels and Stages. `scripts/emit-supabase-content.ts` turns all of it into a
+  migration for `save7-os`. `src/components/lesson/Markdown.tsx` renders the prose.
+  There are no per-lesson components any more. Course copy goes in `content/` or
+  `prisma/content/`, never hardcoded into a component.
 - **Data layer** — `src/db/rows.ts` (the shape of every row this app reads) and
   `src/lib/` (one file per concern: `quiz.ts`, `course.ts`, `progress.ts`,
   `certificates.ts`, `auth.ts`). There is no ORM and no schema file here: the

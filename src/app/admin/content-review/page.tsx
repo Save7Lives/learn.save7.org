@@ -102,7 +102,7 @@ export default async function ContentReviewPage(
     <>
       <PageTitle
         title="Content review"
-        description="Every medical, legal and statistical claim in the course, generated from the content itself. Nothing here is approved by default, and learners see a visible 'pending review' badge wherever a claim is unapproved."
+        description="Every Stage Quiz, Baseline and clinical gate question, generated from the content itself. A question is approved on generation only when it names the document it was checked against. Lesson prose is not listed here, and learners see no badge on an unapproved question."
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -128,7 +128,7 @@ export default async function ContentReviewPage(
 
       <Section
         title="Register"
-        description="Approving an item removes the learner-facing badge from that claim. Re-running the content seed never un-approves what you have already signed off."
+        description="Your decision is recorded with your name and the date. Re-running the content generator never overrides an approval or a rejection made here."
         className="mt-6"
       >
         <nav aria-label="Filter by status" className="mb-5 flex flex-wrap gap-2">
@@ -188,27 +188,29 @@ export default async function ContentReviewPage(
 
       <Section
         title="What must clear before launch"
+        description="Most of this is lesson prose, which the register above does not list, so it is read and signed off outside this page."
         className="mt-4"
       >
         <ul className="space-y-2 text-sm text-sand-600">
           <li>
-            · <Badge tone="review">Module 6</Badge> Determination of death — must be
-            verified against the current South African guidelines, cited exactly.
+            · <Badge tone="review">Intermediate · Stage 1</Badge> Determination of
+            death must be verified against the current South African guidelines,
+            cited exactly.
           </li>
           <li>
-            · <Badge tone="review">Module 9</Badge> The law — the National Health Act
-            provisions must be checked against the consolidated text in force, not an
-            older study guide.
+            · <Badge tone="review">Intermediate · Stage 3, Advanced · Stage 3</Badge>{" "}
+            The law. The National Health Act provisions must be checked against the
+            consolidated text in force, not an older study guide.
           </li>
           <li>
-            · <Badge tone="review">Module 8</Badge> Donor suitability — outdated
-            exclusion criteria are actively harmful, so this needs current guidance
-            rather than merely available guidance.
+            · <Badge tone="review">Beginner · Stage 2</Badge> Donor suitability.
+            Outdated exclusion criteria are actively harmful, so this needs current
+            guidance rather than merely available guidance.
           </li>
           <li>
-            · <Badge tone="review">All modules</Badge> Statistics must be date-stamped
-            at publication, and every stub citation completed. No author, year or
-            identifier has been invented anywhere in this course.
+            · <Badge tone="review">All Stages</Badge> Statistics must be date-stamped
+            at publication. No author, year or identifier has been invented anywhere
+            in this course.
           </li>
         </ul>
       </Section>

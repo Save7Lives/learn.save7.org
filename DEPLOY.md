@@ -660,23 +660,25 @@ change is slower and is reviewable in a pull request.
 
 ## Before you launch
 
-The content-review register currently holds **13 launch-blocking items**, visible
-at `/admin/content-review` with the most severe first:
+The content-review register at `/admin/content-review` lists every Stage Quiz,
+Baseline and clinical gate question. **As of 29 September 2026 all 205 are marked
+approved, and none carries a Save7 reviewer's name.** Each was approved by the
+content generator because it names the document its answer was checked against.
+None was approved by a person at Save7. The page shows who signed each item off,
+and approving or rejecting an item there is what puts a name against it.
 
-- **Module 9 (The Law)** — legal provisions that I could not verify against the
-  *current consolidated* National Health Act. Your study guide may predate
-  amendments.
-- **Module 12 (FACTS)** — the eight-step sequence. The acronym, its Wits Transplant
-  origin and its intended users are verified against de Jager et al., *SAMJ*
-  2019;109(9). The step names came from the Organ and Tissue Donation Reference
-  File, which is gated and could not be read, so the list is second-hand.
-- **10 assessment items** on brain death and the law, needing a sign-off that the
-  marked-correct answer is correct.
+Two things the register cannot show you:
+
+- **Lesson prose is not in it.** The lessons name their sources in the text and in
+  each Stage's further reading, but nothing records that Save7 has read them. A
+  sign-off on the prose has to happen outside the app.
+- **Learners see no badge.** A question still needing verification reaches
+  learners exactly as an approved one does.
 
 Your brief said: *"Before publishing this information, verify legal claims against
-current authoritative South African sources."* Every flagged claim carries a visible
-"Pending Save7 review" badge, so nothing is presented to a learner as settled fact —
-but a lawyer has not read Module 9.
+current authoritative South African sources."* Nothing records that a lawyer has
+read the legal Stages: Intermediate Stage 3 (The South African Legal Framework) and
+Advanced Stage 3 (Consent and End-of-Life Ethics, In Depth).
 
 You have chosen to launch publicly. That is your call, and it is recorded here so
 the position is not ambiguous later.
