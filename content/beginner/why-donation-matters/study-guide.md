@@ -51,7 +51,7 @@ The report's own summary is that donation and transplantation activity in South 
 
 ## Outcomes
 
-One year after cardiac transplantation, survival approaches 90%, and half of recipients survive beyond eleven years. Good outcomes are the reason the shortage matters; they are not a promise that a transplant is a cure, which this course is careful never to claim.
+📌 A 2010 review in *Circulation* put one-year survival after cardiac transplantation at close to 90%, with half of recipients living more than eleven years. It is not a South African figure, and this course's sources hold no South African equivalent. Good outcomes are the reason the shortage matters; they are not a promise that a transplant is a cure, which this course is careful never to claim.
 
 ## Where the numbers come from
 

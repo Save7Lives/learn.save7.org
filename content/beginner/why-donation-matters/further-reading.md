@@ -14,6 +14,9 @@ SATS / SATCS, *5-Year National Organ Transplant Activity, South Africa 2017–20
 **Who is waiting, and why the data is so hard to assemble.**
 Spotlight, *"SA has very low organ donation rates — how can we fix it?"* (29 September 2025). Independent journalism that reaches the same 2021 waiting-list total from its own reporting, and explains clearly why South Africa has no single national register. Published by [Spotlight](https://www.spotlightnsp.co.za/).
 
+**Outcomes after a heart transplant.**
+Mancini D, Lietz K, "Selection of Cardiac Transplantation Candidates in 2010", *Circulation* 2010;122:173–183. A medical review written for clinicians; the survival figures quoted in this Stage are in its opening paragraph. It is not a South African source, and no South African figure for heart-transplant survival is part of this course's source material.
+
 **The registration body.**
 The [Organ Donor Foundation of South Africa](https://odf.org.za/) — donor information, frequently asked questions, and the online donor register.
 

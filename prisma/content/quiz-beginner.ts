@@ -49,7 +49,7 @@ const RED_FILE_ELIGIBILITY =
 const LIVING_DONOR_SAFETY =
   "SA: Groote Schuur Hospital Kidney Paired Donation SOP (23 May 2025, via sats.org.za), Annexure G donor brochure — the operation is safe and low-risk but not risk-free; workup includes clinical suitability, blood group and tissue typing, social-work and where needed psychological assessment. Dayal C et al., PLoS ONE 2022;17(5):e0268183 — Charlotte Maxeke Johannesburg Academic Hospital 1981-2015, 298 of 1,208 potential donors (24.7%) donated. Botha J et al., S Afr J Surg 2019;57(3):11-16 — 65 living liver donors at Wits Donald Gordon, 0 deaths. National Health Act ss 58, 60(4). 📌 US: Massie AB et al., JAMA 2024;332(12):1015-1017 (0.9 per 10,000 perioperative mortality, 2013-2022); Segev DL et al., JAMA 2010 (3.1 per 10,000, 1994-2009); Lentine KL et al., CJASN 2019 (major complications <3%); Muzaale AD et al., JAMA 2014 (lifetime ESRD risk 90 per 10,000 donors vs 14 healthy non-donors vs 326 general population). Checked in T47 research findings, section 2 and section 3";
 const CARDIAC_OUTCOMES =
-  "One-year survival after cardiac transplantation approaches 90%, with 50% of recipients surviving beyond 11 years — carried over from the prior build's sourced advanced-heart-failure material";
+  "Mancini D, Lietz K, 'Selection of Cardiac Transplantation Candidates in 2010', Circulation 2010;122:173-183 (Source Corpus, mancini-lietz-2010-cardiac-candidates.pdf), p.173, opening paragraph: one-year survival after cardiac transplantation 'approaches 90%', with 50% of patients surviving more than 11 years, credited to advances in immunosuppression therapy. 📌 A review for clinicians: the sentence names no country, era or cohort, and the Source Corpus holds no South African heart-survival figure, so the course attributes the figure and does not state it as South African. The sentence cites the paper's reference 2, printed on p.181 as an ISHLT paediatric lung and heart-lung registry report (Aurora et al., 2008), which does not look like an adult heart source. The figure is therefore recorded as this review's statement and not independently confirmed. Long-term complications: p.180 (chronic allograft dysfunction, transplant vasculopathy). No corpus document says recipients are monitored for life, so the item does not say so. Checked 30 September 2026";
 
 // ---------------------------------------------------------------------------
 // STAGE 1 — Why Donation Matters
@@ -263,12 +263,12 @@ const whyDonationMatters: StageQuizQuestion[] = [
     difficulty: 2,
     prompt: "Which statement about outcomes after a heart transplant is most accurate?",
     explanation:
-      "One-year survival approaches 90% and half of recipients live beyond eleven years. Those are good outcomes, and a transplant is still not a cure — it trades one serious medical situation for a much better one that involves daily medication and lifelong monitoring.",
+      "A 2010 review in the journal Circulation put one-year survival after a heart transplant at close to 90%, with half of recipients living more than eleven years. Those are good outcomes, and a transplant is still not a cure: it trades one serious medical situation for a much better one, with anti-rejection medication and long-term risks. The figure is international, and this course's sources hold no South African one.",
     verifiedAgainst: CARDIAC_OUTCOMES,
     choices: [
-      { text: "A transplant restores the recipient completely, with no further treatment needed", feedback: "Overselling transplantation does the cause no favours. Recipients take medication and are monitored for life." },
-      { text: "Most recipients survive less than a year", feedback: "Outcomes are far better than this. One-year survival approaches 90%." },
-      { text: "Outcomes are unknown because too few transplants are performed", feedback: "Outcomes after cardiac transplantation are well documented." },
+      { text: "A transplant restores the recipient completely, with no further treatment needed", feedback: "Overselling transplantation does the cause no favours. Recipients take anti-rejection medication and can face long-term complications." },
+      { text: "Most recipients survive less than a year", feedback: "Outcomes are far better than this. A 2010 review put one-year survival at close to 90%." },
+      { text: "Outcomes are unknown because too few transplants are performed", feedback: "Outcomes after heart transplantation are documented in international transplant registries." },
       { text: "One-year survival approaches 90%, and half of recipients live beyond eleven years", isCorrect: true },
     ],
   },

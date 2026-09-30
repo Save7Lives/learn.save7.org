@@ -14,7 +14,7 @@ Donation is easy to think about in the abstract. It is much harder to ignore onc
 
 **Someone with advanced lung disease** — severe COPD, or cystic fibrosis — for whom breathing has become the hardest thing they do. A transplant gives them back air.
 
-**Someone with end-stage heart failure**, whose heart can no longer pump enough blood to get them across a room. Outcomes here are genuinely good: one year after a heart transplant, survival approaches **90%**, and half of recipients live more than **eleven years**.
+**Someone with end-stage heart failure**, whose heart can no longer pump enough blood to get them across a room. Outcomes here are genuinely good. 📌 A 2010 review in the journal Circulation put one-year survival after a heart transplant at close to **90%**, with half of recipients living more than **eleven years**. That is not a South African figure, and this course's sources hold no South African equivalent, so read it as a sign of how well a heart transplant can work rather than a local statistic.
 
 **Someone with liver failure** — cirrhosis that has passed the point of recovery, or liver failure that came on in days. For them a transplant is not an improvement in quality of life. It is life.
 
