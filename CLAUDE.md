@@ -31,7 +31,9 @@ npm run dev
 nothing on its own and row level security is the boundary.
 
 There is no local database and no seed. The schema and the content are migrations in
-the `save7-os` repository (`0091`–`0098`), applied with `supabase db push`.
+the `save7-os` repository, applied with `supabase db push`. The `learn_*` schema starts
+at `0091`. `npm run content:emit` writes each content migration at the next free
+number (`0121` at the time of writing), with a copy in `prisma/supabase/`.
 
 **Local development therefore writes to real data.** There is no seeded admin
 account to hide behind, and a learner row you create locally is a row in the same
@@ -97,18 +99,37 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
 - **The answer key is unreadable, not merely unselected.** `learn_choices.is_correct`
   has **no policy for any role**, so RLS denies it outright; the app reads
   `learn_options_pub`, which does not carry the column. Grading happens in
-  `learn_submit_attempt()` and `learn_grade_check()`, security-definer functions
-  holding the only read path. **This app cannot grade even if it tried** — do not
+  `learn_submit_attempt()`, `learn_grade_check()` and
+  `learn_submit_baseline_sitting()`, security-definer functions holding the only
+  read path. **This app cannot grade even if it tried** — do not
   add a code path that attempts it.
 - `select verify_learn_isolation();` asserts all of that: RLS on, no policy on
   `learn_choices`, no view naming `is_correct`, no direct read for `anon`. Run it
   after any migration touching `learn_*`.
-- The baseline (`PRE`) is taken **once**; it cannot be retaken, or the improvement
-  measure is worthless.
-- `attemptNo === 1` is the recorded measure for analytics. Retakes are allowed for
-  certificates but must never feed the impact numbers.
-- `pairKey` links each post-assessment item to its baseline counterpart. Keep pairs
-  intact when editing questions, or the matched-pair comparison silently degrades.
+- The Baseline (`PRE`) is up to **four Sittings**, not one attempt.
+  `learn_submit_baseline_sitting()` marks the same twenty questions and freezes the
+  result as a row in `learn_baseline_sittings`: a score per Level and a total, never
+  the answers. A CHECK (`sitting_no between 1 and 4`) and a UNIQUE
+  `(learner_id, sitting_no)` are the whole cap, and there is no insert or update
+  policy, so a client can neither write, edit nor half-sit a Sitting. Sitting 1 is
+  owed at signup and Stage content waits for it; later Sittings are offered after a
+  Level is completed and never required (`dueSitting()` in `src/lib/baseline.ts`).
+- **Improvement is Sitting 1 against a later Sitting of the same paper.** It is
+  derived at read time (`levelImprovement()` in `src/lib/baseline.ts`, read by
+  `src/lib/analytics.ts`) and never stored. Stage Quiz retakes are unlimited, because
+  passing every Stage Quiz in a Level is what earns its Certificate, so they must
+  never feed the impact numbers.
+  `analytics.ts` and the admin learners page still read POST `attempt_no = 1` for a
+  few Stage Quiz figures; the map's admin-indicator audit owns them, and they are
+  not Improvement.
+- **Do not edit a Baseline question's prompt or options once anyone has sat it.**
+  The same twenty questions come back at every Sitting, so a changed one makes
+  later Sittings a different paper without saying so (save7-os `0116` refuses to
+  replace the bank once a Sitting exists).
+- **There is no `pairKey`.** Wayfinder #26/#41 replaced pairing each post-assessment
+  item with its baseline counterpart by sitting-over-sitting comparison. The emitter
+  writes `learn_questions.pair_key` as `NULL`, and no code uses it. The column
+  (`0091`) and the legacy `pairKey` field on `QuestionSeed` remain but do no work.
 
 ## Platform gotchas
 

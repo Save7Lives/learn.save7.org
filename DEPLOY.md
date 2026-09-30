@@ -4,8 +4,8 @@ Everything is ready to deploy. What remains needs **your Cloudflare account**, s
 those steps are commands for you to run — I cannot authenticate as Save7, and I
 should not: publishing the course is your decision, not mine.
 
-Read [Before you launch](#before-you-launch) first. There are 13 items flagged as
-launch-blocking in the content-review register.
+Read [Before you launch](#before-you-launch) first. It says what the content-review
+register does and does not tell you about sign-off.
 
 The course is a **Cloudflare Worker** again, built by `@opennextjs/cloudflare`.
 If you remember an earlier version of this guide saying the domain needed nothing
@@ -117,7 +117,7 @@ committed, put in `wrangler.jsonc`, or pasted into a chat.
 | Worker | `learn`, on the `admin@save7.org` account (`cab9730a43ee3fb2e8aaf3d36a25cb8d`) |
 | Hostname | `https://learn.save7.workers.dev` — live, deployed 2026-09-23 09:18 UTC. The account's workers.dev subdomain is `save7` |
 | Backend | The Save7 Supabase project — the same one the OS and the volunteer portal use |
-| Database migrations | `save7-os/supabase/migrations/0091`–`0098` |
+| Database migrations | `save7-os/supabase/migrations/`, from `0091` (the schema) onward; `0121` at the time of writing |
 | Sign-in | Google, verified by Supabase. No passwords, no `AUTH_SECRET` |
 | Registration endpoint | `register-learner` deployed 2026-09-23 with the Workers allow-list, verified allowing the live and preview hostnames and refusing four near-miss origins |
 | **Video** | **Not hosted.** Supabase Storage, bucket `learn-media` — step 5 |
@@ -153,10 +153,11 @@ as they land. The floor is where the September 2026 AVIF image-optimization RCE
 | Marking against real data | The rules moved into SQL functions whose probes are structural, not behavioural |
 | Workers Builds | The connection has never been made. The settings in the next section are what the configuration implies, not what a build has run. |
 
-The journey row is the real gap. The rules it used to check — the baseline being
-once-only, unanswered counting as incorrect, only attempt 1 counting — are now
-stated in migrations 0097 and 0098 and enforced there, but nothing exercises them
-end to end.
+The journey row is the real gap. The rules it used to check are now enforced in SQL
+or in `src/lib/`, but nothing exercises them end to end. The Baseline's cap of four
+Sittings is a CHECK and a UNIQUE in 0110, and unanswered counting as incorrect is in
+the marking functions (first 0097). That Improvement comes only from Baseline
+Sittings is app code in `src/lib/analytics.ts`, not a database rule.
 
 ---
 
@@ -260,12 +261,14 @@ and every allow-list in step 6b then names the wrong host.
 **There is no database to create.** The backend is the Save7 Supabase project —
 the same one `os.save7.org` and `volunteers.save7.org` use — and the course's
 schema, content and question bank are migrations in the `save7-os` repository.
+`supabase db push` applies every migration not yet applied, so what follows is
+the foundation it started from, not everything it will run.
 
 ```bash
 cd ../save7-os && supabase db push
 ```
 
-That applies, in order:
+The first eight it applied, in order, were:
 
 | Migration | What it does |
 | --- | --- |
@@ -282,8 +285,15 @@ Each ends in a probe that raises rather than letting a half-applied migration
 commit — 0094's asserts all six content counts and that every non-MULTI question
 has exactly one correct answer.
 
-The 131 questions include the volunteer portal's **forty gate questions**, so the
-clinical and layman's quizzes and the course now read from one bank.
+0094's 131 questions included the volunteer portal's **forty gate questions**, so the
+clinical and layman's quizzes and the course read from one bank.
+
+Later migrations changed what those eight first built. `0110` replaced the once-only
+baseline with up to four Baseline Sittings. `0112` swept 0094's thirteen modules and
+their questions, to make way for the three-Level, eleven-Stage outline, and `0113`
+made each Stage Quiz five questions and gated the Certificate on passing them.
+Content has arrived since as `0114`–`0116`, `0118`, `0120` and `0121`, written by
+`npm run content:emit`.
 
 ### 3. Deploy the registration endpoint
 
@@ -689,11 +699,10 @@ change and is one setting to remove afterwards.
 
 ### Also outstanding
 
-- **Statistics** are 2010–2019 decade totals from the study guide, date-stamped
-  everywhere they appear. They are seven years old; fresher ODF or SATCS figures
-  would make Module 2 land considerably harder.
-- **Three citations** are incomplete: the current SATCS URL, a link to the
-  consolidated National Health Act, and the Reference File itself.
+- **National statistics stop at 2021.** Beginner Stage 1 leads with the SATS/SATCS
+  five-year report, 2017–2021, and keeps the ODF's 2010–2019 decade totals only as
+  dated background. Figures reported for 2024 are marked as not independently
+  verified. Newer verified figures would make Stage 1 land harder.
 - **The video has no captions or transcript.** You have said these are not needed;
   noting it because it is the one accessibility gap in an otherwise
   WCAG-conformant build.

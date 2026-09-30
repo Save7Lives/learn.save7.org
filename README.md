@@ -43,7 +43,8 @@ back to the shared Google redirect flow and still works.
 
 There is **no local database and no seed**. The schema, the course content and
 the question bank live in the `save7-os` repository as migrations, and are applied
-with `supabase db push` — `save7-os/supabase/migrations/0091` through `0098`. That
+with `supabase db push` — `save7-os/supabase/migrations/`, from `0091` (the schema)
+onward, with each content migration written by `npm run content:emit`. That
 is deliberate: one bank, one set of policies, and content changes that arrive as
 reviewable SQL rather than as whatever a seed script happened to write.
 
@@ -96,7 +97,7 @@ design goal, not a consolation.
 | 🟡 Intermediate | Understand the Journey | 5–8 | Donation Advocate |
 | 🔴 Advanced | Become a Transplant Advocate | 9–13 | Transplant Advocate |
 
-**Learner flow:** welcome → introduction → one-time baseline quiz → chosen level's
+**Learner flow:** welcome → introduction → first Baseline Sitting → chosen level's
 modules → level assessment → knowledge-impact screen → certificate → continue or
 stop.
 
@@ -201,16 +202,23 @@ Markdown, and git keeps them.
 - **Answer keys never reach the browser.** `toClientQuestion` in `src/lib/quiz.ts`
   is the only path from a question row to the client, and it strips `isCorrect`.
   All grading — including the formative inline checks — happens on the server.
-- **The baseline can only be taken once.** A retake could manufacture an
-  improvement.
-- **Only `attemptNo === 1` counts toward reported improvement.** If retakes
-  counted, Save7's headline learning gain would drift upward forever and the
-  platform's central claim would be unfalsifiable.
+- **The Baseline is capped at four Sittings, and each is frozen.** A Sitting is the
+  same twenty questions, marked in one call and stored as its scores, never its
+  answers. A database CHECK and UNIQUE stop a fifth, and a client cannot write a
+  Sitting at all. A learner can therefore not keep sitting the paper until the
+  score looks good.
+- **Only the Baseline feeds reported improvement.** Stage Quiz retakes are
+  unlimited, because passing every Stage Quiz in a Level earns its Certificate. If
+  they counted, Save7's headline learning gain would drift upward forever and the
+  platform's central claim would be unfalsifiable. (A few admin Stage Quiz columns
+  still read `attempt_no = 1`. They are not the improvement figure.)
 - **Multi-select requires an exact set match.** Partial credit would teach
   learners to select everything.
-- **Improvement is reported two ways.** A headline figure comparing the two papers,
-  and a `pairKey`-matched like-for-like comparison that is the honest primary
-  number. The pair count is always shown, so a thin comparison looks thin.
+- **Improvement compares a learner's first Sitting with a later one.** Every
+  Sitting is the same paper, so the comparison is like for like without matching
+  individual questions, and there is no `pairKey`. It is reported overall and per
+  Level, and the count of learners behind each figure is always shown, so a thin
+  comparison looks thin.
 
 ### Content governance
 
@@ -251,9 +259,11 @@ All lesson content is drawn from the material Save7 supplied, which is served fr
 | Han et al. (2017) | That families who take longer to decide consent *more*, not less |
 | Mancini & Lietz (2010), Weill et al. (2015), Porrett et al. (2009) | Modules 10 and 11 |
 
-**Statistics are decade totals for 2010–2019** (Organ Donor Foundation, via the Red
-File) and are date-stamped everywhere they appear. Save7 should refresh them — an
-undated statistic quietly becomes a wrong one.
+**The newest verified national figures are for 2021.** Beginner Stage 1 leads with
+the SATS/SATCS five-year report, 2017–2021 (published 2024). Its study guide keeps
+the Organ Donor Foundation's 2010–2019 decade totals only as dated background, and
+marks figures reported for 2024 as not independently verified. Every statistic
+carries its year, since an undated one quietly becomes a wrong one.
 
 ### FACTS — partially verified, deliberately framed
 
@@ -323,8 +333,7 @@ a handful of details.
 | **Legal review** | Module 9, against the National Health Act as currently in force |
 | **Clinical review** | Module 10's selection criteria |
 | **Assessment sign-off** | 91 questions registered for review at `/admin/content-review` |
-| **Refreshed statistics** | Current figures to replace the 2010–2019 decade totals |
-| **Three citation links** | The current SATCS URL, the consolidated National Health Act text, and the Organ and Tissue Donation Reference File |
+| **Refreshed statistics** | National figures newer than 2021, when SATS or the ODF publish them |
 | **FACTS eight steps** | Confirm the sequence and step names against the Organ and Tissue Donation Reference File, and supply the file so its citation can be completed |
 | **Certificate wording** | Sign-off on the current text |
 | **Privacy notice details** | Information officer, hosting location, retention period |

@@ -44,8 +44,9 @@ knowing on day one:
   `/register` before your first sign-in. Admin dashboards need staff standing
   (`app_is_staff()`), not a flag you can set locally.
 
-The schema and the course content are migrations in the `save7-os` repository
-(`0091`–`0098`), applied with `supabase db push`.
+The schema and the course content are migrations in the `save7-os` repository,
+from `0091` (the schema) onward, applied with `supabase db push`. `npm run
+content:emit` writes each content migration at the next free number.
 
 ## Read these three files
 
