@@ -172,11 +172,28 @@ that silently misses one record is how email breaks.
 | TXT   | `save7.org` (@)  | `google-site-verification=ZSfcA5WdGbPCdqJSFyOQ4vDmQsOJlnpAZx5a0hgKH1Q` | n/a |
 | TXT   | `save7.org` (@)  | `google-gws-recovery-domain-verification=53260319` | n/a |
 | TXT   | `_dmarc`         | `v=DMARC1; p=none;`            | n/a        |
+| MX    | `send`           | `feedback-smtp.us-east-1.amazonses.com` priority `10` | n/a |
+| TXT   | `resend._domainkey` | `p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDgz3HEN338LEViNsI3SrIYEmEAAOufo7AdnCTmHvApgQ4rxhgIOEzVBnQTLNzr0aw0Loh6ZUfyCOK1JJKwogncPS2ifr9rPkUfVxG643sy+t1qE/8OWXAsEeFqqFDPcYqbeYBnp334Rw1jbg2Biin1J/2BHDFBLsN0WNzKGYvakwIDAQAB` | n/a |
 
 The last three CNAMEs were **not in the August capture** and were found by
 re-sweeping the zone on 22 September 2026. Two of them serve live Save7 sites, so
 a migration plan that does not mention them is a migration plan that can break
 them.
+
+The last two rows (`send` and `resend._domainkey`) were **found on 30 September
+2026** and were in neither earlier capture. They are the sending records for
+Resend, which sends through Amazon SES, and they are why the apex SPF carries
+`include:amazonses.com`. Cloudflare's import scan checks only a fixed list of
+common names, so it may well miss `resend._domainkey`; add both by hand if they
+are not there. Lose them and mail sent through Resend starts failing DKIM
+quietly.
+
+**DKIM for Google Workspace is unconfirmed.** Gilbert says DKIM is switched on in
+the Google Admin console, but no `google._domainkey` record exists on the
+authoritative nameservers or on a public resolver, and the only DKIM record found
+is Resend's. Either he was looking at a custom selector prefix or he meant the
+Resend one. Ask him for the selector shown under Google Admin, Apps, Google
+Workspace, Gmail, Authenticate email, and add that record to this table.
 
 ### `learn` must be deleted, not imported
 
