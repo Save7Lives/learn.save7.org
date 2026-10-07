@@ -139,11 +139,13 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   `authz.ts` is the second layer, not the only one. **Never introduce a
   service-role client here** — it would make every query trivially allowed and turn
   an app-level mistake into a data leak.
-- **Anything a client must not assert lives in SQL.** Derived progress
-  (`learn_complete_module`), marking (`learn_submit_attempt`), certificate issuance
-  (`learn_issue_certificate`), enrolment (`learn_claim_me`). `learn_level_progress`
-  and `learn_course_progress` have no write policy for anybody, deliberately: a
-  client that can write its own percentage makes the dashboard fiction.
+- **Anything a client must not assert lives in SQL.** Stage Quiz marking, and with it
+  the pass that completes a Stage (`learn_submit_attempt`), derived progress
+  (`learn_refresh_progress`), certificate issuance (`learn_issue_certificate`),
+  enrolment (`learn_claim_me`). `learn_complete_module` only records that a Stage was
+  read: since 0113 reading completes nothing. `learn_level_progress` and
+  `learn_course_progress` have no write policy for anybody, deliberately: a client
+  that can write its own percentage makes the dashboard fiction.
 - **Next has a security floor, and no ceiling.** The September 2026 AVIF
   image-optimization RCE (GHSA-2xp9-vwfh-vxw4, CVSS 9.5) is fixed in Next 15.5.24
   and 16.3.3, so **do not go below 16.3.3.** Nothing caps Next on Vercel, which is
@@ -160,9 +162,10 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   name 'PageProps'" on ten call sites. It passes locally only when a previous build
   happened to leave `.next` behind, which is how this reached CI unnoticed. Do not
   reduce the script back to bare `tsc`.
-- **A lesson slug is unique only within its module.** `intro`, `check` and
-  `complete` each occur once per module, thirteen times over. Anything identifying a
-  lesson needs the module too — that is why `viewLessonAction` takes both.
+- **A lesson slug is unique only within its Stage** (`module` in the schema). `intro`,
+  `check` and `complete` each occur once per Stage, eleven times over. Anything
+  identifying a lesson needs the Stage too — that is why `viewLessonAction` takes
+  both.
 - **No `src/proxy.ts` / middleware.** Every protected page does its own session
   check and passes its own `returnTo`. Don't reintroduce middleware.
 - **The film ships with the app.** `public/media/journey-of-a-gift.mp4` (35 MB) is
@@ -209,9 +212,9 @@ Nothing equivalent runs against Supabase yet — so the rules above are enforced
 the migrations and checked by nothing that runs on every change.
 
 **Treat that as the standing risk when touching `src/lib/` or any `learn_*`
-function.** Walk the journey manually: register, baseline, a module, the level
-assessment, the certificate, the admin dashboards. A pushed branch gets a Vercel
-preview deployment, which is the closest thing to the real host.
+function.** Walk the journey manually: register, the first Baseline Sitting, a Stage
+and its Stage Quiz, the Certificate, the admin dashboards. A pushed branch gets a
+Vercel preview deployment, which is the closest thing to the real host.
 
 ## Design
 

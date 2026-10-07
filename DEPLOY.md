@@ -208,8 +208,9 @@ It is public today, deliberately, and that cannot stay. Three reasons, all concr
    documents, SAMJ papers, the SATCS reference file. Save7 was given them for the
    course; a public repository republishes them, which is a different thing from
    citing them.
-3. Module 9's legal content and Module 10's clinical criteria have not been
-   reviewed yet. A public repository is a public claim.
+3. The legal Stages, Intermediate Stage 3 and Advanced Stage 3, have not been
+   reviewed by a lawyer, and no lesson prose has a recorded sign-off. A public
+   repository is a public claim.
 
 **Why it is public anyway:** Vercel's Hobby plan cannot deploy a private repository
 owned by a GitHub organization. Going private therefore means one of two things, and
@@ -658,7 +659,7 @@ change is slower and is reviewable in a pull request.
 ## Before you launch
 
 The content-review register at `/admin/content-review` lists every Stage Quiz,
-Baseline and clinical gate question. **As of 29 September 2026 all 205 are marked
+Baseline and clinical gate question. **As of 7 October 2026 all 205 are marked
 approved, and none carries a Save7 reviewer's name.** Each was approved by the
 content generator because it names the document its answer was checked against.
 None was approved by a person at Save7. The page shows who signed each item off,
@@ -692,11 +693,14 @@ decision.
   five-year report, 2017–2021, and keeps the ODF's 2010–2019 decade totals only as
   dated background. Figures reported for 2024 are marked as not independently
   verified. Newer verified figures would make Stage 1 land harder.
-- **The video has no captions or transcript.** You have said these are not needed;
-  noting it because it is the one accessibility gap in an otherwise
-  WCAG-conformant build.
-- **The privacy notice** needs your information officer's name, the hosting
-  location, and a data-retention period.
+- **The video has no captions or transcript.** An earlier version of this guide said
+  you had decided they were not needed. Wayfinder #58 replaced that: the film goes at
+  the top of Beginner Stage 3 only once it has captions, because WCAG 2.x SC 1.2.2
+  requires them on prerecorded video. #61 builds them and was still open on 7 October.
+- **The privacy notice** needs the responsible party's registered name and address,
+  your information officer's name and contact details, an address for access and
+  deletion requests, where the data is hosted and in which country, how long records
+  are kept, and a legal review against POPIA. `/privacy` lists the same six.
 - **Certificate wording** has not been signed off.
 
 ---

@@ -103,11 +103,12 @@ npm run typecheck && npm run lint && npm run build
 ```
 
 That is the gate. There is **no test suite.** The 53-assertion journey suite drove
-a learner through baseline → modules → assessment → certificate → analytics, and it
-was deleted with the local SQLite database it asserted against. Nothing equivalent
-runs against Supabase yet, so anything you change in `src/lib/` or in a `learn_*`
-function is unverified until you walk it by hand. HANDOVER.md §6 is blunt about
-this being the largest hole in the repo.
+a learner through the previous build's journey, baseline → modules → level
+assessment → certificate → analytics, and it was deleted with the local SQLite
+database it asserted against. Nothing equivalent runs against Supabase yet, so
+anything you change in `src/lib/` or in a `learn_*` function is unverified until you
+walk it by hand. HANDOVER.md §6 is blunt about this being the largest hole in the
+repo.
 
 Nothing runs the host locally: there is no `npm run preview` any more. A branch push
 gives you a Vercel preview deployment, which is the closest thing to a check of the
@@ -130,7 +131,7 @@ do not change the setting on your own (HANDOVER.md §6).
 
 Three things in it should not stay public: the quiz answer keys (`isCorrect` in
 `prisma/content/*.ts` and the generated SQL), `public/resources/`, which holds ten
-third-party academic PDFs that Save7 was given for this course, and Module 9's legal
-content, which has not been reviewed yet. A public repo republishes the first two and
-publishes the third as a claim. Until it is private, never commit anything you would
-not publish.
+third-party academic PDFs that Save7 was given for this course, and the legal
+Stages (Intermediate Stage 3 and Advanced Stage 3), which have not been reviewed yet.
+A public repo republishes the first two and publishes the third as a claim. Until it
+is private, never commit anything you would not publish.

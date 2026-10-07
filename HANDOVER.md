@@ -9,9 +9,9 @@ State at the time of writing:
 | | |
 | --- | --- |
 | This repo | `Save7Lives/learn.save7.org` (renamed from `transplant-alchemy`; the old `zzubyr7x/...` URLs redirect), `main` |
-| Backend repo | `gilbertlieb/save7-os`, `main` at `f387ff3` |
+| Backend repo | `gilbertlieb/save7-os`, `main` |
 | Supabase project | `zbaoziisqroqxfwcnhlb` — shared with the OS and the volunteer portal |
-| Migrations applied | `0091`–`0098` in `save7-os/supabase/migrations/` |
+| Migrations applied | `0091` onward in `save7-os/supabase/migrations/`. `0091`–`0098` are the schema, and later ones changed it and the content (§2). The sequence is shared with the OS: production's head was `0124` on 2026-10-07 |
 | Host | Vercel, Hobby team `Save7`, project `learn-save7-org`; `https://learn.save7.org` since 2026-10-07 |
 | Branch `supabase-auth` | Identical to `main` — merged, kept only as a marker |
 
@@ -73,16 +73,21 @@ matter any more, by design. Anything a client must not be able to assert is a
 | --- | --- | --- |
 | `learn_submit_attempt` | 0097 | Grading needs the answer key, which has no read path |
 | `learn_grade_check` | 0097 | Same, for the inline checks |
-| `learn_start_attempt` | 0097 | Resume must not mint a new attempt; refuses the Baseline since 0110 |
+| `learn_start_attempt` | 0097 | Resume must not mint a new attempt; refuses the Baseline since 0110, and the Level-wide quiz since 0113 |
+| `learn_start_stage_quiz` | 0113 | The draw of five questions from a Stage's fifteen, so a refresh cannot re-roll for easier ones |
 | `learn_submit_baseline_sitting` | 0110 | Marks a Baseline Sitting from the bank, never the payload; written once, capped at four |
-| `learn_complete_module` | 0096 | Level and course percentages are derived, not claimed |
+| `learn_complete_module` | 0096, 0113 | Records that a Stage was read and nothing more: since 0113 passing the Stage Quiz is what completes a Stage. Level and course percentages are derived (`learn_refresh_progress`), not claimed |
 | `learn_view_lesson` | 0096 | Same row, so the completed-lesson set stays a set |
-| `learn_issue_certificate` | 0098 | Two gates must be checked where they cannot be skipped |
+| `learn_issue_certificate` | 0098, 0113 | The gate, every Stage Quiz in the Level passed, must be checked where it cannot be skipped |
 | `learn_verify_certificate` | 0098 | A verifier has no account, so RLS cannot serve them |
 | `learn_set_name` | 0098 | Renaming touches live certificates, which have no update policy |
 | `learn_claim_me` | 0095 | `learners` has no insert policy, on purpose; since 0119 Google's name seeds a new row only, never an existing one |
 | `learn_record_popia_consent` | 0111 | Consent is written once and never moved; the column has no client grant |
 | `learn_record_date_of_birth` | 0117 | An under-18 date deletes the row and is never stored; an adult date never moves |
+
+In the schema a Stage is still called a `module` (`learn_modules`, `learn_complete_module`,
+`module_slug`): no stored key was renamed when the course became 3 Levels and 11 Stages
+(#26), so the domain says Stage and the database says `module`.
 
 If a feature seems to need one of these behaviours in TypeScript, that is the
 signal to write SQL, not to add a policy.
@@ -151,12 +156,12 @@ into a data leak. **Never introduce one here.**
 
 Each of these was a real failure, not a hypothetical.
 
-**Lesson slugs are unique only within a module.** `intro`, `check`, `complete`,
-`study-guide` and `further-reading` each occur once per module — thirteen times
-over. 0091 made `slug` the primary key, so 97 lessons upserted into 26 rows and
-0094's probe raised `expected 97 lessons, found 26`. The key is now
-`(module_slug, slug)`. Anything identifying a lesson needs the module too, which is
-why `viewLessonAction` takes both — resolving the module from the lesson is no
+**Lesson slugs are unique only within a Stage.** `intro`, `check`, `complete`,
+`study-guide` and `further-reading` each occur once per Stage — eleven times over.
+0091 made `slug` the primary key, so the first load, the previous build's 97 lessons,
+upserted into 26 rows and 0094's probe raised `expected 97 lessons, found 26`. The key
+is now `(module_slug, slug)`. Anything identifying a lesson needs the Stage too, which
+is why `viewLessonAction` takes both — resolving the Stage from the lesson is no
 longer possible.
 
 **`NEXT_PUBLIC_*` is inlined at build time, and a build does not always have the
@@ -256,9 +261,10 @@ as well — that one has no RPC route.
 
 ## 6. Unfinished, and the risks the user has accepted knowingly
 
-**The 53-assertion journey suite is gone.** This is the largest hole. It drove
-baseline → modules → assessment → certificate → analytics against the local SQLite
-file and checked every assessment-integrity guarantee. It was removed with the
+**The 53-assertion journey suite is gone.** This is the largest hole. It drove the
+previous build's journey, baseline → modules → level assessment → certificate →
+analytics, against the local SQLite file and checked every assessment-integrity
+guarantee. It was removed with the
 database it depended on. The rules it protected are now in migrations 0097 and 0098
 and enforced there, but the probes are structural, not behavioural — nothing
 exercises the rules end to end. Rewriting it needs a service-role key and a

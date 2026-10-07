@@ -70,7 +70,7 @@ which posts to the `register-learner` Edge Function.
 | `npm run lint` | ESLint |
 | `npm run content:emit` | Regenerate the Supabase migration that loads the course |
 | `npm run content:apply` | Apply that migration to the Supabase project |
-| `npm run media:upload` | Publish the Module 5 video to Supabase Storage (optional; see [MEDIA-HOSTING.md](MEDIA-HOSTING.md)) |
+| `npm run media:upload` | Publish the Stage 3 film (*The Journey of a Gift*) to Supabase Storage (optional; see [MEDIA-HOSTING.md](MEDIA-HOSTING.md)) |
 | `npm run brand:generate` | Re-embed the Save7 logo used on certificates |
 
 There is no deploy script: Vercel builds every push (see [Deploying](#deploying)).
@@ -90,17 +90,28 @@ Three levels, each a **complete achievement with its own certificate**. A learne
 who stops after Beginner has finished something real — that is a deliberate
 design goal, not a consolation.
 
-| Level | Title | Modules | Certificate |
-| --- | --- | --- | --- |
-| 🟢 Beginner | Start the Conversation | 1–4 | Conversation Starter |
-| 🟡 Intermediate | Understand the Journey | 5–8 | Donation Advocate |
-| 🔴 Advanced | Become a Transplant Advocate | 9–13 | Transplant Advocate |
+Eleven **Stages** in all, from `prisma/content/structure.ts`:
 
-**Learner flow:** welcome → introduction → first Baseline Sitting → chosen level's
-modules → level assessment → knowledge-impact screen → certificate → continue or
-stop.
+| Level | Stages | Certificate |
+| --- | --- | --- |
+| 🟢 Beginner | 3: Why Donation Matters · Busting the Myths · How Donation Actually Works | Beginner |
+| 🟡 Intermediate | 4: How Donation Happens: The Process · Consent: Whose Decision and How · The South African Legal Framework · Ethics of Donation and End-of-Life Care | Intermediate |
+| 🔴 Advanced | 4: The Transplant/Donation Coordinator's Role · Having the Donation Conversation · Consent and End-of-Life Ethics, In Depth · Public Advocacy: Equity, Media, and Community Trust | Advanced |
 
-Every module follows the same seven-part spine: *why this matters → learn → key
+Stage numbering restarts in each Level, because the Certificate is per Level. A
+Certificate's title is the Level's name and nothing more. **In the database and in
+code a Stage is still a `module`** (`learn_modules`, `learn_complete_module`, the
+`/levels/[level]/modules/[module]` route): no stored key was renamed (#26), so the
+content files say Stage and the schema says `module`.
+
+**Learner flow:** welcome → introduction → first Baseline Sitting → Stage content,
+each Stage ending in its Stage Quiz → Certificate, once every Stage Quiz in the Level
+is passed → later Baseline Sittings, offered after each Level and never required.
+Stage content waits for the first Sitting. A Stage Quiz is five questions drawn from
+a bank of fifteen, and four right passes it. Passing it is what completes the Stage,
+and retaking it is unlimited. There is no Level-wide assessment.
+
+Every Stage follows the same seven-part spine: *why this matters → learn → key
 takeaways → check your understanding → study guide → further reading → complete*.
 
 ---
@@ -141,8 +152,10 @@ security-definer function in the database, not code here:
 | --- | --- |
 | `learn_submit_attempt` | Grading needs the answer key, which has no read path |
 | `learn_grade_check` | Same, for the inline checks |
-| `learn_complete_module` | Level and course percentages are derived, not claimed |
-| `learn_issue_certificate` | Both gates must be checked where they cannot be skipped |
+| `learn_start_stage_quiz` | The draw of five questions from fifteen, so a refresh cannot re-roll for easier ones |
+| `learn_complete_module` | Records that a Stage was read, nothing more. Passing the Stage Quiz is what completes a Stage, and Level and course percentages are derived, not claimed |
+| `learn_submit_baseline_sitting` | A Sitting is marked from the bank, never from the payload, and written once |
+| `learn_issue_certificate` | The gate, every Stage Quiz in the Level passed, must be checked where it cannot be skipped |
 | `learn_verify_certificate` | A verifier has no account, so RLS cannot serve them |
 | `learn_claim_me` | `learners` has no insert policy, on purpose |
 | `learn_record_date_of_birth` | An under-18 date deletes the row it would be written to, and is never stored |
@@ -157,8 +170,8 @@ src/
     api/quiz/check   server-side grading for inline checks
     certificate/     public verification, its own bare layout for printing
   components/
-    lesson/          lesson body, Markdown renderer, module runner
-    quiz/            assessment runner
+    lesson/          lesson body, Markdown renderer, Stage runner (`ModuleRunner`)
+    quiz/            Stage Quiz and Baseline runners
     ui/              design system primitives
   lib/
     auth.ts          Google sign-in via Supabase, sessions
@@ -166,7 +179,7 @@ src/
     course.ts        structure + progress reads
     progress.ts      progress writes and events
     quiz.ts          the quiz engine
-    impact.ts        knowledge-improvement calculations
+    baseline.ts      Baseline Sittings, when one is due, and Improvement read off them
     certificates.ts  issuance and verification
     analytics.ts     admin reporting
     supabase/        server + browser clients, one project config
@@ -174,7 +187,9 @@ src/
     rows.ts          the shape of every row this app reads
 prisma/
   content/           the course, as data — the authoring source of truth
-    review.ts        the content-review register, derived from that content
+    structure.ts     the Levels and Stages, and the lessons in each
+    quiz-*.ts        the Stage Quiz banks, one file per Level
+    questions-*.ts   the Baseline and the clinical gate banks
 scripts/
   emit-supabase-content.ts   writes the course into a Supabase migration
 ```
@@ -236,27 +251,39 @@ names its sources in the text and in each Stage's further reading, and nothing i
 the app records a sign-off on it. And nothing learner-facing reads the register, so
 a question still needing verification reaches learners with no badge.
 
-**As of 29 September 2026**, all 205 registered questions are approved on a named
-source, and none yet carries a Save7 reviewer's name.
+**As of 7 October 2026**, read from production, all 205 registered questions are
+approved on a named source, and none yet carries a Save7 reviewer's name.
 
 Citations are real. No author, year, journal or identifier has been invented
 anywhere in this course.
 
 ### Where the content comes from
 
-All lesson content is drawn from the material Save7 supplied, which is served from
-`/public/resources` so learners can open the reading rather than hit a paywall.
+The base is the Source Corpus: the ten PDFs Save7 supplied, served from
+`/public/resources` so learners can open the reading rather than hit a paywall, and
+one film. The Stages also cite public law and professional guidance that is not in the
+corpus (below the table). **A Stage's own source list is its `further-reading.md`,
+and each Stage Quiz item names the document it was checked against in
+`verifiedAgainst`.** The table says where each corpus source is used, by Stage.
 
 | Source | Used for |
 | --- | --- |
-| Save7, *Transplant Alchemy 101 — Study Guide* | The spine of the course. Its five objectives map to modules 1, 2, 7, 9 and 8 |
-| Save7, *7 Lives in 7 Steps* | Referral triggers, documentation, and the decoupling principle |
-| Save7, *The Journey of a Gift* (6m59s) | Module 5 |
-| Thomson et al. (2021), *SA Guidelines on the Determination of Death* | Module 6, closely followed rather than paraphrased |
-| SATCS *Red File* | Donation routes, team roles, national figures |
-| *Excellence in Deceased Donation* manual (2025) | Donor management, family support, HPCSA consent and palliative guidance |
-| Han et al. (2017) | That families who take longer to decide consent *more*, not less |
-| Mancini & Lietz (2010), Weill et al. (2015), Porrett et al. (2009) | Modules 10 and 11 |
+| Save7, *Transplant Alchemy 101 — Study Guide* | Beginner Stages 2 and 3, for the family's role in consent (its Objective 2), cited beside de Jager et al. (2019). A tertiary document, so the primary sources lead |
+| Save7, *7 Lives in 7 Steps* | Not used as content: it is an ICU referral algorithm for hospital staff, and the Curriculum Spec excludes it. Beginner Stage 3 and Intermediate Stage 1 name it in Further Reading only to say what not to reach for |
+| Save7, *The Journey of a Gift* (6m59s) | Beginner Stage 3's film. Further Reading in all three Beginner Stages points to it, and #61, still open, is to show it at the top of Stage 3 |
+| Thomson et al. (2021), *SA Guidelines on the Determination of Death* | Intermediate Stage 1: the tests in *Determining death* come from it, and most of that Stage Quiz is checked against it |
+| SATCS *Red File* | Referral, consent and family-approach practice, donation routes, team roles and tissue donation. Every Stage cites it, most heavily Advanced Stages 2 and 4 |
+| *Excellence in Deceased Donation* manual (2025) | The reprints inside it that the course cites, among them the Western Cape circular H 84/2025, HPCSA Booklets 4 and 17, and the Australian best-practice guideline, which the Stage Quizzes mark as non-South African. Cited in Intermediate Stages 1 and 4 and Advanced Stages 1 to 3 |
+| Han et al. (2017) | Advanced Stage 2: a slow decision is not a refusal. Families who took 48 hours or more consented no less often than the faster ones (73% against 55%, a difference that was not statistically significant), at one centre in South Korea |
+| Mancini & Lietz (2010) | Beginner Stage 1: the heart-transplant survival figure, and the clinical gate bank |
+| Weill et al. (2015) | The clinical gate bank only. No Stage cites it |
+| Porrett et al. (2009) | In the corpus, but no Stage or question cites it |
+
+**Public law and guidance that is not in the corpus**, each named in the Stage that
+uses it: the National Health Act 61 of 2003 (Chapter 8) and its 2012 regulations, GN
+R180, which Stages in all three Levels cite; the HPCSA booklets, for Intermediate
+Stages 2 and 4 and Advanced Stage 3; and the SATS/SATCS five-year report, for Beginner
+Stages 1 and 2 (below).
 
 **The newest verified national figures are for 2021.** Beginner Stage 1 leads with
 the SATS/SATCS five-year report, 2017–2021 (published 2024). Its study guide keeps
@@ -264,31 +291,45 @@ the Organ Donor Foundation's 2010–2019 decade totals only as dated background,
 marks figures reported for 2024 as not independently verified. Every statistic
 carries its year, since an undated one quietly becomes a wrong one.
 
-### FACTS — partially verified, deliberately framed
+### FACTS — taught as FACTS's own, deliberately framed
 
-Module 12 now teaches **FACTS**, the Family Approach to Consent for Transplant
-Strategy. What is verified and what is not:
+Advanced Stage 2, *Having the Donation Conversation*
+(`content/advanced/donation-conversation/`), teaches **FACTS**, the Family Approach to
+Consent for Transplant Strategy, and its eight steps as FACTS's own: planning,
+breaking bad news, a time-out break, assessing understanding and acceptance, the
+consent conversation, a second time-out break, the final family discussion, and
+follow-up, feedback and support.
 
-| Claim | Status |
-|---|---|
-| The acronym expands to "Family Approach to Consent for Transplant Strategy" | **Verified** — de Jager et al., *SAMJ* 2019;109(9) |
-| Developed at Wits Transplant, adapted from the UK NHSBT model | **Verified** — same source |
-| Intended for transplant procurement coordinators | **Verified** — same source |
-| It is a stepwise process | **Verified** — same source |
-| The eight steps, and their names | **Not verified.** Supplied by Save7 from the Organ and Tissue Donation Reference File, which is gated and could not be read. Flagged as launch-blocking. |
+**Where each claim comes from.** The steps, the Do's and Don'ts, the two hard cases and
+the donor pause are from the *Wits Transplant Procurement Handbook* (Wilmans and de
+Jager, 2019). The handbook's download link no longer works, and its FACTS section is
+reproduced in the SATCS Red File, which is now in the Source Corpus
+(`public/resources/satcs-red-file.pdf`, section 8.1). That is the file the previous
+build could not read, which is why it had to flag the steps as unverified. The
+acronym, the Wits origin, the adaptation of the UK NHS Blood and Transplant guidance
+and the intended audience of procurement coordinators are from de Jager et al.,
+*SAMJ* 2019;109(9). The consent-rate figure in that paper (25% to 73%, 35 of 48
+families) is one coordinator at one centre, compared before and after, and the lesson
+says so. Wayfinder #49 decided to teach the steps as FACTS's own, citing the Red File.
 
 **The framing is a safety decision, not an editorial one.** FACTS is a clinical
-procurement strategy. The module teaches learners to understand *why* the
-professional conversation is structured as it is; it states plainly, in the lesson,
-the study guide and a check question, that completing the course does not qualify
-anyone to approach a family or request consent. A course completion must never read
-as authorisation to do a transplant coordinator's job.
+procurement strategy. The Stage teaches learners to understand *why* the professional
+conversation is structured as it is, and to apply the parts that fall to anyone near a
+family: refer early, keep donation out of the conversation until the family accepts
+the death, avoid the words that mislead. Its introduction says plainly that asking for
+consent belongs to the transplant coordinator working with the treating team, and that
+completing the course qualifies nobody to do it, and its key takeaways repeat that
+asking is the coordinator's job. The Stage Quiz is written so that no item treats the
+learner as the person who asks. A course completion must never read as authorisation
+to do a transplant coordinator's job.
 
-**The video has no captions or transcript.** Save7 has decided these are not needed.
-Noting it here because they are the one accessibility gap in an otherwise
-WCAG-conformant build: a learner who cannot use audio currently cannot access
-Module 5's primary content. Chapter timecodes were also not measured, so the chapter
-list beside the player labels rather than seeks.
+**As of 7 October 2026 the film has no captions or transcript, and no lesson shows
+it.** *The Journey of a Gift* ships with the app, and Further Reading in the three
+Beginner Stages points to it, but nothing plays it inside a Stage. Wayfinder #58 decided it goes at the
+top of Beginner Stage 3 only once it has captions: WCAG 2.x SC 1.2.2 requires them on
+prerecorded video, and a transcript alone does not meet it. That replaced an earlier
+note here that Save7 had decided captions were not needed. #61 builds the captions and
+the placement, and is still open.
 
 ---
 
@@ -332,31 +373,32 @@ by `supabase db push`, so a correction is `npm run content:emit` followed by a
 push — slower, and reviewable, which is the trade that was wanted.
 
 **The end-to-end journey suite is gone and needs rewriting.** It drove a learner
-through baseline → modules → assessment → certificate → analytics and asserted 53
-behaviours against the local SQLite file. Nothing equivalent runs against Supabase
-yet, and that is the largest gap in this repo's verification. It needs a
-service-role key and a disposable learner; until then the marking rules are
-covered only by the probes inside the migrations.
+through the previous build's journey, baseline → modules → level assessment →
+certificate → analytics, and asserted 53 behaviours against the local SQLite file.
+Nothing equivalent runs against Supabase yet, and that is the largest gap in this
+repo's verification. It needs a service-role key and a disposable learner; until
+then the marking rules are covered only by the probes inside the migrations.
 
 ---
 
 ## What Save7 still needs to supply
 
-The platform and the course content are both complete. What remains is review and
-a handful of details.
+The Levels and Stages are written and in production: three Levels and eleven Stages.
+What remains for Save7 to supply or decide is below, and
+[DEPLOY.md](DEPLOY.md) (*Outstanding right now* and *Before you launch*) is the longer
+account. Build work is tracked on the wayfinder map, not here.
 
 | | |
 | --- | --- |
-| **Legal review** | Module 9, against the National Health Act as currently in force |
-| **Clinical review** | Module 10's selection criteria |
-| **Assessment sign-off** | 91 questions registered for review at `/admin/content-review` |
+| **Legal review** | Intermediate Stage 3 (*The South African Legal Framework*) and Advanced Stage 3 (*Consent and End-of-Life Ethics, In Depth*), against the National Health Act as currently in force. Nothing records that a lawyer has read them |
+| **Lesson prose sign-off** | No Stage's prose has one. Nothing registers prose or records who read it, so a sign-off has to happen outside the app. The law and the clinical criteria are the highest-risk prose: the determination of death in Intermediate Stage 1 and donor eligibility in Beginner Stage 2 |
+| **Question sign-off** | All 205 registered questions are approved on a named source by the content generator, and none by a person at Save7. Approving or rejecting an item at `/admin/content-review` is what puts a name against it |
 | **Refreshed statistics** | National figures newer than 2021, when SATS or the ODF publish them |
-| **FACTS eight steps** | Confirm the sequence and step names against the Organ and Tissue Donation Reference File, and supply the file so its citation can be completed |
 | **Certificate wording** | Sign-off on the current text |
-| **Privacy notice details** | Information officer, hosting location, retention period |
-| **Deployment credentials** | Postgres |
-| **Hosting plan** | Confirm the course meets Vercel Hobby's non-commercial condition, or fund Pro ($20 per developer seat per month) |
-| **Optional** | Captions and a transcript for the video, and chapter timecodes |
+| **Privacy notice details** | The responsible party's registered name and address, the information officer, an address for access and deletion requests, where the data is hosted, how long records are kept, and a legal review against POPIA. `/privacy` lists them |
+| **Live hostname settings** | `SITE_URL` and `NEXT_PUBLIC_SITE_URL` still hold a placeholder, and the Supabase redirect URL had not been added as of 7 October. The Google origin was reported done and cannot be checked from outside Google |
+| **Hosting plan** | Confirm the course meets Vercel Hobby's non-commercial condition, or fund Pro ($20 per developer seat per month). The repository must go private before launch, which needs Pro or a move to a personal GitHub account |
+| **A way to take the site down** | None exists on Vercel. The old holding page went with Cloudflare |
 
 ---
 
@@ -369,32 +411,37 @@ Documented rather than half-built:
   chatbot. The resource metadata needed to build it is already in the schema.
 - **Full CMS authoring UI** — the data model already supports it; see *Content is
   data, not code* above.
-- **Video engagement analytics** — needs the video asset and its player first
+- **Video engagement analytics** — needs the film shown inside a Stage first
   (wayfinder #61).
 
 ---
 
-## Verification performed
+## Verification
 
-- Full learner journey driven in a browser: register → baseline → modules (every
-  interactive component exercised) → assessment → impact screen → certificate →
-  dashboard.
-- All 13 module pages render without error.
-- **Security:** admin routes return 404 to learners; a validly-signed token
-  claiming `role: ADMIN` is still rejected because the role is re-read from the
-  database; forged cookies rejected; the inline-check API requires auth; answer
-  keys confirmed absent from page payloads; the certificate page leaks no email,
-  score or answers.
-- **Gating:** modules require the baseline; assessments require completed modules;
-  certificates require both completed modules and the pass mark.
-- **Accessibility:** 0 contrast failures across the app after darkening the
-  neutral scale and the pink used behind small white text — brand pink measured
-  4.31:1 against white, just under the 4.5:1 minimum, so buttons use a marginally
-  deeper shade. Single `h1` per page, no skipped heading levels, all controls
-  named, all inputs labelled, visible focus ring, 44px tap targets, `lang="en-ZA"`.
-- **Responsive:** no horizontal scroll at 375 / 768 / 1280; the comparison tables
-  collapse to a tabbed view below `md`.
-- `npm run build`, `typecheck` and `lint` all clean.
+The dated record is [DEPLOY.md](DEPLOY.md), *What has been verified, and what has not*;
+this is its summary, as of 7 October 2026.
+
+- **Gates.** `npm ci`, typecheck, lint and build run from a clean checkout on every
+  push to `main` and every pull request (`build.yml`), and the Build workflow passed
+  on `fc18150`, the last code commit.
+- **Answer keys.** `verify_learn_isolation()` passed against the live project on
+  2026-09-23, and `learn_choices` and `learn_questions` both denied a direct read.
+- **Production, unauthenticated.** `/`, `/login`, `/register` and `/privacy` answer
+  `200`, `/dashboard` and `/admin` redirect to sign-in, and the film serves as
+  `video/mp4` with range requests.
+- **The question register.** All 205 registered questions are approved on a named
+  source, none by a Save7 reviewer (read from production on 7 October 2026).
+- **The course in production.** Three Levels and eleven Stages (read from production
+  on 7 October 2026).
+
+**Not verified:** anything behind sign-in on the live site, Google sign-in on
+`learn.save7.org`, marking against real data, and the end-to-end journey, which no
+suite covers any more.
+
+An earlier version of this section recorded a browser walkthrough of the previous
+build, its interactive components, and a contrast and responsive audit. It described
+an app that no longer exists, so it was replaced rather than kept as current, and git
+history keeps it.
 
 ---
 
