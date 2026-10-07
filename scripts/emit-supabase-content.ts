@@ -41,6 +41,7 @@
 import { readdirSync, writeFileSync } from "node:fs";
 
 import { loadLesson } from "../prisma/content/markdown";
+import { FILM_KEYS } from "../src/lib/films";
 import { assertBankIsWellFormed, type StageQuizBanks } from "../prisma/content/quiz";
 import { beginnerStageQuizBanks } from "../prisma/content/quiz-beginner";
 import { intermediateStageQuizBanks } from "../prisma/content/quiz-intermediate";
@@ -120,10 +121,17 @@ const LETTERS = "abcdefghij";
 // ── which Stages are finished ───────────────────────────────────────────────
 assertBankIsWellFormed(stageQuizBanks);
 
-type ReadyStage = { level: LevelStructure; stage: StageSeed; bodies: Map<string, string> };
+type ReadyStage = {
+  level: LevelStructure;
+  stage: StageSeed;
+  bodies: Map<string, string>;
+  /** Lesson slug to the registry key of the film it opens with (#61). */
+  films: Map<string, string>;
+};
 
 function readiness(level: LevelStructure, stage: StageSeed): ReadyStage | null {
   const bodies = new Map<string, string>();
+  const films = new Map<string, string>();
   let stubs = 0;
   for (const lesson of stage.lessons) {
     if (!lesson.bodyPath) continue;
@@ -133,11 +141,12 @@ function readiness(level: LevelStructure, stage: StageSeed): ReadyStage | null {
     }
     if (loaded.isStub) stubs++;
     bodies.set(lesson.slug, loaded.bodyMarkdown);
+    if (loaded.frontMatter.video) films.set(lesson.slug, loaded.frontMatter.video);
   }
   const hasBank = stage.slug in stageQuizBanks;
   const proseDone = stubs === 0;
 
-  if (proseDone && hasBank) return { level, stage, bodies };
+  if (proseDone && hasBank) return { level, stage, bodies, films };
   if (!proseDone && !hasBank) return null;
   throw new Error(
     proseDone
@@ -152,7 +161,7 @@ const ready = courseStructure.flatMap((level) =>
 const readySlugs = new Set(ready.map((r) => r.stage.slug));
 
 const out: string[] = [];
-const counts = { levels: 0, stages: 0, lessons: 0, resources: 0, stageQuiz: 0, baseline: 0, gate: 0, choices: 0, review: 0 };
+const counts = { levels: 0, stages: 0, lessons: 0, films: 0, resources: 0, stageQuiz: 0, baseline: 0, gate: 0, choices: 0, review: 0 };
 const review: ReviewSeed[] = [];
 
 out.push(`-- The course content, emitted from the authoring files (${only === "all" ? "course, baseline and gate" : only}).
@@ -199,7 +208,7 @@ if (emitCourse) {
   }
 
   // The domain says Stage; the schema says module (#26). The mapping is here only.
-  for (const { level, stage, bodies } of ready) {
+  for (const { level, stage, bodies, films } of ready) {
     counts.stages++;
     out.push(`insert into learn_modules (
   slug, level_slug, position, title, number, core_question, intro_markdown,
@@ -217,11 +226,17 @@ if (emitCourse) {
 
     for (const [lessonIndex, lesson] of stage.lessons.entries()) {
       counts.lessons++;
+      // The one thing component_key carries since #58 retired the interactive
+      // components: the registry key of the film the lesson opens with (#61). It is
+      // a key into src/lib/films.ts, never a URL, and loadLesson() has already
+      // refused any value that is not registered.
+      const film = films.get(lesson.slug);
+      if (film) counts.films++;
       out.push(`insert into learn_lessons (
   slug, module_slug, position, title, kind, body_markdown, component_key, payload
 ) values (
   ${q(lesson.slug)}, ${q(stage.slug)}, ${lessonIndex}, ${q(lesson.title)}, ${q(lesson.kind)},
-  ${q(bodies.get(lesson.slug))}, NULL, NULL
+  ${q(bodies.get(lesson.slug))}, ${q(film)}, NULL
 ) on conflict (module_slug, slug) do update set
   position = excluded.position, title = excluded.title, kind = excluded.kind,
   body_markdown = excluded.body_markdown, component_key = excluded.component_key,
@@ -501,6 +516,7 @@ for (const item of review) {
 const probe: string[] = [];
 if (emitCourse) {
   const slugList = [...readySlugs].map((s) => q(s)).join(", ");
+  const filmKeyList = FILM_KEYS.map((k) => q(k)).join(", ");
   probe.push(`  select count(*) into n from learn_levels;
   if n <> ${counts.levels} then raise exception 'expected ${counts.levels} levels, found %', n; end if;
 
@@ -520,6 +536,18 @@ if (emitCourse) {
   select count(*) into n from learn_lessons
    where strpos(body_markdown, '<!--') > 0 or strpos(body_markdown, '_Not yet written._') > 0;
   if n <> 0 then raise exception '% lesson(s) carry a drafting brief or stub text', n; end if;
+
+  /* component_key carries one thing: the registry key of the film a lesson opens
+     with (src/lib/films.ts, #61). The app resolves it through that registry, so a
+     key outside it is a value nothing can render, and a payload is a pattern #58
+     walked away from. */
+  select count(*) into n from learn_lessons where component_key is not null;
+  if n <> ${counts.films} then raise exception 'expected ${counts.films} lesson(s) with a film, found %', n; end if;
+  select count(*) into n from learn_lessons
+   where component_key is not null and component_key not in (${filmKeyList});
+  if n <> 0 then raise exception '% lesson(s) name a film that is not registered', n; end if;
+  select count(*) into n from learn_lessons where payload is not null;
+  if n <> 0 then raise exception '% lesson(s) carry a payload', n; end if;
 
   /* Fifteen per Stage, per the Blueprint — and no POST item outside a finished
      Stage, since a level-keyed POST attempt marks every POST row in its level. */

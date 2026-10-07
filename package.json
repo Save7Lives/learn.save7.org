@@ -11,7 +11,9 @@
     "brand:generate": "node scripts/generate-brand-assets.mjs",
     "content:emit": "tsx scripts/emit-supabase-content.ts",
     "content:apply": "node scripts/apply-content.mjs",
-    "media:upload": "node scripts/upload-media.mjs"
+    "media:check": "tsx scripts/check-media.ts",
+    "media:verify": "tsx scripts/verify-media.ts",
+    "media:upload": "tsx scripts/upload-media.ts"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^3.3.0",

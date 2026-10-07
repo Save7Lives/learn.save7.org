@@ -34,6 +34,12 @@ level: beginner
 ---
 ```
 
+A prose lesson may also open with the film: add `video: journey-of-a-gift` to its
+front matter, and the player, its transcript and the note on where the film differs
+from the course appear above the prose. The value is a key in `src/lib/films.ts` and
+nothing else: a URL, a path or an unregistered name fails the content build, so
+content can't point a learner at a file. Only Beginner Stage 3's `intro.md` uses it.
+
 `CHECK` and `COMPLETE` lessons have no file here: `CHECK` carries a question bank,
 and `COMPLETE` is a shell.
 

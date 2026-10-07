@@ -386,9 +386,11 @@ are still to do.
 - **Leftovers in the Cloudflare account `admin@save7.org`**: the pending `save7.org`
   zone (nothing was ever switched over to it) and the Worker `learn`, which still
   answers at `learn.save7.workers.dev`. Delete both once Vercel is proven.
-- **Hosting the 35 MB video on Supabase Storage is now optional.** The film ships
-  with the app and is served from the same origin. The public bucket `learn-media`
-  (map #23) is still the intended long-term home. See MEDIA-HOSTING.md.
+- **Moving the film to Supabase Storage is a hand-over step, not a build step.** The
+  film, its poster and its captions ship with the app and play from the same origin
+  until `npm run media:upload` has put them in the public bucket `learn-media` (map
+  #23) and `MEDIA_BASE_URL` is set in the Vercel project. The upload needs a secret key
+  and so is the user's to run. See MEDIA-HOSTING.md.
 
 ---
 

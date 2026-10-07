@@ -338,37 +338,35 @@ It confirms row level security is on for every `learn_*` table, that
 `learn_choices` has **no policy at all**, that no view names `is_correct`, and that
 `anon` has no direct read of the bank.
 
-### 5. The video
+### 5. The film
 
-`public/media/journey-of-a-gift.mp4` is 34.6 MiB. **It ships with the app** and is
-served from the same origin at `/media/journey-of-a-gift.mp4`. Vercel serves it as
-`video/mp4` with range requests — checked, an HTTP 206 — which is what seeking needs.
-A wrong content type is exactly how this fails, silently, in a `<video>` element, so
-that check is worth repeating after any change to how the file is served. The 25 MiB
-per-file asset cap that used to force the film elsewhere was a Cloudflare limit and
-no longer applies.
+*The Journey of a Gift* is shown at the top of Beginner Stage 3, with its captions,
+a transcript and a note. Its three files are in `public/media/` (the film is 34.6
+MiB), under names that carry their content hash, and **they ship with the app**:
+Vercel serves them from the same origin, the film as `video/mp4` with range requests,
+which is what seeking needs. The 25 MiB per-file asset cap that used to force the film
+elsewhere was a Cloudflare limit and no longer applies. `npm run media:check` is what
+keeps the names, the captions and the registry (`src/lib/films.ts`) in agreement, and
+CI runs it.
 
 **Supabase Storage, public bucket `learn-media`, is still the intended long-term
-home.** That is the decision on the map (#23), and `scripts/upload-media.mjs` still
-does it:
+home** (map #23). Moving there is three steps, all in [MEDIA-HOSTING.md](MEDIA-HOSTING.md):
 
-```bash
-npm run media:upload
-```
+1. **`npm run media:upload`** needs a Supabase secret key in `.env.secrets`
+   (git-ignored). It creates the bucket, uploads the three files with a one-year cache,
+   and proves against the public URL that each comes back with the right content type,
+   answers a range request with `206`, carries the one-year `cache-control`, and
+   allows cross-origin reads. It exits non-zero if any of that fails. The key must
+   never be committed, put in `.env`, or added to the Vercel project.
+2. **Set `MEDIA_BASE_URL`** in the Vercel project, for Production and Preview, to the
+   value the script prints, and **redeploy**: a changed variable reaches a running
+   deployment only that way. Do not set it before step 1 passes. Pointing the app at
+   files that are not there is the one way to get a dead player where the same-origin
+   copy would have worked.
+3. **`npm run media:verify`** repeats step 1's proofs against the bucket at any time,
+   with no secret.
 
-It creates the bucket, uploads the file, checks that it comes back as `video/mp4`, and
-prints the `MEDIA_BASE_URL` to set. It reads the service-role key from the
-environment; see `scripts/load-secrets.mjs`. That key must never be committed, put in
-`.env`, or added to the Vercel project. MEDIA-HOSTING.md has the reasoning, including
-which hosts do not work.
-
-`MEDIA_BASE_URL` is **optional and unset**. Setting it is meant to redirect `/media/`
-paths to the bucket host (`src/lib/media.ts` does the rewrite), and, like any variable,
-it takes effect only after a redeploy. But at the time of writing **nothing in `src/`
-imports `src/lib/media.ts`**, so treat the variable as not yet wired to anything, and
-check a deployment before relying on it. Do not set it before the object actually
-serves from the bucket: pointing the app at a file that is not there is the one way
-to break a video that works today.
+`MEDIA_BASE_URL` is **optional**. Unset, the film is served from `public/media`.
 
 ### 6. Set the environment variables
 
@@ -693,10 +691,12 @@ decision.
   five-year report, 2017–2021, and keeps the ODF's 2010–2019 decade totals only as
   dated background. Figures reported for 2024 are marked as not independently
   verified. Newer verified figures would make Stage 1 land harder.
-- **The video has no captions or transcript.** An earlier version of this guide said
-  you had decided they were not needed. Wayfinder #58 replaced that: the film goes at
-  the top of Beginner Stage 3 only once it has captions, because WCAG 2.x SC 1.2.2
-  requires them on prerecorded video. #61 builds them and was still open on 7 October.
+- **The film's captions have not been checked by someone listening.** Their timing came
+  from speech recognition. MEDIA-HOSTING.md says how, and names two moments (about 2:15
+  and 4:48) where the transcript and the recogniser disagreed on a word. The captions
+  also cover only what is said: the film's on-screen text and diagrams are not
+  described anywhere, which WCAG SC 1.2.3 (Level A) asks for, and nothing has decided
+  that is not needed.
 - **The privacy notice** needs the responsible party's registered name and address,
   your information officer's name and contact details, an address for access and
   deletion requests, where the data is hosted and in which country, how long records

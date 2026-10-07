@@ -4,6 +4,7 @@ title: Why this matters
 kind: INTRO
 stage: how-donation-works
 level: beginner
+video: journey-of-a-gift
 ---
 
 People do not usually ask advocates technical questions. They ask practical ones.

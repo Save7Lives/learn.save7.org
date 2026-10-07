@@ -70,7 +70,9 @@ which posts to the `register-learner` Edge Function.
 | `npm run lint` | ESLint |
 | `npm run content:emit` | Regenerate the Supabase migration that loads the course |
 | `npm run content:apply` | Apply that migration to the Supabase project |
-| `npm run media:upload` | Publish the Stage 3 film (*The Journey of a Gift*) to Supabase Storage (optional; see [MEDIA-HOSTING.md](MEDIA-HOSTING.md)) |
+| `npm run media:check` | Check the film's files: names carry their content hash, the captions are the transcript's words, the registry matches the file. Runs in CI |
+| `npm run media:upload` | Publish the Stage 3 film, its poster and captions to Supabase Storage, and prove how they are served (see [MEDIA-HOSTING.md](MEDIA-HOSTING.md)) |
+| `npm run media:verify` | Check that a host serves the film as the app needs: content type, range requests, one-year cache, CORS. Reads nothing secret |
 | `npm run brand:generate` | Re-embed the Save7 logo used on certificates |
 
 There is no deploy script: Vercel builds every push (see [Deploying](#deploying)).
@@ -270,7 +272,7 @@ and each Stage Quiz item names the document it was checked against in
 | --- | --- |
 | Save7, *Transplant Alchemy 101 — Study Guide* | Beginner Stages 2 and 3, for the family's role in consent (its Objective 2), cited beside de Jager et al. (2019). A tertiary document, so the primary sources lead |
 | Save7, *7 Lives in 7 Steps* | Not used as content: it is an ICU referral algorithm for hospital staff, and the Curriculum Spec excludes it. Beginner Stage 3 and Intermediate Stage 1 name it in Further Reading only to say what not to reach for |
-| Save7, *The Journey of a Gift* (6m59s) | Beginner Stage 3's film. Further Reading in all three Beginner Stages points to it, and #61, still open, is to show it at the top of Stage 3 |
+| Save7, *The Journey of a Gift* (6m59s) | Beginner Stage 3's film, shown at the top of the Stage with captions, a transcript and a note on the three places it contradicts the course (#61). Further Reading in all three Beginner Stages points to it too |
 | Thomson et al. (2021), *SA Guidelines on the Determination of Death* | Intermediate Stage 1: the tests in *Determining death* come from it, and most of that Stage Quiz is checked against it |
 | SATCS *Red File* | Referral, consent and family-approach practice, donation routes, team roles and tissue donation. Every Stage cites it, most heavily Advanced Stages 2 and 4 |
 | *Excellence in Deceased Donation* manual (2025) | The reprints inside it that the course cites, among them the Western Cape circular H 84/2025, HPCSA Booklets 4 and 17, and the Australian best-practice guideline, which the Stage Quizzes mark as non-South African. Cited in Intermediate Stages 1 and 4 and Advanced Stages 1 to 3 |
@@ -323,13 +325,16 @@ asking is the coordinator's job. The Stage Quiz is written so that no item treat
 learner as the person who asks. A course completion must never read as authorisation
 to do a transplant coordinator's job.
 
-**As of 7 October 2026 the film has no captions or transcript, and no lesson shows
-it.** *The Journey of a Gift* ships with the app, and Further Reading in the three
-Beginner Stages points to it, but nothing plays it inside a Stage. Wayfinder #58 decided it goes at the
-top of Beginner Stage 3 only once it has captions: WCAG 2.x SC 1.2.2 requires them on
-prerecorded video, and a transcript alone does not meet it. That replaced an earlier
-note here that Save7 had decided captions were not needed. #61 builds the captions and
-the placement, and is still open.
+**The film is shown at the top of Beginner Stage 3, with its captions on.** *The
+Journey of a Gift* plays inside the Stage, with its transcript beside it and a note on
+the three places where it contradicts the course: over 65 tissue lives against up to
+fifty, a state pathologist against the Forensic Pathology Service, and a legal
+guarantee of no cost against no cost in practice. Wayfinder #58 decided that, because
+WCAG 2.x SC 1.2.2 requires captions on prerecorded video and a transcript alone does
+not meet it, and #61 built it. The captions are what is **said**. What the pictures
+show is not described, which SC 1.2.3 asks for, and nothing has decided that is not
+needed. Their timing came from speech recognition and has not yet been checked by
+someone listening. [MEDIA-HOSTING.md](MEDIA-HOSTING.md) says where to listen.
 
 ---
 
@@ -353,12 +358,13 @@ Supabase's redirect URLs (the Google OAuth client's authorised origins were repo
 done by Gilbert but cannot be checked from outside Google). See
 [HANDOVER.md](HANDOVER.md) §6.
 
-**The video ships with the app.** `journey-of-a-gift.mp4` is 34.6 MiB, committed at
-`public/media/`, and Vercel serves it from the same origin as `video/mp4` with range
-requests. The 25 MiB asset limit that once kept it out of the deploy was
-Cloudflare's. Supabase Storage remains the intended long-term home and is optional
-until then. [MEDIA-HOSTING.md](MEDIA-HOSTING.md) has the detail, including what
-`MEDIA_BASE_URL` does and does not do today.
+**The film ships with the app.** The film, its poster and its captions are committed
+at `public/media/` under names that carry their content hash, and Vercel serves them
+from the same origin, the film as `video/mp4` with range requests. Supabase Storage
+remains the long-term home (#23). `npm run media:upload` puts the files there and
+proves how they are served, and the app moves over when `MEDIA_BASE_URL` is set in the
+Vercel project and the site is redeployed. [MEDIA-HOSTING.md](MEDIA-HOSTING.md) has
+the detail.
 
 **Hobby is for non-commercial use only, and the repository is public on purpose.**
 Nobody has confirmed that the course meets Hobby's condition. The repository is
@@ -411,8 +417,8 @@ Documented rather than half-built:
   chatbot. The resource metadata needed to build it is already in the schema.
 - **Full CMS authoring UI** — the data model already supports it; see *Content is
   data, not code* above.
-- **Video engagement analytics** — needs the film shown inside a Stage first
-  (wayfinder #61).
+- **Video engagement analytics** — the film now plays inside Stage 3 (wayfinder #61),
+  but nothing records that it was watched.
 
 ---
 

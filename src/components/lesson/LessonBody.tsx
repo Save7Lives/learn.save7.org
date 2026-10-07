@@ -1,4 +1,5 @@
 import { AwaitingContent } from "@/components/ui/primitives";
+import { LessonFilm } from "@/components/lesson/LessonFilm";
 import { Markdown } from "@/components/lesson/Markdown";
 import {
   ModuleComplete,
@@ -11,6 +12,16 @@ export type LessonRow = {
   title: string;
   kind: string;
   bodyMarkdown: string | null;
+  /** A film registered in src/lib/films.ts, shown above the prose, or null. */
+  filmKey?: string | null;
+};
+
+type LessonBodyProps = {
+  lesson: LessonRow;
+  /** The CHECK step's Stage Quiz, built by the Stage page, which holds the learner's state. */
+  stageQuiz?: React.ReactNode;
+  /** Only needed by the COMPLETE step, which is generated from module data. */
+  moduleContext?: ModuleCompleteContext;
 };
 
 /**
@@ -21,22 +32,26 @@ export type LessonRow = {
  * CHECK is the Stage Quiz (#57), and COMPLETE is generated from the Stage's own
  * data.
  *
+ * A lesson may also open with a film (`filmKey`, a registry key from the lesson's
+ * `video:` front matter), shown above everything else. Beginner Stage 3's intro
+ * is the only one (#61).
+ *
  * The prior build dispatched here on `componentKey` to eleven interactive
  * components fed by jsonb payloads. No lesson had used one since #33, and #58
- * retired them: tables are Markdown now, and the Stage 3 film gets a primitive
- * of its own (#61).
+ * retired them: tables are Markdown now, and the film is the one media primitive.
+ * `learn_lessons.component_key` survives as the column that carries the film's
+ * registry key, and nothing in it is ever dispatched on or rendered as a URL.
  */
-export function LessonBody({
-  lesson,
-  stageQuiz,
-  moduleContext,
-}: {
-  lesson: LessonRow;
-  /** The CHECK step's Stage Quiz, built by the Stage page, which holds the learner's state. */
-  stageQuiz?: React.ReactNode;
-  /** Only needed by the COMPLETE step, which is generated from module data. */
-  moduleContext?: ModuleCompleteContext;
-}) {
+export function LessonBody(props: LessonBodyProps) {
+  return (
+    <>
+      <LessonFilm filmKey={props.lesson.filmKey} />
+      <LessonContent {...props} />
+    </>
+  );
+}
+
+function LessonContent({ lesson, stageQuiz, moduleContext }: LessonBodyProps) {
   const prose = lesson.bodyMarkdown ? <Markdown source={lesson.bodyMarkdown} /> : null;
 
   if (lesson.kind === "CHECK") {

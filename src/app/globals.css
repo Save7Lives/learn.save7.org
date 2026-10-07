@@ -344,6 +344,18 @@ body {
   animation: save7-pulse-ring 1.8s ease-out infinite;
 }
 
+/* --- Film captions (#61) ------------------------------------------------- */
+
+/* Browsers size captions at a share of the video's height, which in a phone's
+   341-pixel-wide player comes to under 10px. Fixing the size is only worth doing
+   below `sm`: wider than that the player is big enough for the default, and in
+   landscape fullscreen the default is better than anything fixed. */
+@media (width < 40rem) {
+  video::cue {
+    font-size: 13px;
+  }
+}
+
 /* --- Print: certificates ------------------------------------------------- */
 
 @media print {

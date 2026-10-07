@@ -40,5 +40,8 @@ jobs:
 
       - run: npm run typecheck
       - run: npm run lint
+      # The film's files agree: names carry their content hash, the captions are the
+      # transcript's words, the registry's size and duration are the file's (#61).
+      - run: npm run media:check
 
       - run: npm run build

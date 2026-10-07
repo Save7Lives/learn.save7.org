@@ -74,6 +74,8 @@ export type LessonRow = {
   title: string;
   kind: LessonKind;
   body_markdown: string | null;
+  /** A registry key in src/lib/films.ts, or null. Holds only that: never a URL. */
+  component_key: string | null;
 };
 
 /** PRE and POST are the matched pair; CHECK is in-lesson; GATE is the volunteer gate. */

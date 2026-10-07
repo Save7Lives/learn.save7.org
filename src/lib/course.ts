@@ -77,6 +77,8 @@ function mapLesson(row: LessonRow) {
     title: row.title,
     kind: row.kind,
     bodyMarkdown: row.body_markdown,
+    // The film the lesson opens with, as a registry key (#61). Resolved in code.
+    filmKey: row.component_key,
   };
 }
 
@@ -290,7 +292,7 @@ export async function getModuleForUser(
   const [lessonResult, siblingResult, progressResult] = await Promise.all([
     supabase
       .from("learn_lessons")
-      .select("slug, module_slug, position, title, kind, body_markdown")
+      .select("slug, module_slug, position, title, kind, body_markdown, component_key")
       .eq("module_slug", moduleSlug)
       .order("position"),
 

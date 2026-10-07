@@ -153,9 +153,9 @@ export const resourceSeeds: ResourceSeed[] = [
     type: "VIDEO",
     source: "Save7",
     isRequired: true,
-    filePath: "/media/journey-of-a-gift.mp4",
-    licenceNote:
-      "Still needed for launch: a WebVTT captions track and a text transcript (both accessibility requirements), and chapter timecodes so the chapter list beside the player becomes seekable.",
+    // The film is shown through src/lib/films.ts now (#61), and this prior-build
+    // entry belongs to a Module 5 that no longer exists, so the emitter never writes it.
+    filePath: "/media/journey-of-a-gift.5e5b3bab.mp4",
   },
   {
     key: "excellence-in-deceased-donation-2025",

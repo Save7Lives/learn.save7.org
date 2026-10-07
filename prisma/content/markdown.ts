@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import type { LessonKind } from "../../src/lib/constants";
+import { FILM_KEYS, isFilmKey, type FilmKey } from "../../src/lib/films";
 import { hasTableLine, parseTable } from "../../src/lib/markdown-table";
 import { courseStructure, type LevelStructure, type StageSeed } from "./structure";
 
@@ -25,6 +26,12 @@ export type LessonFrontMatter = {
   kind: LessonKind;
   stage: string;
   level: string;
+  /**
+   * The film this lesson opens with, as a key in `src/lib/films.ts`. Optional, and
+   * only ever a registry key: the loader refuses anything else, so content can't
+   * name a URL or a path (#61).
+   */
+  video?: FilmKey;
 };
 
 export type LoadedLesson = {
@@ -40,9 +47,9 @@ const STUB_MARKER = "_Not yet written._";
  * Minimal front-matter split.
  *
  * Deliberately not a YAML parser: the front matter here is five flat scalar
- * keys, fixed by the generator, and reaching for a dependency to read them
- * would be the larger cost. If the shape ever grows nesting, replace this
- * wholesale rather than teaching it to limp along.
+ * keys, fixed by the generator, plus an optional `video`, and reaching for a
+ * dependency to read them would be the larger cost. If the shape ever grows
+ * nesting, replace this wholesale rather than teaching it to limp along.
  */
 function parseFrontMatter(raw: string, path: string): [LessonFrontMatter, string] {
   if (!raw.startsWith("---\n")) {
@@ -63,6 +70,12 @@ function parseFrontMatter(raw: string, path: string): [LessonFrontMatter, string
 
   for (const key of ["slug", "title", "kind", "stage", "level"]) {
     if (!fields[key]) throw new Error(`${path}: front matter is missing ${key}`);
+  }
+  if ("video" in fields && !isFilmKey(fields.video)) {
+    throw new Error(
+      `${path}: video ${JSON.stringify(fields.video)} is not a registered film. ` +
+        `It takes a key from src/lib/films.ts (${FILM_KEYS.join(", ")}), never a URL or a path.`,
+    );
   }
   return [fields as LessonFrontMatter, raw.slice(end + 4).trim()];
 }

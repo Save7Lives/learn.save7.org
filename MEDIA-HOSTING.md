@@ -1,139 +1,194 @@
-# Hosting the Module 5 video
+# The Stage 3 film: its files, where it is served from, and its captions
 
-`journey-of-a-gift.mp4` is 34.6 MiB. It ships with the app: it is committed at
-`public/media/journey-of-a-gift.mp4`, deployed with the site, and served from the
-same origin at `/media/journey-of-a-gift.mp4`. Vercel serves it as `video/mp4` and
-answers range requests (checked: HTTP 206), so nothing has to be configured.
+*The Journey of a Gift* (6:59, 36 MB) opens Beginner Stage 3. This file is the
+reference for how it gets there. The decisions behind it are wayfinder #23 (hosting)
+and #58 (placement, captions and the note), and #61 built them.
 
-**Supabase Storage**, public bucket `learn-media`, is still the intended long-term
-home. That was the map's decision (#23), and it stands. Until the file is moved
-there, doing so is optional.
+## What a learner sees
 
-Moving between hosts is one variable, `MEDIA_BASE_URL`, and no code change. It is
-read on the server at runtime, but on Vercel a changed environment variable takes
-effect only after a redeploy.
+At the top of Stage 3's first lesson, above its prose: the player, with its captions
+on; the film's length and size, so that 36 MB is a choice on a metered connection
+(nothing downloads until play is pressed); a note on the three places where the film
+contradicts the course; and the transcript, word for word.
 
-## The 25 MiB cap was Cloudflare's
+The three places are *over 65* tissue lives (the course says up to fifty), a *state
+pathologist* signing off an accidental death (the Forensic Pathology Service
+authorises it), and *by law* there is no cost to the family (no cost in practice:
+neither the National Health Act nor its regulations says who pays). The first two are
+Stage Quiz items the film would answer wrongly.
 
-The film used to be kept out of the deploy. Cloudflare, on Pages and then on Workers,
-refuses any single static asset over 25 MiB, and the film is roughly 10 MiB over, so
-production had to fetch it from elsewhere. On Pages that took a post-build strip
-script, and on Workers `public/.assetsignore`. Both are gone, because the limit does
-not apply on Vercel. Older notes and commits that say the film cannot ship in the
-bundle are describing Cloudflare.
+## How the film gets from a file to a page
 
-The committed copy is also what lets local development serve the film with no setup.
+1. **`content/beginner/how-donation-works/intro.md`** has `video: journey-of-a-gift`
+   in its front matter.
+2. **`loadLesson()`** accepts only a key that is registered in `src/lib/films.ts`.
+   A URL, a path or an unknown name fails the content build, so content can't name a
+   URL.
+3. **`emit-supabase-content.ts`** writes the key to `learn_lessons.component_key`,
+   the one use that column has had since #58 retired the interactive components. Its
+   probe asserts that exactly the registered keys are present.
+4. **`LessonFilm`** reads the key from the lesson row and looks it up in the registry.
+   A missing or unregistered key renders no film and never fails the Stage.
 
-## Moving it to Supabase Storage (optional)
+Everything the page shows lives in the registry, in typed code: the three file paths,
+the title, length and size, the captions track, the transcript and the corrections.
 
-`scripts/upload-media.mjs` creates the bucket, uploads the file, checks the
-content type that comes back, and prints the value to put in `MEDIA_BASE_URL`:
+## The files, and why their names are permanent
 
-```bash
-npm run media:upload
+```
+public/media/journey-of-a-gift.5e5b3bab.mp4       the film, unedited (36,239,535 bytes)
+public/media/journey-of-a-gift.91c4e4f6.jpg       the title card at one second, the poster
+public/media/journey-of-a-gift.en.9cfe81c6.vtt    the captions (WebVTT)
 ```
 
-**It needs a Supabase secret key**, because creating a bucket is not something the
-anon key can do. The script reads it from `.env.secrets`, which is git-ignored —
-`SUPABASE_SECRET_KEY` (the newer `sb_secret_...` form, preferred) or the legacy
-`SUPABASE_SERVICE_ROLE_KEY`. Either bypasses row level security entirely, so it
-belongs in that file and nowhere else: never in the Vercel project, never in `.env`,
-never in a commit.
+**Each name carries the first eight hex characters of the SHA-256 of its bytes.** The
+files are served with a one-year cache (#23), so a corrected file that kept its name
+would be served stale from every cache that held it. `npm run media:check` fails if a
+name and its contents disagree, and CI runs it. It also checks that the registry's
+size and duration are the file's, that the cues are in order and inside the film, and
+that **the captions' words are the transcript's words, in order**.
 
-The bucket is `learn-media`. That is the script's default, and the bucket the
-`MEDIA_BASE_URL` example in `.env.example` is written for. `MEDIA_BUCKET` overrides
-it; if you override it, make the variable match what the upload actually created, or
-the app will point at a bucket that is not there.
+**To change any file:** put the new one in `public/media/` under its new hash, point
+`src/lib/films.ts` at it, and run `npm run media:check`. Never edit a file and keep
+its name. Upload the new file with `npm run media:upload`. The old object can stay in
+the bucket, because a deployed page may still be pointing at it.
 
-Then set `MEDIA_BASE_URL` in the Vercel project (Settings → Environment Variables,
-for Production and Preview) and redeploy. Set it only once the object really answers:
-pointing the app at a URL that does not serve is the one way to get a dead `<video>`
-instead of the film.
+## Where it is served from
+
+`src/lib/media.ts` has two states, and `mediaUrl()` is the only thing that chooses:
+
+| `MEDIA_BASE_URL` | The film is served from |
+| --- | --- |
+| unset | the app itself, from `public/media`, same origin. Vercel serves it as `video/mp4` and answers range requests |
+| set | the Supabase Storage bucket `learn-media`, at `<base>/media/<file>` |
+
+The map settled the bucket as the long-term home (#23), and the same-origin copy is
+what works before it exists and in local development. Nothing about the page changes
+between the two.
+
+### Moving it to the bucket
+
+**1. Upload.** This needs a Supabase secret key, so it is a command you run:
+
+```bash
+cd "/Users/zubayrparak/Desktop/Save7 Course/transplant-alchemy" && npm run media:upload
+```
+
+The key goes in `.env.secrets` (git-ignored) as `SUPABASE_SECRET_KEY=sb_secret_...`
+or the legacy `SUPABASE_SERVICE_ROLE_KEY=eyJ...`, from the dashboard's *Settings → API
+Keys*. It bypasses row level security entirely: never in `.env`, never in the Vercel
+project, never in a commit.
+
+The script:
+
+- refuses to start unless `media:check` passes;
+- creates the public bucket `learn-media` if it is missing (50 MB per file, MIME types
+  `video/mp4`, `image/jpeg` and `text/vtt`), and leaves the other two buckets alone;
+- uploads each file with **`cacheControl: 31536000`** and never overwrites. A name
+  that exists must hold the same bytes, or it stops;
+- then **proves, against the public URL, what the app depends on**, and exits
+  non-zero if any of it fails (the same proofs as `npm run media:verify`).
+
+If a proof about *headers* fails on files that were already there, `npm run
+media:upload -- --refresh` sends the same bytes again. That is safe because a name is
+the hash of its bytes: it changes what a cache is told about a file, never what the
+file is.
+
+**2. What it proves, and why each one matters.** Each of these fails without a sound.
+
+- **`content-type: video/mp4`** (and `image/jpeg`, `text/vtt`). A `<video>` on a wrong
+  type shows a dead player with no error.
+- **`206` for a range request.** Seeking, and a quick start, both depend on it. A host
+  that answers `200` forces a full download first.
+- **`cache-control: max-age=31536000`.** The project's default is one hour, which on
+  a 36 MB file turns nearly every view into an origin pull and wastes the second 5 GB
+  of cached egress (#23). The egress quota is per organisation, shared with Save7 OS's
+  own traffic, so there is no headroom to give away.
+- **`access-control-allow-origin`.** The captions are fetched cross-origin when the
+  film is on the bucket, and a text track the browser may not read never appears. The
+  player sets `crossorigin="anonymous"`, so the video needs the header too.
+
+**3. Point the app at it.** The script prints the line. In the Vercel project
+(*Settings → Environment Variables*), add it for **Production and Preview**:
+
+```
+MEDIA_BASE_URL=https://zbaoziisqroqxfwcnhlb.supabase.co/storage/v1/object/public/learn-media
+```
+
+Then **redeploy**: a changed variable reaches a running deployment only that way. Set
+it only after step 1 passes. Pointing the app at files that are not there is the one
+way to get a dead player where the same-origin copy would have worked.
+
+**4. Check it later.** `npm run media:verify` reads nothing secret and can be run by
+anyone, any time the film seems not to play. Pass a base URL to check another host.
+
+## The captions
+
+The words are the transcript in
+[T04](https://github.com/Save7Lives/learn.save7.org-map/blob/main/wayfinder/research/T04-video-review-findings.md),
+which the user supplied after watching the film. **No wording was written for the
+captions.** What was built is the timing, and it was built on 7 October 2026:
+
+1. The audio's word times came from macOS 26's on-device `SpeechAnalyzer`, run over
+   the film as committed. The transcript and the recognised words agree on 99.0% of
+   tokens (1,267 of 1,280). The 12 places that differ are recogniser errors or
+   spelling (`2nd` for *second*, `corneous` for *corneas*, and so on), and the user's
+   text was kept every time.
+2. The transcript was aligned to those words, and cut at sentence and clause breaks
+   into 132 cues of at most two lines of 42 characters, each held about 17 characters
+   a second where the next cue allows. The narrator is fast, so 29 cues are shorter
+   than that.
+3. As a consistency check, each cue's own audio window was recognised again on its
+   own. It produced the cue's words, apart from words clipped at the edge of a window and
+   the occasional recogniser slip.
+
+That makes the timing good to a few tenths of a second. It is **not the same as a
+person listening**, so the captions should be spot-checked against playback by someone
+who can hear them. Two spots are worth a listen, where the transcript and the
+recogniser disagreed on a real word and nothing could settle it: *"…and I mean
+everything that's essential…"* at about **2:15**, where the recogniser heard *in* for
+*and*, and *"…the family has given consent"* at about **4:48**, where it heard *is
+giving*.
+
+To re-time a new cut: run a recogniser over its audio for word times, align the
+transcript to them, regenerate the cues, name the new files for their hashes, and run
+`npm run media:check`, which proves the words still match.
+
+### What the captions do not cover
+
+They are what is **said**. The film also shows on-screen text, diagrams and a quote
+that the narrator points at (*"this image right here"*, *"this quote"*, *"this
+chart"*), and none of that is described anywhere on the page. WCAG 2.x SC 1.2.2
+(captions) is met. SC 1.2.3 (Level A), an audio description or a full text alternative
+that includes what the pictures show, is not, and nothing has decided it is not
+needed. It is an open question for Save7, not something this build settled.
 
 ## What any host has to do
 
 Three requirements, and a host that fails the first one fails silently:
 
-- **`content-type: video/mp4`.** Not negotiable — see the trap below.
-- **HTTP range requests.** Seeking, and the chapter list beside the player, both
-  depend on them. A host that answers `200` to a `Range:` request instead of `206`
-  forces a full download before playback.
-- **CDN caching.** The audience is South African and mostly on phones; a 35 MB file
-  served from a single origin is a poor experience on a mobile connection.
+- **`content-type: video/mp4`.** Not negotiable.
+- **HTTP range requests.**
+- **CDN caching.** The audience is South African and mostly on phones.
 
-Vercel was checked against the first two: it serves `video/mp4`, and answers a range
-request with `206`. The third was not measured.
+### `raw.githubusercontent.com` is not a valid host
 
-Confirm all of it before pointing the course at a host. Set `MEDIA_BASE_URL` in your
-shell to the host's base (for the copy the app ships with, `https://learn.save7.org`),
-then:
+Measured on 23 August 2026: it serves `.mp4` as `application/octet-stream` with
+`x-content-type-options: nosniff`, so the bytes arrive, range requests work, and
+nothing plays. Once the repository is private it also returns 404 to anyone not signed
+in to GitHub.
 
-```bash
-curl -s -o /dev/null -D - -H "Range: bytes=0-1023" "$MEDIA_BASE_URL/media/journey-of-a-gift.mp4" | grep -i "^HTTP\|content-type\|content-range\|accept-ranges"
-```
+### Routes that were considered and are not the plan
 
-Passing looks like `206`, `content-type: video/mp4` and an `accept-ranges: bytes`
-header.
+- **Cloudflare R2** was the original intention (free egress, a real CDN) but needs a
+  payment method on the Cloudflare account, and the course no longer uses Cloudflare.
+- **GitHub Pages**, from an orphan `media` branch, was the interim route while R2 was
+  blocked. GitHub asks that Pages not be used as a general media CDN, and its soft
+  limits are thin cover for a film that might be linked from social media.
+- **Cloudflare's 25 MiB per-asset cap** is why the film used to be kept out of the
+  deploy. That was Cloudflare's limit, and Vercel has no such cap, which is why the
+  film now ships in `public/media`.
 
-## `raw.githubusercontent.com` is not a valid host
-
-This is worth stating because raw URLs are the obvious thing to reach for and they
-do not work. Measured on 23 August 2026:
-
-| Host | Content-Type | Ranges | Plays in `<video>`? |
-| ---- | ------------ | ------ | ------------------- |
-| `raw.githubusercontent.com` | `application/octet-stream` + `x-content-type-options: nosniff` | yes | **No** |
-
-`nosniff` tells the browser not to second-guess the declared type, so an
-`application/octet-stream` response is treated as a file to download rather than a
-video to play. The `<video>` element fails silently — no error, just a dead player.
-That failure mode is the reason this section exists: the bytes arrive, the range
-requests work, and nothing plays.
-
-A second reason applies once the repository is private, as it has to be before
-launch (it is public for now; see HANDOVER.md §6): private raw URLs return 404 to
-anyone not signed in. Authenticating from a learner's browser would mean putting a
-GitHub token in the page.
-
-## Routes that were considered and are not the plan
-
-Both of these appear in older notes and commits. Neither is current:
-
-- **R2** was the original intention — free egress and a real CDN — but it needs a
-  payment method on the Cloudflare account. Superseded, and the course no longer uses
-  Cloudflare.
-- **GitHub Pages**, from an orphan `media` branch, was the interim route while R2
-  was blocked. Superseded. GitHub also asks that Pages not be used as a general
-  media CDN, and its documented soft limits (a 1 GB site, roughly 100 GB of
-  bandwidth a month) are thin cover for a film that might be linked from social
-  media.
-
-Supabase Storage is the intended home because the project already exists, it is the
-backend anyway, and a public bucket serves correct content types and ranges. Two
-things to check rather than assume: the Supabase project's plan, whose free-tier
-monthly egress allowance is modest against a 35 MB file, and what Vercel's Hobby plan
-allows in transfer while the film is served from the app. Neither has been checked.
-Watch both once the course has learners.
-
-## What one variable fixes
-
-`MEDIA_BASE_URL` is applied by `mediaUrl()` in `src/lib/media.ts`, which joins the
-base onto a `/media/...` path. It has two states. With the base set, paths under
-`/media/` are rewritten to the bucket. With it unset, which is the case today, the
-path is returned unchanged and `public/` serves the file. An unedited
-`REPLACE_WITH…` placeholder counts as unset. See the comment at the top of that file.
-
-**Nothing calls `mediaUrl()` yet.** `src/lib/media.ts` currently has no importers, and
-there is no `<video>` element in `src/`. The prior build had two places that used it,
-the Module 5 `ChapterVideo` player and an "Opens here" resource link, and both were
-deleted in wayfinder #60. The Stage 3 film's new player is wayfinder #61. Until a
-player exists and goes through `mediaUrl()`, setting `MEDIA_BASE_URL` changes nothing
-a learner sees.
-
-## Still outstanding for Module 5
-
-Hosting the file does not finish the module:
-
-- a WebVTT captions track and a text transcript — both accessibility requirements
-- chapter timecodes measured against the film, so the chapter list beside the
-  player can seek instead of only listing
+Two things were never measured and are worth watching once the course has learners:
+the Supabase project's monthly egress against a 36 MB file, and what Vercel's Hobby
+plan allows in transfer while the film is served from the app.

@@ -168,11 +168,15 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   both.
 - **No `src/proxy.ts` / middleware.** Every protected page does its own session
   check and passes its own `returnTo`. Don't reintroduce middleware.
-- **The film ships with the app.** `public/media/journey-of-a-gift.mp4` (35 MB) is
-  deployed with the site, and Vercel serves it same-origin as `video/mp4` with range
-  requests. The 25 MiB per-file limit that once kept it out was Cloudflare's. The map
-  chose Supabase Storage (`learn-media`) as its long-term home; `MEDIA_BASE_URL`
-  points the app there once the file is uploaded. See MEDIA-HOSTING.md.
+- **The film is a registered asset, not a URL.** `src/lib/films.ts` holds *The Journey
+  of a Gift*: its three files in `public/media/`, its transcript and the note on where
+  it contradicts the course. A lesson names it with `video: <key>` in its front
+  matter, `loadLesson()` refuses any key that isn't registered, and the emitter
+  carries the key in `learn_lessons.component_key`. Content never names a URL. **Every
+  file name carries the hash of its bytes** because the files are served with a
+  one-year cache: change a file, rename it, run `npm run media:check`, never edit in
+  place. The files ship with the app and play same-origin until `MEDIA_BASE_URL`
+  points the app at the Supabase bucket `learn-media`. See MEDIA-HOSTING.md.
 - **`SITE_URL`, not `NEXT_PUBLIC_SITE_URL`.** Next inlines public variables into the
   bundle at build time, while `SITE_URL` is read on the server per request.
   Certificate links are built from it. Both are Vercel project environment variables
