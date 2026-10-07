@@ -6,15 +6,17 @@
  * `learners` row, which is what lets the portal show their progress.
  *
  * ── WHY THE BROWSER IS HANDED THIS RATHER THAN READING IT ────────────────────
- * `NEXT_PUBLIC_*` variables are **inlined by Next at build time**, and Cloudflare
- * applies `wrangler.jsonc` vars at **runtime**. So a client component reading
- * `process.env.NEXT_PUBLIC_SUPABASE_URL` on Pages gets whatever was present on the
- * build machine — `undefined`, for a git-connected build — and sign-in breaks with
- * no error the server can see.
+ * `NEXT_PUBLIC_*` variables are **inlined by Next at build time**. The app first ran
+ * on Cloudflare, where `wrangler.jsonc` vars were applied at *deploy* time, so a
+ * client component reading `process.env.NEXT_PUBLIC_SUPABASE_URL` got `undefined`
+ * and sign-in broke with no error the server could see.
  *
- * So the values are read on the server, where runtime vars work, and passed to the
- * client components that need them. One build then runs in any environment, and
- * changing project or hostname is a variable change rather than a rebuild.
+ * So the values are read on the server and passed to the client components that need
+ * them. Vercel makes project environment variables available at build time too, so
+ * the indirection is no longer strictly required. It stays because it works
+ * unchanged on any host, and because a build without the variables then fails on the
+ * server with a clear message rather than shipping a client that silently cannot
+ * sign anyone in.
  *
  * All three are public by design: the anon key grants nothing on its own, a Google
  * client id appears in every page that uses Google sign-in, and row level security
@@ -47,7 +49,7 @@ export function publicConfig(): PublicSupabaseConfig {
     throw new Error(
       "NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set. " +
         "Both are safe in client code — copy them from the Supabase dashboard, " +
-        "Project Settings → API. On Cloudflare Pages they are vars in wrangler.jsonc.",
+        "Project Settings → API. On Vercel they are project environment variables; locally they are in .env (see .env.example).",
     );
   }
 

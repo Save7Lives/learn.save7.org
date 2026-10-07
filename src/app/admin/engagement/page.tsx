@@ -4,7 +4,7 @@ import { DataTable, PageTitle, Section, StatCard } from "@/components/admin/Admi
 import { Badge } from "@/components/ui/primitives";
 
 // Rendered per request, never prerendered: this route reads runtime configuration
-// (Supabase URL and key, SITE_URL) which Cloudflare applies at deploy time. A
+// (Supabase URL and key, SITE_URL) which Vercel supplies per environment. A
 // prerender would bake whatever the build machine had. See src/lib/supabase/config.ts.
 export const dynamic = "force-dynamic";
 

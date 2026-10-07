@@ -1,11 +1,11 @@
 /**
  * Publish the Module 5 video to Supabase Storage.
  *
- * The film is 35 MB. Cloudflare caps a static asset at 25 MiB — the same on Workers
- * as it was on Pages — so public/.assetsignore keeps it out of the upload and the
- * player fetches it from the host named by MEDIA_BASE_URL.
- * Supabase Storage is that host: it serves the correct content type, supports the
- * range requests seeking needs, and the project already exists.
+ * The film is 35 MB. It ships with the app in public/media, so it plays without this
+ * script. The map settled Supabase Storage as its permanent home, and the player
+ * fetches it from the host named by MEDIA_BASE_URL once that is set. Supabase Storage
+ * serves the correct content type, supports the range requests seeking needs, and the
+ * project already exists.
  *
  * **Needs the service-role key, which is why this is a script you run and not
  * something committed anywhere.** Creating a bucket is not something the anon key
@@ -16,7 +16,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY='eyJ...' \
  *   node scripts/upload-media.mjs
  *
- * Never put that key in wrangler.jsonc, .env or a commit. It bypasses row level
+ * Never put that key in .env, the Vercel project or a commit. It bypasses row level
  * security entirely.
  *
  * Creates a public bucket, uploads the file, verifies the content type that comes
@@ -34,7 +34,7 @@ const url = (process.env.SUPABASE_URL ?? "").replace(/\/$/, "");
 const key =
   process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 // `learn-media`, not `course-media`: the map settled this bucket name, and
-// wrangler.jsonc's MEDIA_BASE_URL is written for it. A mismatch here uploads the
+// the MEDIA_BASE_URL in .env.example is written for it. A mismatch here uploads the
 // file somewhere the app will never look for it.
 const BUCKET = process.env.MEDIA_BUCKET ?? "learn-media";
 const LOCAL = "public/media/journey-of-a-gift.mp4";
@@ -103,7 +103,7 @@ if (type !== "video/mp4") {
   console.error(`\nWrong content type (${type}). A <video> element will not play this.`);
   process.exitCode = 1;
 } else {
-  console.log(`\nDone. Put this in wrangler.jsonc under vars:\n\n  "MEDIA_BASE_URL": "${base}"\n`);
+  console.log(`\nDone. Set this as an environment variable in the Vercel project, then redeploy:\n\n  MEDIA_BASE_URL=${base}\n`);
   console.log("The stored path is media/journey-of-a-gift.mp4, which is what the");
   console.log("lesson content already points at, so nothing else needs changing.");
 }

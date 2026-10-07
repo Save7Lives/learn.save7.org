@@ -24,3 +24,10 @@ now comes from the page instead of from in front of it.
 
 The original file is kept here as `proxy.ts.removed` for reference. If Next.js
 later supports edge proxies, it can be restored unchanged.
+
+## Update: the app now runs on Vercel
+
+The constraint above came from OpenNext on Cloudflare Workers. The course is hosted on
+Vercel now, which runs Node proxies, so the reason no longer holds. Nothing was
+restored: every protected page still does its own session check, and CLAUDE.md still
+says not to reintroduce middleware.

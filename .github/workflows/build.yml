@@ -1,22 +1,16 @@
 # Build gates for every push to main and every pull request.
 #
-# ── WHY THIS NO LONGER DEPLOYS ───────────────────────────────────────────────
-# It used to run `wrangler pages deploy` with two repository secrets, because the
-# Pages project had been created by direct upload and could not be converted to a
-# git integration. That constraint died with Pages: deploys now come from
-# **Cloudflare Workers Builds**, connected once to this repository in the
-# dashboard, which is the deploy-rights model the map settled — granting someone
-# else deploy access becomes "give them GitHub write access", not "hand them a
-# Cloudflare credential".
+# ── THIS WORKFLOW DOES NOT DEPLOY ────────────────────────────────────────────
+# Deploys come from **Vercel's Git integration**: the Vercel project connected to
+# this repository builds every push, publishes `main` to learn.save7.org, and gives
+# every other branch a preview URL. Two systems deploying the same site would race,
+# so this workflow keeps only what Vercel does not give us for free: the gates. A red
+# build here is the signal; the deploy is Vercel's job.
 #
-# Two workflows deploying the same Worker would race, so this one keeps only the
-# part Workers Builds does not give us for free: the gates. A red build here is
-# the signal; the deploy is Cloudflare's job.
-#
-# **No Supabase values are needed here.** The app reads its configuration at
-# runtime from wrangler.jsonc rather than at build time, so the build carries no
-# secrets at all — see src/lib/supabase/config.ts. The service-role key must never
-# be added to this repository.
+# **No Supabase values are needed here.** Every route reads its configuration at
+# request time rather than at build time, so the build carries no secrets at all —
+# see src/lib/supabase/config.ts. The service-role key must never be added to this
+# repository or to the Vercel project.
 name: Build
 
 on:
@@ -47,7 +41,4 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
 
-      # The full Workers bundle, not just `next build` — the adapter is where a
-      # runtime-shaped break shows up, and there is no journey suite to catch it
-      # later.
-      - run: npm run cf:build
+      - run: npm run build

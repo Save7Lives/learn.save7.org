@@ -9,10 +9,6 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "brand:generate": "node scripts/generate-brand-assets.mjs",
-    "cf:build": "opennextjs-cloudflare build",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "cf:types": "wrangler types",
     "content:emit": "tsx scripts/emit-supabase-content.ts",
     "content:apply": "node scripts/apply-content.mjs",
     "media:upload": "node scripts/upload-media.mjs"
@@ -28,7 +24,6 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@opennextjs/cloudflare": "^1.20.6",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",
@@ -40,7 +35,6 @@
     "server-only": "^0.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
-    "typescript": "^5",
-    "wrangler": "^4.136.3"
+    "typescript": "^5"
   }
 }
