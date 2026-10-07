@@ -2,25 +2,24 @@
 
 Save7's organ-donation course, replacing their Google Classroom.
 
-Next.js 16.3.6 · React 19 · Tailwind v4 · Supabase (Postgres) · deployed as a
-Cloudflare Worker (`learn`, serving at `https://learn.save7.workers.dev`) via
-`@opennextjs/cloudflare`.
+Next.js 16.3.6 · React 19 · Tailwind v4 · Supabase (Postgres) · hosted on Vercel,
+serving at `https://learn.save7.org`.
 
-It spent a period on Cloudflare Pages and has been ported back to Workers. Old
-notes, branches and commit messages mention `@cloudflare/next-on-pages`,
-`.vercel/output/static` and `npm run pages:*` — all of those are gone.
-HANDOVER.md §1 and §6 record why the detour happened and why it was reversed.
+It has been on Cloudflare Pages and on Cloudflare Workers before this. Old notes,
+branches and commit messages mention `@cloudflare/next-on-pages`,
+`@opennextjs/cloudflare`, `wrangler`, `npm run pages:*` and `npm run deploy` — all of
+those are gone. HANDOVER.md §1 records why the app moved.
 
 ## Get it running
 
 ```bash
-git clone git@github.com:zzubyr7x/learn.save7.org.git
+git clone git@github.com:Save7Lives/learn.save7.org.git
 cd learn.save7.org
 npm install
 npm run dev
 ```
 
-**You need credentials for this one**, unlike the old SQLite build. `.env` wants
+**You need configuration for this one**, unlike the old SQLite build. `.env` wants
 three values:
 
 ```
@@ -30,8 +29,9 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=<the volunteer portal's Google client id>
 ```
 
 All three are safe in client code — the anon key grants nothing on its own, and row
-level security is what protects the data. Ask whoever owns the Supabase project for
-the first two.
+level security is what protects the data. That is why `.env.example` is committed with
+the real values: copy it to `.env`. Never add the Supabase service-role key
+anywhere, `.env` included.
 
 **There is no local database.** The backend is the shared Save7 Supabase project —
 the same one `os.save7.org` and `volunteers.save7.org` use. Two consequences worth
@@ -99,7 +99,7 @@ CLAUDE.md has the details.
 ## Before you say it works
 
 ```bash
-npm run typecheck && npm run lint && npm run cf:build
+npm run typecheck && npm run lint && npm run build
 ```
 
 That is the gate. There is **no test suite.** The 53-assertion journey suite drove
@@ -109,21 +109,28 @@ runs against Supabase yet, so anything you change in `src/lib/` or in a `learn_*
 function is unverified until you walk it by hand. HANDOVER.md §6 is blunt about
 this being the largest hole in the repo.
 
-```bash
-npm run preview
-```
-
-Builds and runs the **real Worker** on workerd against Supabase. Slower than
-`npm run dev`, which runs on Node, and the only thing that catches
-runtime-specific breakage before a deploy does.
+Nothing runs the host locally: there is no `npm run preview` any more. A branch push
+gives you a Vercel preview deployment, which is the closest thing to a check of the
+real host. It has its own hostname, which would need adding to the sign-in
+allow-lists (HANDOVER.md §4 and §6) before registering or signing in works on it.
 
 ## How changes ship
 
-Open a pull request against `main`. Deploys to Cloudflare happen from `main` — you
-do not need Cloudflare credentials, and production learner data stays with Save7.
+Open a pull request against `main`. Vercel builds every push: `main` publishes to
+`learn.save7.org`, and every other branch gets a preview URL. GitHub Actions only
+runs the gates (typecheck, lint, build). There is no deploy command, you do not need
+Vercel credentials, and production learner data stays with Save7.
 
-## Please keep the repository private
+## The repository is public for now, and must go private before launch
 
-`public/resources/` holds ten third-party academic PDFs that Save7 was given for
-this course, and Module 9's legal content has not been reviewed yet. A public repo
-would republish the first and publish the second as a claim.
+It is public on purpose. Vercel's free Hobby plan cannot deploy a private repository
+owned by a GitHub organization, and this one is owned by `Save7Lives`. Making it
+private needs Vercel Pro, or moving the repository to a personal GitHub account, so
+do not change the setting on your own (HANDOVER.md §6).
+
+Three things in it should not stay public: the quiz answer keys (`isCorrect` in
+`prisma/content/*.ts` and the generated SQL), `public/resources/`, which holds ten
+third-party academic PDFs that Save7 was given for this course, and Module 9's legal
+content, which has not been reviewed yet. A public repo republishes the first two and
+publishes the third as a claim. Until it is private, never commit anything you would
+not publish.

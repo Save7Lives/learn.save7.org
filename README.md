@@ -37,9 +37,11 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=<the volunteer portal's Google client id>
 ```
 
 All three are safe in client code — the anon key grants nothing on its own, and
-row level security is what protects the data. Copy the first two from Supabase
-(Project Settings → API); the third is optional, and without it sign-in falls
-back to the shared Google redirect flow and still works.
+row level security is what protects the data. That is why `.env.example` is
+committed with the real values: copy it to `.env`. The third value is optional, and
+without it sign-in falls back to the shared Google redirect flow and still works.
+`.env.example` also carries `NEXT_PUBLIC_SITE_URL`, which certificate links use. In
+production the same variables are set in the Vercel project, along with `SITE_URL`.
 
 There is **no local database and no seed**. The schema, the course content and
 the question bank live in the `save7-os` repository as migrations, and are applied
@@ -64,23 +66,20 @@ which posts to the `register-learner` Edge Function.
 | --- | --- |
 | `npm run dev` | Dev server |
 | `npm run build` / `start` | Production build and serve |
-| `npm run typecheck` | `tsc --noEmit` |
+| `npm run typecheck` | `next typegen && tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm run content:emit` | Regenerate the Supabase migration that loads the course |
 | `npm run content:apply` | Apply that migration to the Supabase project |
-| `npm run cf:build` | Build the Worker (`.open-next/` — `worker.js` plus `assets/`) |
-| `npm run preview` | Build, then run the real Worker locally on workerd |
-| `npm run deploy` | Build and deploy the `learn` Worker |
-| `npm run cf:types` | Regenerate the Workers binding types (`wrangler types`) |
-| `npm run media:upload` | Publish the Module 5 video to Supabase Storage |
+| `npm run media:upload` | Publish the Module 5 video to Supabase Storage (optional; see [MEDIA-HOSTING.md](MEDIA-HOSTING.md)) |
 | `npm run brand:generate` | Re-embed the Save7 logo used on certificates |
 
-`npm run preview` is the only check that exercises the runtime the course actually
-ships on; `npm run dev` runs on Node and will not surface workerd-specific
-breakage. The gate before claiming something works is:
+There is no deploy script: Vercel builds every push (see [Deploying](#deploying)).
+Nothing runs the host locally either. A preview deployment from a branch push is the
+closest thing to a check of the real host. The gate before claiming something works
+is:
 
 ```bash
-npm run typecheck && npm run lint && npm run cf:build
+npm run typecheck && npm run lint && npm run build
 ```
 
 ---
@@ -109,17 +108,17 @@ takeaways → check your understanding → study guide → further reading → c
 ## Architecture
 
 Next.js 16.3.6 (App Router) · React 19 · TypeScript · Tailwind CSS v4 ·
-Supabase (Postgres) · deployed as a Cloudflare **Worker** via
-`@opennextjs/cloudflare` — see [DEPLOY.md](DEPLOY.md).
+Supabase (Postgres) · hosted on **Vercel** — see [DEPLOY.md](DEPLOY.md).
 
-The Worker is named `learn`, on the `admin@save7.org` Cloudflare account, and
-answers at `https://learn.save7.workers.dev`. It was briefly on Cloudflare Pages;
-the detour is recorded in [HANDOVER.md](HANDOVER.md) §1 and §6, along with why it
-was reversed. **Next is no longer pinned.** The Pages adapter capped it at 15.5.2;
-`@opennextjs/cloudflare` sets a floor instead (`>=15.5.24 <16 || >=16.3.3`), so
-security patches can be taken as they land. That floor is where the AVIF
-image-optimization RCE (GHSA-2xp9-vwfh-vxw4, CVSS 9.5, published 2026-09-08) was
-fixed. 16.3.6 carries no open critical or high advisory.
+The app is the Vercel project `learn-save7-org`, on a Hobby team named `Save7`. It
+answers at `https://learn.save7.org`, and has since 2026-10-07. It is a plain
+`next build` with no adapter, and every route is dynamic (server-rendered on
+demand). It ran on Cloudflare Workers and Cloudflare Pages before this; why it left
+is recorded in [HANDOVER.md](HANDOVER.md) §1. **Next is not pinned.** Nothing caps it
+on Vercel, so security patches can be taken as they land, but never go below 16.3.3:
+that release (and 15.5.24) is where the AVIF image-optimization RCE
+(GHSA-2xp9-vwfh-vxw4, CVSS 9.5, published 2026-09-08) was fixed. 16.3.6 carries no
+open critical or high advisory.
 
 **Why Supabase and not its own database.** The course was built on its own
 SQLite/D1 database with its own password login, and the volunteer portal held a
@@ -295,19 +294,37 @@ list beside the player labels rather than seeks.
 
 ## Deploying
 
-**[DEPLOY.md](DEPLOY.md) is the guide.** It covers the setup end to end: applying
-the Supabase migrations, deploying the `register-learner` function, hosting the
-video, setting the Worker's `vars`, the domain question, and how to push
-content corrections after launch without touching learner data.
+**[DEPLOY.md](DEPLOY.md) is the guide** to the Vercel setup and the Supabase and
+Google settings that have to know the site's address.
 
-Three things are worth knowing before the first deploy:
+Five things are worth knowing before the first deploy:
 
-**The video is not in the bundle.** Workers caps a single static asset at 25 MiB —
-the same cap Pages had, re-checked against Cloudflare's limits page during the port
-rather than assumed to have improved — and `journey-of-a-gift.mp4` is 34.6 MiB.
-`public/.assetsignore` keeps it out of the upload, which Workers honours where Pages
-did not, and it is served from `MEDIA_BASE_URL` instead. See
-[MEDIA-HOSTING.md](MEDIA-HOSTING.md).
+**There is no deploy command.** Vercel's Git integration builds every push: `main`
+is the production branch and publishes to `learn.save7.org`, and every other branch
+gets a preview URL. GitHub Actions (`build.yml`) only runs the gates: typecheck,
+lint and build. Vercel's Instant Rollback makes the previous production deployment
+available at the custom domain again. Configuration is environment variables in the
+Vercel project, set for Production and Preview, and **a changed variable takes effect
+only after a redeploy**. Two steps are still to do: `SITE_URL` and
+`NEXT_PUBLIC_SITE_URL` hold a placeholder (`https://learn-save7-org.vercel.app`) and
+must become `https://learn.save7.org`, and that address must also be added to
+Supabase's redirect URLs (the Google OAuth client's authorised origins were reported
+done by Gilbert but cannot be checked from outside Google). See
+[HANDOVER.md](HANDOVER.md) §6.
+
+**The video ships with the app.** `journey-of-a-gift.mp4` is 34.6 MiB, committed at
+`public/media/`, and Vercel serves it from the same origin as `video/mp4` with range
+requests. The 25 MiB asset limit that once kept it out of the deploy was
+Cloudflare's. Supabase Storage remains the intended long-term home and is optional
+until then. [MEDIA-HOSTING.md](MEDIA-HOSTING.md) has the detail, including what
+`MEDIA_BASE_URL` does and does not do today.
+
+**Hobby is for non-commercial use only, and the repository is public on purpose.**
+Nobody has confirmed that the course meets Hobby's condition. The repository is
+public because Hobby cannot deploy a private repository owned by a GitHub
+organization, and this one is owned by `Save7Lives`. It holds the quiz answer keys,
+so it has to be made private before launch, which needs Vercel Pro or moving the
+repository to a personal GitHub account. See [HANDOVER.md](HANDOVER.md) §6.
 
 **Content corrections are a migration now, not a button.** The old build had an
 admin route that re-seeded the course from the running app. Content is now applied
@@ -337,7 +354,8 @@ a handful of details.
 | **FACTS eight steps** | Confirm the sequence and step names against the Organ and Tissue Donation Reference File, and supply the file so its citation can be completed |
 | **Certificate wording** | Sign-off on the current text |
 | **Privacy notice details** | Information officer, hosting location, retention period |
-| **Deployment credentials** | Postgres, hosting |
+| **Deployment credentials** | Postgres |
+| **Hosting plan** | Confirm the course meets Vercel Hobby's non-commercial condition, or fund Pro ($20 per developer seat per month) |
 | **Optional** | Captions and a transcript for the video, and chapter timecodes |
 
 ---

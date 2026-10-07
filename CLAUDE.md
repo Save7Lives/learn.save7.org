@@ -6,8 +6,8 @@ Save7's organ-donation course, replacing their Google Classroom.
 
 > **Read [HANDOVER.md](HANDOVER.md) first if you have not worked on this before.**
 > The app moved from Workers + D1 + password sign-in to the shared Save7 Supabase
-> project + Google sign-in, and — after a detour through Cloudflare Pages — back to
-> Cloudflare Workers. Most of what enforces correctness is now SQL in another
+> project + Google sign-in, went through Cloudflare Pages and Workers, and now runs
+> on Vercel. Most of what enforces correctness is now SQL in another
 > repository, and HANDOVER.md is the map: the invariants, the traps that already
 > cost a cycle, and what is unfinished.
 
@@ -27,8 +27,9 @@ npm run dev
 
 **The backend is the Save7 Supabase project**, so `.env` needs three values —
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and
-`NEXT_PUBLIC_GOOGLE_CLIENT_ID`. All three are public by design; the anon key grants
-nothing on its own and row level security is the boundary.
+`NEXT_PUBLIC_GOOGLE_CLIENT_ID`. Copy `.env.example`, which has them. All three are
+public by design; the anon key grants nothing on its own and row level security is
+the boundary.
 
 There is no local database and no seed. The schema and the content are migrations in
 the `save7-os` repository, applied with `supabase db push`. The `learn_*` schema starts
@@ -143,11 +144,11 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   (`learn_issue_certificate`), enrolment (`learn_claim_me`). `learn_level_progress`
   and `learn_course_progress` have no write policy for anybody, deliberately: a
   client that can write its own percentage makes the dashboard fiction.
-- **Next is no longer pinned.** `@opennextjs/cloudflare` peers at
-  `>=15.5.24 <16 || >=16.3.3`, which is a floor rather than a ceiling, so security
-  patches can be taken as they land. The floor is not arbitrary: it is where the
-  September 2026 AVIF image-optimization RCE (GHSA-2xp9-vwfh-vxw4, CVSS 9.5) was
-  fixed. **Do not drop below it.**
+- **Next has a security floor, and no ceiling.** The September 2026 AVIF
+  image-optimization RCE (GHSA-2xp9-vwfh-vxw4, CVSS 9.5) is fixed in Next 15.5.24
+  and 16.3.3, so **do not go below 16.3.3.** Nothing caps Next on Vercel, which is
+  part of why the app left Cloudflare Pages (its adapter stopped at 15.5.2), so patch
+  releases can be taken as they land.
 - **Every rendering route needs `export const dynamic = "force-dynamic"`**, and the
   reason is not the adapter. On the Node runtime Next will happily prerender these
   routes at build time and bake in whatever configuration the build machine had —
@@ -164,17 +165,15 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   lesson needs the module too — that is why `viewLessonAction` takes both.
 - **No `src/proxy.ts` / middleware.** Every protected page does its own session
   check and passes its own `returnTo`. Don't reintroduce middleware.
-- **`/media/*` is excluded from the deploy** (`public/.assetsignore`): the
-  35 MB video exceeds the 25 MiB per-file asset limit, which is the same on Workers
-  as it was on Pages — re-checked, not assumed. Workers **honours** that file, which
-  Pages did not, so the post-build strip script Pages needed is gone.
-  `src/lib/media.ts` handles three states, including "deployed with no bucket
-  configured", where it drops the path so the player shows its placeholder instead
-  of a dead `<video>`.
-- **`SITE_URL`, not `NEXT_PUBLIC_SITE_URL`.** Next inlines public variables at build
-  time; Cloudflare applies vars at deploy time. Certificate links are built from it.
-  One `vars` block in `wrangler.jsonc` now, not two — Pages needed a separate
-  `env.preview`, and an edit reaching only one of them was a real trap.
+- **The film ships with the app.** `public/media/journey-of-a-gift.mp4` (35 MB) is
+  deployed with the site, and Vercel serves it same-origin as `video/mp4` with range
+  requests. The 25 MiB per-file limit that once kept it out was Cloudflare's. The map
+  chose Supabase Storage (`learn-media`) as its long-term home; `MEDIA_BASE_URL`
+  points the app there once the file is uploaded. See MEDIA-HOSTING.md.
+- **`SITE_URL`, not `NEXT_PUBLIC_SITE_URL`.** Next inlines public variables into the
+  bundle at build time, while `SITE_URL` is read on the server per request.
+  Certificate links are built from it. Both are Vercel project environment variables
+  (Production and Preview), and an edit reaches the site only after a redeploy.
 - **There is no admin account to create.** Admin is `app_is_staff()` — a `people`
   row with an `app_role` on the Supabase project. A revoked staff member loses the
   dashboards immediately rather than when a token expires.
@@ -200,7 +199,7 @@ The single source of truth is `save7-os/supabase/migrations/`, applied with
 ## Before you say it works
 
 ```
-npm run typecheck && npm run lint && npm run cf:build
+npm run typecheck && npm run lint && npm run build
 ```
 
 **The end-to-end journey suite is gone.** It drove a learner through the whole
@@ -211,8 +210,8 @@ the migrations and checked by nothing that runs on every change.
 
 **Treat that as the standing risk when touching `src/lib/` or any `learn_*`
 function.** Walk the journey manually: register, baseline, a module, the level
-assessment, the certificate, the admin dashboards. `npm run preview` runs the real
-Worker on workerd, which is the only thing that catches runtime-specific breakage.
+assessment, the certificate, the admin dashboards. A pushed branch gets a Vercel
+preview deployment, which is the closest thing to the real host.
 
 ## Design
 

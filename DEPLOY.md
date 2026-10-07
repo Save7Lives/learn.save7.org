@@ -1,58 +1,60 @@
-# Deploying Transplant Alchemy 101 to Cloudflare
+# Deploying Transplant Alchemy 101 to Vercel
 
-Everything is ready to deploy. What remains needs **your Cloudflare account**, so
-those steps are commands for you to run — I cannot authenticate as Save7, and I
-should not: publishing the course is your decision, not mine.
+The course is **deployed and live** at `https://learn.save7.org`, serving from Vercel
+since 7 October 2026. What remains needs **your accounts** — the Vercel project, the
+Supabase console and the Google Cloud console — so those steps are for you to do. I
+cannot sign in to Save7's accounts, and I should not: publishing the course is your
+decision, not mine.
 
 Read [Before you launch](#before-you-launch) first. It says what the content-review
 register does and does not tell you about sign-off.
 
-The course is a **Cloudflare Worker** again, built by `@opennextjs/cloudflare`.
-If you remember an earlier version of this guide saying the domain needed nothing
-but one CNAME at xneelo, that was true of **Pages** and is not true of **Workers**.
-[Step 9](#9-attach-your-domain) and DNS-MIGRATION.md carry the correction, and it
-is the largest change in this document.
+The course is hosted on **Vercel**, deployed from GitHub by Vercel's Git integration.
+If you remember an earlier version of this guide, it described Cloudflare Workers
+(and before that Cloudflare Pages), with `wrangler` and `npm run deploy`. None of
+that exists any more: there is no deploy command, and the domain is attached with
+one CNAME and one TXT record at xneelo. [Step 9](#9-attach-your-domain) says what
+changed and why.
 
 ---
 
 ## Outstanding right now, and who can clear it
 
-Three things. None of them is waiting on code.
+Four things. None of them is waiting on code.
 
-### 1. The Worker is deployed; two console allow-lists are outstanding
+### 1. `learn.save7.org` is live; three settings still need the new hostname
 
-Deployed **23 September 2026** by `admin@save7.org`, one version serving 100% of
-traffic. Checked rather than assumed:
+Checked on 7 October 2026:
 
 ```bash
-npx wrangler deployments list --name learn
-curl -s -o /dev/null -w "%{http_code}\n" https://learn.save7.workers.dev/
+dig +short learn.save7.org
+curl -sI https://learn.save7.org
 ```
 
-The site answers `200` and renders. Runtime configuration is reaching it from
-`wrangler.jsonc` and not from a build-time inline — the Supabase URL and the Google
-client id both appear in `/login`, which is the trap in §2 of HANDOVER working
-correctly. Protected routes redirect: `/dashboard` and `/admin` both `307` to
-`/login?next=…`. `/media/*` is `404` and `/favicon.ico` is `200`, so `.assetsignore`
-is doing its job.
+The first answers with the Vercel CNAME target (`f5d209c593f287f5.vercel-dns-017.com.`)
+and the second with `200` from `server: Vercel`. The certificate is Let's Encrypt,
+issued and renewed by Vercel.
 
-`register-learner` now carries the Workers allow-list (`save7-os` `da07e83`,
-deployed 23 September). Verified in both directions: `learn.save7.workers.dev` and
-a hyphenated preview hostname are allowed; `evil.workers.dev`,
-`other.save7.workers.dev`, `learn.save7.workers.dev.evil.com` and plain-`http://`
-are all refused.
+**What is still outstanding is configuration that names the hostname.** Two of the
+three items are not done; Gilbert reported the third as done (status 7 October 2026):
 
-**What is still outstanding is two allow-lists that live in consoles**, covered by
-step 6b. Both must be done, and they gate different code paths, so doing one leaves
-a broken route:
-
+- **Vercel project → Settings → Environment Variables.** `SITE_URL` and
+  `NEXT_PUBLIC_SITE_URL` are both a placeholder, `https://learn-save7-org.vercel.app`.
+  Change both to `https://learn.save7.org` and redeploy — certificate verification
+  links are built from `SITE_URL`. Step 7 has the detail.
+- **Supabase → Authentication → URL Configuration → Redirect URLs.** Add
+  `https://learn.save7.org/**`. Gates the `signInWithOAuth` fallback, which uses
+  `redirectTo: window.location.origin + pathname`. Leave the **Site URL** alone.
 - **Google Cloud console → the volunteer portal's OAuth client → Authorised
   JavaScript origins.** Gates `signInWithIdToken`, which `GoogleSignIn.tsx`
-  prefers. **Append** `https://learn.save7.workers.dev`; never replace the list,
-  it is shared with volunteers.save7.org.
-- **Supabase → Authentication → URL Configuration → Redirect URLs.** Gates the
-  `signInWithOAuth` fallback, which uses
-  `redirectTo: window.location.origin + pathname`.
+  prefers. **Append** `https://learn.save7.org`; never replace the list, it is
+  shared with volunteers.save7.org. Gilbert reported this entry already made for
+  `learn.save7.org` on 30 September 2026. That cannot be checked from outside Google,
+  so signing in is the check.
+
+Both console entries must be made, and they gate different code paths, so doing one
+leaves a broken route. Step 6b covers them. `register-learner` needs nothing for the
+live domain: its allow-list already admits `https://learn.save7.org` (step 3).
 
 These are deploy-time configuration that no build, typecheck or lint can catch, and
 **they fail silently** — in the browser a missing entry reads as "Could not reach
@@ -60,51 +62,49 @@ Save7", which looks like an outage rather than a missing allow-list entry. The s
 was true of the `register-learner` allow-list before it was fixed. When a journey
 step fails on the live site, check these before suspecting the code.
 
-### 2. `learn.save7.org` currently serves the holding page, from somewhere else
+### 2. The Hobby plan has limits nobody has resolved
 
-Checked the same day:
+The course runs on Vercel's free **Hobby** plan, on a team named `Save7`. Two
+constraints come with it, and neither is settled:
 
-```bash
-dig +short learn.save7.org      # transplant-alchemy.pages.dev.
-curl -sI https://learn.save7.org # 503
-```
+- **Hobby is non-commercial only** (Vercel's fair-use guidelines). Commercial means
+  anyone is paid for the site's production, including a paid employee or consultant
+  writing code; donations are fine. Nobody has confirmed the course meets that.
+  Upgrading to Pro is the fallback, at a cost the project's zero budget does not
+  cover — see [Costs](#costs).
+- **Hobby cannot deploy a private repository owned by a GitHub organization.** That
+  is why the code repository is **public for now, deliberately**. It contains the
+  quiz answer keys, so it must be made private before launch, and that then needs
+  Vercel Pro or moving the repository to a personal GitHub account. See
+  [Make the repository private before launch](#make-the-repository-private-before-launch).
 
-The hostname is a CNAME at xneelo pointing at the old **Pages** project, which is
-still serving `maintenance/`'s 503 holding page. Two consequences worth knowing
-before anybody expects a deploy to change what the public sees:
+On a Hobby team the commit author must be the team owner for private repositories,
+and for public ones collaboration is free. Pushes by `zzubyr7x` to the current public
+repository do deploy (checked 7 October 2026: `fc18150` reached production), so the
+owner-only rule does not bite today. It would for a private repository, and that case
+is untested.
 
-- **`npm run deploy` will not take the site out of maintenance.** It uploads the
-  Worker; `learn.save7.org` still resolves to the Pages project. The hostname
-  moves only when the DNS question in step 9 is answered.
-- **`npx wrangler pages project list` on `admin@save7.org` returns nothing**,
-  while `transplant-alchemy.pages.dev` still serves. The most likely reading is
-  that the Pages project lives on a different Cloudflare account (the personal
-  one the first deploy used). That is unconfirmed — whoever can see both accounts
-  should confirm it, because retiring that project later needs whichever account
-  owns it.
+### 3. There is no way to take the site down on purpose
 
-`maintenance/README.md` documents the holding page as a `wrangler pages deploy`,
-which matches where it is deployed and **not** where the course now lives. Taking
-it down is a Pages operation on that account, not a Workers one.
+The old `maintenance/` holding page was a Cloudflare Pages worker, and it was deleted
+with the Cloudflare tooling. **No maintenance or take-down procedure exists on
+Vercel.** This is an open item, not a known procedure. What exists is Instant
+Rollback (step 8), which returns to an earlier deployment of the course, not to a
+holding page.
 
-### 3. The video has nowhere to live
+### 4. Cloudflare leftovers to delete once Vercel is proven
 
-`journey-of-a-gift.mp4` is **34.6 MiB** against a **25 MiB per-file static-asset
-cap**. That cap is the same on Workers as it was on Pages — re-checked against
-Cloudflare's limits page during the port, not assumed to have improved with the
-platform.
+Two things are still sitting in the Cloudflare account `admin@save7.org`:
 
-What did change is the mechanism. Pages ignored `public/.assetsignore` and needed
-a post-build strip script; **Workers honours it**, verified by serving the built
-output and watching `/media/journey-of-a-gift.mp4` return 404 while
-`/favicon.ico` returned 200. `scripts/strip-oversized-media.mjs` is therefore
-deleted, and the exclusion is one line of configuration instead of a build step.
+- the pending `save7.org` zone, added for the abandoned nameserver move (nothing was
+  ever switched to it);
+- the Worker `learn`, last deployed 23 September 2026, which still answers at
+  `https://learn.save7.workers.dev`. Until it is deleted it is a second live copy of
+  the course on a public hostname.
 
-The file's home is **Supabase Storage**, public bucket `learn-media` — see
-[step 5](#5-host-the-video). `npm run media:upload` creates the bucket, uploads
-the file, verifies it comes back as `video/mp4`, and prints the `MEDIA_BASE_URL`
-to set. It needs the service-role key in the environment, which must never be
-committed, put in `wrangler.jsonc`, or pasted into a chat.
+Delete both once Vercel is proven. The old Pages project (`transplant-alchemy.pages.dev`)
+is no longer pointed at by anything; whether it has been deleted, and on which
+Cloudflare account it lives, is not recorded here.
 
 ---
 
@@ -112,22 +112,23 @@ committed, put in `wrangler.jsonc`, or pasted into a chat.
 
 | | Status |
 |---|---|
-| Build target | Cloudflare **Workers**, via `@opennextjs/cloudflare` 1.20.6 |
+| Host | **Vercel**, Hobby (free) plan, team `Save7`, project `learn-save7-org`. Default address `https://learn-save7-org.vercel.app` |
+| Build | A plain `next build` (the `build` script). No adapter and no `vercel.json`; every route is rendered on demand |
 | Framework | Next **16.3.6**, React 19.2.8 |
-| Worker | `learn`, on the `admin@save7.org` account (`cab9730a43ee3fb2e8aaf3d36a25cb8d`) |
-| Hostname | `https://learn.save7.workers.dev` — live, deployed 2026-09-23 09:18 UTC. The account's workers.dev subdomain is `save7` |
+| Source | GitHub `Save7Lives/learn.save7.org`, **public for now** (see [Outstanding](#2-the-hobby-plan-has-limits-nobody-has-resolved)). The old `zzubyr7x/...` URLs redirect |
+| Deploys | Vercel's Git integration: every push builds, `main` publishes to `learn.save7.org`, every other branch gets a preview URL |
+| Hostname | `https://learn.save7.org` — serving since 2026-10-07. Certificate issued and renewed by Vercel (Let's Encrypt) |
 | Backend | The Save7 Supabase project — the same one the OS and the volunteer portal use |
 | Database migrations | `save7-os/supabase/migrations/`, from `0091` (the schema) onward; `0121` at the time of writing |
 | Sign-in | Google, verified by Supabase. No passwords, no `AUTH_SECRET` |
-| Registration endpoint | `register-learner` deployed 2026-09-23 with the Workers allow-list, verified allowing the live and preview hostnames and refusing four near-miss origins |
-| **Video** | **Not hosted.** Supabase Storage, bucket `learn-media` — step 5 |
-| Custom domain | Not attached, and **no longer a single CNAME edit** — step 9 |
+| Registration endpoint | `register-learner`, deployed 2026-09-23. Its allow-list admits `https://learn.save7.org`, the old Workers hostnames and `localhost`. It does **not** admit `learn-save7-org.vercel.app` or Vercel preview URLs — step 3 |
+| Video | Ships with the app and plays from the same origin. Supabase Storage (`learn-media`) is the intended long-term home — step 5 |
+| Public URL variables | **Placeholder, to be changed** to `https://learn.save7.org` and redeployed — step 7 |
 
-The `@cloudflare/next-on-pages` adapter capped Next at 15.5.2, which is what made
-the version problem intractable on Pages. `@opennextjs/cloudflare` peers at
-`>=15.5.24 <16 || >=16.3.3` — a **floor**, not a ceiling — so patches can be taken
-as they land. The floor is where the September 2026 AVIF image-optimization RCE
-(GHSA-2xp9-vwfh-vxw4, CVSS 9.5) was fixed. Do not drop below it.
+There is no adapter, so nothing caps the Next version and patches can be taken as they
+land. The floor is **16.3.3**: that release is where the September 2026 AVIF
+image-optimization RCE (GHSA-2xp9-vwfh-vxw4, CVSS 9.5) was fixed (15.5.24 on the 15.5
+line). Never go below it.
 
 ---
 
@@ -135,23 +136,21 @@ as they land. The floor is where the September 2026 AVIF image-optimization RCE
 
 | | Status |
 |---|---|
-| Builds for Workers | `npm ci` then `npm run cf:build` from a clean checkout, no `.env` needed |
-| Runs on `workerd` | `npm run preview` — the real runtime, not an emulator |
-| Type and lint | `tsc --noEmit` and `eslint` clean |
-| `.assetsignore` is honoured | Served the built output: the video 404s, `/favicon.ico` serves |
+| Gates | `npm ci`, `npm run typecheck`, `npm run lint` and `npm run build` from a clean checkout, no `.env` needed. That is what `build.yml` runs on every push to `main` and every pull request |
 | Answer-key isolation | Run against the live project 2026-09-23: `verify_learn_isolation()` passes, `learn_choices` and `learn_questions` both deny with 401, `learn_options_pub` denies and does not carry `is_correct`. HANDOVER §5 has the commands — no database credentials needed |
-| Production smoke test | 2026-09-23 against `learn.save7.workers.dev`: `/`, `/login`, `/register`, `/privacy` and `/certificate/[publicId]` all `200`; `/dashboard` and `/admin` `307` to `/login?next=…`; runtime vars reaching the page from `wrangler.jsonc` |
+| Production smoke test | 2026-10-07 against `learn.save7.org`, unauthenticated: `/`, `/login`, `/register` and `/privacy` all `200`; `/dashboard` and `/admin` `307` to `/login?next=…`; the Supabase URL and the Google client id both appear in `/login`, so runtime configuration is reaching the page. `/media/journey-of-a-gift.mp4` serves as `video/mp4`, and a range request returns `206`. `/certificate/[publicId]` was not repeated on Vercel |
 | Content load | 0094's probe asserts all six counts and the one-correct-answer invariant |
 
 **Not verified, and you should know it before launch:**
 
 | | |
 |---|---|
-| Anything behind sign-in | The smoke test above is unauthenticated. Nothing past the login wall has been exercised on the live site, and registration is currently blocked by the stale `register-learner` allow-list. |
+| Anything behind sign-in | The smoke test above is unauthenticated. Nothing past the login wall has been exercised on the live site. |
 | The end-to-end journey | The 53-assertion suite drove the old SQLite database and was removed with it. Nothing equivalent runs against Supabase yet. |
-| Google sign-in on production | The flow is the volunteer portal's, unchanged, but it has not been walked on a `workers.dev` hostname. Both paths need an allow-list entry added by hand: `signInWithIdToken` needs the Google **Authorised JavaScript origins**, and the `signInWithOAuth` fallback needs Supabase's **Redirect URLs** — step 6b covers both |
+| Google sign-in on production | The flow is the volunteer portal's, unchanged, but it has not been walked on `learn.save7.org`. Both paths need an allow-list entry added by hand: `signInWithIdToken` needs the Google **Authorised JavaScript origins**, and the `signInWithOAuth` fallback needs Supabase's **Redirect URLs** — step 6b covers both. The Redirect URL is not made yet; Gilbert reported the Google origin as made on 30 September 2026, which cannot be checked from outside Google |
 | Marking against real data | The rules moved into SQL functions whose probes are structural, not behavioural |
-| Workers Builds | The connection has never been made. The settings in the next section are what the configuration implies, not what a build has run. |
+| Pushes by `zzubyr7x` | They deploy on the Hobby team while the repository is public (checked 7 October 2026 with `fc18150`); a private repository is untested — see [Outstanding](#2-the-hobby-plan-has-limits-nobody-has-resolved) |
+| Certificate links | `SITE_URL` is still the placeholder, so the verification link a certificate shows is not yet the intended host — step 7 |
 
 The journey row is the real gap. The rules it used to check are now enforced in SQL
 or in `src/lib/`, but nothing exercises them end to end. The Baseline's cap of four
@@ -161,100 +160,90 @@ Sittings is app code in `src/lib/analytics.ts`, not a database rule.
 
 ---
 
-## Deploying from GitHub (recommended)
+## Deploying from GitHub
 
-Cloudflare **Workers Builds** watches a GitHub repository and redeploys on every
-push. That is better than deploying from a laptop: the deploy is reproducible,
-there is a record of what shipped, and it does not depend on one person's machine.
+Vercel's **Git integration** watches the repository and builds every push. That is
+better than deploying from a laptop: the deploy is reproducible, there is a record of
+what shipped, and it does not depend on one person's machine. It is also the only way
+this course deploys.
 
 `.github/workflows/build.yml` deliberately does **not** deploy. It runs `npm ci`,
-`typecheck`, `lint` and `cf:build` as gates on every push and pull request, and
-nothing else — two systems deploying the same Worker would race. A red build here
-is the signal; the deploy is Cloudflare's job.
+`typecheck`, `lint` and `build` as gates on every push to `main` and every pull
+request, and nothing else — two systems deploying the same site would race. A red
+build here is the signal; the deploy is Vercel's job.
 
-### Connect Cloudflare to the repository
+### How a push becomes a deployment
 
-The repository is `zzubyr7x/learn.save7.org`, **renamed from
-`transplant-alchemy`**. That rename is the first thing to check: if a Git
-connection was ever made under the old name, confirm it survived — a connection
-pointing at a repository name that no longer exists is the kind of thing that
-fails quietly, by simply never building. **This is an open question, not a known
-problem.** Nobody has looked.
-
-Cloudflare dashboard → **Workers & Pages** → the `learn` Worker → **Settings** →
-**Builds** → connect the repository, then:
-
-| Setting | Value |
+| You push | What Vercel does |
 |---|---|
-| Branch | `main` |
-| Build command | `npm run cf:build` |
-| Deploy command | `npx wrangler deploy` |
-| Root directory | the repository root |
+| `main` | Builds and publishes to `https://learn.save7.org` — production |
+| any other branch | Builds a preview deployment with its own URL |
 
-`cf:build` produces `.open-next/worker.js` and `.open-next/assets`, and
-`wrangler.jsonc` names both, so the deploy step needs no arguments. There are no
-compatibility flags to set in the dashboard either — `nodejs_compat` and
-`global_fetch_strictly_public` are in `wrangler.jsonc`, which is where Workers
-reads them from. `nodejs_compat` is not optional: the Next server needs Node
-built-ins (crypto, buffer, async_hooks).
+The repository is `Save7Lives/learn.save7.org`, on the GitHub organisation. It was
+renamed from `transplant-alchemy` and moved from a personal account earlier; the old
+`zzubyr7x/...` URLs redirect.
 
-**Finish steps 2 to 7 below before the first build**, or the deploy will serve a
-site that cannot reach its database. Cloudflare reads `wrangler.jsonc` from the
-repository, so the Supabase values must be committed:
-
-```bash
-git commit -am "Point wrangler at the Supabase project"
-```
-
-```bash
-git push
-```
+The build is a plain `next build`. Nothing in the repository configures it further:
+there is no `vercel.json`, no adapter, and `next.config.ts` is empty. Configuration
+that varies between environments lives in the Vercel project's environment variables
+(step 6), not in the repository — apart from the three public values that are also
+committed in `.env.example` for local development.
 
 There is no secret to set. Every value the app needs is public by design — see
 step 6 — and the service-role key must never be added.
 
-### Keep the repository private
+A deployment without the Supabase variables throws on the server rather than
+rendering a sign-in that cannot work, and `/login` is where it shows first. That
+applies to preview deployments too, which is why step 6 sets every variable for both
+Production and Preview.
 
-Two reasons, both concrete:
+### Make the repository private before launch
 
-1. `public/resources/` holds ten third-party academic PDFs — ISHLT consensus
+It is public today, deliberately, and that cannot stay. Three reasons, all concrete:
+
+1. The repository contains the **quiz answer keys** — `isCorrect` in
+   `prisma/content/*.ts` and in the generated SQL. A browser is kept from reading
+   them (step 4); a public repository publishes them.
+2. `public/resources/` holds ten third-party academic PDFs — ISHLT consensus
    documents, SAMJ papers, the SATCS reference file. Save7 was given them for the
    course; a public repository republishes them, which is a different thing from
    citing them.
-2. Module 9's legal content and Module 10's clinical criteria have not been
+3. Module 9's legal content and Module 10's clinical criteria have not been
    reviewed yet. A public repository is a public claim.
 
-Nothing about the build requires a public repository, and Workers Builds works on
-a private one, so private costs you nothing.
+**Why it is public anyway:** Vercel's Hobby plan cannot deploy a private repository
+owned by a GitHub organization. Going private therefore means one of two things, and
+neither is decided:
+
+- upgrade to **Vercel Pro**, which costs money the project's budget does not have
+  (see [Costs](#costs)); or
+- **move the repository to a personal GitHub account.** The `Save7-NPO` account is an
+  owner of the organisation.
 
 ### After that
 
-Every push to `main` builds and deploys. Content changes become: edit
-`prisma/content/`, run `npm run content:emit`, and push the regenerated migration
-with `supabase db push` (see [Updating content](#updating-content-after-launch)).
+Every push builds. Content changes become: edit `prisma/content/`, run
+`npm run content:emit`, and push the regenerated migration with `supabase db push`
+(see [Updating content](#updating-content-after-launch)).
 
 ---
 
 ## One-time setup
 
-Do these regardless of whether you deploy from GitHub or from your laptop.
+These are the steps that stand the course up from nothing. Most are already done for
+the live deployment; they are kept as the record of what it needs, and as the order
+to follow if the Vercel project or the Supabase project ever has to be rebuilt.
 
-### 1. Sign in
+### 1. Know where it runs
 
-```bash
-npx wrangler login
-```
+Nothing here deploys from a laptop, so there is no command-line sign-in. The course is
+the Vercel project **`learn-save7-org`**, on the **Save7** team (Hobby plan), at
+`https://learn-save7-org.vercel.app`, and its production branch is `main`.
 
-```bash
-npx wrangler whoami
-```
-
-The second one matters more than it looks. The Worker must land on
-`admin@save7.org` (`cab9730a43ee3fb2e8aaf3d36a25cb8d`), because that account's
-`workers.dev` subdomain is `save7` — which is what makes the hostname
-`learn.save7.workers.dev` rather than something on a personal account. Deploying
-while logged in as somebody else produces a working site at the wrong address,
-and every allow-list in step 6b then names the wrong host.
+Everything below that says "in the Vercel project" — environment variables, the
+domain, redeploys, rollback — is done on that project, so you need access to the
+Save7 team. How to grant someone that access is covered in
+[Giving someone else control](#giving-someone-else-control-of-the-domain-and-deploys).
 
 ### 2. Apply the database
 
@@ -267,6 +256,11 @@ the foundation it started from, not everything it will run.
 ```bash
 cd ../save7-os && supabase db push
 ```
+
+Always pass `--workdir` (pointing at the `save7-os` checkout) and
+`--project-ref zbaoziisqroqxfwcnhlb`: a directory that is not linked defaults to the
+wrong project. The same goes for the `supabase functions deploy` and
+`supabase secrets set` commands in step 3.
 
 The first eight it applied, in order, were:
 
@@ -304,19 +298,24 @@ has to work before anybody can sign in:
 cd ../save7-os && supabase functions deploy register-learner
 ```
 
-**This needs doing again even if you deployed it in August.** The function's CORS
-allow-list was rewritten for Workers and the change is in the repository, not in
-the deployed function. It now matches:
+The function's CORS allow-list decides which sites a browser may call it from, and it
+is in code in `save7-os`, not in a console. As written there it admits:
 
-```
-^https://([a-z0-9]+-)?learn\.save7\.workers\.dev$
-```
+- `https://learn.save7.org`, exactly — so the live domain works without any change;
+- the old Workers hostnames, `learn.save7.workers.dev` and its per-version
+  previews, which are scoped to that one Worker rather than matched as `*.workers.dev`;
+- `localhost` and `127.0.0.1`, on any port.
 
-Note the shape, because it is not the Pages shape. `wrangler versions upload`
-publishes a per-version hostname that **hyphenates onto the same label** —
-`<version-prefix>-learn.save7.workers.dev` — where a Pages preview added a
-subdomain. It is deliberately not `*.workers.dev`, which would admit every Worker
-on the internet.
+It does **not** admit `learn-save7-org.vercel.app` or the preview URLs Vercel gives
+other branches, so registration on those is refused by the browser's CORS check,
+which the page reports as "Could not reach Save7". **That is an open item, not a
+known fix:** admitting Vercel previews would be a change in `save7-os`, the shape of
+the preview hostnames is not recorded here, and it must stay scoped to this project.
+A wildcard on `vercel.app` would admit every Vercel project on the internet, and this
+is the one endpoint here that anybody can call without a token.
+
+Redeploying the function matters only if that allow-list changes, or if the deployed
+copy has fallen behind the source.
 
 Set the throttle salt while you are there. Without it the function falls back to
 the service key, which works but is not the intended state:
@@ -338,47 +337,43 @@ It confirms row level security is on for every `learn_*` table, that
 `learn_choices` has **no policy at all**, that no view names `is_correct`, and that
 `anon` has no direct read of the bank.
 
-### 5. Host the video
+### 5. The video
 
-The video is 34.6 MiB and a single static asset may be 25 MiB, so it cannot ship
-in the bundle. `public/.assetsignore` keeps `media/*` out of the upload — Workers
-reads that file, which is why there is no strip script any more.
+`public/media/journey-of-a-gift.mp4` is 34.6 MiB. **It ships with the app** and is
+served from the same origin at `/media/journey-of-a-gift.mp4`. Vercel serves it as
+`video/mp4` with range requests — checked, an HTTP 206 — which is what seeking needs.
+A wrong content type is exactly how this fails, silently, in a `<video>` element, so
+that check is worth repeating after any change to how the file is served. The 25 MiB
+per-file asset cap that used to force the film elsewhere was a Cloudflare limit and
+no longer applies.
 
-**Supabase Storage, public bucket `learn-media`.** That is the decision on the
-map, and it replaces two earlier plans that are both superseded: **R2** (needs a
-payment method on the Cloudflare account, which was waiting on Save7's bank
-details) and **GitHub Pages from the orphan `media` branch** (needs a paid GitHub
-plan for a private repository). Neither is the route any more. MEDIA-HOSTING.md
-still describes the GitHub Pages route and has not been updated.
+**Supabase Storage, public bucket `learn-media`, is still the intended long-term
+home.** That is the decision on the map (#23), and `scripts/upload-media.mjs` still
+does it:
 
 ```bash
 npm run media:upload
 ```
 
-It creates the bucket, uploads the file, checks that it comes back as
-`video/mp4` — a wrong content type is exactly how this fails, silently, in a
-`<video>` element — and prints the `MEDIA_BASE_URL` to uncomment in
-`wrangler.jsonc`. It reads the service-role key from the environment; see
-`scripts/load-secrets.mjs`. That key must never be committed or put in
-`wrangler.jsonc`.
+It creates the bucket, uploads the file, checks that it comes back as `video/mp4`, and
+prints the `MEDIA_BASE_URL` to set. It reads the service-role key from the
+environment; see `scripts/load-secrets.mjs`. That key must never be committed, put in
+`.env`, or added to the Vercel project. MEDIA-HOSTING.md has the reasoning, including
+which hosts do not work.
 
-Then redeploy, so the Worker picks up the new variable:
+`MEDIA_BASE_URL` is **optional and unset**. Setting it is meant to redirect `/media/`
+paths to the bucket host (`src/lib/media.ts` does the rewrite), and, like any variable,
+it takes effect only after a redeploy. But at the time of writing **nothing in `src/`
+imports `src/lib/media.ts`**, so treat the variable as not yet wired to anything, and
+check a deployment before relying on it. Do not set it before the object actually
+serves from the bucket: pointing the app at a file that is not there is the one way
+to break a video that works today.
 
-```bash
-npm run deploy
-```
+### 6. Set the environment variables
 
-**Until the bucket is serving, Module 5 has no video, and that is a designed
-state rather than a broken one.** With `MEDIA_BASE_URL` unset, `src/lib/media.ts`
-drops the path and the player renders its "not hosted yet" state, listing the
-chapters and saying plainly that the film is finished but not yet uploaded. A
-`<video>` pointing at a missing file would look like a bug in the site. Do not set
-the variable before the object actually serves — that is the one way to get the
-dead player instead of the honest placeholder.
-
-### 6. Set the Supabase variables
-
-Three values, in `wrangler.jsonc` under `vars`:
+Environment variables live in the Vercel project, under **Settings → Environment
+Variables**, and are set for **Production and Preview**. The three that configure the
+backend:
 
 | Variable | Where it comes from |
 | --- | --- |
@@ -386,171 +381,176 @@ Three values, in `wrangler.jsonc` under `vars`:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the same page |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | the volunteer portal's Google client id |
 
-**There is one `vars` block now, not two.** Pages needed a separate `env.preview`
-block because it built preview branches as separate deployments with their own
-variables, and an edit that reached only one of them was a real trap — the
-Supabase values once landed in `env.preview` alone, so previews worked and
-production would have thrown on `/login`. Workers previews are **versions of this
-same Worker** and inherit these vars. Do not reintroduce a second block without a
-reason.
+The same three values are committed in `.env.example`, which is what local development
+copies. `SITE_URL` and `NEXT_PUBLIC_SITE_URL` are step 7, and `MEDIA_BASE_URL` is
+step 5.
 
-**None of these is a secret, and none of them goes in `wrangler secret put`.**
-The anon key is public by design and grants nothing on its own; a Google client id
-appears in every page that uses Google sign-in. Row level security is what protects
-the data — see `verify_learn_isolation()` in step 4.
+**Changing a variable does not change a running deployment.** It takes effect only
+after a redeploy: **Deployments** → the deployment's menu → **Redeploy**.
 
-There is **no `AUTH_SECRET` any more.** The app no longer mints its own session
+**Set each variable for both Production and Preview, and check both carry it after an
+edit.** An edit that reached only one of them is a real trap, and the old Pages setup
+fell into it: the Supabase values once landed in a preview-only block, so previews
+worked and production would have thrown on `/login`.
+
+**None of these is a secret.** The anon key is public by design and grants nothing
+on its own; a Google client id appears in every page that uses Google sign-in. Row
+level security is what protects the data — see `verify_learn_isolation()` in step 4.
+
+There is no `AUTH_SECRET` any more. The app no longer mints its own session
 cookie: the Supabase cookie is the session, and it carries the JWT that row level
 security reads. If you are looking for it because an older copy of this guide
 mentioned it, it is gone along with password sign-in.
 
-⚠️ **Never put the service-role key in this file or in the Worker.** It bypasses
-every policy, and `wrangler.jsonc` is committed to the repository. The app does
-not need it and must not have it.
+⚠️ **Never put the service-role key in the Vercel project, in the repository, or in
+`.env`.** It bypasses every policy. The app does not need it and must not have it.
 
 ### 6b. Let Google and Supabase know the hostname
 
 **Both of these fail silently, and this is the step most likely to be missed.**
 Sign-in has two paths and each one has its own allow-list, held in a different
-console. Moving to Workers changed the hostname, so both lists need editing again.
+console. The course now lives at `https://learn.save7.org`, which neither list has been
+told about. **Neither entry is made yet** (status 7 October 2026).
 
 **Supabase → Authentication → URL Configuration.** Add the hostname to the
-redirect allow-list, and set it as the Site URL if the course is the primary site
-for it:
+redirect allow-list under **Redirect URLs**:
 
 ```
-https://learn.save7.workers.dev
-https://learn.save7.org
-http://localhost:4327
+https://learn.save7.org/**
 ```
+
+**Leave the Site URL alone.** This Supabase project is shared with `os.save7.org` and
+`volunteers.save7.org`, and whether changing the Site URL is safe for them has not
+been checked.
 
 Without this, `signInWithOAuth` — the fallback path — returns the learner to a
 refused redirect after they have already approved the Google prompt.
 
 **Google Cloud console → the volunteer portal's OAuth client → Authorised
-JavaScript origins.** Add the same hostnames, **appending rather than
+JavaScript origins.** Add `https://learn.save7.org`, **appending rather than
 replacing**: that client is what `volunteers.save7.org` signs in with, and
-clearing an existing entry breaks the portal.
+clearing an existing entry breaks the portal. Gilbert reported this entry already made
+for `learn.save7.org` on 30 September 2026, which cannot be checked from outside
+Google, so a sign-in test is the check.
 
 Without this, Identity Services still draws a perfectly convincing button and 403s
 an iframe request the moment it is pressed — a failure the page cannot observe, and
 the reason the "Continue with Google" fallback is never hidden.
 
 ⚠️ **The registration endpoint has a third allow-list of its own**, in code, and
-it has already been updated — but the function still needs redeploying, which is
-step 3. It is deliberately not a wildcard, because that endpoint is the one thing
-anybody can call without a token.
+the live domain is already on it (step 3). It is deliberately not a wildcard, because
+that endpoint is the one thing anybody can call without a token.
 
-Per-version preview hostnames are covered by the regex in step 3, so a
-`wrangler versions upload` preview signs in without further edits. The Supabase
-and Google lists are exact strings and are not: a preview hostname pasted into a
-browser will hit the redirect allow-list. That is expected, and the reason to walk
-the journey on the deployed Worker rather than on a version preview.
+For local sign-in, `npm run dev` serves on port 3000 unless told otherwise, so the
+matching Supabase entry would be `http://localhost:3000/**`. An earlier version of
+this list named port 4327, which nothing in the repository uses.
+
+If entries for `https://learn.save7.workers.dev` were ever added to either list, they
+can come out when the Worker is deleted (see Outstanding, item 4). Whether they were
+is not recorded here.
+
+**Vercel preview deployments are on none of the three lists.** Signing in or
+registering on a preview URL is therefore not expected to work. This has not been
+tested. Previews are for looking at pages and checking the build; walk the journey on
+`learn.save7.org`, not on a preview. Whether to add a pattern for them has not been
+decided.
 
 ### 7. Set the public URL
 
-`wrangler.jsonc` sets both `SITE_URL` and `NEXT_PUBLIC_SITE_URL` to
-`https://learn.save7.workers.dev`.
+`SITE_URL` and `NEXT_PUBLIC_SITE_URL` in the Vercel project set the host that
+certificate verification links are built from.
 
-That is the `workers.dev` hostname rather than `learn.save7.org`, deliberately:
-it is the one that will answer as soon as the Worker is deployed, whereas
-`learn.save7.org` still points at the old Pages project and cannot be moved
-without the decision in step 9. A certificate issued now should carry a link that
-works. Pointing this at the intended domain before that domain reaches this Worker
-would print dead links onto real certificates, which cannot be corrected after the
-fact without reissuing them.
+**Today both are a placeholder, `https://learn-save7-org.vercel.app`. They must be
+changed to `https://learn.save7.org` and the project redeployed. That step is still
+to do.**
 
-`SITE_URL` is the one that takes effect. Next inlines `NEXT_PUBLIC_` variables
-into the bundle when it builds, and on Cloudflare the build happens before deploy
-variables are applied, so a public variable would freeze whatever the build
-machine had. `SITE_URL` is read at runtime, which means changing the domain is a
-config change and a deploy, not a rebuild.
+Until it is done, the verification link shown on a certificate names the placeholder
+host rather than the domain Save7 intends people to use. The link is built each time
+the certificate page is rendered, so changing the variable corrects the page from then
+on. A copy someone has already printed or saved keeps the host it showed at the time,
+and that cannot be corrected without reissuing it — so this is worth doing before real
+certificates are issued.
 
-**Changing the domain later is this one line and a deploy, with no rebuild:**
+`SITE_URL` is the one that takes effect. Next inlines `NEXT_PUBLIC_` variables into
+the bundle when it builds, so a public variable would freeze whatever the build
+had. `SITE_URL` is a plain server-side variable read on each request, and
+`src/lib/site.ts` reads it first. Set both to the same value so they cannot disagree.
 
-```bash
-npx wrangler deploy
-```
-
-This was verified on the Pages build by doing exactly that — the variable was
-changed and deployed without rebuilding, and a certificate on production then
-printed the new host. The mechanism is the same on Workers, but it has not been
-repeated here, because nothing has been deployed yet.
+Changing the domain later is this one pair of variables and a redeploy
+(**Deployments** → the deployment's menu → **Redeploy**); nothing in the code needs to
+change. That has not been done on Vercel yet, so it is untested here.
 
 ### 8. Deploy
 
-If you connected Workers Builds, push instead — Cloudflare builds and deploys:
+Push:
 
 ```bash
 git push
 ```
 
-Or deploy straight from this machine:
+Vercel builds the push. A push to `main` is a production deployment at
+`https://learn.save7.org`; a push to any other branch is a preview deployment with
+its own URL. **A push to `main` is the deploy**, so apply any migration that code
+reads *before* pushing it — see
+[Changing the database schema](#changing-the-database-schema-after-launch).
 
-```bash
-npm run deploy
-```
+To redeploy without a code change — after editing an environment variable, for
+example — use **Deployments** → the deployment's menu → **Redeploy**.
 
-That runs `opennextjs-cloudflare build` and then the upload. To put a version up
-without promoting it to the live hostname:
+To put a version up without promoting it to the live hostname, push a branch: it gets
+a preview deployment and production is untouched. That is also the closest thing to a
+production check that exists, because there is no local runtime for the host (see
+[Local development](#local-development)).
 
-```bash
-npx wrangler versions upload
-```
-
-which prints a `<version-prefix>-learn.save7.workers.dev` URL. That is the
-hostname the CORS regex in step 3 exists for.
+**Rolling back:** Vercel's **Instant Rollback** makes the previous production
+deployment available at the custom domain instantly. It rolls the *code* back and
+nothing else: the database is the Supabase project, and a migration applied for the
+bad deploy stays applied. Check that the older code still works against the current
+schema before relying on it.
 
 ### 9. Attach your domain
 
-**This is where Workers differs from Pages, and the difference is not small.**
+**Done on 7 October 2026.** `learn.save7.org` is attached to the Vercel project (in
+the project, **Settings → Domains**) and serves the course. The certificate is Let's
+Encrypt, issued and renewed by Vercel.
 
-An earlier version of this guide said no nameserver move was needed. That was
-correct for **Pages**, which will serve a custom domain on a subdomain with the
-zone left at an external provider. **Workers reinstates the requirement**, and the
-single-CNAME plan recorded here and in DNS-MIGRATION.md — *Gilbert repoints one
-CNAME at xneelo* — **does not work**. Checked against Cloudflare's documentation
-on 22 September 2026:
+The zone stays at **xneelo**. Nothing moved to Cloudflare, and the nameservers are
+unchanged: `ns1.host-h.net`, `ns2.host-h.net`, `ns1.dns-h.com` and `ns2.dns-h.com`.
+The registrar is Tucows, through xneelo. Gilbert owns DNS and infrastructure and
+edits the records himself.
 
-- A **Workers Custom Domain** needs an active Cloudflare zone, and Cloudflare is
-  explicit that you cannot create one
-  "on a hostname with an existing CNAME DNS record or on a zone you do not own"
-  ([docs](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)).
-  Both halves bite here: the zone is at xneelo, and `learn.save7.org` *is* an
-  existing CNAME today.
-- A **Workers Route** needs an active zone plus a proxied, orange-clouded record
-  on Cloudflare
-  ([docs](https://developers.cloudflare.com/workers/configuration/routing/routes/)).
-- **Partial (CNAME) zone setup**, which would let Cloudflare serve one hostname
-  while xneelo keeps the zone, is a **Business or Enterprise** feature
-  ([docs](https://developers.cloudflare.com/dns/zone-setups/partial-setup/)).
-  Not available on Free.
-- **Subdomain setup / delegation** is **Enterprise** only
-  ([docs](https://developers.cloudflare.com/dns/zone-setups/subdomain-setup/)).
+Two records changed at xneelo:
 
-This project has a zero budget, so that leaves two free routes, and choosing
-between them is **not a decision this repository can make**:
+| Type | Name | Value |
+| --- | --- | --- |
+| CNAME | `learn` | `f5d209c593f287f5.vercel-dns-017.com.` |
+| TXT | `_vercel` | `vc-domain-verify=learn.save7.org,98022079fd5a62255618` |
 
-1. **Move the `save7.org` zone's nameservers to Cloudflare.** Free, and the
-   normal way to do this. But it is a whole-zone move: every record — mail, SPF,
-   DMARC, the apex on Vercel, `os.save7.org`, `volunteers.save7.org` — moves with
-   it. That makes it **Gilbert's decision, not ours**, and DNS-MIGRATION.md holds
-   the captured zone and the procedure.
-2. **Cloudflare for SaaS custom hostnames.** Available on Free (100 hostnames
-   included, then $0.10 each) and a Worker can be the origin
-   ([docs](https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/plans/)).
-   It does not need `save7.org` on Cloudflare — but it does need **some other
-   domain** whose nameservers point at Cloudflare to act as the SaaS zone.
-   Whether Save7 has a spare domain is not known here.
+The CNAME replaced `transplant-alchemy.pages.dev`, the old 503 holding page. The TXT
+record proves ownership, because the main site's Vercel team — another account —
+already holds `save7.org`. Vercel says it may be removed after verification.
 
-**Nothing is blocked while this is open.** Once the Worker is deployed,
-`https://learn.save7.workers.dev` serves the whole course, sign-in included, and
-the end-to-end journey can be walked there. `SITE_URL` already names it, so
-certificates issued in the meantime carry a link that works. Moving to
-`learn.save7.org` later is a `wrangler.jsonc` edit and a deploy, not a rebuild.
+**Every other record is untouched:** the apex (the main site, on Vercel), Google
+Workspace mail, SPF, DMARC, the Resend records, and the `os`, `volunteers` and
+`staging` subdomains. The record table in DNS-MIGRATION.md is the only complete
+capture of the zone, because xneelo refuses zone transfers. Keep it as a recovery
+record, and read it before touching anything at xneelo.
 
-DNS-MIGRATION.md is the document for this. Read it before touching anything at
-xneelo.
+**Rolling the domain back** means putting the `learn` CNAME back (the TTL is 60
+seconds). That is a DNS rollback, and it is not how to undo a bad deploy: a bad deploy
+is Instant Rollback in step 8.
+
+**An open note:** the Google Workspace DKIM selector was never confirmed — no
+`google._domainkey` record exists in the zone. It is no longer a blocker.
+
+**Why Vercel, and not Cloudflare.** The plan before this was to move the whole
+`save7.org` zone to Cloudflare, so that a Workers custom domain could attach.
+Cloudflare's single-subdomain delegation is Enterprise-only, and Cloudflare for SaaS
+needed a spare domain. Gilbert asked why the whole zone had to move, then chose Vercel
+instead. Going back to Cloudflare Pages was rejected: `@cloudflare/next-on-pages` is
+archived and capped Next at 15.5.2, which carries the GHSA-2xp9-vwfh-vxw4 advisory.
+The Cloudflare zone was added but left pending and is unused. Map tickets #51 (route A)
+and #64 (the nameserver move) are superseded by this.
 
 ---
 
@@ -564,6 +564,9 @@ columns fails in between:
 1. Add a numbered file to `save7-os/supabase/migrations/`
 2. `cd ../save7-os && supabase db push`
 3. Then build and deploy this app
+
+On Vercel the deploy is the push, so that third step is the push of the code that
+reads the new columns.
 
 Migrations are recorded by the Supabase CLI, so re-running is safe: only unapplied
 files execute. **End any migration that touches a `learn_*` view or table with
@@ -579,66 +582,50 @@ inside it. Write them: a migration that raises rolls itself back, which is how t
 
 ## Giving someone else control of the domain and deploys
 
-Two ways, and the first is better.
+Three things are held in three places: the code that deploys (GitHub), the Vercel
+project's settings (Vercel), and the DNS records (xneelo). The first is the easiest to
+share.
 
 ### Through the repository (recommended)
 
-Connect Workers Builds to the GitHub repository (see
-[Deploying from GitHub](#deploying-from-github-recommended)). Deploys then run
-under your Cloudflare account, triggered by merges to `main`.
+Vercel's Git integration deploys what is pushed to the GitHub repository (see
+[Deploying from GitHub](#deploying-from-github)). A collaborator with **Write access
+on GitHub** can push a branch, which builds a preview, and merge to `main`, which
+deploys to production — without ever holding a Vercel credential. The change is
+visible, reversible, and recorded. They cannot see learner data or touch the database;
+that lives on the Supabase project, which this repository has no privileged access to.
 
-Once that is set up, a collaborator with **Write access on GitHub** can change
-where the course lives without ever holding your Cloudflare credentials:
+What this route **cannot** do is change the domain or the environment variables. The
+hostname is no longer declarable in code, as it was on Workers: it is attached in the
+Vercel project under **Settings → Domains**, and the DNS records are at xneelo. The
+variables are in the Vercel project.
 
-1. Uncomment the `routes` block in `wrangler.jsonc` and set the hostname
-2. Set `SITE_URL` and `NEXT_PUBLIC_SITE_URL` to the same origin
-3. Open a pull request
+On a Hobby team, the commit author must be the team owner for private repositories;
+for public repositories collaboration is free. That is one more reason the question in
+[Make the repository private before launch](#make-the-repository-private-before-launch)
+has to be answered with the Vercel plan in mind.
 
-You review it, merge it, and the deploy attaches the domain. The change is
-visible, reversible, and recorded — which clicking in a dashboard is not. They
-cannot see learner data or touch the database; that lives on the Supabase project,
-which this repository has no privileged access to.
+### Through the Vercel team
 
-**That route only exists because the course is a Worker again.** A Pages custom
-domain could only be attached in the dashboard. On Workers the hostname is
-declarable in `wrangler.jsonc`, which is the whole reason the hostname is
-configuration rather than a dashboard setting. `SITE_URL` is read at runtime, so
-no rebuild is involved either.
-
-It presupposes the zone is on Cloudflare. Until then the `routes` block claims a
-hostname this Worker does not serve, which is why it is commented out.
-
-### Through the Cloudflare account
-
-Only if they genuinely need dashboard access — reading logs, managing DNS records
-directly, connecting Workers Builds:
-
-Cloudflare dashboard → **Manage Account** → **Members** → **Invite**. Grant the
-narrowest role that fits, rather than Super Administrator:
-
-| They need to | Role |
-|---|---|
-| Deploy Workers, attach domains | Workers Admin |
-| Manage DNS for save7.org, once the zone is there | DNS |
-| Manage R2 or other storage | Workers Admin |
-| Everything except billing and member management | Administrator |
-
-Super Administrator can remove you, change billing, and delete the account. There is
-almost never a reason to grant it.
+Only if they genuinely need to change environment variables, redeploy, roll back, or
+manage the domain themselves. That needs access to the **Save7** team on Vercel.
+**How to invite someone, and which roles Vercel offers, is not recorded here**, and
+neither is what the Hobby plan allows for team members. Look at what the team's
+settings offer, and grant the narrowest access that fits rather than the broadest.
 
 Note that learner records — names, email addresses, assessment answers — are in the
-**Supabase** project now, not in the Cloudflare account. So Cloudflare access no
-longer reaches personal information, and Supabase access does. Under POPIA that is
-personal information either way: keep both lists short and deliberate, and remember
-that the Supabase project also holds the organisation's books.
+**Supabase** project, not in the Vercel project, which holds only public values. So
+Vercel access does not by itself reach personal information, and Supabase access
+does. Under POPIA that is personal information: keep the Supabase list short and
+deliberate, and remember that the Supabase project also holds the organisation's books.
 
 ### The part neither option solves
 
-`learn.save7.org` cannot be pointed at this Worker by anyone — you, a
-collaborator, or me — while the zone is authoritative at xneelo. That is not a
-permissions problem inside Cloudflare; it is the platform requirement in step 9.
-Whoever holds the registrar and zone access at xneelo, and whoever gets to decide
-that every other `save7.org` record moves, is the person this is waiting on.
+The DNS records for `learn.save7.org` are at xneelo, and the zone stays there. Nobody
+can change them from GitHub or from Vercel: Gilbert owns DNS and infrastructure, and
+edits records himself. A change of hostname waits on whoever holds that access, however
+the Vercel side is arranged. This is not a platform requirement as it was on Workers;
+it is only who holds the xneelo login.
 
 ---
 
@@ -693,9 +680,11 @@ Advanced Stage 3 (Consent and End-of-Life Ethics, In Depth).
 You have chosen to launch publicly. That is your call, and it is recorded here so
 the position is not ambiguous later.
 
-If you change your mind and want reviewer-only access first, put Cloudflare Access
-in front of the Worker (Zero Trust → Access → Applications), which needs no code
-change and is one setting to remove afterwards.
+If you change your mind and want reviewer-only access first, **there is no recorded
+way to do it on Vercel.** The earlier suggestion was to put Cloudflare Access in front
+of the Worker, and the course is no longer behind Cloudflare. No Vercel equivalent has
+been looked into, so reviewer-only access is an open item that would need its own
+decision.
 
 ### Also outstanding
 
@@ -716,23 +705,29 @@ change and is one setting to remove afterwards.
 
 | | |
 |---|---|
-| Workers | Free tier covers 100,000 requests/day. Paid is $5/month. |
+| Vercel | The **Hobby** plan is free, but **non-commercial only** (Vercel's fair-use guidelines): commercial means anyone is paid for the site's production, including a paid employee or consultant writing code; donations are fine. Nobody has confirmed the course meets that. **Pro** is $20 per developer seat per month. |
 | Supabase | Shared with the OS and the volunteer portal, so the course adds no new bill. |
-| Supabase Storage | The video is one 34.6 MiB object in the shared project. Check that project's plan allowance rather than trusting a number here. |
-| Cloudflare for SaaS, if that route is taken | 100 custom hostnames included on Free, $0.10 each after. |
-| DNS on Cloudflare, if the zone moves | Free. |
+| Supabase Storage | If the video moves there (step 5), it is one 34.6 MiB object in the shared project. Check that project's plan allowance rather than trusting a number here. |
 
-For an awareness course, expect this to run at no cost, or $5/month if you exceed
-the Workers free tier.
+For an awareness course, expect this to run at no cost on Hobby — if it counts as
+non-commercial, which is unconfirmed. If it does not, or if the repository has to be
+private, the fallback is Pro at $20 per developer seat per month, against a project
+budget of zero.
 
 The one CPU-heavy operation this app used to have is gone with password sign-in:
 bcrypt at cost 12 spent roughly 200 ms per sign-in, and nothing now hashes
-anything. Sign-in is a Google credential verified by Supabase, and the Worker's own
+anything. Sign-in is a Google credential verified by Supabase, and the server's own
 work is a handful of HTTPS calls.
 
 ---
 
 ## Local development
+
+Copy the example environment first. Every value in it is public by design:
+
+```bash
+cp .env.example .env
+```
 
 ```bash
 npm run dev
@@ -747,29 +742,24 @@ data. Sign in as yourself, and remember that a learner row you create is a row i
 the same project as the organisation's books. There is no seeded admin to hide
 behind.
 
-```bash
-npm run preview
-```
-
-Builds the Worker and runs it on **workerd** with the configuration from
-`wrangler.jsonc` — the real runtime rather than `next dev`. Slower, but it is the
-truth, and while nothing is deployed it is the closest thing to production that
-exists.
+**There is no local runtime check of the host any more.** The old `npm run preview`
+ran the built Worker on workerd, and it is gone. Vercel's preview deployments from
+branch pushes are the closest thing to production that exists, with the sign-in limits
+described in step 6b.
 
 Other useful commands:
 
 ```bash
 npm run content:emit     # regenerate the migration that loads the course
-npm run cf:build         # the full Workers bundle
-npm run cf:types         # regenerate worker-configuration.d.ts from wrangler.jsonc
-npm run typecheck        # tsc --noEmit
+npm run build            # the production build, as the CI gate runs it
+npm run typecheck        # next typegen && tsc --noEmit
 npm run lint             # eslint
 ```
 
 Before claiming anything works:
 
 ```bash
-npm run typecheck && npm run lint && npm run cf:build
+npm run typecheck && npm run lint && npm run build
 ```
 
 **There is no journey suite any more.** `npm run verify` drove a learner through
@@ -778,10 +768,10 @@ removed with the database it depended on. Until it is rewritten against Supabase
 the assessment-integrity rules are covered only by the structural probes inside the
 migrations — so changes to marking deserve manual walking through.
 
-One thing `npm run cf:build` will catch that `next dev` will not: a rendering route
-missing `export const dynamic = "force-dynamic"`. OpenNext runs on the Node runtime,
-where Next will happily prerender a route at build time and bake in whatever
-configuration the build machine had. All 22 routes carry the directive for that
-reason — it replaced `export const runtime = "edge"`, which OpenNext does not
-support, and it is load-bearing rather than cosmetic. This was found by the build
-failing on a missing Supabase URL while prerendering `/login`.
+One thing `npm run build` will catch that `next dev` will not: a rendering route
+missing `export const dynamic = "force-dynamic"`. Next will happily prerender a route
+at build time and bake in whatever configuration the build machine had. The routes
+that render carry the directive for that reason, and it is load-bearing rather than
+cosmetic: the CI build has no Supabase values (`build.yml` sets none), so a route that
+tried to prerender fails there. This was found by the build failing on a missing
+Supabase URL while prerendering `/login`.
