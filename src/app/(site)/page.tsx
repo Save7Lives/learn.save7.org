@@ -10,6 +10,11 @@ import { Badge, ButtonLink, Display, Eyebrow } from "@/components/ui/primitives"
 // prerender would bake whatever the build machine had. See src/lib/supabase/config.ts.
 export const dynamic = "force-dynamic";
 
+// A Certificate is titled with its Level's name (prisma/content/structure.ts). Written
+// out here rather than read from `levels` because a signed-out visitor reads no Levels:
+// learn_levels is readable only by signed-in users (save7-os 0091).
+const CERTIFICATE_TITLES = ["Beginner", "Intermediate", "Advanced"] as const;
+
 export default async function HomePage() {
   const session = await getSession();
 
@@ -75,8 +80,9 @@ export default async function HomePage() {
 
           {session && baseline && !baseline.completed ? (
             <p className="mt-6 text-sm text-cream/60">
-              Before your first module we&apos;ll ask you 20 quick questions, and the same
-              20 again after each level, so you can see how much you&apos;ve learned.
+              Before your first Stage we&apos;ll ask you 20 quick questions. After each
+              level you can answer the same 20 again, so you can see how much you&apos;ve
+              learned.
             </p>
           ) : null}
         </div>
@@ -120,28 +126,28 @@ export default async function HomePage() {
           <div className="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
             {[
               {
-                title: "Multimedia learning",
-                body: "Video, visual storytelling and interactive diagrams instead of walls of text.",
+                title: "Plain-language lessons",
+                body: "Written lessons in plain language, with a table wherever things are easier to compare side by side.",
               },
               {
-                title: "Interactive questions",
-                body: "Short checks after each topic, with explanations that teach rather than just mark you.",
+                title: "Questions that explain",
+                body: "Every Stage has a five-question quiz, with an explanation for each answer that teaches rather than just marks you.",
               },
               {
-                title: "Conversation practice",
-                body: "Real objections you will actually hear, and the chance to try responses safely.",
+                title: "Real objections, answered",
+                body: "The beliefs you will actually hear, twelve of them in the Beginner Level, each with what is true and why it is persuasive.",
               },
               {
                 title: "Study material",
-                body: "A concise written summary of every module, to keep and refer back to.",
+                body: "A written summary of every Stage, to come back to.",
               },
               {
                 title: "Optional deeper reading",
-                body: "Clinical and academic material for anyone who wants it. The course is complete without it.",
+                body: "The laws, guidelines and studies each Stage draws on, for anyone who wants them. The course is complete without them.",
               },
               {
                 title: "Before and after assessment",
-                body: "A short baseline quiz at the start, and the same quiz again after each level, so you can see exactly how much you have learned.",
+                body: "A short baseline quiz before you start, and the same questions again after each level if you choose, so you can see how much you have learned.",
               },
             ].map((item) => (
               <div key={item.title}>
@@ -155,14 +161,14 @@ export default async function HomePage() {
             <div className="flex-1">
               <h3 className="font-bold text-ink">A certificate for each level</h3>
               <p className="mt-1 text-sm text-sand-600">
-                Conversation Starter, Donation Advocate and Transplant Advocate. Each is
-                verifiable from its certificate ID.
+                {CERTIFICATE_TITLES.join(", ")}. Each is verifiable from its certificate
+                ID.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge tone="teal">Conversation Starter</Badge>
-              <Badge tone="neutral">Donation Advocate</Badge>
-              <Badge tone="pink">Transplant Advocate</Badge>
+              <Badge tone="teal">{CERTIFICATE_TITLES[0]}</Badge>
+              <Badge tone="neutral">{CERTIFICATE_TITLES[1]}</Badge>
+              <Badge tone="pink">{CERTIFICATE_TITLES[2]}</Badge>
             </div>
           </div>
         </div>
@@ -182,7 +188,7 @@ export default async function HomePage() {
             "Who is involved?",
             "What does South African law say?",
             "Who can donate?",
-            "What happens after transplantation?",
+            "Who decides, and how is consent given?",
             "How do I talk about donation?",
             "How can I become part of the solution?",
           ].map((q, i) => (

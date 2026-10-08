@@ -85,7 +85,7 @@ export function LevelCard({
           <dt className="w-24 shrink-0 font-semibold text-sand-500">Time</dt>
           <dd className="text-sand-700">
             {level.estMinMinutes}–{level.estMaxMinutes} minutes · {level.modules.length}{" "}
-            modules
+            Stages
           </dd>
         </div>
         <div className="flex gap-3">
@@ -114,7 +114,7 @@ export function LevelCard({
         <div className="mb-4">
           <div className="mb-2 flex items-baseline justify-between text-xs font-semibold">
             <span className="text-sand-500">
-              {progress.modulesComplete} of {progress.modulesTotal} modules
+              {progress.stagesPassed} of {progress.modulesTotal} Stages passed
             </span>
             {progress.certificatePublicId ? (
               <Link

@@ -72,11 +72,9 @@ export default async function IntroductionPage() {
             </p>
             <p>
               A great deal follows from that. You will spend more time on how to respond
-              to a frightened family member than on transplant immunology. You will be
-              told repeatedly that <strong>&ldquo;I don&apos;t know, let me find
-              out&rdquo;</strong> is a good answer. And you will learn that someone who
-              decides <em>against</em> donation but tells their family clearly is a
-              success, not a failure.
+              to a frightened family member than on transplant immunology. And you will
+              learn that someone who decides <em>against</em> donation but tells their
+              family clearly is a success, not a failure.
             </p>
           </div>
         </section>
@@ -123,7 +121,7 @@ export default async function IntroductionPage() {
                   </div>
                   <p className="mt-3 text-sand-700">{level.goal}</p>
                   <p className="mt-3 text-sm text-sand-500">
-                    Modules: {level.modules.map((m) => m.title).join(" · ")}
+                    Stages: {level.modules.map((m) => m.title).join(" · ")}
                   </p>
                   <p className="mt-3 text-sm font-semibold text-ink">
                     Earns the &ldquo;{level.certificateTitle}&rdquo; certificate.
@@ -142,20 +140,20 @@ export default async function IntroductionPage() {
           <dl className="mt-6 space-y-5">
             {[
               [
-                "Multimedia learning",
-                "Video, visual storytelling and interactive diagrams. You will not be handed walls of text to read.",
+                "Plain-language lessons",
+                "Written lessons in plain language, with a table wherever things are easier to compare side by side.",
               ],
               [
-                "Interactive questions",
-                "Two to four short questions after each topic. Every answer comes with an explanation, including an explanation of why a tempting wrong answer is tempting.",
+                "Questions that explain",
+                "Once you submit a Stage Quiz, every question comes with an explanation, including an explanation of why a tempting wrong answer is tempting.",
               ],
               [
                 "Study material",
-                "A concise written summary of each module, to keep and refer back to.",
+                "A written summary of each Stage, to come back to.",
               ],
               [
                 "Optional deeper reading",
-                "Clinical and academic sources for anyone who wants them. The course is complete without opening a single one.",
+                "The laws, guidelines and studies each Stage draws on, for anyone who wants them. The course is complete without opening a single one.",
               ],
               [
                 "A baseline assessment",
@@ -166,8 +164,8 @@ export default async function IntroductionPage() {
                 "After each level you finish, so you can see what changed. It is optional, and it never affects a certificate.",
               ],
               [
-                "A Stage Quiz in every module",
-                "Five questions, with unlimited retries. Passing every Stage Quiz in a level earns its certificate.",
+                "A Stage Quiz in every Stage",
+                "Five questions drawn from a bank of fifteen. Four right passes, and retries are unlimited. Passing every Stage Quiz in a level earns its certificate.",
               ],
               [
                 "A certificate of completion",
@@ -185,20 +183,23 @@ export default async function IntroductionPage() {
         {/* --- How each module works ---------------------------------------- */}
         <section className="mt-16">
           <Display as="h2" className="text-title text-ink">
-            How each module works
+            How each Stage works
           </Display>
           <p className="mt-4 text-sand-600">
-            Every module follows the same shape, so you always know where you are.
+            Every Stage follows the same shape, so you always know where you are.
           </p>
           <ol className="mt-6 space-y-3">
             {[
               ["Why this matters", "A short explanation of why the topic is worth your time."],
-              ["Learn", "The main experience — usually visual or interactive."],
-              ["Key takeaways", "Three to six things worth remembering."],
-              ["Check your understanding", "A few questions, with explanations."],
+              ["Learn", "The main lesson, in plain language."],
+              ["Key takeaways", "The points worth remembering, in one list."],
+              ["Check your understanding", "The Stage Quiz: five questions, with explanations once you submit."],
               ["Study guide", "The written summary."],
               ["Further reading", "Optional, always."],
-              ["Complete module", "You mark it done yourself."],
+              [
+                "Complete Stage",
+                "Marking it done records that you have read the Stage, so you can stop and pick up later. Only passing its Stage Quiz counts towards your certificate.",
+              ],
             ].map(([title, body], i) => (
               <li key={title} className="flex gap-4">
                 <span className="font-display text-xl text-pink-300">
@@ -211,33 +212,6 @@ export default async function IntroductionPage() {
               </li>
             ))}
           </ol>
-        </section>
-
-        {/* --- Honesty about content state --------------------------------- */}
-        <section className="mt-16">
-          <Card className="border-review/30 bg-review-soft p-6">
-            <Badge tone="review">A note on this early version</Badge>
-            <Display as="h2" className="mt-4 text-xl text-ink">
-              Some sections are still being written
-            </Display>
-            <div className="prose-save7 mt-3">
-              <p>
-                This platform has been built ahead of the final Save7 study guide. Where a
-                medical, legal or statistical statement has not yet been verified against
-                an authoritative source, you will see a{" "}
-                <span className="whitespace-nowrap">
-                  <Badge tone="review">Pending Save7 review</Badge>
-                </span>{" "}
-                marker, and the text is left blank rather than filled in with something
-                unverified.
-              </p>
-              <p>
-                We would rather show you an obvious gap than a confident guess. The
-                structure, the interactions and the assessments are all complete and
-                working.
-              </p>
-            </div>
-          </Card>
         </section>
 
         {/* --- Next step ---------------------------------------------------- */}
