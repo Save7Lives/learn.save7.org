@@ -10,17 +10,17 @@ level: beginner
 
 Organ and tissue transplantation is required by patients with end-stage organ failure, to save their lives or significantly improve them.
 
-- **Kidney** — end-stage renal disease: the kidneys can no longer filter the blood well enough to sustain life
-- **Liver** — cirrhosis past the point of recovery, liver cancer, or acute liver failure
-- **Heart** — end-stage heart failure: the heart cannot pump enough blood to sustain ordinary activity
-- **Lungs** — advanced lung disease such as COPD or cystic fibrosis
-- **Pancreas** — diabetes that insulin can no longer manage well, often alongside kidney failure
+- **Kidney**: end-stage renal disease, where the kidneys can no longer filter the blood well enough to sustain life
+- **Liver**: cirrhosis past the point of recovery, liver cancer, or acute liver failure
+- **Heart**: end-stage heart failure, where the heart cannot pump enough blood to sustain ordinary activity
+- **Lungs**: advanced lung disease such as COPD or cystic fibrosis
+- **Pancreas**: diabetes that insulin can no longer manage well, often alongside kidney failure
 
 Tissue transplants restore sight (corneas), restore mobility and relieve pain (bone and ligaments), keep severely burned patients alive (skin), and repair heart function, including in children born with heart defects (heart valves).
 
 ## The impact of one donor
 
-One donor can save **seven** lives through organ donation and improve up to **fifty** more through tissue donation — the figures published by the Organ Donor Foundation, and the origin of Save7's name.
+One donor can save **seven** lives through organ donation and improve up to **fifty** more through tissue donation. These are the figures published by the Organ Donor Foundation, and the origin of Save7's name.
 
 You may see "65 or more" quoted for tissue. That figure cannot be traced to a source; the published South African figure is fifty, and it is the one to use.
 
@@ -36,11 +36,11 @@ You may see "65 or more" quoted for tissue. That figure cannot be traced to a so
 
 The report's own summary is that donation and transplantation activity in South Africa is alarmingly low, deteriorated over the five years, and has not recovered since the COVID-19 pandemic.
 
-**📌 International comparator (not a South African source).** Spain's deceased-donor rate was 47.05 per million in 2017 — approximately thirty times South Africa's rate in the same year. Source: Global Observatory data, cited in a 2020 *South African Medical Journal* study.
+**📌 International comparator (not a South African source).** Spain's deceased-donor rate was 47.05 per million in 2017, approximately thirty times South Africa's rate in the same year. Source: Global Observatory data, cited in a 2020 *South African Medical Journal* study.
 
-**Reported but not independently verified.** Around 6,500 South Africans awaiting an organ or tissue transplant, and 317 organ transplants performed nationally in 2024 — attributed to the Gauteng Department of Health in August 2026 news coverage, with no primary document located.
+**Reported but not independently verified.** Around 6,500 South Africans awaiting an organ or tissue transplant, and 317 organ transplants performed nationally in 2024, attributed to the Gauteng Department of Health in August 2026 news coverage, with no primary document located.
 
-**Historical decade totals — Organ Donor Foundation, 2010–2019**, retained for scale and explicitly dated. The ODF no longer publishes these and now refers enquiries to SATS.
+**Historical decade totals: Organ Donor Foundation, 2010–2019**, retained for scale and explicitly dated. The ODF no longer publishes these and now refers enquiries to SATS.
 
 - 2,416 kidney transplants
 - 1,911 patients had sight restored by corneal transplants
@@ -55,4 +55,4 @@ The report's own summary is that donation and transplantation activity in South 
 
 ## Where the numbers come from
 
-The Organ Donor Foundation is South Africa's awareness and registration body. **SATS is the statistics authority** — the ODF's own statistics page now defers to it. For a current national figure, go to SATS, not the ODF.
+The Organ Donor Foundation is South Africa's awareness and registration body. **SATS is the statistics authority.** The ODF's own statistics page now defers to it. For a current national figure, go to SATS, not the ODF.

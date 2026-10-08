@@ -26,7 +26,7 @@ That difference is also why tissue donation is possible for far more people than
 |---|---|---|---|
 | After brain death (DBD) | A patient on a ventilator is certified brain dead by two independent doctors | Heart, lungs, liver, kidneys and pancreas, plus tissue | Next of kin |
 | After circulatory death (DCD) | Treatment is withdrawn where death is expected, and the heart stops | Depends on the circumstances and on how quickly recovery can follow | Next of kin |
-| Living donation | While the donor is alive and well, by their own decision | A kidney, or a segment of liver | **The donor**, for themselves — the only route where they do |
+| Living donation | While the donor is alive and well, by their own decision | A kidney, or a segment of liver | **The donor**, for themselves (the only route where they do) |
 | Tissue donation | Irrespective of the manner of death, and much later than organ donation | Corneas, bone and ligaments, skin, heart valves | Next of kin |
 
 Most deceased organ donation in South Africa follows one of the first two routes, and **both require consent from next of kin**.
@@ -41,11 +41,11 @@ That separation is written into the rules for establishing death. It is not a ma
 
 Intermediate Level covers what the tests actually are and where the requirement comes from. For an ordinary conversation, the fact above is enough, and it is strong.
 
-**One more authority, in one specific case.** Where a death is unnatural — a road accident, for example — it must be referred for a forensic post-mortem, and donation then also needs the authorisation of the **Forensic Pathology Service**, which decides what may be recovered without compromising the examination. Donation is still possible; it simply involves one more person saying yes. (Older material calls this office the *district surgeon* or *state pathologist*. It no longer performs the function, and using those terms in public dates you.)
+**One more authority, in one specific case.** Where a death is unnatural (a road accident, for example), it must be referred for a forensic post-mortem, and donation then also needs the authorisation of the **Forensic Pathology Service**, which decides what may be recovered without compromising the examination. Donation is still possible; it simply involves one more person saying yes. (Older material calls this office the *district surgeon* or *state pathologist*. It no longer performs the function, and using those terms in public dates you.)
 
 ## It is free, and it is voluntary
 
-**Free.** A donor's family does not pay for the donation. The costs of recovering organs and tissue are carried by the hospital or the tissue bank from the point consent is given. The family still pays for the care the patient received *before* death, exactly as they would for any hospital admission — donation neither adds to that bill nor removes it.
+**Free.** A donor's family does not pay for the donation. The costs of recovering organs and tissue are carried by the hospital or the tissue bank from the point consent is given. The family still pays for the care the patient received *before* death, exactly as they would for any hospital admission. Donation neither adds to that bill nor removes it.
 
 **Voluntary.** Donation is a gift. Trading in human tissue is a criminal offence in South Africa, and it is an offence for a donor or their family to receive any reward for a donation beyond reimbursement of costs actually incurred. Nobody is paid, and nobody can be.
 
@@ -55,6 +55,6 @@ Registering with the Organ Donor Foundation records what you want. It takes a fe
 
 It is not, by itself, enough.
 
-In South African practice, hospitals approach the family in every case, and a family's refusal is respected. So the question your family will actually be asked, at the worst hour of their lives, is *"what would they have wanted?"* — and the only thing that lets them answer it is having heard you say so.
+In South African practice, hospitals approach the family in every case, and a family's refusal is respected. So the question your family will actually be asked, at the worst hour of their lives, is *"what would they have wanted?"* The only thing that lets them answer it is having heard you say so.
 
 **Register, and then tell your family.** Both halves. The register records the decision; the conversation is what your family will be asked to act on.

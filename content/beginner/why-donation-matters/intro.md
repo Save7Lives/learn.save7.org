@@ -6,7 +6,7 @@ stage: why-donation-matters
 level: beginner
 ---
 
-Most conversations about organ donation start in the wrong place — with death. This one starts with the people who are still alive, and waiting.
+Most conversations about organ donation start in the wrong place, with death. This one starts with the people who are still alive, and waiting.
 
 Organ and tissue transplantation is what remains for patients in **end-stage organ failure**. When an organ fails completely there is usually no way to repair it. Treatment can buy time, sometimes a great deal of it, but for some conditions a transplant is the only option left.
 

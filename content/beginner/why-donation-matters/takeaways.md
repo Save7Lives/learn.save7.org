@@ -10,9 +10,9 @@ level: beginner
 
 - **One donor can save seven lives through organ donation and improve up to fifty more through tissue donation.** That is where Save7's name comes from, and the tissue half is the part most people have never heard.
 
-- **Donation is far wider than hearts.** Kidneys, liver, heart, lungs and pancreas — plus corneas, bone, ligaments, skin and heart valves. By volume, tissue is the largest part of what donation achieves.
+- **Donation is far wider than hearts.** Kidneys, liver, heart, lungs and pancreas, plus corneas, bone, ligaments, skin and heart valves. By volume, tissue is the largest part of what donation achieves.
 
-- **South Africa's deceased-donation rate fell from 1.60 to 0.48 per million people between 2017 and 2021** — roughly two thirds, in five years, and no recovery since.
+- **South Africa's deceased-donation rate fell from 1.60 to 0.48 per million people between 2017 and 2021**, roughly two thirds, in five years, and no recovery since.
 
 - **2,586 people were on the national waiting list at the end of 2021**, and 189 of them died that year while waiting. These are the most recent verified national figures, not this year's.
 

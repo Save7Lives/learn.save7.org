@@ -18,7 +18,7 @@ Health Professions Council of South Africa, *Ethical Guidelines on Palliative Ca
 National Health Act 61 of 2003, on [gov.za](https://www.gov.za/documents/national-health-act). Read sections 6 to 8 (information, consent and participation) next to sections 62 and 65 (donation after death and revocation). Seeing the two family lists in the original makes the differences hard to forget.
 
 **Chapter 8, explained for doctors.**
-McQuoid-Mason D, *"Human tissue and organ transplant provisions: Chapter 8 of the National Health Act and its Regulations, in effect from March 2012 — what doctors must know"*, South African Medical Journal 2012;102(9):733–735. Covers consent on behalf of the deceased, revocation and confidentiality in three pages.
+McQuoid-Mason D, *"Human tissue and organ transplant provisions: Chapter 8 of the National Health Act and its Regulations, in effect from March 2012: what doctors must know"*, South African Medical Journal 2012;102(9):733–735. Covers consent on behalf of the deceased, revocation and confidentiality in three pages.
 
 **Why South Africa has no living-will statute.**
 South African Law Commission, *Euthanasia and the Artificial Preservation of Life*, Project 86 report (November 1998), on the [Commission's site](https://www.justice.gov.za/salrc/). The draft Bill it recommended, and the reasoning behind it, remain the fullest official treatment of advance directives in South African law.

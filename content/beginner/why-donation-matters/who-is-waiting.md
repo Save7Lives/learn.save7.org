@@ -12,15 +12,15 @@ Donation is easy to think about in the abstract. It is much harder to ignore onc
 
 **Someone in end-stage kidney failure.** Their kidneys can no longer filter their blood well enough to keep them alive, so a machine does it for them, several times a week, indefinitely. A transplant ends that. Kidneys are the most transplanted organ in South Africa by a wide margin.
 
-**Someone with advanced lung disease** — severe COPD, or cystic fibrosis — for whom breathing has become the hardest thing they do. A transplant gives them back air.
+**Someone with advanced lung disease** (severe COPD, or cystic fibrosis) for whom breathing has become the hardest thing they do. A transplant gives them back air.
 
 **Someone with end-stage heart failure**, whose heart can no longer pump enough blood to get them across a room. Outcomes here are genuinely good. 📌 A 2010 review in the journal Circulation put one-year survival after a heart transplant at close to **90%**, with half of recipients living more than **eleven years**. That is not a South African figure, and this course's sources hold no South African equivalent, so read it as a sign of how well a heart transplant can work rather than a local statistic.
 
-**Someone with liver failure** — cirrhosis that has passed the point of recovery, or liver failure that came on in days. For them a transplant is not an improvement in quality of life. It is life.
+**Someone with liver failure**: cirrhosis that has passed the point of recovery, or liver failure that came on in days. For them a transplant is not an improvement in quality of life. It is life.
 
 **Someone who has been badly burned.** Donated skin is what keeps a severely burned patient alive while their own body tries to heal. Most people have never heard this, because tissue donation is almost entirely absent from the public conversation.
 
-**Someone who cannot see.** A damaged or diseased cornea causes blindness that a corneal transplant can reverse. Poor eyesight in the donor makes no difference at all — a person who wore glasses their whole life can still restore someone else's sight.
+**Someone who cannot see.** A damaged or diseased cornea causes blindness that a corneal transplant can reverse. Poor eyesight in the donor makes no difference at all: a person who wore glasses their whole life can still restore someone else's sight.
 
 ## What one donor can do
 
@@ -28,7 +28,7 @@ The published South African figures are the ones Save7 is named after:
 
 > **One donor can save seven lives through organ donation, and improve up to fifty more through tissue donation.**
 
-Seven, because a single donor may provide two kidneys, a liver, a heart, two lungs and a pancreas. Fifty, because tissue — corneas, bone, ligaments, skin, heart valves — goes further and helps more people than the organs do. By volume, tissue is the largest part of what donation achieves.
+Seven, because a single donor may provide two kidneys, a liver, a heart, two lungs and a pancreas. Fifty, because tissue (corneas, bone, ligaments, skin, heart valves) goes further and helps more people than the organs do. By volume, tissue is the largest part of what donation achieves.
 
 Those are the Organ Donor Foundation's published figures. You will sometimes see a larger tissue number quoted; this course uses fifty, because fifty is the figure that can be sourced.
 
@@ -44,9 +44,9 @@ The most recent verified national data comes from the South African Transplant S
 
 The donation rate fell by roughly **two thirds in five years**. Activity dropped during the COVID-19 pandemic and, on the report's own assessment, has not since recovered.
 
-**At the end of 2021, 2,586 people were on the national transplant waiting list** — 2,382 waiting for a kidney, 108 for a heart, 52 for a liver, 44 for lungs. That year, 189 of them died waiting.
+**At the end of 2021, 2,586 people were on the national transplant waiting list**: 2,382 waiting for a kidney, 108 for a heart, 52 for a liver, 44 for lungs. That year, 189 of them died waiting.
 
-To see how far that is from what is achievable, compare it with a country that made donation work. 📌 **Spain's deceased-donor rate was 47.05 per million in 2017** — close to thirty times South Africa's rate in the same year. Spain is not a South African source and its health system is not ours, but it establishes something important: 0.48 is not a natural floor. It is a result.
+To see how far that is from what is achievable, compare it with a country that made donation work. 📌 **Spain's deceased-donor rate was 47.05 per million in 2017**, close to thirty times South Africa's rate in the same year. Spain is not a South African source and its health system is not ours, but it establishes something important: 0.48 is not a natural floor. It is a result.
 
 ### A note on how current these numbers are
 

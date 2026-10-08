@@ -6,7 +6,7 @@ stage: how-donation-works
 level: beginner
 ---
 
-- **Organs must keep working; tissue does not.** Organs can only be recovered in hospital and transplanted within hours. Tissue can be recovered irrespective of the manner of death, in far more settings, and stored — which is why tissue donation is possible for many more people.
+- **Organs must keep working; tissue does not.** Organs can only be recovered in hospital and transplanted within hours. Tissue can be recovered irrespective of the manner of death, in far more settings, and stored, which is why tissue donation is possible for many more people.
 
 - **There are four routes:** donation after brain death, donation after circulatory death, living donation of a kidney or a segment of liver, and tissue donation.
 

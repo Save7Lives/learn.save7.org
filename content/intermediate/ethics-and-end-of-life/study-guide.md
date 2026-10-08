@@ -52,7 +52,7 @@ South African sources:
 
 - **The gap (SATS/SATCS, 2021):** 2,586 on the waiting list at year end; 229 solid organ transplants; 189 deaths on the waiting list.
 - **Access (SATS roadmap):** transplant services concentrated in large urban areas in wealthier provinces, and more available to people with private health care; public-sector consent rates in the Western Cape far below private-sector rates.
-- **Who is asked:** Western Cape circular H84/2025 — no community is excluded, and a family's ethnic, cultural or spiritual background must never be the reason donation is not raised.
-- **Who receives:** Booklet 7 — no prejudice on grounds such as age, disability, race, culture, beliefs, sexuality, gender, lifestyle or social or economic status. Draft Regulations on Organ Transplantation (September 2026, not in force) — allocation may not consider race, religion, culture or similar aspects of the deceased donor's life.
+- **Who is asked:** Western Cape circular H84/2025. No community is excluded, and a family's ethnic, cultural or spiritual background must never be the reason donation is not raised.
+- **Who receives:** Booklet 7: no prejudice on grounds such as age, disability, race, culture, beliefs, sexuality, gender, lifestyle or social or economic status. Draft Regulations on Organ Transplantation (September 2026, not in force): allocation may not consider race, religion, culture or similar aspects of the deceased donor's life.
 - **Extended selection criteria (SATCS Red File):** donors with comorbidities such as hypertension, diabetes and HIV may be considered, with each organ assessed individually; outcomes are reported as excellent, with a significant survival benefit over no transplant.
 - **Financial neutrality (SATS roadmap):** donors and families should neither lose nor gain; paying funeral costs is not an ethical solution.
