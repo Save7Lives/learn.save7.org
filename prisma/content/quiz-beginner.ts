@@ -114,7 +114,7 @@ const whyDonationMatters: StageQuizQuestion[] = [
     difficulty: 1,
     prompt: "How many people can one donor help through tissue donation?",
     explanation:
-      "Up to fifty. Tissue — corneas, bone, ligaments, skin, heart valves — goes further and reaches more people than the solid organs do. By volume it is the largest part of what donation achieves.",
+      "Up to fifty. Tissue (corneas, bone, ligaments, skin, heart valves) goes further and reaches more people than the solid organs do. By volume it is the largest part of what donation achieves.",
     verifiedAgainst: ODF_DONOR_INFO,
     choices: [
       { text: "Up to fifty", isCorrect: true },
@@ -131,7 +131,7 @@ const whyDonationMatters: StageQuizQuestion[] = [
     prompt:
       "What happened to South Africa's deceased-donation rate between 2017 and 2021?",
     explanation:
-      "It fell from 1.60 to 0.48 donors per million people — roughly two thirds in five years. Activity dropped during the COVID-19 pandemic and has not recovered since.",
+      "It fell from 1.60 to 0.48 donors per million people, roughly two thirds in five years. Activity dropped during the COVID-19 pandemic and has not recovered since.",
     verifiedAgainst: SATS_5YR,
     choices: [
       { text: "It roughly doubled, from 0.48 to 1.60 per million people", feedback: "The direction is the wrong way round. The rate fell." },
@@ -148,7 +148,7 @@ const whyDonationMatters: StageQuizQuestion[] = [
     prompt:
       "How many people were on South Africa's national transplant waiting list at the end of 2021, the most recent verified figure?",
     explanation:
-      "2,586 — of whom 2,382 were waiting for a kidney. 189 people on the list died that year.",
+      "2,586, of whom 2,382 were waiting for a kidney. 189 people on the list died that year.",
     verifiedAgainst: SATS_5YR,
     choices: [
       { text: "258", feedback: "Too low by a factor of ten. 2,586 people were waiting." },
@@ -197,11 +197,11 @@ const whyDonationMatters: StageQuizQuestion[] = [
     difficulty: 1,
     prompt: "Can someone who wore glasses all their life donate their corneas?",
     explanation:
-      "Yes. Poor eyesight and cataracts do not disqualify a cornea donor — the cornea is the clear front surface of the eye, and the reasons most people wear glasses have nothing to do with it.",
+      "Yes. Poor eyesight and cataracts do not disqualify a cornea donor. The cornea is the clear front surface of the eye, and the reasons most people wear glasses have nothing to do with it.",
     verifiedAgainst: TISSUE_CRITERIA,
     choices: [
-      { text: "Yes — wearing glasses does not disqualify a cornea donor", isCorrect: true },
-      { text: "No — donated corneas must have had perfect vision", feedback: "This is one of the most common reasons people wrongly rule themselves out." },
+      { text: "Yes: wearing glasses does not disqualify a cornea donor", isCorrect: true },
+      { text: "No: donated corneas must have had perfect vision", feedback: "This is one of the most common reasons people wrongly rule themselves out." },
       { text: "Only if the glasses were for reading", feedback: "The reason for the glasses makes no difference." },
       { text: "Only if they had laser surgery to correct their vision first", feedback: "No such requirement exists." },
     ],
@@ -299,7 +299,7 @@ const whyDonationMatters: StageQuizQuestion[] = [
     recycledFrom: "post-b-01",
     prompt: "Why do people need organ transplants?",
     explanation:
-      "Because their organ has failed completely and cannot be repaired. Transplantation is not an enhancement and it is not usually a preference — it is what remains when other treatment can no longer sustain the organ's function.",
+      "Because their organ has failed completely and cannot be repaired. Transplantation is not an enhancement and it is not usually a preference: it is what remains when other treatment can no longer sustain the organ's function.",
     verifiedAgainst: ODF_DONOR_INFO,
     choices: [
       { text: "To improve the performance of a healthy organ", feedback: "Transplantation treats organs that have failed; it is not an enhancement." },
@@ -329,7 +329,7 @@ const bustingTheMyths: StageQuizQuestion[] = [
       { text: "The doctors who certify death may not take part in the transplant", isCorrect: true },
       { text: "Doctors take an oath, so they would never do that", feedback: "An appeal to character asks the person to trust. The separation of teams means they do not have to." },
       { text: "Hospitals are never told who is a registered donor", feedback: "Not the safeguard. The protection is who may certify death, not who knows about the registration." },
-      { text: "It would be illegal, so it cannot happen", feedback: "Vague. The specific safeguard — separate teams — is what reassures." },
+      { text: "It would be illegal, so it cannot happen", feedback: "Vague. The specific safeguard (separate teams) is what reassures." },
     ],
   },
   {
@@ -355,7 +355,7 @@ const bustingTheMyths: StageQuizQuestion[] = [
     difficulty: 2,
     prompt: "What is the most accurate way to tell a family that donation will not cost them anything?",
     explanation:
-      "State it as practice. The hospital or tissue bank carries the costs of the donation from the point consent is given — that is the stated position of the Organ Donor Foundation and the tissue banks. Neither the National Health Act nor its regulations allocate donation costs, so claiming the law guarantees it is an error.",
+      "State it as practice. The hospital or tissue bank carries the costs of the donation from the point consent is given. That is the stated position of the Organ Donor Foundation and the tissue banks. Neither the National Health Act nor its regulations allocate donation costs, so claiming the law guarantees it is an error.",
     verifiedAgainst: NHA_COSTS,
     choices: [
       { text: "The National Health Act prohibits anyone from charging the family", feedback: "Neither the Act nor its regulations allocate donation costs. This course corrected exactly this claim." },
@@ -375,7 +375,7 @@ const bustingTheMyths: StageQuizQuestion[] = [
     verifiedAgainst:
       "National Health Act 61 of 2003 s 60 (prohibition on trading in human tissue; reward beyond reasonable costs is an offence) and s 61(1)-(3) (organs to be allocated in the prescribed manner; transplant into a non-citizen or non-permanent-resident requires the Minister's written authorisation)",
     choices: [
-      { text: "No — trading in human tissue is a crime and organs are allocated by prescribed rules", isCorrect: true },
+      { text: "No: trading in human tissue is a crime and organs are allocated by prescribed rules", isCorrect: true },
       { text: "Yes, private patients can pay to move up the list", feedback: "Allocation is regulated, not sold." },
       { text: "Only for organs from living donors", feedback: "The prohibition on trading applies to living and deceased donation alike." },
       { text: "Only when the organ is transplanted outside South Africa", feedback: "Trading is prohibited, and transplanting into a non-resident needs the Minister's written authorisation." },
@@ -393,7 +393,7 @@ const bustingTheMyths: StageQuizQuestion[] = [
     verifiedAgainst:
       "Organ Donor Foundation FAQ: most religions support organ and tissue donation as consistent with the preservation of life; the prior build's sourced guidance that a faith representative or chaplain may be included in hospital, and that no one's background should be assumed to rule donation out",
     choices: [
-      { text: "Tell them most religions actually permit it, so they are probably mistaken", feedback: "Even where broadly true, telling someone what their own faith permits oversteps — and loses their trust." },
+      { text: "Tell them most religions actually permit it, so they are probably mistaken", feedback: "Even where broadly true, telling someone what their own faith permits oversteps, and loses their trust." },
       { text: "Respect it, suggest they ask their own faith leader, and ask whether their family knows their wishes", isCorrect: true },
       { text: "Look up their religion's position for them on the spot", feedback: "Well-meant, but it makes you the interpreter of their faith. Point them to someone inside it." },
       { text: "Drop the subject and move on to someone more likely to register", feedback: "Their family still needs to know their wishes. That conversation is worth having whatever they decide." },
@@ -405,14 +405,14 @@ const bustingTheMyths: StageQuizQuestion[] = [
     topicTag: "eligibility",
     difficulty: 1,
     recycledFrom: "post-b-06",
-    scenario: "A colleague says: \"I'm in my sixties and on blood pressure medication — I'd be turned down anyway.\"",
+    scenario: "A colleague says: \"I'm in my sixties and on blood pressure medication. I'd be turned down anyway.\"",
     prompt: "What is the best response?",
     explanation:
       "Do not let anyone rule themselves out, and do not overcorrect by claiming the factor is irrelevant. There is no strict upper age limit, and suitability is assessed organ by organ by clinicians at the time.",
     verifiedAgainst: RED_FILE_ELIGIBILITY,
     choices: [
       { text: "You're right, that combination would exclude you", feedback: "A confident exclusion can permanently remove a potential donor. There is no strict upper age limit." },
-      { text: "Don't rule yourself out — suitability is assessed individually by doctors at the time", isCorrect: true },
+      { text: "Don't rule yourself out: suitability is assessed individually by doctors at the time", isCorrect: true },
       { text: "Age and blood pressure make no difference at all to donation", feedback: "Overcorrection. These factors are assessed rather than ignored, and the claim will not survive someone checking." },
       { text: "You could only donate your corneas", feedback: "Speculation about a specific outcome. Keep it general and let the assessment decide." },
     ],
@@ -430,7 +430,7 @@ const bustingTheMyths: StageQuizQuestion[] = [
       { text: "The family is always asked, so they need to know what you want", isCorrect: true },
       { text: "The register is often lost or out of date", feedback: "The reason is not the register's reliability. It is that the family is asked in every case." },
       { text: "Registration expires after five years", feedback: "It does not expire. It is simply not the decision the family will be asked to make." },
-      { text: "It is enough — hospitals follow the register without asking the family", feedback: "This is the myth. Hospitals approach the family in every case." },
+      { text: "It is enough: hospitals follow the register without asking the family", feedback: "This is the myth. Hospitals approach the family in every case." },
     ],
   },
   {
@@ -447,7 +447,7 @@ const bustingTheMyths: StageQuizQuestion[] = [
       { text: "Earlier agreement is legally void after one year", feedback: "There is no such rule. The issue is that families are asked again at the time." },
       { text: "Agreement only counts if it was given in writing to a hospital", feedback: "The form of the earlier agreement is not the issue. The family is asked again at the time." },
       { text: "The family can change its mind at the bedside, and a refusal is respected in practice", isCorrect: true },
-      { text: "It will always go ahead — earlier agreement binds the family", feedback: "This is the myth. Agreement given calmly years ago can change in acute grief." },
+      { text: "It will always go ahead: earlier agreement binds the family", feedback: "This is the myth. Agreement given calmly years ago can change in acute grief." },
     ],
   },
   {
@@ -490,12 +490,12 @@ const bustingTheMyths: StageQuizQuestion[] = [
     scenario: "A friend had cancer ten years ago and says there is no point registering as a donor.",
     prompt: "What is the most accurate thing to tell them?",
     explanation:
-      "A medical history is not an automatic exclusion. Suitability is assessed at the time of death, by the transplant team, and the answer depends on what is being donated — most cancers do not prevent cornea donation, for example, and organs are assessed case by case.",
+      "A medical history is not an automatic exclusion. Suitability is assessed at the time of death, by the transplant team, and the answer depends on what is being donated: most cancers do not prevent cornea donation, for example, and organs are assessed case by case.",
     verifiedAgainst: RED_FILE_ELIGIBILITY,
     choices: [
       { text: "Any history of cancer rules out every kind of donation", feedback: "Not true. Most cancers do not prevent cornea donation, and organs are assessed case by case." },
-      { text: "It isn't an automatic exclusion — it would be assessed at the time, and depends on what is donated", isCorrect: true },
-      { text: "A cancer history makes no difference to donation at all", feedback: "Overcorrection. A cancer history is assessed carefully — it rules out skin, bone and heart-valve donation, for example." },
+      { text: "It isn't an automatic exclusion: it would be assessed at the time, and depends on what is donated", isCorrect: true },
+      { text: "A cancer history makes no difference to donation at all", feedback: "Overcorrection. A cancer history is assessed carefully. It rules out skin, bone and heart-valve donation, for example." },
       { text: "They need medical clearance before they are allowed to register", feedback: "No medical tests are needed to register. Suitability is assessed only at the time of death." },
     ],
   },
@@ -510,7 +510,7 @@ const bustingTheMyths: StageQuizQuestion[] = [
     verifiedAgainst: LIVING_DONOR_SAFETY,
     choices: [
       { text: "Completely safe, with no risk to the donor at all", feedback: "Overcorrection. It is major surgery and every operation carries some risk." },
-      { text: "So dangerous that it is only permitted in emergencies", feedback: "Living kidney donation is a planned, routine operation in South Africa — 57 were performed in 2021." },
+      { text: "So dangerous that it is only permitted in emergencies", feedback: "Living kidney donation is a planned, routine operation in South Africa: 57 were performed in 2021." },
       { text: "Acceptable because the donor is paid for taking the risk", feedback: "Paying a donor is a criminal offence in South Africa." },
       { text: "Low-risk but not risk-free, because donors are carefully screened and most are turned away", isCorrect: true },
     ],
@@ -529,7 +529,7 @@ const bustingTheMyths: StageQuizQuestion[] = [
       { text: "It lets you answer the real concern instead of dismissing the person", isCorrect: true },
       { text: "It makes the myth easier to memorise", feedback: "The point is the conversation, not recall." },
       { text: "It proves the person is being unreasonable", feedback: "The opposite. Most of these beliefs are reasonable fears." },
-      { text: "It is not useful — correcting the fact is enough", feedback: "A correction that ignores the fear behind it rarely changes anyone's mind." },
+      { text: "It is not useful: correcting the fact is enough", feedback: "A correction that ignores the fear behind it rarely changes anyone's mind." },
     ],
   },
   {
@@ -557,7 +557,7 @@ const bustingTheMyths: StageQuizQuestion[] = [
     recycledFrom: "chk-m2-03",
     prompt: "Where are most potential donations in South Africa lost?",
     explanation:
-      "At human points rather than medical ones — awareness, myths, fear, and families who have never discussed donation. That is why busting myths and starting conversations matters.",
+      "At human points rather than medical ones: awareness, myths, fear, and families who have never discussed donation. That is why busting myths and starting conversations matters.",
     verifiedAgainst: LOSS_POINTS,
     choices: [
       { text: "At human points, such as myths, fear and families who never discussed it", isCorrect: true },
@@ -604,7 +604,7 @@ const howDonationWorks: StageQuizQuestion[] = [
       { text: "A kidney, or a segment of liver", isCorrect: true },
       { text: "A heart", feedback: "A heart cannot come from a living donor." },
       { text: "Corneas", feedback: "Corneas are recovered after death." },
-      { text: "Any organ, provided the donor consents", feedback: "Living donation is limited to organs the donor can live without — in practice a kidney or part of a liver." },
+      { text: "Any organ, provided the donor consents", feedback: "Living donation is limited to organs the donor can live without, in practice a kidney or part of a liver." },
     ],
   },
   {
@@ -615,13 +615,13 @@ const howDonationWorks: StageQuizQuestion[] = [
     recycledFrom: "chk-m3-03",
     prompt: "You have registered as an organ donor. What most improves the chance your wishes are followed?",
     explanation:
-      "Your family knowing what you want. In South African practice hospitals approach the family in every case, so the conversation — not the register — is what your family will be asked to act on.",
+      "Your family knowing what you want. In South African practice hospitals approach the family in every case, so the conversation, not the register, is what your family will be asked to act on.",
     verifiedAgainst: FAMILY_PRACTICE,
     choices: [
       { text: "Registering a second time to be sure", feedback: "Registering twice changes nothing. Telling your family changes everything." },
       { text: "Carrying a donor card in your wallet", feedback: "A card in a wallet is unlikely to be found in time, and the family will still be asked." },
       { text: "Telling your family what you have decided", isCorrect: true },
-      { text: "Nothing further — registration is sufficient on its own", feedback: "This is the single most consequential misunderstanding in South African donation." },
+      { text: "Nothing further: registration is sufficient on its own", feedback: "This is the single most consequential misunderstanding in South African donation." },
     ],
   },
   {
@@ -637,7 +637,7 @@ const howDonationWorks: StageQuizQuestion[] = [
       { text: "Tissue can be recovered in far more settings and much later; organs cannot", isCorrect: true },
       { text: "Tissue donation requires a court order and organ donation does not", feedback: "Neither requires a court order. Both require consent from next of kin." },
       { text: "Organs can be stored for months; tissue cannot", feedback: "It is the other way round. Tissue can be stored; organs must be transplanted within hours." },
-      { text: "There is no practical difference — the rules are identical", feedback: "The differences in timing and setting are what make tissue donation possible for many more people." },
+      { text: "There is no practical difference: the rules are identical", feedback: "The differences in timing and setting are what make tissue donation possible for many more people." },
     ],
   },
   {
@@ -712,7 +712,7 @@ const howDonationWorks: StageQuizQuestion[] = [
     difficulty: 1,
     prompt: "Which route to donation is the only one where the donor consents for themselves?",
     explanation:
-      "Living donation. Every deceased route — after brain death, after circulatory death, and tissue donation — requires consent from next of kin.",
+      "Living donation. Every deceased route (after brain death, after circulatory death, and tissue donation) requires consent from next of kin.",
     verifiedAgainst: FAMILY_PRACTICE,
     choices: [
       { text: "Donation after brain death", feedback: "Next of kin are asked in every deceased donation." },
@@ -733,7 +733,7 @@ const howDonationWorks: StageQuizQuestion[] = [
     verifiedAgainst: FPS,
     choices: [
       { text: "Donation becomes impossible", feedback: "Donation after an unnatural death is possible; it simply involves one more authorisation." },
-      { text: "The family's consent is no longer needed", feedback: "Family consent is still required — it is just no longer sufficient on its own." },
+      { text: "The family's consent is no longer needed", feedback: "Family consent is still required. It is just no longer sufficient on its own." },
       { text: "The police decide which organs may be donated", feedback: "The forensic pathologist decides. The police may be involved in liaison, not in the decision." },
       { text: "The Forensic Pathology Service must also authorise what may be recovered", isCorrect: true },
     ],
@@ -745,7 +745,7 @@ const howDonationWorks: StageQuizQuestion[] = [
     difficulty: 2,
     prompt: "Who pays for recovering the organs and tissue from a donor?",
     explanation:
-      "The hospital or the tissue bank, from the point consent is given. The family still pays for the care the patient received before death, exactly as they would for any admission — donation neither adds to that bill nor removes it.",
+      "The hospital or the tissue bank, from the point consent is given. The family still pays for the care the patient received before death, exactly as they would for any admission. Donation neither adds to that bill nor removes it.",
     verifiedAgainst: NHA_COSTS,
     choices: [
       { text: "The donor's family, out of the estate", feedback: "The family does not pay for the donation. This fear is one of the commonest reasons people hesitate." },
@@ -767,7 +767,7 @@ const howDonationWorks: StageQuizQuestion[] = [
       { text: "Yes, a standard fee is paid to the family", feedback: "No such fee exists, and paying one would be a crime." },
       { text: "Yes, but only for tissue rather than organs", feedback: "The prohibition covers human tissue generally." },
       { text: "Only if the recipient offers the payment voluntarily", feedback: "Who offers it makes no difference. Payment for tissue is prohibited." },
-      { text: "No — trading in human tissue is a criminal offence", isCorrect: true },
+      { text: "No: trading in human tissue is a criminal offence", isCorrect: true },
     ],
   },
   {
@@ -777,7 +777,7 @@ const howDonationWorks: StageQuizQuestion[] = [
     difficulty: 2,
     prompt: "When can tissue donation take place?",
     explanation:
-      "Irrespective of the manner of death, and considerably later than organ donation — including after the body has been moved to a mortuary. This is why tissue donation is possible for far more people than the public assumes.",
+      "Irrespective of the manner of death, and considerably later than organ donation, including after the body has been moved to a mortuary. This is why tissue donation is possible for far more people than the public assumes.",
     verifiedAgainst: TISSUE_CRITERIA,
     choices: [
       { text: "Only in an intensive care unit, like organ donation", feedback: "That restriction applies to organs, which must keep working. Tissue does not." },
@@ -793,11 +793,11 @@ const howDonationWorks: StageQuizQuestion[] = [
     difficulty: 2,
     prompt: "Why can solid organs only be recovered in a clinical setting?",
     explanation:
-      "Because they have to keep working. Organ donation depends on circulation having been maintained up to recovery, and on the organ reaching a recipient within hours — neither of which is possible outside a hospital.",
+      "Because they have to keep working. Organ donation depends on circulation having been maintained up to recovery, and on the organ reaching a recipient within hours, neither of which is possible outside a hospital.",
     verifiedAgainst: LOSS_POINTS,
     choices: [
       { text: "Because the organs must keep working, which depends on circulation being maintained", isCorrect: true },
-      { text: "Because the law only permits donation inside a hospital building", feedback: "The constraint is biological rather than legal — tissue donation happens outside intensive care routinely." },
+      { text: "Because the law only permits donation inside a hospital building", feedback: "The constraint is biological rather than legal: tissue donation happens outside intensive care routinely." },
       { text: "Because the family can only give consent at a hospital", feedback: "Consent can be obtained wherever the family is; the constraint is on the organs." },
       { text: "Because transplant surgeons are not allowed to travel", feedback: "Recovery teams do travel. The organs are what cannot wait." },
     ],
@@ -814,7 +814,7 @@ const howDonationWorks: StageQuizQuestion[] = [
     verifiedAgainst: FPS,
     choices: [
       { text: "The terms are legally accurate but considered impolite", feedback: "The problem is accuracy, not tone." },
-      { text: "The office no longer performs the function — it is now the Forensic Pathology Service", isCorrect: true },
+      { text: "The office no longer performs the function: it is now the Forensic Pathology Service", isCorrect: true },
       { text: "They refer to a role that only exists in the private sector", feedback: "The function moved to the Forensic Pathology Service, which is a state service." },
       { text: "They are correct, and this course prefers them", feedback: "They are out of date. The course uses Forensic Pathology Service." },
     ],

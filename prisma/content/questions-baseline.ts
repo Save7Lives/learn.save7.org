@@ -169,7 +169,7 @@ const beginner: BaselineQuestion[] = [
       "Transplantation is not an enhancement or a preference. When an organ fails completely, treatment can often buy time, but for some conditions a transplant is the only option that remains.",
     verifiedAgainst: ODF_FAQ,
     choices: [
-      { text: "To boost an organ that is still working normally", feedback: "Transplantation is not an enhancement — it replaces an organ that has failed." },
+      { text: "To boost an organ that is still working normally", feedback: "Transplantation is not an enhancement: it replaces an organ that has failed." },
       { text: "Their organ has failed and cannot be repaired", isCorrect: true, feedback: "Correct. This is what end-stage organ failure means." },
       { text: "Because they prefer a transplant to taking medication", feedback: "A transplant is not a preference. It is what remains when other treatment can no longer sustain the organ." },
       { text: "Only after injuries from a serious accident", feedback: "Accidents are one route to organ failure, but most people waiting have a long-term illness." },
@@ -185,7 +185,7 @@ const beginner: BaselineQuestion[] = [
     prompt:
       "South Africa has many people waiting for organs but relatively few transplants. What is the main reason?",
     explanation:
-      "The shortage is a pathway problem. Potential donations are lost between a potential donor and a recipient — above all when a potential donor is never referred, or when a family is not asked or declines — rather than for surgical or legal reasons.",
+      "The shortage is a pathway problem. Potential donations are lost between a potential donor and a recipient (above all when a potential donor is never referred, or when a family is not asked or declines) rather than for surgical or legal reasons.",
     verifiedAgainst: WITS_MODEL,
     choices: [
       { text: "South Africa lacks the surgical skill to carry out transplants", feedback: "South Africa has a long transplant history. Surgical capability is not the main constraint." },
@@ -202,11 +202,11 @@ const beginner: BaselineQuestion[] = [
     difficulty: 1,
     prompt: "How many people can a single deceased donor help?",
     explanation:
-      "One donor's organs can save up to seven lives, and their tissue — corneas, skin, bone, tendons and heart valves — can help up to fifty more.",
+      "One donor's organs can save up to seven lives, and their tissue (corneas, skin, bone, tendons and heart valves) can help up to fifty more.",
     verifiedAgainst: ODF_FAQ,
     choices: [
       { text: "Up to seven through organs, and up to fifty more through tissue", isCorrect: true, feedback: "Correct. Tissue donation is the part most people leave out." },
-      { text: "One — each donor's organs go to a single recipient", feedback: "Different organs go to different recipients. One donor can help many people." },
+      { text: "One: each donor's organs go to a single recipient", feedback: "Different organs go to different recipients. One donor can help many people." },
       { text: "Up to seven, but only through organs, as tissue cannot be donated", feedback: "Tissue can be donated, and it helps far more people than organs do." },
       { text: "Two at most, because only the kidneys can be transplanted", feedback: "Hearts, livers, lungs and pancreases are transplanted too, as well as tissue." },
     ],
@@ -221,7 +221,7 @@ const beginner: BaselineQuestion[] = [
     prompt:
       'A friend says: "If I\'m registered as a donor, doctors won\'t try as hard to save me." What is the strongest factual answer?',
     explanation:
-      "The doctors who determine death must be independent of the transplant team. That is not a custom — the regulations under the National Health Act require it, and require two doctors. Pointing at a structural safeguard answers this fear far better than vouching for doctors' character.",
+      "The doctors who determine death must be independent of the transplant team. That is not a custom: the regulations under the National Health Act require it, and require two doctors. Pointing at a structural safeguard answers this fear far better than vouching for doctors' character.",
     verifiedAgainst: REG_9,
     choices: [
       { text: "Doctors take an oath to do their best for every patient, so they would never do that", feedback: "An appeal to character. It does not explain what actually prevents the conflict, and it invites argument." },
@@ -239,11 +239,11 @@ const beginner: BaselineQuestion[] = [
     recycledFrom: "pre-08",
     prompt: 'Someone in their late sixties asks whether they are "too old" to be a donor. What is the accurate answer?',
     explanation:
-      "Age alone does not rule anyone out. Suitability is assessed by medical professionals at the time — it is not something a member of the public, or the donor, can decide in advance.",
+      "Age alone does not rule anyone out. Suitability is assessed by medical professionals at the time. It is not something a member of the public, or the donor, can decide in advance.",
     verifiedAgainst: GAUTENG_AGE,
     choices: [
-      { text: "Not on age alone — suitability is assessed at the time", isCorrect: true, feedback: "Correct. This is the accurate answer, and the one that keeps a potential donor from ruling themselves out." },
-      { text: "Yes — donors have to be younger than sixty-five", feedback: "There is no such cut-off. A confident exclusion rule can remove a potential donor for good." },
+      { text: "Not on age alone: suitability is assessed at the time", isCorrect: true, feedback: "Correct. This is the accurate answer, and the one that keeps a potential donor from ruling themselves out." },
+      { text: "Yes: donors have to be younger than sixty-five", feedback: "There is no such cut-off. A confident exclusion rule can remove a potential donor for good." },
       { text: "Age makes no difference at all to whether their organs can be used", feedback: "An overcorrection. Age is part of the medical assessment; it just does not decide it on its own." },
       { text: "Only their corneas could be used at that age", feedback: "This invents a rule. Suitability is assessed individually." },
     ],
@@ -280,7 +280,7 @@ const beginner: BaselineQuestion[] = [
       { text: "Carrying a donor card with you at all times", feedback: "Helpful, but a card cannot have a conversation with your family on your behalf." },
       { text: "Telling your family what you want", isCorrect: true, feedback: "Correct. This single act is what Save7 exists to encourage." },
       { text: "Registering a second time to be sure", feedback: "Registering again adds nothing. Talking to your family does." },
-      { text: "Nothing — registering is enough on its own", feedback: "Your family is still asked. A family that does not know your wishes has to guess." },
+      { text: "Nothing: registering is enough on its own", feedback: "Your family is still asked. A family that does not know your wishes has to guess." },
     ],
   },
   {
@@ -291,13 +291,13 @@ const beginner: BaselineQuestion[] = [
     difficulty: 1,
     prompt: "Which of these is donated as tissue rather than as an organ?",
     explanation:
-      "Organs are the heart, liver, pancreas, kidneys and lungs. Tissue — corneas, skin, bone, tendons and heart valves — is donated separately, and helps far more people.",
+      "Organs are the heart, liver, pancreas, kidneys and lungs. Tissue (corneas, skin, bone, tendons and heart valves) is donated separately, and helps far more people.",
     verifiedAgainst: TISSUE_CRITERIA,
     choices: [
       { text: "A kidney", feedback: "A kidney is an organ." },
       { text: "A liver", feedback: "The liver is an organ." },
       { text: "A cornea", isCorrect: true, feedback: "Correct. Corneas are tissue, and restore sight." },
-      { text: "A heart", feedback: "The heart is an organ — though its valves can be donated as tissue." },
+      { text: "A heart", feedback: "The heart is an organ, though its valves can be donated as tissue." },
     ],
   },
 ];
@@ -318,8 +318,8 @@ const intermediate: BaselineQuestion[] = [
       "South Africa recognises two ways of determining death: by neurological criteria, which is brain death, and by circulatory criteria. Both are death, not a stage of dying.",
     verifiedAgainst: SAJCC_DEATH,
     choices: [
-      { text: "Only by the heart stopping — brain death is not treated as death", feedback: "Brain death is death, determined by neurological criteria." },
-      { text: "Only by brain death — a stopped heart is not enough on its own", feedback: "Death can also be determined by circulatory criteria." },
+      { text: "Only by the heart stopping: brain death is not treated as death", feedback: "Brain death is death, determined by neurological criteria." },
+      { text: "Only by brain death: a stopped heart is not enough on its own", feedback: "Death can also be determined by circulatory criteria." },
       { text: "By the family, once they agree that life-sustaining treatment should end", feedback: "A family's decision about treatment is not a determination of death. Death is determined by doctors, against defined criteria." },
       { text: "By neurological criteria (brain death) or by circulatory criteria", isCorrect: true, feedback: "Correct." },
     ],
@@ -333,13 +333,13 @@ const intermediate: BaselineQuestion[] = [
     recycledFrom: "pre-06",
     prompt: "How can someone be declared dead while their heart is still beating?",
     explanation:
-      "A ventilator supplies oxygen the person can no longer take in for themselves, which lets the heart keep beating for a time after death has been determined by neurological criteria. That is why a family at the bedside sees a warm body and a beating heart — and why their disbelief is a reasonable human response.",
+      "A ventilator supplies oxygen the person can no longer take in for themselves, which lets the heart keep beating for a time after death has been determined by neurological criteria. That is why a family at the bedside sees a warm body and a beating heart, and why their disbelief is a reasonable human response.",
     verifiedAgainst: SAJCC_DEATH,
     choices: [
       { text: "A ventilator supplies the oxygen they can no longer take in themselves", isCorrect: true, feedback: "Correct, and this is the explanation you will most often be asked for." },
       { text: "The declaration is provisional and may be reversed later", feedback: "Determination of death is not provisional. It follows a defined process with deliberate safeguards." },
-      { text: "They are in a deep coma, which the law treats as death", feedback: "A coma is not death — recovery from a coma is possible. Brain death is a different thing." },
-      { text: "It cannot happen — a beating heart always means the person is alive", feedback: "This is exactly the misconception that stops donation conversations." },
+      { text: "They are in a deep coma, which the law treats as death", feedback: "A coma is not death: recovery from a coma is possible. Brain death is a different thing." },
+      { text: "It cannot happen: a beating heart always means the person is alive", feedback: "This is exactly the misconception that stops donation conversations." },
     ],
   },
   {
@@ -355,7 +355,7 @@ const intermediate: BaselineQuestion[] = [
     choices: [
       { text: "Donation goes ahead automatically, because they registered", feedback: "Registration records a wish. It does not mean organs are donated automatically." },
       { text: "The Organ Donor Foundation reviews the case and decides whether to proceed", feedback: "The ODF runs awareness and the register. It is not a medical or allocation body, and it makes no bedside decisions." },
-      { text: "The family is still asked, and in practice a refusal is respected", isCorrect: true, feedback: "Correct — which is why telling your family matters as much as registering." },
+      { text: "The family is still asked, and in practice a refusal is respected", isCorrect: true, feedback: "Correct, which is why telling your family matters as much as registering." },
       { text: "The hospital decides alone, without involving the family", feedback: "The family is approached in every case." },
     ],
   },
@@ -372,7 +372,7 @@ const intermediate: BaselineQuestion[] = [
     verifiedAgainst: CONSENT_UNDERSTOOD,
     choices: [
       { text: "They make the conversation quicker", feedback: "Their purpose is a valid decision, not speed." },
-      { text: "Consent that is not understood is not informed consent", isCorrect: true, feedback: "Correct — an interpreter is a consent safeguard, not a convenience." },
+      { text: "Consent that is not understood is not informed consent", isCorrect: true, feedback: "Correct: an interpreter is a consent safeguard, not a convenience." },
       { text: "They are needed only for families from outside South Africa", feedback: "South Africa has many languages. Interpretation is routinely needed." },
       { text: "They are unnecessary if a relative can translate", feedback: "Relying on a grieving relative to interpret a consent conversation is not a safeguard." },
     ],
@@ -385,7 +385,7 @@ const intermediate: BaselineQuestion[] = [
     difficulty: 2,
     prompt: "What does South African law say about paying for donated organs or tissue?",
     explanation:
-      "Under section 60 of the National Health Act, it is an offence to sell or trade in tissue — which in the Act includes organs — and an offence for a donor to receive any reward beyond reimbursement of reasonable costs. That applies to living donors as much as to deceased donation.",
+      "Under section 60 of the National Health Act, it is an offence to sell or trade in tissue (which in the Act includes organs) and an offence for a donor to receive any reward beyond reimbursement of reasonable costs. That applies to living donors as much as to deceased donation.",
     verifiedAgainst: NHA_S60,
     choices: [
       { text: "Trading is an offence; a donor may only be reimbursed reasonable costs", isCorrect: true, feedback: "Correct. Section 60 of the National Health Act." },
@@ -403,7 +403,7 @@ const intermediate: BaselineQuestion[] = [
     prompt:
       "South Africa uses an opt-in system: donation needs explicit consent. What does the evidence suggest about switching to opt-out (\"presumed consent\")?",
     explanation:
-      "Reviews of the international evidence find little difference between opt-in and opt-out systems for increasing donor numbers when the switch is made on its own. What moves the numbers is addressing the barriers along the donation pathway — referral, family support, trained staff — with or without a change of system.",
+      "Reviews of the international evidence find little difference between opt-in and opt-out systems for increasing donor numbers when the switch is made on its own. What moves the numbers is addressing the barriers along the donation pathway (referral, family support, trained staff), with or without a change of system.",
     verifiedAgainst: OPT_OUT_EVIDENCE,
     choices: [
       { text: "Switching on its own would reliably raise donation rates within a few years", feedback: "The evidence finds little difference between the systems when the switch is made in isolation." },
@@ -427,7 +427,7 @@ const advanced: BaselineQuestion[] = [
     difficulty: 3,
     prompt: "When should the transplant coordinator be contacted about a potential donor?",
     explanation:
-      "Before the family is told about end-of-life decisions. Contacting the coordinator first lets the team check feasibility, the national priority list and ODF registration, and plan the conversation — rather than raising donation prematurely, or not at all.",
+      "Before the family is told about end-of-life decisions. Contacting the coordinator first lets the team check feasibility, the national priority list and ODF registration, and plan the conversation, rather than raising donation prematurely, or not at all.",
     verifiedAgainst: WC_COORDINATOR,
     choices: [
       { text: "Only after the family has agreed to donation", feedback: "By then the conversation has already happened without the person best placed to support it." },
@@ -485,7 +485,7 @@ const advanced: BaselineQuestion[] = [
     choices: [
       { text: "Move straight on to asking whether they would consider donation", feedback: "Donation cannot be discussed while the family believe they are being asked to end a life." },
       { text: "Explain that donation is what the patient would have wanted", feedback: "This presumes the answer, and leaves the misconception untouched." },
-      { text: "Tell them the machine can stay on for as long as they need, so there is no rush", feedback: "Not accurate — accommodation after death is ordinarily limited to about a day — and it confirms the belief that the machine is keeping the person alive." },
+      { text: "Tell them the machine can stay on for as long as they need, so there is no rush", feedback: "Not accurate: accommodation after death is ordinarily limited to about a day, and it confirms the belief that the machine is keeping the person alive." },
       { text: "Explain that the person has already died, so no one is ending a life", isCorrect: true, feedback: "Correct. The misconception has to be addressed first." },
     ],
   },
@@ -497,7 +497,7 @@ const advanced: BaselineQuestion[] = [
     difficulty: 3,
     prompt: "When a patient can no longer decide for themselves, what should guide the person deciding on their behalf?",
     explanation:
-      "The patient's own wishes where they are known — an advance directive, or what they said while they could — and, where they are not, the patient's best interests. It is the patient's decision being made by someone else, not the decision-maker's own.",
+      "The patient's own wishes where they are known (an advance directive, or what they said while they could) and, where they are not, the patient's best interests. It is the patient's decision being made by someone else, not the decision-maker's own.",
     verifiedAgainst: SURROGATE,
     choices: [
       { text: "What the decision-maker would choose for themselves", feedback: "The decision is being made for the patient. The decision-maker's own preference is not the test." },
@@ -518,7 +518,7 @@ const advanced: BaselineQuestion[] = [
       "Every family is offered the conversation. Assumptions about a family's ethnic, cultural or spiritual background must never be used to skip it, and a faith representative or chaplain can be brought in to support the family.",
     verifiedAgainst: WC_EQUALITY,
     choices: [
-      { text: "That is appropriate — it spares the family an upsetting question", feedback: "It takes the decision away from the family on the strength of an assumption." },
+      { text: "That is appropriate: it spares the family an upsetting question", feedback: "It takes the decision away from the family on the strength of an assumption." },
       { text: "Offer every family the conversation, with faith support if wanted", isCorrect: true, feedback: "Correct. No community is excluded from being asked." },
       { text: "Raise it only if the family brings up donation first", feedback: "Few families raise it themselves. Waiting excludes them just as surely." },
       { text: "Ask a relative privately what their religion allows before deciding", feedback: "This still puts the team's assumption ahead of the family's own decision." },
