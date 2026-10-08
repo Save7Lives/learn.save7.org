@@ -129,7 +129,7 @@ export default async function HomePage() {
             {[
               {
                 title: "Plain-language lessons",
-                body: "Written lessons in plain language, with a table wherever things are easier to compare side by side.",
+                body: "Written lessons in plain language, with a table wherever things are easier to compare side by side. Beginner Stage 3 opens with a short film, with captions and a transcript.",
               },
               {
                 title: "Questions that explain",

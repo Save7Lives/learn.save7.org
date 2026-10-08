@@ -141,7 +141,7 @@ export default async function IntroductionPage() {
             {[
               [
                 "Plain-language lessons",
-                "Written lessons in plain language, with a table wherever things are easier to compare side by side.",
+                "Written lessons in plain language, with a table wherever things are easier to compare side by side. Beginner Stage 3 opens with a short film, with captions and a transcript.",
               ],
               [
                 "Questions that explain",
