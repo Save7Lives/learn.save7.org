@@ -79,6 +79,19 @@ differ from it:
 - **Focus ring:** 3px navy, 3px offset, on light surfaces; 3px white on navy surfaces. Navy is 17.48:1 on white and 16.5+ on both card tints.
 - **No Level colour-coding.** #10 stands: the Level name is always text. The deck's teal/pink/amber alternation is positional, and amber cannot carry meaning. Pink progress also reads as a call to action or an alert.
 
+### Third-party controls (#70)
+
+**Google's sign-in button is the one control Learn does not colour from its
+own tokens.** Google's branding guidance (developers.google.com/identity/
+branding-guidelines, read 2026-10-09) puts the standard-colour G on a white,
+dark or neutral fill and does not allow it on a coloured one, so the button on
+`/login` uses Google's light theme: `#ffffff` fill, a 1px `#747775` stroke,
+`#1f1f1f` text, label "Continue with Google". Those three values are Google's,
+not the palette's, so please don't map them onto `white`, `line-strong` or
+`navy`. Every other primary button stays `pink` with white text. The prototype
+follows the theme's colours only; the build should follow Google's button
+specification for the rest (shape, type, spacing).
+
 ### Superseded
 
 `#ED0E69` was the previously recorded hero pink here. It measures 4.31:1
