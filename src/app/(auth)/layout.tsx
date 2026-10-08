@@ -21,7 +21,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <span className="text-teal">seven lives.</span>
           </p>
           <p className="mt-6 text-cream/70">
-            Transplant Alchemy 101 is Save7&apos;s organ donation and transplantation
+            Save7 Learn is Save7&apos;s organ donation and transplantation
             awareness course. Three levels, each a complete achievement on its own.
           </p>
         </div>

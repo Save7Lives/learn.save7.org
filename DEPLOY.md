@@ -1,4 +1,4 @@
-# Deploying Transplant Alchemy 101 to Vercel
+# Deploying Save7 Learn to Vercel
 
 The course is **deployed and live** at `https://learn.save7.org`, serving from Vercel
 since 7 October 2026. What remains needs **your accounts** — the Vercel project, the

@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Course introduction",
   description:
-    "How Transplant Alchemy 101 works: three levels, what's included, and how your learning is measured.",
+    "How Save7 Learn works: three levels, what's included, and how your learning is measured.",
 };
 
 export default async function IntroductionPage() {

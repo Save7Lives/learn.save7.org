@@ -1,6 +1,6 @@
 @AGENTS.md
 
-# Transplant Alchemy 101 — working rules
+# Save7 Learn: working rules
 
 Save7's organ-donation course, replacing their Google Classroom.
 

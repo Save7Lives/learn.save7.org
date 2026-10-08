@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Privacy & POPIA",
   description:
-    "What information Transplant Alchemy 101 collects, why, and what Save7 does with it.",
+    "What information Save7 Learn collects, why, and what Save7 does with it.",
 };
 
 /**

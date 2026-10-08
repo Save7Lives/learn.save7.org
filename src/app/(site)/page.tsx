@@ -41,13 +41,13 @@ export default async function HomePage() {
 
         <div className="relative mx-auto max-w-6xl px-5 py-20 sm:px-8 sm:py-28">
           <Eyebrow className="text-teal">
-            Save7 Organ Donation &amp; Transplantation Awareness Course
+            Organ Donation and Transplantation Awareness Course
           </Eyebrow>
 
           <Display as="h1" className="mt-6 max-w-3xl text-hero text-cream">
-            Transplant
+            Save7
             <br />
-            Alchemy <span className="text-pink">101</span>
+            <span className="text-pink">Learn</span>
           </Display>
 
           <p className="mt-8 max-w-xl text-lg text-cream/75">

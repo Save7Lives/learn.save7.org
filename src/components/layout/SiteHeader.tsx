@@ -28,7 +28,7 @@ export async function SiteHeader({ className }: { className?: string }) {
 
         <span aria-hidden="true" className="hidden h-5 w-px bg-sand-300 sm:block" />
         <p className="hidden text-sm font-semibold text-sand-600 sm:block">
-          Transplant Alchemy 101
+          Save7 Learn
         </p>
 
         <nav className="ml-auto flex items-center gap-0.5 sm:gap-2">

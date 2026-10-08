@@ -1,6 +1,6 @@
-# Transplant Alchemy 101
+# Save7 Learn
 
-**Save7 Organ Donation & Transplantation Awareness Course**
+**Organ Donation and Transplantation Awareness Course**
 
 A three-level learning platform that takes someone from *"I don't know much about
 organ donation"* to *"I understand the issue, I know how the system works, I can

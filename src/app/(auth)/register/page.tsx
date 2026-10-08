@@ -19,7 +19,7 @@ export default async function RegisterPage() {
 
   return (
     <div>
-      <Eyebrow>Transplant Alchemy 101</Eyebrow>
+      <Eyebrow>Save7 Learn</Eyebrow>
       <Display className="mt-3">Register</Display>
       <p className="mt-4 text-ink/70">
         You need your name, an email and your date of birth. This course is 18+ only. There

@@ -101,7 +101,7 @@ export default async function CertificatePage(
           learnerName={cert.learnerName}
           awardTitle={cert.awardTitle}
           courseTitle={cert.courseTitle}
-          courseSubtitle="Save7 Organ Donation & Transplantation Awareness Course"
+          courseSubtitle="Organ Donation and Transplantation Awareness Course"
           levelTitle={cert.levelTitle}
           issuedAt={issuedAt}
           publicId={cert.publicId}

@@ -22,7 +22,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
 
   return (
     <div>
-      <Eyebrow>Transplant Alchemy 101</Eyebrow>
+      <Eyebrow>Save7 Learn</Eyebrow>
       <Display className="mt-3">Sign in</Display>
       <p className="mt-4 text-ink/70">
         With the same Google account Save7 knows you by. Volunteers, staff and learners all

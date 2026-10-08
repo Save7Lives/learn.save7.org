@@ -22,15 +22,15 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Transplant Alchemy 101 · Save7",
-    template: "%s · Transplant Alchemy 101",
+    default: "Save7 Learn",
+    template: "%s · Save7 Learn",
   },
   description:
     "Save7's organ donation and transplantation awareness course. Learn enough to confidently start the conversation.",
-  applicationName: "Transplant Alchemy 101",
+  applicationName: "Save7 Learn",
   authors: [{ name: "Save7", url: "https://save7.org" }],
   openGraph: {
-    title: "Transplant Alchemy 101 · Save7",
+    title: "Save7 Learn",
     description:
       "A three-level learning pathway on organ donation and transplantation in South Africa.",
     siteName: "Save7",
