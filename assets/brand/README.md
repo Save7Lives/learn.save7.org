@@ -209,6 +209,14 @@ Title Case, so this is a deliberate departure: Stage and Level titles are
 long, a sentence-case rule is simpler for content authors to apply, and the
 audience is the general public. Eyebrows and pills are always capitals.
 
+**The table is the wide scale, from about 640px.** The phone is the primary
+device, so below that the headings step down (#74): Display 32/36, H1 28/33,
+H2 22/28, H3 18/24, H4 16/22. Lesson body stays 18/31.5 at every width.
+
+**Heading levels in a lesson.** The Stage title is the page's H1 and a
+step's title is its H2, so a lesson's `##` is styled and marked up as H3 and
+its `###` as H4 (#74).
+
 ## Wordmark
 
 The V7 vector mark plus live text, as the deck sets it: **SAVE** in teal,
@@ -229,11 +237,53 @@ Carried over from the deck (#67): an eyebrow over a navy title, tinted
 cards with a hairline border, numbered pills, the dotted stepper and
 timeline (they map onto Level to Stage progress), outline icons in tinted
 circles. Corner blobs and the teal-and-pink circle pair appear on public
-pages only, never behind lesson reading. The dark hero is gone and the
+pages, and on the Baseline's before-you-start and results screens (#74),
+never behind lesson reading or a question. The dark hero is gone and the
 lesson reader stays plain white. Two Registers share these tokens:
 **Editorial** (landing, sign-in, lessons, the Certificate) and **Portal**
 (a Student's My Progress, and Admin); see `CONTEXT.md`. The icon set is
 outline only, 1.75px stroke, no stock clip-art.
+
+## Reader, Stage Quiz and Baseline (#74)
+
+Settled against a 375px prototype, `wayfinder/prototypes/reader-quiz-baseline-prototype.html`
+on `prototype/reader-quiz-baseline` (commit `75378a5`). Its DOM audit reports
+0 failing pairs in 6,912 combinations of screen and switch, and it fails when
+a bad pair is planted. Behaviour is unchanged: the Stage Quiz stays 5
+questions, 4 to pass, unlimited retries (#8), and the Baseline never shows
+answers.
+
+**The reader is plain white.**
+- *Stage header:* back link, a `teal-ink` eyebrow ("Beginner Level · Stage 3 of 3"), the Stage title at H1, the core question, "About 8 minutes · 7 steps", then the **Stage stepper**: one dot per Stage, `teal` with a navy check when that Stage's quiz is passed, a navy ring for the Stage you are in, a grey ring for the rest. On a phone it is dots only, since a Level can hold four Stages with long names; names and status words show from about 640px. Each dot is a link.
+- *Step rail:* a slim sticky bar, "Step 2 of 7" over the step's short name, an "All steps" button and a 4px `teal-ink` progress line, about 52px of a phone screen. "All steps" opens a vertical dotted list of the seven steps (numbered, a check once read). From about 640px it becomes the labelled stepper. Rail labels are the short ones: Why this matters, Learn, Key takeaways, Check, Study guide, Further reading, Finish; a step's heading is its own title. **The site header scrolls away in the reader and only the rail sticks.**
+- *Back and Continue* sit inline at the end of a step. They are not docked: a learner presses Continue after reading to the end, and a dock costs about 68px and invites tapping past a step.
+- *Prose:* Lexend 18/31.5 in `grey`, 62 characters wide, bold in `navy`. Bullets take a `teal-ink` marker. A numbered list uses numbered pills (`teal`, navy numerals). A blockquote is a `teal-50` card with a 5px `teal-ink` bar. Links are `teal-ink` and underlined. Code is navy on `line`. The Key takeaways step shows each takeaway as a `teal-50` row with an outline check in a `teal-100` circle.
+- *Tables* (#58): a table from about 640px, and below it one card per row, the row header as the card title and every cell labelled by its column header in small capitals.
+- *The film* runs the full width of a phone, with the note under the player. The note ("Where the film and this course differ") is **`pink-50` with an alert icon in a `pink-100` circle** and navy text, since pink already means alert and it matches the quiz's "Not quite". Each correction is a short stack: the film says, the course says, why. The plain transcript becomes **"Read the film as text"**, the Text Alternative of #78.
+
+**The Stage Quiz** lives inside the Check step.
+- *Status card:* eyebrow, a status pill, one sentence, three fact chips (5 questions, 4 right to pass, retry as often as you like) and one primary button. The pills are Not started, Not passed yet, Passed, Practice attempt, Answered and Not answered; each is a tint, a hairline, an icon and navy text.
+- *Progress:* one 6px segment per question: `teal-ink` answered, a taller navy segment for the current one, `line` for the rest, with "Question 3 of 5" and "n answered" in text. The Baseline uses the same strip with 20 segments.
+- *A scenario* sits in a `teal-50` box with an info icon, in italics. The prompt is H3, and "Select all that apply" follows it on a multiple-answer question.
+- *Choices* are whole-row targets, 56px or taller, with a letter pill (A to D; rounded squares when several answers apply). Unmarked, a selected choice is a 2px navy border and a filled navy pill with a check. Marked:
+
+| State | Surface | Border | Pill | Words beside it | Measured |
+|---|---|---|---|---|---|
+| Idle | white | 1.5px `line-strong` | outline, letter | none | border 3.82:1 on white, 3.64:1 on `teal-50` |
+| Selected | white | 2px `navy` | navy fill, check | none | 17.48:1 |
+| Yours, correct | `teal-50` | 2px `correct` | `correct` fill, check | "Your answer, correct" | border 5.71:1, glyph 5.99:1 |
+| Correct, missed | `teal-50` | 2px `correct` | `correct` fill, check | "Correct answer" | as above |
+| Yours, not correct | `pink-50` | 2px `incorrect` | `incorrect` fill, cross | "Your answer, not correct", then the choice's own feedback | border 6.50:1, glyph 6.85:1 |
+| Not chosen | white | 1px `line` | outline, letter | none | decorative |
+
+- *Explanation* under each marked question: `teal-50` with a Correct pill, or `pink-50` with a Not quite pill, navy text.
+- *Result:* a status pill, the score at Display ("3 of 5"), one sentence, Try again (primary) and Done. On the last Stage Quiz of a Level a pass adds a `pink-50` Certificate callout with an award icon and a "View my certificate" button.
+- *Finish step:* the question the Stage asked on `teal-50`, then "Finish this Stage". Finishing records the Stage as read; a `pink-50` card says a Stage counts as complete when its quiz is passed and links to the Check step.
+
+**The Baseline.**
+- *Before you start* is a new screen, and replaces the one-line box above question 1: a pink eyebrow, a Display title, a lede, three numbered cards (not a test; you won't see the answers afterwards, because the same 20 questions come back; the course opens when you submit, or for a later sitting that your score gates nothing) and one primary button. Later sittings use the same layout with "Sitting 2 of 4".
+- *Results:* a Display title, then a card with the score at 56px, "n of 20 questions", and **one row per Level**: name, percent, a 12px `teal-ink` bar on `line`, and "n of m questions". No Level colour. After a later sitting each bar carries a 4px navy mark at the first sitting's value, "First sitting n%" beside the count, a "+10 points since your first sitting" pill, and a four-dot stepper of the sittings, named from about 640px. `BaselineResults`' table is not used here, because at 375px it scrolls sideways; it stays as the twin on My Progress (#71).
+- The blob and circle pair appear on before-you-start and results, and nowhere on a question.
 
 ## Tailwind v4 note
 
