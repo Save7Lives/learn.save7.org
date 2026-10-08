@@ -75,3 +75,12 @@ The admin-configurable, versioned condition that determines Nerve Center eligibi
 
 **Nerve Center Eligibility Signal**
 The per-Student record produced by evaluating a Student's Progress Record against an Eligibility Rule: an eligible flag, the timestamp it was evaluated, and a reference to the Eligibility Rule version that produced it. This is what would eventually be exported to Nerve Center — never raw Baseline scores or completion history.
+
+### Design
+
+**KEPSA Deck**
+Save7's "Presentation Mastertemplate", the slides used for the KEPSA presentation on 3 October 2026 (kept locally at `Desktop/Presentation Mastertemplate.pdf`, not in this repo). The visual reference Learn derives its look from: navy headings over a pink or teal eyebrow, tinted rounded cards, numbered pills, steppers, soft corner blobs. A reference, not a spec: Learn takes its shapes and its navy, and corrects its colours where they fail contrast on the web.
+
+**Register**
+One of two visual modes that share the same tokens: the **Editorial Register** (landing, sign-in, lessons, Certificate), expressive and deck-like, and the **Portal Register** (a Student's My Progress, and Admin), dense and app-like, after the KEPSA portal's screens in the deck. A Register is not a dark/light switch; Learn stays light.
+_Avoid_: Theme (implies a user-selectable switch Learn does not have)
