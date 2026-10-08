@@ -200,7 +200,7 @@ page lists all three.
 | H3 | Montserrat 700 | 22/28 | |
 | H4 | Montserrat 700 | 18/23 | |
 | Lesson body | Lexend 400 | 18/31.5 | `grey`, on plain white, about 62 characters wide |
-| UI body | Lexend 400/500/600 | 16/24 | buttons, labels, table cells |
+| UI body | Lexend 400/500 | 16/24 | buttons, labels, table cells |
 | Small | Lexend 400 | 14/20 | helper text; nothing in the system is under 12px |
 | Eyebrow | Montserrat 700 | 13, +0.07em | always small capitals |
 
@@ -208,6 +208,14 @@ page lists all three.
 Title Case, so this is a deliberate departure: Stage and Level titles are
 long, a sentence-case rule is simpler for content authors to apply, and the
 audience is the general public. Eyebrows and pills are always capitals.
+
+**Bold is rare** (#74, from the user, 2026-10-09). The KEPSA Deck bolds far
+more than the web needs. Only headings, eyebrows, scores and the current item
+(the Stage you are in, the step you are on) are bold. Buttons, pills, links,
+labels, table cells and emphasis inside a lesson are Lexend 500 at most, and
+emphasis in prose is told apart by `navy` against the `grey` body, not by
+weight. The earlier re-cut prototypes (#69 to #73) still set some UI text at
+600; builds follow this rule, not those.
 
 **The table is the wide scale, from about 640px.** The phone is the primary
 device, so below that the headings step down (#74): Display 32/36, H1 28/33,
@@ -247,7 +255,7 @@ outline only, 1.75px stroke, no stock clip-art.
 ## Reader, Stage Quiz and Baseline (#74)
 
 Settled against a 375px prototype, `wayfinder/prototypes/reader-quiz-baseline-prototype.html`
-on `prototype/reader-quiz-baseline` (commit `98a8199`). Its DOM audit reports
+on `prototype/reader-quiz-baseline` (commit `3fee12f`). Its DOM audit reports
 0 failing pairs in 3,456 combinations of screen and switch, and it fails when
 a bad pair is planted. Behaviour is unchanged: the Stage Quiz stays 5
 questions, 4 to pass, unlimited retries (#8), and the Baseline never shows
@@ -257,9 +265,9 @@ answers.
 - *Stage header:* back link, a `teal-ink` eyebrow ("Beginner Level · Stage 3 of 3"), the Stage title at H1, the core question, "About 8 minutes · 7 steps", then the **Stage stepper**: one dot per Stage, `teal` with a navy check when that Stage's quiz is passed, a navy ring for the Stage you are in, a grey ring for the rest. On a phone it is dots only, since a Level can hold four Stages with long names; names and status words show from about 640px. Each dot is a link.
 - *Step rail:* a slim sticky bar, "Step 2 of 7" over the step's short name, an "All steps" button and a 4px `teal-ink` progress line, about 52px of a phone screen. "All steps" opens a vertical dotted list of the seven steps (numbered, a check once read). From about 640px it becomes the labelled stepper. Rail labels are the short ones: Why this matters, Learn, Key takeaways, Check, Study guide, Further reading, Finish; a step's heading is its own title. **The site header scrolls away in the reader and only the rail sticks.**
 - *Back and Continue* sit inline at the end of a step. They are not docked: a learner presses Continue after reading to the end, and a dock costs about 68px and invites tapping past a step.
-- *Prose:* Lexend 18/31.5 in `grey`, 62 characters wide, bold in `navy`. Bullets take a `teal-ink` marker. A numbered list uses numbered pills (`teal`, navy numerals). A blockquote is a `teal-50` card with a 5px `teal-ink` bar. Links are `teal-ink` and underlined. Code is navy on `line`. The Key takeaways step shows each takeaway as a `teal-50` row with an outline check in a `teal-100` circle.
+- *Prose:* Lexend 18/31.5 in `grey`, 62 characters wide, with emphasis in `navy` at Lexend 500 rather than bold. Bullets take a `teal-ink` marker. A numbered list uses numbered pills (`teal`, navy numerals). A blockquote is a `teal-50` card with a 5px `teal-ink` bar. Links are `teal-ink` and underlined. Code is navy on `line`. The Key takeaways step shows each takeaway as a `teal-50` row with an outline check in a `teal-100` circle.
 - *Tables* (#58): a table from about 640px, and below it one card per row, the row header as the card title and every cell labelled by its column header in small capitals.
-- *The film* runs the full width of a phone, with its caption under the player (title, length, size) and nothing else. **This design has no note on where the film and the course differ, and no transcript or text version of the film.** The user does not want either on the site (2026-10-09).
+- *There is no film.* The user took *The Journey of a Gift* out of the course (2026-10-09), so the reader has no player, no note on where the film and the course differ, and no transcript or text version. Stage 3's first step is its prose.
 
 **The Stage Quiz** lives inside the Check step.
 - *Status card:* eyebrow, a status pill, one sentence, three fact chips (5 questions, 4 right to pass, retry as often as you like) and one primary button. The pills are Not started, Not passed yet, Passed, Practice attempt, Answered and Not answered; each is a tint, a hairline, an icon and navy text.
