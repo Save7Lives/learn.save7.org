@@ -47,7 +47,7 @@ export default async function ProfilePage() {
         {profile.name}
       </Display>
       <p className="mt-3 text-sand-600">
-        Your name is the only thing here that appears anywhere else — on your
+        Your name is the only thing here that appears anywhere else: on your
         certificate.
       </p>
 

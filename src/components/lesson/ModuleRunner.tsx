@@ -274,7 +274,7 @@ export function ModuleRunner({
           <p className="mt-4 text-sm text-sand-500">
             {nextModuleTitle
               ? `Completing this module takes you on to "${nextModuleTitle}".`
-              : "This is the last module in the level — completing it unlocks the assessment."}
+              : "This is the last module in the level. Completing it unlocks the assessment."}
           </p>
         ) : null}
       </div>

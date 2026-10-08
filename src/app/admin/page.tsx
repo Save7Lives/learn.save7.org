@@ -35,7 +35,7 @@ export default async function AdminOverviewPage() {
     <>
       <PageTitle
         title="Overview"
-        description="Save7's headline question is whether people are learning — so knowledge movement leads, and engagement is context for it."
+        description="Save7's headline question is whether people are learning, so knowledge movement leads, and engagement is context for it."
       />
 
       {/* The metric the platform exists to produce. */}
@@ -45,25 +45,25 @@ export default async function AdminOverviewPage() {
           value={
             knowledge.averageBaselinePct !== null
               ? `${knowledge.averageBaselinePct}%`
-              : "—"
+              : "n/a"
           }
           sub={`${knowledge.baselineCount} learners, first sitting`}
         />
         <StatCard
           label="Average latest baseline"
-          value={knowledge.averageLatestPct !== null ? `${knowledge.averageLatestPct}%` : "—"}
+          value={knowledge.averageLatestPct !== null ? `${knowledge.averageLatestPct}%` : "n/a"}
           sub={`${knowledge.resatCount} learners have re-sat it`}
         />
         <StatCard
           label="Average improvement"
-          value={averageGain !== null ? `${averageGain >= 0 ? "+" : ""}${averageGain}` : "—"}
+          value={averageGain !== null ? `${averageGain >= 0 ? "+" : ""}${averageGain}` : "n/a"}
           sub="percentage points, first sitting to latest"
           tone="pink"
         />
         <StatCard
           label="Completion rate"
           value={
-            learners.completionRatePct !== null ? `${learners.completionRatePct}%` : "—"
+            learners.completionRatePct !== null ? `${learners.completionRatePct}%` : "n/a"
           }
           sub="Of learners who started"
         />
@@ -181,7 +181,7 @@ export default async function AdminOverviewPage() {
             {dropOff.dropped} of {dropOff.started} learners who started this module have
             not completed it
             {dropOff.completionRatePct !== null
-              ? ` — a ${dropOff.completionRatePct}% completion rate`
+              ? ` (a ${dropOff.completionRatePct}% completion rate)`
               : ""}
             .
           </p>

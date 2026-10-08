@@ -59,7 +59,7 @@ export default async function CertificatesPage() {
             </span>,
             cert.awardTitle,
             // Null since 0113: a Level has no single score under the Blueprint.
-            cert.scorePct === null ? "—" : `${cert.scorePct}%`,
+            cert.scorePct === null ? "n/a" : `${cert.scorePct}%`,
             <span key="d" className="whitespace-nowrap text-xs text-sand-500">
               {cert.issuedAt.toLocaleDateString("en-ZA", {
                 day: "numeric",

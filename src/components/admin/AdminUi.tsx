@@ -86,7 +86,7 @@ export function BarChart({
           <div className="mb-1 flex items-baseline justify-between gap-4">
             <span className="text-sm text-ink">{row.label}</span>
             <span className="shrink-0 text-sm font-bold text-ink">
-              {row.value === null ? "—" : `${row.value}${valueSuffix}`}
+              {row.value === null ? "n/a" : `${row.value}${valueSuffix}`}
             </span>
           </div>
           <div

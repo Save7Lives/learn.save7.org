@@ -115,7 +115,7 @@ export default async function ContentReviewPage(
         <StatCard
           label="Blocking launch"
           value={summary.blockingLaunch}
-          sub="Severity 1 — must clear first"
+          sub="Severity 1: must clear first"
           tone={summary.blockingLaunch > 0 ? "warn" : "teal"}
         />
         <StatCard label="Approved" value={summary.approved} tone="teal" />

@@ -143,7 +143,7 @@ export function RegisterForm({ config }: { config: PublicSupabaseConfig }) {
           className="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2"
         />
         <span className="mt-1 block text-xs text-ink/60">
-          This course is for adults. You must be 18 or older to register — there is no
+          This course is for adults. You must be 18 or older to register. There is no
           exception, so please use your real date of birth.
         </span>
       </label>

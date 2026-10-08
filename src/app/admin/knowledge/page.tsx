@@ -37,7 +37,7 @@ export default async function KnowledgePage() {
           value={
             knowledge.averageBaselinePct !== null
               ? `${knowledge.averageBaselinePct}%`
-              : "—"
+              : "n/a"
           }
           sub={`${knowledge.baselineCount} first sittings recorded`}
         />
@@ -51,7 +51,7 @@ export default async function KnowledgePage() {
           value={
             knowledge.averageImprovement !== null
               ? `${knowledge.averageImprovement >= 0 ? "+" : ""}${knowledge.averageImprovement} pp`
-              : "—"
+              : "n/a"
           }
           sub={`First sitting to latest, ${knowledge.resatCount} learners`}
           tone="pink"
@@ -107,7 +107,7 @@ export default async function KnowledgePage() {
               {l.title}
             </span>,
             l.postCount,
-            l.averagePostPct !== null ? `${l.averagePostPct}%` : "—",
+            l.averagePostPct !== null ? `${l.averagePostPct}%` : "n/a",
             l.averagePointChange !== null ? (
               <span
                 key="c"
@@ -121,9 +121,9 @@ export default async function KnowledgePage() {
                 {l.averagePointChange} pp
               </span>
             ) : (
-              "—"
+              "n/a"
             ),
-            l.passRatePct !== null ? `${l.passRatePct}%` : "—",
+            l.passRatePct !== null ? `${l.passRatePct}%` : "n/a",
           ])}
           emptyMessage="No assessments submitted yet."
         />
@@ -146,7 +146,7 @@ export default async function KnowledgePage() {
                 ? "Baseline"
                 : q.moduleTitle
                   ? q.moduleTitle
-                  : (q.levelTitle ?? "—")}
+                  : (q.levelTitle ?? "n/a")}
             </span>,
             <Badge key="t" tone="neutral">
               {q.topicTag}

@@ -74,20 +74,20 @@ export default async function BaselineDonePage() {
             <>
               <p className="text-sand-700">
                 There is no pass mark here, and this is not a grade. It is a measurement taken
-                before you learned anything — which is exactly what makes the later sittings
+                before you learned anything, which is exactly what makes the later sittings
                 meaningful. You&apos;ll sit the same questions again after each level you
                 finish.
               </p>
               <p className="mt-3 text-sand-700">
                 {latest.totalPct < 50
                   ? "A low baseline is genuinely the best place to start from. You have the most to gain."
-                  : "You already know some of this. The course will fill in the parts that are harder to pick up casually — brain death, the law, and how to handle a difficult conversation."}
+                  : "You already know some of this. The course will fill in the parts that are harder to pick up casually: brain death, the law, and how to handle a difficult conversation."}
               </p>
             </>
           ) : (
             <p className="text-sand-700">
               Each row is the same {latest.totalMax} questions, so the difference between rows is what
-              you learned. A level you haven&apos;t studied yet usually moves least — that is
+              you learned. A level you haven&apos;t studied yet usually moves least. That is
               expected, not a shortfall.
             </p>
           )}

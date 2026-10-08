@@ -183,13 +183,13 @@ export default function PrivacyPage() {
 
       <section className="mt-14">
         <Display as="h2" className="text-title text-ink">
-          Your certificate is public — on purpose
+          Your certificate is public, on purpose
         </Display>
         <div className="prose-save7 mt-5">
           <p>
             A certificate is only useful if someone else can check it. Anyone with your
             certificate ID can see the name on it, which level it is for, the date, and
-            whether it is still valid. Nothing else — not your email, not your scores, not
+            whether it is still valid. Nothing else: not your email, not your scores, not
             your answers.
           </p>
           <p>

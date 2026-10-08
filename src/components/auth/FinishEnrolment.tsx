@@ -32,7 +32,7 @@ export function DateOfBirthForm({ action, next }: { action: Action; next: string
           className="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2"
         />
         <span className="mt-1 block text-xs text-ink/60">
-          This course is for adults. You must be 18 or older — there is no exception, so
+          This course is for adults. You must be 18 or older. There is no exception, so
           please use your real date of birth.
         </span>
       </label>

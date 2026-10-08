@@ -21,7 +21,7 @@ export async function generateMetadata(
   return cert
     ? {
         title: `Certificate ${cert.publicId}`,
-        description: `${cert.learnerName} — ${cert.awardTitle}, ${cert.courseTitle}.`,
+        description: `${cert.learnerName}: ${cert.awardTitle}, ${cert.courseTitle}.`,
       }
     : { title: "Certificate not found" };
 }
@@ -56,7 +56,7 @@ export default async function CertificatePage(
         <p className="mt-4 text-sand-600">
           We couldn&apos;t find a certificate with the ID{" "}
           <span className="font-mono font-semibold text-ink">{publicId}</span>. Check the
-          ID and try again — they look like{" "}
+          ID and try again. They look like{" "}
           <span className="font-mono">S7-2026-B-000123</span>.
         </p>
         <div className="mt-8">
@@ -82,7 +82,7 @@ export default async function CertificatePage(
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <Eyebrow>Certificate verification</Eyebrow>
           {cert.revoked ? (
-            <Badge tone="incorrect">Revoked — no longer valid</Badge>
+            <Badge tone="incorrect">Revoked: no longer valid</Badge>
           ) : (
             <Badge tone="correct">✓ Valid certificate</Badge>
           )}

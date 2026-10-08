@@ -67,7 +67,7 @@ export function BaselineResults({
                         </span>
                       </>
                     ) : (
-                      "—"
+                      "n/a"
                     )}
                   </td>
                 );

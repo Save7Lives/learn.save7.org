@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Engagement" };
 
 function formatMinutes(seconds: number | null): string {
-  if (seconds === null) return "—";
+  if (seconds === null) return "n/a";
   if (seconds < 60) return `${seconds}s`;
   return `${Math.round(seconds / 60)} min`;
 }
@@ -49,7 +49,7 @@ export default async function EngagementPage() {
         />
         <StatCard
           label="Weakest module"
-          value={worst?.completionRatePct !== undefined && worst?.completionRatePct !== null ? `${worst.completionRatePct}%` : "—"}
+          value={worst?.completionRatePct !== undefined && worst?.completionRatePct !== null ? `${worst.completionRatePct}%` : "n/a"}
           sub={worst ? worst.title : "No data yet"}
           tone="warn"
         />
@@ -117,7 +117,7 @@ export default async function EngagementPage() {
         <ul className="space-y-2 text-sm text-sand-600">
           <li>
             · <strong className="text-ink">No IP addresses or device details.</strong>{" "}
-            The event log stores neither, by design — see the privacy notice.
+            The event log stores neither, by design. See the privacy notice.
           </li>
           <li>
             · <strong className="text-ink">No video engagement yet.</strong> Watch-time

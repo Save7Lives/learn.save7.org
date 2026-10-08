@@ -65,7 +65,7 @@ export default async function DashboardPage() {
             Start with the baseline
           </Display>
           <p className="mt-3 text-sand-700">
-            Twenty short questions before you begin. There is no pass mark — it is the
+            Twenty short questions before you begin. There is no pass mark. It is the
             &ldquo;before&rdquo; that shows what you learn, so the levels open once
             it&apos;s done.
           </p>
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
             <Stat label="Before the course" value={`${before.totalPct}%`} sub="Baseline, at signup" />
             <Stat
               label="Latest baseline"
-              value={after ? `${after.totalPct}%` : "—"}
+              value={after ? `${after.totalPct}%` : "n/a"}
               sub={after ? `Sitting ${after.sittingNo} of 4` : "After your first level"}
             />
             <Stat
@@ -111,7 +111,7 @@ export default async function DashboardPage() {
               value={
                 after
                   ? `${after.totalPct - before.totalPct >= 0 ? "+" : ""}${after.totalPct - before.totalPct}`
-                  : "—"
+                  : "n/a"
               }
               sub="percentage points"
               emphasis
@@ -227,7 +227,7 @@ export default async function DashboardPage() {
         {certificates.length === 0 ? (
           <p className="mt-4 rounded-card border border-dashed border-sand-300 bg-sand-100/50 p-5 text-sand-600">
             No certificates yet. Finish a level&apos;s modules and pass its assessment to
-            earn one — each level has its own.
+            earn one. Each level has its own.
           </p>
         ) : (
           <ul className="mt-5 space-y-3">

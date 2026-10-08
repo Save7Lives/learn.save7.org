@@ -63,8 +63,8 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
 
         {alreadyComplete ? (
           <p className="mt-2 text-sand-700">
-            This module is recorded as complete. You can revisit any step at any time —
-            nothing is locked once you have been through it.
+            This module is recorded as complete. You can revisit any step at any time.
+            Nothing is locked once you have been through it.
           </p>
         ) : (
           <p className="mt-2 text-sand-700">

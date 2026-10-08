@@ -98,9 +98,9 @@ export default async function HomePage() {
             We recommend completing the levels in order, but you can choose where you
             begin based on what you already know.{" "}
             <strong className="text-ink">
-              Each level is a complete achievement with its own certificate
+              Each level is a complete achievement with its own certificate.
             </strong>{" "}
-            — you are not expected to finish all three to be an informed advocate.
+            You are not expected to finish all three to be an informed advocate.
           </p>
         </div>
 

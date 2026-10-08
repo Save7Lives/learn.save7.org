@@ -67,7 +67,7 @@ export default async function IntroductionPage() {
             <p>
               That is worth taking literally. The goal of this course is not to turn you
               into a clinician, and it is not to teach you to win arguments. It is to make
-              you someone people are willing to talk to about organ donation — and who
+              you someone people are willing to talk to about organ donation, and who
               knows enough to be useful when they do.
             </p>
             <p>
@@ -86,7 +86,7 @@ export default async function IntroductionPage() {
           </Display>
           <p className="mt-4 text-sand-600">
             The course is a pathway, not a single block. We recommend the levels in order,
-            but you can start wherever suits what you already know — and stopping after any
+            but you can start wherever suits what you already know, and stopping after any
             level is a complete outcome, not an abandoned one.
           </p>
 
@@ -157,7 +157,7 @@ export default async function IntroductionPage() {
               ],
               [
                 "A baseline assessment",
-                "Twenty short questions before you start. This is a baseline, not a test — there is no pass mark and nobody is judged on it.",
+                "Twenty short questions before you start. This is a baseline, not a test. There is no pass mark and nobody is judged on it.",
               ],
               [
                 "The same baseline, again",
@@ -193,7 +193,7 @@ export default async function IntroductionPage() {
               ["Why this matters", "A short explanation of why the topic is worth your time."],
               ["Learn", "The main lesson, in plain language."],
               ["Key takeaways", "The points worth remembering, in one list."],
-              ["Check your understanding", "The Stage Quiz: five questions, with explanations once you submit."],
+              ["Check your understanding", "The Stage Quiz, five questions with explanations once you submit."],
               ["Study guide", "The written summary."],
               ["Further reading", "Optional, always."],
               [
@@ -207,7 +207,7 @@ export default async function IntroductionPage() {
                 </span>
                 <span>
                   <strong className="text-ink">{title}</strong>
-                  <span className="text-sand-600"> — {body}</span>
+                  <span className="text-sand-600">: {body}</span>
                 </span>
               </li>
             ))}

@@ -111,7 +111,7 @@ export default async function LearnersPage() {
         <StatCard
           label="Completion rate"
           value={
-            summary.completionRatePct !== null ? `${summary.completionRatePct}%` : "—"
+            summary.completionRatePct !== null ? `${summary.completionRatePct}%` : "n/a"
           }
           sub="Of learners who started"
           tone="pink"
@@ -159,7 +159,7 @@ export default async function LearnersPage() {
                 </span>
               ) : (
                 <span key="p" className="text-sand-400">
-                  —
+                  n/a
                 </span>
               ),
               <span key="m">
@@ -175,7 +175,7 @@ export default async function LearnersPage() {
                 </span>
               ) : (
                 <span key="c" className="text-sand-400">
-                  —
+                  n/a
                 </span>
               ),
             ];
