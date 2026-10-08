@@ -380,62 +380,113 @@ One per Stage, **11 total**.
 
 One Certificate per completed Level (a learner finishing all three Levels
 holds three Certificates). Fields: learner name, Level completed, date,
-"Save7" as issuing organisation (org name only — no individual
-signatory).
+"Save7" as issuing organisation (org name only, no individual
+signatory), and the Certificate ID with the address where anyone can
+check it (see **Certificate Verification** in [CONTEXT.md](CONTEXT.md)).
 
-**Layout — bold poster, split panel:**
+**Re-cut 2026-10-09 (ticket #69), in the Editorial Register.** Resolved
+with the user: a **type poster** on one white sheet. The split panel, the
+ink surface, Anton, the raster lockup and the two-pinks arrangement that
+#10 and #28 settled are superseded by the derived design language
+(#67, #68; tokens in [`assets/brand/README.md`](assets/brand/README.md)).
+The org-only issuer, per-Level behaviour and the client-side pipeline
+(#24) are unchanged; the Certificate ID and Verify at line are added
+(below).
 
-- **Left panel:** ink (`#111111`) background, holding the full
-  "Save7-V7-with-type" lockup **used unmodified, at 200px wide**, and a
-  large low-opacity V7-mark watermark. Body copy on this panel is white.
-- **Right panel:** white background —
-  - "CERTIFICATE OF COMPLETION" eyebrow, `pink` (4.80:1)
-  - large ink learner name (Anton)
-  - `pink` Level-name pill (Beginner / Intermediate / Advanced), white
-    Anton text (4.80:1)
-  - footer row: "Issued by / Save7" (left) and date (right) — org-only,
-    no individual signatory
+**Why this one.** Three structures were built as inline SVG and
+measured: the navy panel kept (A), a light sheet in the deck's shape
+language (B), and a type poster (C). On the default content, mono toner
+was 32.9% for A, 3.2% for B and 6.0% for C, so a navy panel costs about
+five times the toner of C. A is also the only one that misprints on a
+home inkjet: the printer cannot reach the edge, so a full-bleed panel
+comes out with an uneven white border and the panel goes near-black in
+greyscale. B kept the deck's look but its blobs and card tints are pale
+enough to print as almost nothing. C stays a poster through scale and
+navy rules, and its content sits inside the printable area.
 
-Body/UI type is **Lexend**; **Anton** stays display-only (learner name,
-Level pill).
+**Layout** (all measures are in the 1123 by 794 viewBox, which is A4
+landscape, so one unit is one CSS pixel at print size):
 
-**Two pinks, accepted (ticket #28, 2026-09-21).** The brand raster
-assets are frozen at the superseded pink — every PNG in `assets/brand/`
-measures `#ED0E6A`, and `Save7-logo-horizontal.png` is `#ED186B` +
-`#00B9B5`. No CSS reaches those pixels. So the Certificate carries
-`#ED0E6A` in the lockup and `#df0e62` in live type, ΔE76 = 4.8 apart.
-This is **knowingly accepted** rather than resolved: the two never share
-a panel, and the alternative — a derived lockup — is a brand act, not a
-styling change. See the wider question in Open Items.
+- White sheet, 72 units of margin left and right. All content sits inside
+  15 mm (57 units) clear on the left and right and 6 mm (23 units) top
+  and bottom, so a home printer cannot clip it. This holds for all text
+  and rules; only the ghost mark bleeds.
+- **Ghost V7 mark:** `pink-50` fill with a `pink-line` hairline, 700
+  units square at the top right (x 560, y -70), clipped by the sheet.
+  Decoration only; text may cross it because `pink-50` may hold text.
+- **Wordmark**, top left (baseline y 100): the vector V7 mark in `pink`
+  beside SAVE in `teal` and SEVEN in `pink`, Montserrat 800, 30 units.
+- **Navy rule**, 3 units, `navy`, across the content width at y 132.
+- **Eyebrow** "CERTIFICATE OF COMPLETION": Montserrat 700, 14 units, +1.3
+  tracking, `pink`, baseline y 172.
+- **Lead-in** "This certifies that": Lexend 400, 20 units, `grey`, y 210.
+- **Learner name:** Montserrat 800, `navy`, base 100 units, last line on
+  baseline y 410. A name of two or more words is stacked on two lines,
+  split at the space that makes the lines most equal, line height 0.98 em;
+  one word stays on one line. The size shrinks until the widest line fits
+  820 units, to a floor of 44. An SVG does not wrap, so the build measures
+  after the fonts load.
+- **Body line** "has completed the following Level of Save7 Learn":
+  Lexend 400, 20 units, `grey`, y 466.
+- **Level pill:** `pink` fill, white Montserrat 800 capitals, 30 units,
+  +0.04 em, fully rounded, 68 units high with 30 units of padding each
+  side and its width taken from its text, top at y 492. The text is the
+  Level name, "Beginner Level", "Intermediate Level" or "Advanced Level".
+- **Footer:** a 2-unit `navy` rule at y 640. Labels in Montserrat 700, 13
+  units, +1.1 tracking, capitals, `grey`, baseline y 678: ISSUED BY (x
+  72), DATE (x 320), CERTIFICATE ID (x 600). Values in Lexend 400, 17
+  units, `navy`, baseline y 706: "Save7", the date as "9 October 2026",
+  and the public ID (for example `S7-2026-B-000123`). A second row at y
+  744: VERIFY AT (x 72) and the address in Lexend 400, 15 units, `navy`
+  (x 190), `learn.save7.org/certificate/` plus the ID in the prototype;
+  the build supplies the real `verifyUrl`.
 
-**"WWW.SAVE7.ORG" is solved by scale, not colour.** It is not live text:
-it is pink pixels baked into the lockup PNG, 120px of a 1570px-tall
-image, so it cannot "become white" without deriving a new asset.
-Rendering the lockup at **200px** instead of 150px lifts its cap height
-from ~12px to ~16px (≈22px bold equivalent), clearing the 18.66px-bold
-AA-Large threshold at 4.38:1. The 200px width is therefore **load-bearing
-for accessibility**, not a visual preference — do not shrink it.
+**Certificate ID and Verify at line.** The live build prints both and
+#10 and #28 never placed them. They are on the artwork (user's call,
+2026-10-09), so a printed copy can be checked without anyone knowing
+where to look.
 
-**Level pill — checked, no change needed.** White on `#df0e62` is 4.80:1,
-clearing AA for normal text outright and AA-Large with room at 20px
-Anton. The pill *fill* against the white panel is also 4.80:1, well past
-the 3:1 that WCAG 1.4.11 asks of a graphical object.
+**Type:** Montserrat 700 and 800 and Lexend 400, so three font files
+embed in the SVG. Nothing on the sheet is under 13 units (about 10 pt on
+paper).
 
-**Per-Level variation:** only the Level-name text changes — no
-per-Level colour-coding, since the brand kit's palette is deliberately
-restrained to one hero colour (pink) plus teal reserved for dark
-surfaces.
+**Revoked state.** A full-width band across the middle (y 327 to 467) in
+`incorrect` at 93% opacity with REVOKED in white Montserrat 800, 56 units,
++3 tracking, centred. It is unmistakable by design and the text under it
+is not meant to be read.
 
-**Prototypes:** both on the `prototype/certificate-layout` branch, not
-merged to `main` — this spec doesn't ship the actual Certificate
-template/code, which is downstream build work.
+**Per-Level variation:** only the Level-name text changes. No per-Level
+colour-coding (#10 stands, and #68 confirmed it).
 
-- [`certificate-prototype.html`](https://github.com/zzubyr7x/Learn.save7.org/blob/prototype/certificate-layout/wayfinder/prototypes/certificate-prototype.html)
-  — the original 3-layout mockup that settled the split panel (#10).
-- [`certificate-recut-prototype.html`](https://github.com/zzubyr7x/Learn.save7.org/blob/prototype/certificate-layout/wayfinder/prototypes/certificate-recut-prototype.html)
-  — the token re-cut (#28), carrying a live contrast readout and the two
-  rejected answers to the frozen-raster problem (a derived white lockup,
-  and a derived teal one).
+**Measured.** Every text pair was sampled against the composited pixels
+behind it, in all 54 combinations of variant, Level, name length (short,
+37 characters, one word) and issued or revoked: 0 failing pairs, and
+nothing outside the safe area. Normal text is 4.80:1 or better (`pink` on
+white); the pill is white on `pink` at 4.80:1 and clears 3:1 against the
+sheet as a graphic. SAVE in `teal` on white is 2.43:1 and stands on the
+logotype exception (#39). The audit also caught a real fault in the
+prototype, the eyebrow sitting on the ghost mark's outline at 3.7:1,
+which is why it sits in the left column.
+
+**Not carried from the current build's sheet:** the pink top rule, teal
+corner wedge, sand inner border, the "Level achieved" label, the course
+subtitle, and the tagline "One decision can save seven lives." (set in
+`teal` on white at 2.43:1). Revisit the tagline only in `teal-ink` or
+`navy`.
+
+**Prototypes:** on the `prototype/certificate-layout` branch, not merged
+to `main`. This spec does not ship the actual Certificate template or
+code, which is build work ([#37](https://github.com/Save7Lives/learn.save7.org-map/issues/37)).
+
+- [`certificate-derived-recut-prototype.html`](https://github.com/Save7Lives/learn.save7.org-map/blob/prototype/certificate-layout/wayfinder/prototypes/certificate-derived-recut-prototype.html)
+  the re-cut (#69): three variants as inline SVG, a contrast audit
+  measured on rendered pixels, an ink estimate, and a home-inkjet margin
+  test. Opens on C. Live once the branch is pushed.
+- [`certificate-recut-prototype.html`](https://github.com/Save7Lives/learn.save7.org-map/blob/prototype/certificate-layout/wayfinder/prototypes/certificate-recut-prototype.html)
+  the earlier token re-cut (#28), kept as the record of the split panel
+  and the two rejected answers to the frozen-raster problem.
+- [`certificate-prototype.html`](https://github.com/Save7Lives/learn.save7.org-map/blob/prototype/certificate-layout/wayfinder/prototypes/certificate-prototype.html)
+  the original 3-layout mockup (#10).
 
 ### Brand Assets
 
