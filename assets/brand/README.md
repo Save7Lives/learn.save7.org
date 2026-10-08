@@ -247,8 +247,8 @@ outline only, 1.75px stroke, no stock clip-art.
 ## Reader, Stage Quiz and Baseline (#74)
 
 Settled against a 375px prototype, `wayfinder/prototypes/reader-quiz-baseline-prototype.html`
-on `prototype/reader-quiz-baseline` (commit `75378a5`). Its DOM audit reports
-0 failing pairs in 6,912 combinations of screen and switch, and it fails when
+on `prototype/reader-quiz-baseline` (commit `98a8199`). Its DOM audit reports
+0 failing pairs in 3,456 combinations of screen and switch, and it fails when
 a bad pair is planted. Behaviour is unchanged: the Stage Quiz stays 5
 questions, 4 to pass, unlimited retries (#8), and the Baseline never shows
 answers.
@@ -259,7 +259,7 @@ answers.
 - *Back and Continue* sit inline at the end of a step. They are not docked: a learner presses Continue after reading to the end, and a dock costs about 68px and invites tapping past a step.
 - *Prose:* Lexend 18/31.5 in `grey`, 62 characters wide, bold in `navy`. Bullets take a `teal-ink` marker. A numbered list uses numbered pills (`teal`, navy numerals). A blockquote is a `teal-50` card with a 5px `teal-ink` bar. Links are `teal-ink` and underlined. Code is navy on `line`. The Key takeaways step shows each takeaway as a `teal-50` row with an outline check in a `teal-100` circle.
 - *Tables* (#58): a table from about 640px, and below it one card per row, the row header as the card title and every cell labelled by its column header in small capitals.
-- *The film* runs the full width of a phone, with the note under the player. The note ("Where the film and this course differ") is **`pink-50` with an alert icon in a `pink-100` circle** and navy text, since pink already means alert and it matches the quiz's "Not quite". Each correction is a short stack: the film says, the course says, why. The plain transcript becomes **"Read the film as text"**, the Text Alternative of #78.
+- *The film* runs the full width of a phone, with its caption under the player (title, length, size) and nothing else. **This design has no note on where the film and the course differ, and no transcript or text version of the film.** The user does not want either on the site (2026-10-09).
 
 **The Stage Quiz** lives inside the Check step.
 - *Status card:* eyebrow, a status pill, one sentence, three fact chips (5 questions, 4 right to pass, retry as often as you like) and one primary button. The pills are Not started, Not passed yet, Passed, Practice attempt, Answered and Not answered; each is a tint, a hairline, an icon and navy text.
