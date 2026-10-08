@@ -14,7 +14,7 @@ level: beginner
 4. **Organs are bought and sold.** Trading in tissue is a criminal offence and allocation is prescribed. *Source:* National Health Act ss 60–61.
 5. **Religion forbids donation.** Most religions support it; ask your own faith leader. *Source:* Organ Donor Foundation FAQs.
 6. **Too old, unhealthy, or wears glasses.** No strict upper age limit; assessed at the time; glasses make no difference to corneas. *Source:* Organ Donor Foundation FAQs; SATCS Red File p.20.
-7. **Registering alone is enough.** The family is asked in every case and a refusal is respected. *Source:* Transplant Alchemy 101, Objective 2; South African legal scholarship.
+7. **Registering alone is enough.** The family is asked in every case and a refusal is respected. *Source:* Save7, Transplant Alchemy 101: Study Guide, Objective 2; South African legal scholarship.
 8. **Family agreement once guarantees donation.** A family can decline at the bedside. *Source:* Gauteng Department of Health, 2026; National Health Act s 62.
 9. **The shortage isn't severe.** 1.60 → 0.48 per million people, 2017–2021; 📌 Spain 47.05 in 2017. *Source:* SATS/SATCS 5-year report.
 10. **Tissue myths.** Far more people can donate tissue; possible hours or days after death; funeral rites and an open casket are unaffected. *Source:* Organ Donor Foundation FAQ and cornea FAQ; SATCS Red File pp.15–16, 21.
