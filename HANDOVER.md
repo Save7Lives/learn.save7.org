@@ -110,6 +110,19 @@ not select the column, and do not add a service-role client to make a query work
 `select verify_learn_isolation();` asserts all of it and should end any migration
 touching `learn_*`.
 
+### What a signed-out visitor can read
+
+The landing page and the course introduction are public, so they read the Levels and
+Stages as `anon`. Since save7-os 0131, `anon` may select every row of `learn_levels`
+and `learn_modules`, and only the columns `levelShape` and `moduleShape` in
+`src/lib/course.ts` list. Before it, 0091 allowed any signed-in user and nobody else,
+and both pages rendered an empty section for a visitor. Nothing else opens to `anon`:
+not the lessons, the Stage prose in `learn_modules.intro_markdown`, the questions, the
+answer key, any attempt or any learner's progress. `verify_learn_isolation()` asserts
+that list as well. A new column on either table is private until a migration grants
+it, and selecting it before then fails for a signed-out visitor with "permission
+denied".
+
 ### Why the app holds only the anon key
 
 `src/lib/supabase/server.ts` builds a client with the anon key and **the learner's

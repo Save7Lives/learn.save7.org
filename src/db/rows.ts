@@ -62,7 +62,6 @@ export type ModuleRow = {
   title: string;
   number: number;
   core_question: string;
-  intro_markdown: string;
   est_minutes: number;
   is_mandatory: boolean;
 };

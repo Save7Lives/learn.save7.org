@@ -145,7 +145,9 @@ their course progress shows up in the portal.
 Supabase over HTTPS with the **anon key and the learner's own JWT**, so every read
 is subject to the same row level security a browser would face; `authz.ts` is the
 second layer rather than the only one. A service-role client would have made every
-query trivially allowed and turned an app-level mistake into a data leak.
+query trivially allowed and turned an app-level mistake into a data leak. A visitor
+who has not signed in reads as `anon`, which may see the Level and Stage catalogue
+and nothing else, so the landing page can show the Levels (save7-os 0131).
 
 **Where the rules live.** Anything a client must not be able to assert is a
 security-definer function in the database, not code here:

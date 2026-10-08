@@ -10,16 +10,18 @@ import { Badge, ButtonLink, Display, Eyebrow } from "@/components/ui/primitives"
 // prerender would bake whatever the build machine had. See src/lib/supabase/config.ts.
 export const dynamic = "force-dynamic";
 
-// A Certificate is titled with its Level's name (prisma/content/structure.ts). Written
-// out here rather than read from `levels` because a signed-out visitor reads no Levels:
-// learn_levels is readable only by signed-in users (save7-os 0091).
-const CERTIFICATE_TITLES = ["Beginner", "Intermediate", "Advanced"] as const;
+// The Badge colour for each Level's Certificate, in Level order.
+const CERTIFICATE_TONES = ["teal", "neutral", "pink"] as const;
 
 export default async function HomePage() {
   const session = await getSession();
 
   const { levels } = await getPathwayForUser(session?.id ?? null);
   const baseline = session ? await getBaselineState(session.id) : null;
+
+  // A Certificate is titled with its Level's name. Read from `levels`, which a
+  // signed-out visitor can read too (save7-os 0131), so there is no second copy to drift.
+  const certificateTitles = levels.map((l) => l.certificateTitle);
 
   // Recommend the first level they haven't finished, so the card that carries the
   // pink CTA is always the genuinely useful one.
@@ -161,14 +163,16 @@ export default async function HomePage() {
             <div className="flex-1">
               <h3 className="font-bold text-ink">A certificate for each level</h3>
               <p className="mt-1 text-sm text-sand-600">
-                {CERTIFICATE_TITLES.join(", ")}. Each is verifiable from its certificate
+                {certificateTitles.join(", ")}. Each is verifiable from its certificate
                 ID.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge tone="teal">{CERTIFICATE_TITLES[0]}</Badge>
-              <Badge tone="neutral">{CERTIFICATE_TITLES[1]}</Badge>
-              <Badge tone="pink">{CERTIFICATE_TITLES[2]}</Badge>
+              {certificateTitles.map((title, i) => (
+                <Badge key={title} tone={CERTIFICATE_TONES[i] ?? "neutral"}>
+                  {title}
+                </Badge>
+              ))}
             </div>
           </div>
         </div>

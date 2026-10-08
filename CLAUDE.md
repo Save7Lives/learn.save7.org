@@ -105,8 +105,10 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   read path. **This app cannot grade even if it tried** — do not
   add a code path that attempts it.
 - `select verify_learn_isolation();` asserts all of that: RLS on, no policy on
-  `learn_choices`, no view naming `is_correct`, no direct read for `anon`. Run it
-  after any migration touching `learn_*`.
+  `learn_choices`, no view naming `is_correct`, no direct read of the bank for
+  `anon`, and that `anon` reads only the Level and Stage catalogue (columns listed in
+  `src/lib/course.ts`; save7-os 0131), because the landing page and the course
+  introduction are public. Run it after any migration touching `learn_*`.
 - The Baseline (`PRE`) is up to **four Sittings**, not one attempt.
   `learn_submit_baseline_sitting()` marks the same twenty questions and freezes the
   result as a row in `learn_baseline_sittings`: a score per Level and a total, never

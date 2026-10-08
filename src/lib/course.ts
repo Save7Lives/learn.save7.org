@@ -32,8 +32,13 @@ import type {
 const levelShape =
   "slug, position, title, tier, strapline, goal, est_min_minutes, est_max_minutes, accent_token, certificate_title, certificate_code, pass_mark_pct";
 
+// levelShape and moduleShape are exactly the columns `anon` may read (save7-os 0131),
+// because a signed-out visitor reads the Levels and Stages too: the landing page and the
+// course introduction are public. Selecting any other column fails for `anon` with
+// "permission denied", so add one only with a migration that grants it. Never add
+// `intro_markdown`: it is Stage prose and stays behind sign-in.
 const moduleShape =
-  "slug, level_slug, position, title, number, core_question, intro_markdown, est_minutes, is_mandatory";
+  "slug, level_slug, position, title, number, core_question, est_minutes, is_mandatory";
 
 function mapLevel(row: LevelRow) {
   return {
@@ -62,7 +67,6 @@ function mapModule(row: ModuleRow) {
     number: row.number,
     title: row.title,
     coreQuestion: row.core_question,
-    introMarkdown: row.intro_markdown,
     estMinutes: row.est_minutes,
     isMandatory: row.is_mandatory,
   };
