@@ -26,6 +26,8 @@ const BUTTON_VARIANTS = {
   /** Navy. For confident secondary actions. */
   navy: "bg-navy text-white hover:bg-navy/90",
   outline: "border-2 border-line-strong text-navy hover:border-navy hover:bg-white",
+  /** Navy outline on white: the secondary button of the Editorial pages, beside a pink primary. */
+  secondary: "border-2 border-navy bg-white text-navy hover:bg-line",
   /** For use on navy surfaces, where teal becomes legible. */
   onNavy: "bg-teal text-navy hover:bg-teal-100 font-medium",
   quiet: "text-grey hover:text-navy hover:bg-line/50",
@@ -121,7 +123,9 @@ export function Eyebrow({
   return (
     <p
       className={cx(
-        "font-display text-xs font-bold uppercase tracking-[0.07em] text-grey",
+        "font-display text-[0.8125rem] font-bold uppercase leading-snug tracking-[0.07em]",
+        // Grey unless the page sets a colour: two text-* classes would fight on order.
+        !className?.includes("text-") && "text-grey",
         className,
       )}
     >
@@ -160,6 +164,39 @@ export function Badge({
       )}
     >
       {children}
+    </span>
+  );
+}
+
+/** The solid pink pill that marks the one recommended Level. White on pink is 4.80:1. */
+export function RecommendedPill({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center whitespace-nowrap rounded-pill bg-pink px-2.5 py-1 font-display text-xs font-bold uppercase tracking-[0.06em] text-white">
+      {children}
+    </span>
+  );
+}
+
+/** A numbered circle: teal with navy text, or pink with white text. Decorative. */
+export function NumberPill({
+  n,
+  tone,
+  size = "md",
+}: {
+  n: number | string;
+  tone: "pink" | "teal";
+  size?: "sm" | "md";
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cx(
+        "inline-grid shrink-0 place-items-center rounded-full font-display font-bold",
+        size === "md" ? "size-8 text-sm" : "size-6 text-xs",
+        tone === "pink" ? "bg-pink text-white" : "bg-teal text-navy",
+      )}
+    >
+      {n}
     </span>
   );
 }

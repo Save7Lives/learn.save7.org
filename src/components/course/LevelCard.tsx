@@ -1,14 +1,13 @@
 import Link from "next/link";
+import { PortalCard, StatusPill } from "@/components/portal/Portal";
 import {
-  Badge,
   ButtonLink,
-  Card,
   Display,
+  NumberPill,
   ProgressBar,
-  TIER_META,
+  RecommendedPill,
   cx,
 } from "@/components/ui/primitives";
-import type { LevelTier } from "@/lib/constants";
 import type { LevelProgressSummary } from "@/lib/course";
 
 /**
@@ -18,6 +17,11 @@ import type { LevelProgressSummary } from "@/lib/course";
  * unfinished fragment, so each card leads with what the learner will be able to
  * *do*, and names its own certificate. Nothing here implies the level is a step
  * toward something more legitimate.
+ *
+ * The recommended Level is `pink-50` and carries the only pink button until it is
+ * complete, so a Student halfway through Intermediate sees a pink "Continue" there.
+ * "Recommended start" shows only before the Level is started. A Level is told apart by
+ * its name, never by a colour (#10, #68).
  */
 export function LevelCard({
   level,
@@ -27,7 +31,6 @@ export function LevelCard({
 }: {
   level: {
     slug: string;
-    tier: string;
     title: string;
     strapline: string;
     goal: string;
@@ -40,9 +43,7 @@ export function LevelCard({
   signedIn: boolean;
   recommended?: boolean;
 }) {
-  const tier = level.tier as LevelTier;
-  const meta = TIER_META[tier];
-  const started = progress && progress.status !== "NOT_STARTED";
+  const started = progress != null && progress.status !== "NOT_STARTED";
   const complete = progress?.status === "COMPLETE";
 
   const href = signedIn
@@ -51,75 +52,75 @@ export function LevelCard({
       : `/levels/${level.slug}`
     : `/register?next=${encodeURIComponent(`/levels/${level.slug}`)}`;
 
+  const divider = recommended ? "border-pink-line" : "border-line";
+
   return (
-    <Card
+    <PortalCard
       as="article"
-      className={cx(
-        "flex flex-col p-6 transition hover:shadow-[0_8px_30px_rgba(17,17,17,0.07)] sm:p-7",
-        recommended && "ring-2 ring-pink-line",
-      )}
+      plain
+      tone={recommended ? "pink" : "white"}
+      className="flex flex-col rounded-[1.375rem] p-6 sm:p-[1.625rem]"
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge
-          tone="neutral"
-          className={cx(meta.softClass, meta.textClass, "border-transparent")}
-        >
-          <span aria-hidden="true" className={cx("size-2 rounded-full", meta.dotClass)} />
-          {meta.label}
-        </Badge>
-        {recommended && !started ? <Badge tone="pink">Recommended start</Badge> : null}
-        {complete ? <Badge tone="correct">Complete</Badge> : null}
+      <div className="flex flex-wrap items-start justify-between gap-x-2.5 gap-y-2">
+        <Display as="h3" className="text-[1.375rem] font-bold leading-tight tracking-normal text-navy">
+          {level.title}
+        </Display>
+        {recommended && !started ? (
+          <RecommendedPill>Recommended start</RecommendedPill>
+        ) : complete ? (
+          <StatusPill tone="done" icon="check-circle">
+            Complete
+          </StatusPill>
+        ) : started ? (
+          <StatusPill tone="progress" icon="clock">
+            In progress
+          </StatusPill>
+        ) : null}
       </div>
+      <p className="mb-[1.125rem] mt-2 text-[0.9375rem] text-grey">{level.strapline}</p>
 
-      <Display as="h3" className="mt-4 text-title text-navy">
-        {level.title}
-      </Display>
-      <p className="mt-2 text-sm text-grey">{level.strapline}</p>
-
-      <dl className="mt-5 space-y-3 border-t border-line pt-5 text-sm">
-        <div className="flex gap-3">
-          <dt className="w-24 shrink-0 font-semibold text-grey">You&apos;ll be able to</dt>
-          <dd className="text-grey">{level.goal}</dd>
+      <dl className={cx("mb-[1.125rem] grid gap-3 border-t pt-4 text-[0.9375rem]", divider)}>
+        <div>
+          <dt className="text-[0.8125rem] font-medium text-grey">You&apos;ll be able to</dt>
+          <dd className="mt-0.5">{level.goal}</dd>
         </div>
-        <div className="flex gap-3">
-          <dt className="w-24 shrink-0 font-semibold text-grey">Time</dt>
-          <dd className="text-grey">
-            {level.estMinMinutes}–{level.estMaxMinutes} minutes · {level.modules.length}{" "}
+        <div>
+          <dt className="text-[0.8125rem] font-medium text-grey">Time</dt>
+          <dd className="mt-0.5">
+            {level.estMinMinutes} to {level.estMaxMinutes} minutes &middot; {level.modules.length}{" "}
             Stages
           </dd>
         </div>
-        <div className="flex gap-3">
-          <dt className="w-24 shrink-0 font-semibold text-grey">Earns</dt>
-          <dd className="font-semibold text-navy">
-            &ldquo;{level.certificateTitle}&rdquo; certificate
-          </dd>
+        <div>
+          <dt className="text-[0.8125rem] font-medium text-grey">Earns</dt>
+          <dd className="mt-0.5 font-medium">&ldquo;{level.certificateTitle}&rdquo; certificate</dd>
         </div>
       </dl>
 
-      <ul className="mt-5 space-y-1.5 text-sm text-grey">
-        {level.modules.map((m) => (
-          <li key={m.slug} className="flex gap-2.5">
-            <span
-              aria-hidden="true"
-              className={cx("mt-2 size-1.5 shrink-0 rounded-full", meta.dotClass)}
-            />
-            {m.title}
+      <ol className="mb-[1.375rem] grid gap-[0.5625rem] text-[0.9375rem]">
+        {level.modules.map((m, i) => (
+          <li key={m.slug} className="flex items-start gap-2.5">
+            <NumberPill n={i + 1} tone="teal" size="sm" />
+            <span>
+              <span className="sr-only">Stage {i + 1}: </span>
+              {m.title}
+            </span>
           </li>
         ))}
-      </ul>
+      </ol>
 
-      <div className="mt-6 flex-1" />
+      <div className="flex-1" />
 
       {progress && started ? (
         <div className="mb-4">
-          <div className="mb-2 flex items-baseline justify-between text-xs font-semibold">
-            <span className="text-grey">
+          <div className="mb-2 flex items-baseline justify-between text-[0.8125rem] font-medium">
+            <span>
               {progress.stagesPassed} of {progress.modulesTotal} Stages passed
             </span>
             {progress.certificatePublicId ? (
               <Link
                 href={`/certificate/${progress.certificatePublicId}`}
-                className="text-pink underline"
+                className="text-teal-ink underline underline-offset-2"
               >
                 View certificate
               </Link>
@@ -128,22 +129,18 @@ export function LevelCard({
           <ProgressBar
             value={progress.percentComplete}
             label={`${level.title} progress`}
-            tone={complete ? "teal" : "pink"}
+            tone="teal"
           />
         </div>
       ) : null}
 
       <ButtonLink
         href={href}
-        variant={recommended && !started ? "primary" : "outline"}
+        variant={recommended ? "primary" : "secondary"}
         className="w-full"
       >
-        {complete
-          ? "Review this level"
-          : started
-            ? "Continue"
-            : `Start ${meta.label}`}
+        {complete ? "Review this level" : started ? "Continue" : `Start ${level.title}`}
       </ButtonLink>
-    </Card>
+    </PortalCard>
   );
 }

@@ -82,11 +82,15 @@ body {
 
 /* --- Typographic primitives ---------------------------------------------- */
 
-.font-display,
-.display {
-  font-family: var(--font-display);
-  letter-spacing: -0.015em;
-  font-weight: 800;
+/* In the components layer, so a weight utility beside it (font-bold on a Stage
+   title or an eyebrow, 700) wins over the 800 of Display. Unlayered, it never did. */
+@layer components {
+  .font-display,
+  .display {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+    font-weight: 800;
+  }
 }
 
 /* Long-form lesson prose. Constrained measure because a 90-character line is

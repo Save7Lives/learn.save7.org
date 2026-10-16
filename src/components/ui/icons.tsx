@@ -59,6 +59,35 @@ const PATHS = {
     </>
   ),
   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
+  "arrow-left": <path d="M19 12H5M11 6l-6 6 6 6" />,
+  // Added for the Editorial pages (#86).
+  alert: (
+    <>
+      <path d="M12 3.5 21.5 20h-19z" />
+      <path d="M12 10v4" />
+      <path d="M12 17.2v.01" />
+    </>
+  ),
+  file: (
+    <>
+      <path d="M14 3.5H7A2.5 2.5 0 0 0 4.5 6v12A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5V9z" />
+      <path d="M14 3.5V9h5.5M8.5 13.5h7M8.5 17h5" />
+    </>
+  ),
+  quiz: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6" />
+      <path d="M12 16.9v.01" />
+    </>
+  ),
+  flag: <path d="M5 21V4M5 4h11.5l-2.5 4 2.5 4H5" />,
+  search: (
+    <>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m20 20-4.2-4.2" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof PATHS;

@@ -18,12 +18,19 @@ export const PORTAL_SHADOW = "shadow-[0_1px_2px_rgba(12,23,59,0.05),0_6px_18px_r
 export function PortalCard({
   as: As = "div",
   tone = "white",
+  plain,
   className,
   children,
   ...rest
 }: {
   as?: "div" | "section" | "article" | "li" | "aside";
-  tone?: "white" | "pink";
+  /** White, `pink-50` (the one thing to do next) or `teal-50` (a quiet summary). */
+  tone?: "white" | "pink" | "teal";
+  /**
+   * Just the border and fill: no padding, radius or shadow. The Editorial pages (#73)
+   * set their own, so two competing padding classes never fight on stylesheet order.
+   */
+  plain?: boolean;
   className?: string;
   children: ReactNode;
   "aria-label"?: string;
@@ -31,8 +38,11 @@ export function PortalCard({
   return (
     <As
       className={cx(
-        "rounded-card border p-5 sm:px-6",
-        tone === "pink" ? "border-pink-line bg-pink-50" : cx("border-line bg-white", PORTAL_SHADOW),
+        !plain && "rounded-card p-5 sm:px-6",
+        "border",
+        tone === "pink" && "border-pink-line bg-pink-50",
+        tone === "teal" && "border-teal-line bg-teal-50",
+        tone === "white" && cx("border-line bg-white", !plain && PORTAL_SHADOW),
         className,
       )}
       {...rest}
@@ -152,6 +162,44 @@ export type RailStep = {
 };
 
 /**
+ * A numbered stepper dot: passed (teal fill, check), current (thick navy ring), todo
+ * (grey ring) or locked (dashed, lock). Fill, ring and weight tell them apart, never
+ * colour alone. Shared by the rail stepper here and the Editorial pages' course map
+ * and Level timeline (#73), so there is one dot.
+ */
+export function StepDot({
+  n,
+  state,
+  className,
+}: {
+  n: number;
+  state: RailState;
+  className?: string;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cx(
+        "relative grid size-8 shrink-0 place-items-center rounded-full font-display text-sm font-bold",
+        state === "passed" && "bg-teal text-navy",
+        state === "current" && "border-[3px] border-navy bg-white text-navy",
+        state === "todo" && "border-2 border-line-strong bg-white text-grey",
+        state === "locked" && "border-2 border-dashed border-line-strong bg-white text-grey",
+        className,
+      )}
+    >
+      {state === "passed" ? (
+        <Icon name="check" className="size-4 shrink-0 stroke-[2.5]" />
+      ) : state === "locked" ? (
+        <Icon name="lock" className="size-4 shrink-0 stroke-[2.5]" />
+      ) : (
+        n
+      )}
+    </span>
+  );
+}
+
+/**
  * A vertical rail of numbered steps on a dotted connector. A passed step is a
  * filled pill with a check, the current one is ringed in navy, a locked one is
  * dashed with a lock. Each carries a status word, so state is never the ring alone.
@@ -163,24 +211,7 @@ export function RailStepper({ steps, label }: { steps: RailStep[]; label: string
         const last = i === steps.length - 1;
         const body = (
           <>
-            <span
-              aria-hidden="true"
-              className={cx(
-                "relative grid size-8 shrink-0 place-items-center rounded-full font-display text-sm font-bold",
-                step.state === "passed" && "bg-teal text-navy",
-                step.state === "current" && "border-[3px] border-navy bg-white text-navy",
-                step.state === "todo" && "border-2 border-line-strong bg-white text-grey",
-                step.state === "locked" && "border-2 border-dashed border-line-strong bg-white text-grey",
-              )}
-            >
-              {step.state === "passed" ? (
-                <Icon name="check" className="size-4 stroke-[2.5]" />
-              ) : step.state === "locked" ? (
-                <Icon name="lock" className="size-4 stroke-[2.5]" />
-              ) : (
-                i + 1
-              )}
-            </span>
+            <StepDot n={i + 1} state={step.state} />
             <span className="block">
               <span className="block pt-[5px] text-[0.9375rem] font-medium leading-snug text-navy underline-offset-[3px] group-hover:underline">
                 {step.title}

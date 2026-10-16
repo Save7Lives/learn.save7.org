@@ -1,22 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/authz";
 import { getBaselineState } from "@/lib/baseline";
 import { getPathwayForUser, getLevelBySlug, getModuleStatuses } from "@/lib/course";
 import { issueCertificateIfEarned } from "@/lib/certificates";
 import { getStageQuizStates } from "@/lib/quiz";
-import {
-  Badge,
-  ButtonLink,
-  Card,
-  Display,
-  Eyebrow,
-  ProgressBar,
-  TIER_META,
-  cx,
-} from "@/components/ui/primitives";
-import type { LevelTier } from "@/lib/constants";
+import { LevelOverview } from "@/components/course/LevelOverview";
 
 // Rendered per request, never prerendered: this route reads runtime configuration
 // (Supabase URL and key, SITE_URL) which Vercel supplies per environment. A
@@ -46,8 +35,6 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
   const level = levels.find((l) => l.slug === levelSlug);
   if (!level) notFound();
 
-  const tier = level.tier as LevelTier;
-  const meta = TIER_META[tier];
   const progress = level.progress!;
   const allPassed = progress.modulesTotal > 0 && progress.stagesPassed === progress.modulesTotal;
 
@@ -68,152 +55,13 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
     (allPassed ? ((await issueCertificateIfEarned(user.id, level.id))?.publicId ?? null) : null);
 
   return (
-    <div className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
-      <Link
-        href="/#levels"
-        className="text-sm font-semibold text-grey underline hover:text-navy"
-      >
-        ← All levels
-      </Link>
-
-      <header className="mt-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge
-            tone="neutral"
-            className={cx(meta.softClass, meta.textClass, "border-transparent")}
-          >
-            <span aria-hidden="true" className={cx("size-2 rounded-full", meta.dotClass)} />
-            {meta.label}
-          </Badge>
-          {progress.status === "COMPLETE" ? <Badge tone="correct">Complete</Badge> : null}
-          {certificatePublicId ? (
-            <Badge tone="pink">Certificate earned</Badge>
-          ) : null}
-        </div>
-
-        <Display as="h1" className="mt-4 text-display text-navy">
-          {level.title}
-        </Display>
-        <p className="mt-3 max-w-2xl text-lg text-grey">{level.goal}</p>
-        <p className="mt-2 text-sm text-grey">
-          {level.estMinMinutes}–{level.estMaxMinutes} minutes · {level.modules.length}{" "}
-          modules · earns the &ldquo;{level.certificateTitle}&rdquo; certificate
-        </p>
-      </header>
-
-      <Card className="mt-8 p-5">
-        <div className="mb-2 flex items-baseline justify-between text-sm">
-          <span className="font-semibold text-navy">
-            {progress.stagesPassed} of {progress.modulesTotal} Stage Quizzes passed
-          </span>
-          <span className="text-grey">{progress.percentComplete}%</span>
-        </div>
-        <ProgressBar
-          value={progress.percentComplete}
-          label={`${level.title} progress`}
-          tone={allPassed ? "teal" : "pink"}
-        />
-      </Card>
-
-      {/* --- Modules ------------------------------------------------------- */}
-      <ol className="mt-8 space-y-3">
-        {level.modules.map((mod) => {
-          const status = statusByModule.get(mod.id);
-          const quiz = quizByModule.get(mod.id);
-          // The tick is for the Stage Quiz, which is what the Certificate counts.
-          const isDone = quiz?.passedAt != null;
-          const isStarted = !isDone && (status !== undefined || quiz?.latest != null);
-          const quizFailed = !isDone && quiz?.latest != null;
-
-          return (
-            <Card as="li" key={mod.slug} className="p-0">
-              <Link
-                href={`/levels/${levelSlug}/modules/${mod.slug}`}
-                className="flex items-start gap-4 p-5 transition hover:bg-line/30"
-              >
-                <span
-                  aria-hidden="true"
-                  className={cx(
-                    "grid size-9 shrink-0 place-items-center rounded-full text-sm font-bold",
-                    isDone
-                      ? "bg-correct text-white"
-                      : isStarted
-                        ? "bg-pink text-white"
-                        : "bg-line text-grey",
-                  )}
-                >
-                  {isDone ? "✓" : mod.order}
-                </span>
-
-                <span className="flex-1">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold text-navy">{mod.title}</span>
-                    {isDone ? (
-                      <Badge tone="correct">Quiz passed</Badge>
-                    ) : quizFailed ? (
-                      <Badge tone="review">Quiz not passed yet</Badge>
-                    ) : isStarted ? (
-                      <Badge tone="pink">In progress</Badge>
-                    ) : null}
-                  </span>
-                  <span className="mt-1 block text-sm text-grey">
-                    {mod.coreQuestion}
-                  </span>
-                  <span className="mt-1.5 block text-xs text-grey">
-                    About {mod.estMinutes} minutes
-                  </span>
-                </span>
-
-                <span aria-hidden="true" className="shrink-0 self-center text-grey">
-                  →
-                </span>
-              </Link>
-            </Card>
-          );
-        })}
-      </ol>
-
-      {/* --- Certificate --------------------------------------------------- */}
-      <Card
-        className={cx(
-          "mt-8 p-6",
-          allPassed ? "border-pink-line bg-pink-50" : "bg-line/40",
-        )}
-      >
-        <Eyebrow>Certificate</Eyebrow>
-        <Display as="h2" className="mt-3 text-title text-navy">
-          {level.certificateTitle} certificate
-        </Display>
-
-        {certificatePublicId ? (
-          <>
-            <p className="mt-3 text-grey">
-              You&apos;ve passed every Stage Quiz in {level.title}.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <ButtonLink href={`/certificate/${certificatePublicId}`} size="lg">
-                View my certificate
-              </ButtonLink>
-              {baseline.due !== null ? (
-                <ButtonLink href="/assessment/pre" size="lg" variant="outline">
-                  See what you&apos;ve learned: baseline sitting {baseline.due}
-                </ButtonLink>
-              ) : null}
-            </div>
-          </>
-        ) : allPassed ? (
-          <p className="mt-3 text-grey">
-            You&apos;ve passed every Stage Quiz, but we couldn&apos;t issue your certificate just
-            now. Refresh this page to try again.
-          </p>
-        ) : (
-          <p className="mt-3 text-grey">
-            Pass the Stage Quiz in each of the {progress.modulesTotal} modules to earn it. Each
-            one is in its module&apos;s Check step: {progress.modulesTotal - progress.stagesPassed}{" "}
-            to go.
-          </p>
-        )}
-      </Card>
-    </div>
+    <LevelOverview
+      level={level}
+      levelSlug={levelSlug}
+      certificatePublicId={certificatePublicId}
+      baselineDue={baseline.due}
+      stageStatus={statusByModule}
+      quizByModule={quizByModule}
+    />
   );
 }
