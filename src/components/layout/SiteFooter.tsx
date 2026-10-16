@@ -3,15 +3,15 @@ import { Save7Logo } from "@/components/ui/Save7Logo";
 
 export function SiteFooter() {
   return (
-    <footer className="on-ink mt-24 bg-ink text-cream">
+    <footer className="on-navy mt-24 bg-navy text-white">
       <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8">
         <div className="flex flex-col gap-10 sm:flex-row sm:justify-between">
           <div className="max-w-sm">
             <Save7Logo variant="horizontal" className="h-5 w-auto" />
-            <p className="mt-5 font-display text-2xl leading-tight text-cream">
+            <p className="mt-5 font-display text-2xl leading-tight text-white">
               One decision can save <span className="text-teal">seven lives.</span>
             </p>
-            <p className="mt-4 text-sm text-cream/60">
+            <p className="mt-4 text-sm text-white/70">
               Save7 is a South African organ donation awareness initiative.
             </p>
           </div>
@@ -37,8 +37,8 @@ export function SiteFooter() {
           </nav>
         </div>
 
-        <div className="mt-14 border-t border-cream/10 pt-6">
-          <p className="text-xs text-cream/40">
+        <div className="mt-14 border-t border-white/10 pt-6">
+          <p className="text-xs text-white/70">
             Educational material. This course provides general information about organ
             donation and transplantation and is not medical or legal advice. For advice
             about your own circumstances, speak to a healthcare professional.
@@ -53,7 +53,7 @@ export function SiteFooter() {
 function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h2 className="mb-2 text-xs font-bold uppercase tracking-widest text-cream/40">
+      <h2 className="mb-2 text-xs font-bold uppercase tracking-widest text-white/70">
         {title}
       </h2>
       <ul className="flex flex-col">{children}</ul>
@@ -80,7 +80,7 @@ function FooterLink({
   external?: boolean;
 }) {
   const className =
-    "flex min-h-11 items-center text-cream/70 transition-colors hover:text-teal";
+    "flex min-h-11 items-center text-white/70 transition-colors hover:text-teal";
   return (
     <li>
       {external ? (

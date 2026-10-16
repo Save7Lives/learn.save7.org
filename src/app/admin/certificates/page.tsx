@@ -50,17 +50,17 @@ export default async function CertificatesPage() {
             <Link
               key="id"
               href={`/certificate/${cert.publicId}`}
-              className="font-mono text-xs font-semibold text-pink-600 underline"
+              className="font-mono text-xs font-semibold text-pink underline"
             >
               {cert.publicId}
             </Link>,
-            <span key="n" className="font-semibold text-ink">
+            <span key="n" className="font-semibold text-navy">
               {cert.learnerName}
             </span>,
             cert.awardTitle,
             // Null since 0113: a Level has no single score under the Blueprint.
             cert.scorePct === null ? "n/a" : `${cert.scorePct}%`,
-            <span key="d" className="whitespace-nowrap text-xs text-sand-500">
+            <span key="d" className="whitespace-nowrap text-xs text-grey">
               {cert.issuedAt.toLocaleDateString("en-ZA", {
                 day: "numeric",
                 month: "short",

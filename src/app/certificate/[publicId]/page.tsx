@@ -49,12 +49,12 @@ export default async function CertificatePage(
         <Link href="/" className="inline-block w-36">
           <Save7Logo variant="horizontal" className="h-auto w-full" />
         </Link>
-        <Display as="h1" className="mt-10 text-display text-ink">
+        <Display as="h1" className="mt-10 text-display text-navy">
           No certificate found
         </Display>
-        <p className="mt-4 text-sand-600">
+        <p className="mt-4 text-grey">
           We couldn&apos;t find a certificate with the ID{" "}
-          <span className="font-mono font-semibold text-ink">{publicId}</span>. Check the
+          <span className="font-mono font-semibold text-navy">{publicId}</span>. Check the
           ID and try again. They look like{" "}
           <span className="font-mono">S7-2026-B-000123</span>.
         </p>
@@ -87,15 +87,15 @@ export default async function CertificatePage(
           )}
         </div>
 
-        <Display as="h1" className="mt-4 text-display text-ink">
+        <Display as="h1" className="mt-4 text-display text-navy">
           {cert.learnerName}
         </Display>
-        <p className="mt-2 text-lg text-sand-700">
+        <p className="mt-2 text-lg text-grey">
           {cert.awardTitle} · {cert.courseTitle}
         </p>
       </div>
 
-      <div className="print-sheet mt-8 overflow-hidden rounded-card border border-sand-200 bg-white shadow-sm">
+      <div className="print-sheet mt-8 overflow-hidden rounded-card border border-line bg-white shadow-sm">
         <CertificateSheet
           learnerName={cert.learnerName}
           levelTitle={cert.levelTitle}
@@ -115,7 +115,7 @@ export default async function CertificatePage(
       </div>
 
       <Card className="no-print mt-10 p-6">
-        <h2 className="font-bold text-ink">What this verifies</h2>
+        <h2 className="font-bold text-navy">What this verifies</h2>
         <dl className="mt-4 space-y-3 text-sm">
           {[
             ["Certificate ID", cert.publicId],
@@ -126,13 +126,13 @@ export default async function CertificatePage(
             ["Date completed", issuedAt],
             ["Status", cert.revoked ? "Revoked" : "Valid"],
           ].map(([label, value]) => (
-            <div key={label} className="flex gap-4 border-b border-sand-200 pb-2">
-              <dt className="w-36 shrink-0 font-semibold text-sand-500">{label}</dt>
-              <dd className="text-ink">{value}</dd>
+            <div key={label} className="flex gap-4 border-b border-line pb-2">
+              <dt className="w-36 shrink-0 font-semibold text-grey">{label}</dt>
+              <dd className="text-navy">{value}</dd>
             </div>
           ))}
         </dl>
-        <p className="mt-5 text-sm text-sand-500">
+        <p className="mt-5 text-sm text-grey">
           Save7 publishes only these details. Scores, answers and contact details are
           never shown here.{" "}
           <Link href="/privacy" className="underline">

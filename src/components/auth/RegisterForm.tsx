@@ -94,7 +94,7 @@ export function RegisterForm({ config }: { config: PublicSupabaseConfig }) {
   if (state === "done") {
     return (
       <div className="space-y-4">
-        <p className="text-ink">
+        <p className="text-navy">
           You&apos;re registered. Sign in with that same Google account to start the course.
         </p>
         {/* Straight into the first Baseline Sitting, as #15 decided: it is the
@@ -108,13 +108,13 @@ export function RegisterForm({ config }: { config: PublicSupabaseConfig }) {
     <form onSubmit={onSubmit} className="space-y-5">
       <label className="block">
         <span className="text-sm font-medium">First name</span>
-        <input name="firstName" required className="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2" />
+        <input name="firstName" required className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2" />
       </label>
 
       <label className="block">
         <span className="text-sm font-medium">Surname</span>
-        <input name="lastName" className="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2" />
-        <span className="mt-1 block text-xs text-ink/60">
+        <input name="lastName" className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2" />
+        <span className="mt-1 block text-xs text-grey">
           This is the name that will appear on your certificate. You can change it later in
           your profile.
         </span>
@@ -126,9 +126,9 @@ export function RegisterForm({ config }: { config: PublicSupabaseConfig }) {
           name="email"
           type="email"
           required
-          className="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2"
+          className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2"
         />
-        <span className="mt-1 block text-xs text-ink/60">
+        <span className="mt-1 block text-xs text-grey">
           Use the address of the Google account you will sign in with.
         </span>
       </label>
@@ -140,9 +140,9 @@ export function RegisterForm({ config }: { config: PublicSupabaseConfig }) {
           type="date"
           required
           max={new Date().toISOString().slice(0, 10)}
-          className="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2"
+          className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2"
         />
-        <span className="mt-1 block text-xs text-ink/60">
+        <span className="mt-1 block text-xs text-grey">
           This course is for adults. You must be 18 or older to register. There is no
           exception, so please use your real date of birth.
         </span>
@@ -161,7 +161,7 @@ export function RegisterForm({ config }: { config: PublicSupabaseConfig }) {
       </label>
 
       {error ? (
-        <p className="text-sm text-crit" role="alert">
+        <p className="text-sm text-incorrect" role="alert">
           {error}
         </p>
       ) : null}

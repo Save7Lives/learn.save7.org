@@ -31,7 +31,7 @@ function inline(text: string): string {
       .replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>")
       .replace(/(^|[^_])_([^_]+)_/g, "$1<em>$2</em>")
       // `code`
-      .replace(/`([^`]+)`/g, '<code class="rounded bg-sand-100 px-1 py-0.5 text-sm">$1</code>')
+      .replace(/`([^`]+)`/g, '<code class="rounded bg-line/50 px-1 py-0.5 text-sm">$1</code>')
       // [text](https://…) — https only, so a link cannot become javascript:
       .replace(
         /\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g,

@@ -138,8 +138,8 @@ export default async function ContentReviewPage(
               href={`/admin/content-review?status=${filter.status}`}
               className={
                 filter.status === statusFilter
-                  ? "rounded-pill bg-ink px-3.5 py-1.5 text-sm font-semibold text-cream"
-                  : "rounded-pill border border-sand-300 bg-white px-3.5 py-1.5 text-sm font-semibold text-sand-600 hover:border-sand-400"
+                  ? "rounded-pill bg-navy px-3.5 py-1.5 text-sm font-semibold text-white"
+                  : "rounded-pill border border-line-strong bg-white px-3.5 py-1.5 text-sm font-semibold text-grey hover:border-navy"
               }
             >
               {filter.label}
@@ -149,7 +149,7 @@ export default async function ContentReviewPage(
         </nav>
 
         {items.length === 0 ? (
-          <p className="text-sm text-sand-500">
+          <p className="text-sm text-grey">
             Nothing in this view.
             {statusFilter === "NEEDS_VERIFICATION"
               ? " Every registered claim has been reviewed."
@@ -180,7 +180,7 @@ export default async function ContentReviewPage(
         )}
 
         {items.length === 400 ? (
-          <p className="mt-4 text-xs text-sand-500">
+          <p className="mt-4 text-xs text-grey">
             Showing the first 400 items. Narrow the filter to see more.
           </p>
         ) : null}
@@ -191,7 +191,7 @@ export default async function ContentReviewPage(
         description="Most of this is lesson prose, which the register above does not list, so it is read and signed off outside this page."
         className="mt-4"
       >
-        <ul className="space-y-2 text-sm text-sand-600">
+        <ul className="space-y-2 text-sm text-grey">
           <li>
             · <Badge tone="review">Intermediate · Stage 1</Badge> Determination of
             death must be verified against the current South African guidelines,

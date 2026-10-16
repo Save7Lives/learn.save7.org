@@ -17,7 +17,7 @@ export async function SiteHeader({ className }: { className?: string }) {
   return (
     <header
       className={cx(
-        "sticky top-0 z-40 border-b border-sand-200 bg-sand-50/85 backdrop-blur",
+        "sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur",
         className,
       )}
     >
@@ -26,8 +26,8 @@ export async function SiteHeader({ className }: { className?: string }) {
           <Save7Logo variant="horizontal" className="h-4 w-auto sm:h-5" priority />
         </Link>
 
-        <span aria-hidden="true" className="hidden h-5 w-px bg-sand-300 sm:block" />
-        <p className="hidden text-sm font-semibold text-sand-600 sm:block">
+        <span aria-hidden="true" className="hidden h-5 w-px bg-line-strong sm:block" />
+        <p className="hidden text-sm font-semibold text-grey sm:block">
           Save7 Learn
         </p>
 
@@ -37,27 +37,27 @@ export async function SiteHeader({ className }: { className?: string }) {
               {session.role === "ADMIN" ? (
                 <Link
                   href="/admin"
-                  className="inline-flex min-h-11 items-center whitespace-nowrap rounded-pill px-2.5 text-sm font-semibold sm:px-3 text-sand-600 hover:bg-sand-100 hover:text-ink"
+                  className="inline-flex min-h-11 items-center whitespace-nowrap rounded-pill px-2.5 text-sm font-semibold sm:px-3 text-grey hover:bg-line/50 hover:text-navy"
                 >
                   Admin
                 </Link>
               ) : null}
               <Link
                 href="/dashboard"
-                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-pill px-2.5 text-sm font-semibold sm:px-3 text-sand-600 hover:bg-sand-100 hover:text-ink"
+                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-pill px-2.5 text-sm font-semibold sm:px-3 text-grey hover:bg-line/50 hover:text-navy"
               >
                 My progress
               </Link>
               <Link
                 href="/profile"
-                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-pill px-2.5 text-sm font-semibold sm:px-3 text-sand-600 hover:bg-sand-100 hover:text-ink"
+                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-pill px-2.5 text-sm font-semibold sm:px-3 text-grey hover:bg-line/50 hover:text-navy"
               >
                 Profile
               </Link>
               <form action={signOutAction}>
                 <button
                   type="submit"
-                  className="inline-flex min-h-11 items-center whitespace-nowrap rounded-pill px-2.5 text-sm font-semibold sm:px-3 text-sand-500 hover:bg-sand-100 hover:text-ink"
+                  className="inline-flex min-h-11 items-center whitespace-nowrap rounded-pill px-2.5 text-sm font-semibold sm:px-3 text-grey hover:bg-line/50 hover:text-navy"
                 >
                   Sign out
                 </button>
@@ -67,7 +67,7 @@ export async function SiteHeader({ className }: { className?: string }) {
             <>
               <Link
                 href="/login"
-                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-pill px-2.5 text-sm font-semibold sm:px-3 text-sand-600 hover:bg-sand-100 hover:text-ink"
+                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-pill px-2.5 text-sm font-semibold sm:px-3 text-grey hover:bg-line/50 hover:text-navy"
               >
                 Sign in
               </Link>

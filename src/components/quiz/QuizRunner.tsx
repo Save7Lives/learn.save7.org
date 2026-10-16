@@ -88,10 +88,10 @@ export function QuizRunner({
   if (reviewing) {
     return (
       <div className="mx-auto max-w-2xl">
-        <Display as={headingAs} className="text-title text-ink">
+        <Display as={headingAs} className="text-title text-navy">
           Check before you submit
         </Display>
-        <p className="mt-3 text-sand-600">
+        <p className="mt-3 text-grey">
           {unanswered.length === 0
             ? "All questions answered. You can change any of them before submitting."
             : `${unanswered.length} question${unanswered.length === 1 ? "" : "s"} still unanswered. Unanswered questions are marked incorrect, so it's worth going back.`}
@@ -111,14 +111,14 @@ export function QuizRunner({
                   className={cx(
                     "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition",
                     done
-                      ? "border-sand-200 bg-white hover:border-sand-300"
-                      : "border-review/40 bg-review-soft hover:border-review",
+                      ? "border-line bg-white hover:border-line-strong"
+                      : "border-pink bg-pink-50 hover:border-navy",
                   )}
                 >
-                  <span className="w-6 shrink-0 font-display text-lg text-sand-400">
+                  <span className="w-6 shrink-0 font-display text-lg text-grey">
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <span className="flex-1 text-sm text-ink">{q.prompt}</span>
+                  <span className="flex-1 text-sm text-navy">{q.prompt}</span>
                   {done ? (
                     <Badge tone="neutral">Answered</Badge>
                   ) : (
@@ -132,7 +132,7 @@ export function QuizRunner({
 
         <div aria-live="polite">
           {error ? (
-            <p className="mt-6 rounded-xl border border-red-200 bg-incorrect-soft px-4 py-3 text-sm font-medium text-incorrect">
+            <p className="mt-6 rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-medium text-incorrect">
               {error}
             </p>
           ) : null}
@@ -163,10 +163,10 @@ export function QuizRunner({
       {/* Progress. aria-live announces movement for screen reader users. */}
       <div className="mb-8">
         <div className="mb-2 flex items-baseline justify-between">
-          <p className="text-sm font-semibold text-sand-500" aria-live="polite">
+          <p className="text-sm font-semibold text-grey" aria-live="polite">
             Question {index + 1} of {total}
           </p>
-          <p className="text-sm text-sand-400">{answeredCount} answered</p>
+          <p className="text-sm text-grey">{answeredCount} answered</p>
         </div>
         <ol className="flex gap-1" aria-hidden="true">
           {questions.map((q, i) => (
@@ -177,8 +177,8 @@ export function QuizRunner({
                 i === index
                   ? "bg-pink"
                   : (answers[q.id]?.length ?? 0) > 0
-                    ? "bg-pink-200"
-                    : "bg-sand-200",
+                    ? "bg-pink-100"
+                    : "bg-line",
               )}
             />
           ))}
@@ -186,22 +186,22 @@ export function QuizRunner({
       </div>
 
       {index === 0 && intro ? (
-        <p className="mb-6 rounded-xl border border-sand-200 bg-white px-4 py-3 text-sm text-sand-600">
+        <p className="mb-6 rounded-xl border border-line bg-white px-4 py-3 text-sm text-grey">
           {intro}
         </p>
       ) : null}
 
       <Card className="p-6 sm:p-8">
         {question.scenario ? (
-          <p className="mb-4 border-l-3 border-teal-500 bg-teal-50 py-3 pl-4 pr-3 text-sm italic text-ink">
+          <p className="mb-4 border-l-3 border-teal-ink bg-teal-50 py-3 pl-4 pr-3 text-sm italic text-navy">
             {question.scenario}
           </p>
         ) : null}
 
         <fieldset>
-          <legend className="text-lg font-bold text-ink">{question.prompt}</legend>
+          <legend className="text-lg font-bold text-navy">{question.prompt}</legend>
           {isMulti ? (
-            <p className="mt-1.5 text-sm text-sand-500">Select all that apply.</p>
+            <p className="mt-1.5 text-sm text-grey">Select all that apply.</p>
           ) : null}
 
           <div className="mt-5 space-y-2.5">
@@ -214,7 +214,7 @@ export function QuizRunner({
                     "flex cursor-pointer items-start gap-3 rounded-xl border-2 px-4 py-3.5 transition",
                     isSelected
                       ? "border-pink bg-pink-50"
-                      : "border-sand-200 bg-white hover:border-sand-300",
+                      : "border-line bg-white hover:border-line-strong",
                   )}
                 >
                   <input
@@ -225,7 +225,7 @@ export function QuizRunner({
                     onChange={() => toggle(choice.id)}
                     className="mt-1 size-4 shrink-0 accent-pink"
                   />
-                  <span className={cx("text-ink", isSelected && "font-medium")}>
+                  <span className={cx("text-navy", isSelected && "font-medium")}>
                     {choice.text}
                   </span>
                 </label>
@@ -255,13 +255,13 @@ export function QuizRunner({
         <button
           type="button"
           onClick={() => setReviewing(true)}
-          className="ml-auto inline-flex min-h-11 items-center text-sm font-semibold text-sand-500 underline hover:text-ink"
+          className="ml-auto inline-flex min-h-11 items-center text-sm font-semibold text-grey underline hover:text-navy"
         >
           Review all
         </button>
       </div>
 
-      <p className="mt-6 text-xs text-sand-400">
+      <p className="mt-6 text-xs text-grey">
         {title} · Your answers are saved when you submit.
       </p>
     </div>

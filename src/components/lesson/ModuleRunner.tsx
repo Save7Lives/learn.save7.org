@@ -144,37 +144,37 @@ export function ModuleRunner({
   return (
     <div>
       {/* --- Module header ------------------------------------------------- */}
-      <header className="border-b border-sand-200 bg-white">
+      <header className="border-b border-line bg-white">
         <div className="mx-auto max-w-3xl px-5 py-8 sm:px-8">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <Link
               href={`/levels/${levelSlug}`}
-              className="inline-flex min-h-11 items-center gap-2 font-semibold text-sand-600 hover:text-ink"
+              className="inline-flex min-h-11 items-center gap-2 font-semibold text-grey hover:text-navy"
             >
               <span aria-hidden="true">←</span>
               <span aria-hidden="true" className={cx("size-2 rounded-full", tierDotClass)} />
               {levelTitle}
             </Link>
-            <span aria-hidden="true" className="text-sand-400">
+            <span aria-hidden="true" className="text-grey">
               /
             </span>
-            <span className="text-sand-500">
+            <span className="text-grey">
               {tierLabel} · Module {moduleNumber}
             </span>
           </div>
 
-          <Display as="h1" className="mt-4 text-title text-ink">
+          <Display as="h1" className="mt-4 text-title text-navy">
             {moduleTitle}
           </Display>
-          <p className="mt-2 text-sand-600">{coreQuestion}</p>
-          <p className="mt-2 text-sm text-sand-400">
+          <p className="mt-2 text-grey">{coreQuestion}</p>
+          <p className="mt-2 text-sm text-grey">
             About {estMinutes} minutes · {lessons.length} steps
           </p>
         </div>
       </header>
 
       {/* --- Step rail ----------------------------------------------------- */}
-      <div className="sticky top-[57px] z-30 border-b border-sand-200 bg-sand-50/95 backdrop-blur">
+      <div className="sticky top-[57px] z-30 border-b border-line bg-white/95 backdrop-blur">
         <div className="mx-auto max-w-3xl px-5 py-3 sm:px-8">
           <nav aria-label="Module steps">
             <ol className="flex gap-1.5 overflow-x-auto pb-1">
@@ -190,10 +190,10 @@ export function ModuleRunner({
                       className={cx(
                         "min-h-11 rounded-pill px-3 text-xs font-bold transition",
                         isCurrent
-                          ? "bg-ink text-cream"
+                          ? "bg-navy text-white"
                           : isPast
-                            ? "bg-pink-100 text-pink-700"
-                            : "bg-sand-200/70 text-sand-500 hover:bg-sand-200",
+                            ? "bg-pink-50 text-pink"
+                            : "bg-line text-grey hover:bg-line",
                       )}
                     >
                       {LESSON_KIND_LABELS[step.kind as LessonKind] ?? step.title}
@@ -219,7 +219,7 @@ export function ModuleRunner({
         <h2
           ref={headingRef}
           tabIndex={-1}
-          className="mt-2 font-display text-3xl uppercase tracking-tight text-ink outline-none"
+          className="mt-2 font-display text-3xl tracking-tight text-navy outline-none"
         >
           {lesson.title}
         </h2>
@@ -227,7 +227,7 @@ export function ModuleRunner({
         <div className="mt-8 animate-rise">{lesson.content}</div>
 
         {/* --- Step navigation --------------------------------------------- */}
-        <div className="mt-12 flex flex-wrap items-center gap-3 border-t border-sand-200 pt-6">
+        <div className="mt-12 flex flex-wrap items-center gap-3 border-t border-line pt-6">
           <Button
             variant="outline"
             onClick={() => go(index - 1)}
@@ -240,7 +240,7 @@ export function ModuleRunner({
             <Button onClick={() => go(index + 1)}>Continue</Button>
           ) : isComplete ? (
             <>
-              <Button variant="ink" onClick={finish} disabled={pending}>
+              <Button variant="navy" onClick={finish} disabled={pending}>
                 {pending ? "Saving…" : nextModuleTitle ? "Next module" : "Back to level"}
               </Button>
               <p className="text-sm font-semibold text-correct">
@@ -255,7 +255,7 @@ export function ModuleRunner({
 
           <Link
             href={`/levels/${levelSlug}`}
-            className="ml-auto inline-flex min-h-11 items-center text-sm font-semibold text-sand-500 underline hover:text-ink"
+            className="ml-auto inline-flex min-h-11 items-center text-sm font-semibold text-grey underline hover:text-navy"
           >
             All modules
           </Link>
@@ -264,14 +264,14 @@ export function ModuleRunner({
         {/* aria-live so a failed save is announced, not just drawn. */}
         <div aria-live="polite">
           {saveError ? (
-            <p className="mt-4 rounded-xl border border-pink/30 bg-pink/5 px-4 py-3 text-sm font-semibold text-pink-600">
+            <p className="mt-4 rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-semibold text-pink">
               {saveError}
             </p>
           ) : null}
         </div>
 
         {isLastStep && !isComplete ? (
-          <p className="mt-4 text-sm text-sand-500">
+          <p className="mt-4 text-sm text-grey">
             {nextModuleTitle
               ? `Completing this module takes you on to "${nextModuleTitle}".`
               : "This is the last module in the level. Completing it unlocks the assessment."}

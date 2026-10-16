@@ -5,7 +5,7 @@ import Image from "next/image";
  *
  * Per the brand guidelines: the stacked lockup is the default for covers and
  * hero banners, and the horizontal lockup suits app bars and wide spaces. The
- * artwork is never recoloured — where a single-colour mark is needed on an ink
+ * artwork is never recoloured — where a single-colour mark is needed on a navy
  * surface, the V7 mark is used as supplied.
  */
 

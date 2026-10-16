@@ -49,22 +49,22 @@ export default async function DashboardPage() {
   return (
     <div className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
       <Eyebrow>My progress</Eyebrow>
-      <Display as="h1" className="mt-4 text-display text-ink">
+      <Display as="h1" className="mt-4 text-display text-navy">
         {user.name}
       </Display>
       <p className="mt-2 text-sm">
-        <Link href="/profile" className="font-semibold text-pink-600 underline">
+        <Link href="/profile" className="font-semibold text-pink underline">
           Edit your name
         </Link>
       </p>
 
       {/* --- Baseline gate ------------------------------------------------- */}
       {!baseline.completed ? (
-        <Card className="mt-8 border-pink-200 bg-pink-50/50 p-6">
-          <Display as="h2" className="text-title text-ink">
+        <Card className="mt-8 border-pink-line bg-pink-50 p-6">
+          <Display as="h2" className="text-title text-navy">
             Start with the baseline
           </Display>
-          <p className="mt-3 text-sand-700">
+          <p className="mt-3 text-grey">
             Twenty short questions before you begin. There is no pass mark. It is the
             &ldquo;before&rdquo; that shows what you learn, so the levels open once
             it&apos;s done.
@@ -79,11 +79,11 @@ export default async function DashboardPage() {
 
       {/* --- A later Sitting: offered, never required ---------------------- */}
       {baseline.completed && baseline.due !== null ? (
-        <Card className="mt-8 border-pink-200 bg-pink-50/50 p-6">
-          <Display as="h2" className="text-title text-ink">
+        <Card className="mt-8 border-pink-line bg-pink-50 p-6">
+          <Display as="h2" className="text-title text-navy">
             See what you&apos;ve learned
           </Display>
-          <p className="mt-3 text-sand-700">
+          <p className="mt-3 text-grey">
             You&apos;ve finished a level since your last baseline. Sit the same twenty
             questions again to see how your scores have moved. It&apos;s optional, and it
             doesn&apos;t affect your certificates.
@@ -122,7 +122,7 @@ export default async function DashboardPage() {
               sub={`${levels.length} levels available`}
             />
           </div>
-          <div className="border-t border-sand-200 px-5 py-4">
+          <div className="border-t border-line px-5 py-4">
             <BaselineResults state={baseline} />
           </div>
         </Card>
@@ -134,10 +134,10 @@ export default async function DashboardPage() {
           <Eyebrow>Pick up where you left off</Eyebrow>
           <div className="mt-3 flex flex-wrap items-center gap-4">
             <div className="flex-1">
-              <Display as="h2" className="text-title text-ink">
+              <Display as="h2" className="text-title text-navy">
                 {nextLevel.title}
               </Display>
-              <p className="mt-1 text-sm text-sand-600">
+              <p className="mt-1 text-sm text-grey">
                 {nextLevel.progress?.modulesComplete ?? 0} of{" "}
                 {nextLevel.progress?.modulesTotal ?? 0} modules complete
               </p>
@@ -158,7 +158,7 @@ export default async function DashboardPage() {
 
       {/* --- Level breakdown ---------------------------------------------- */}
       <section className="mt-10">
-        <Display as="h2" className="text-title text-ink">
+        <Display as="h2" className="text-title text-navy">
           Your levels
         </Display>
         <ul className="mt-5 space-y-3">
@@ -179,7 +179,7 @@ export default async function DashboardPage() {
                       />
                       <Link
                         href={`/levels/${level.slug}`}
-                        className="font-bold text-ink underline decoration-transparent hover:decoration-sand-400"
+                        className="font-bold text-navy underline decoration-transparent hover:decoration-line-strong"
                       >
                         {level.title}
                       </Link>
@@ -189,7 +189,7 @@ export default async function DashboardPage() {
                       ) : null}
                     </div>
 
-                    <p className="mt-1 text-sm text-sand-600">
+                    <p className="mt-1 text-sm text-grey">
                       {p?.modulesComplete ?? 0} of {p?.modulesTotal ?? 0} modules
                       {` · ${p?.stagesPassed ?? 0} of ${p?.modulesTotal ?? 0} Stage Quizzes passed`}
                     </p>
@@ -220,12 +220,12 @@ export default async function DashboardPage() {
 
       {/* --- Certificates -------------------------------------------------- */}
       <section className="mt-10">
-        <Display as="h2" className="text-title text-ink">
+        <Display as="h2" className="text-title text-navy">
           My certificates
         </Display>
 
         {certificates.length === 0 ? (
-          <p className="mt-4 rounded-card border border-dashed border-sand-300 bg-sand-100/50 p-5 text-sand-600">
+          <p className="mt-4 rounded-card border border-dashed border-line-strong bg-line/40 p-5 text-grey">
             No certificates yet. Finish a level&apos;s modules and pass its assessment to
             earn one. Each level has its own.
           </p>
@@ -236,14 +236,14 @@ export default async function DashboardPage() {
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-bold text-ink">{cert.awardTitleSnapshot}</p>
+                      <p className="font-bold text-navy">{cert.awardTitleSnapshot}</p>
                       {cert.revokedAt ? (
                         <Badge tone="incorrect">Revoked</Badge>
                       ) : (
                         <Badge tone="correct">Valid</Badge>
                       )}
                     </div>
-                    <p className="mt-1 text-sm text-sand-600">
+                    <p className="mt-1 text-sm text-grey">
                       {cert.levelTitle} · issued{" "}
                       {cert.issuedAt.toLocaleDateString("en-ZA", {
                         day: "numeric",
@@ -251,7 +251,7 @@ export default async function DashboardPage() {
                         year: "numeric",
                       })}
                     </p>
-                    <p className="mt-1 font-mono text-xs text-sand-500">
+                    <p className="mt-1 font-mono text-xs text-grey">
                       {cert.publicId}
                     </p>
                   </div>
@@ -269,7 +269,7 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      <p className="mt-10 text-sm text-sand-500">
+      <p className="mt-10 text-sm text-grey">
         Your scores are private to you and are only reported to Save7 in aggregate.{" "}
         <Link href="/privacy" className="underline">
           What we store and why
@@ -294,14 +294,14 @@ function Stat({
   return (
     <div
       className={cx(
-        "border-b border-sand-200 p-5 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0",
+        "border-b border-line p-5 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0",
         emphasis && "bg-pink-50",
       )}
     >
       <p
         className={cx(
           "text-xs font-bold uppercase tracking-wider",
-          emphasis ? "text-pink-700" : "text-sand-500",
+          emphasis ? "text-pink" : "text-grey",
         )}
       >
         {label}
@@ -309,12 +309,12 @@ function Stat({
       <p
         className={cx(
           "mt-1.5 font-display text-4xl",
-          emphasis ? "text-pink" : "text-ink",
+          emphasis ? "text-pink" : "text-navy",
         )}
       >
         {value}
       </p>
-      <p className={cx("mt-0.5 text-xs", emphasis ? "text-pink-700" : "text-sand-400")}>
+      <p className={cx("mt-0.5 text-xs", emphasis ? "text-pink" : "text-grey")}>
         {sub}
       </p>
     </div>

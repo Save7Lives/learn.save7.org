@@ -31,7 +31,7 @@ export default async function HomePage() {
   return (
     <>
       {/* --- Hero ---------------------------------------------------------- */}
-      <section className="on-ink relative overflow-hidden bg-ink text-cream">
+      <section className="on-navy relative overflow-hidden bg-navy text-white">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-32 -top-40 size-[34rem] rounded-full bg-pink/20 blur-3xl"
@@ -46,19 +46,19 @@ export default async function HomePage() {
             Organ Donation and Transplantation Awareness Course
           </Eyebrow>
 
-          <Display as="h1" className="mt-6 max-w-3xl text-hero text-cream">
+          <Display as="h1" className="mt-6 max-w-3xl text-hero text-white">
             Save7
             <br />
             <span className="text-pink">Learn</span>
           </Display>
 
-          <p className="mt-8 max-w-xl text-lg text-cream/75">
+          <p className="mt-8 max-w-xl text-lg text-white/70">
             Some people join Save7 already understanding the transplant landscape in
             South Africa. Others have never been exposed to the organ donation crisis.
             What everyone has in common is a passion for educating others.
           </p>
 
-          <blockquote className="mt-8 max-w-xl border-l-2 border-teal pl-5 text-lg font-medium text-cream">
+          <blockquote className="mt-8 max-w-xl border-l-2 border-teal pl-5 text-lg font-medium text-white">
             Whether it is for an awareness campaign or a private conversation with family
             and friends, the most important part is simply starting the conversation.
           </blockquote>
@@ -74,14 +74,14 @@ export default async function HomePage() {
             <ButtonLink
               href="/course/introduction"
               size="lg"
-              variant="onInk"
+              variant="onNavy"
             >
               How the course works
             </ButtonLink>
           </div>
 
           {session && baseline && !baseline.completed ? (
-            <p className="mt-6 text-sm text-cream/60">
+            <p className="mt-6 text-sm text-white/70">
               Before your first Stage we&apos;ll ask you 20 quick questions. After each
               level you can answer the same 20 again, so you can see how much you&apos;ve
               learned.
@@ -93,13 +93,13 @@ export default async function HomePage() {
       {/* --- Level chooser -------------------------------------------------- */}
       <section id="levels" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-20 sm:px-8">
         <div className="max-w-2xl">
-          <Display as="h2" className="text-display text-ink">
+          <Display as="h2" className="text-display text-navy">
             Choose your learning level
           </Display>
-          <p className="mt-4 text-sand-600">
+          <p className="mt-4 text-grey">
             We recommend completing the levels in order, but you can choose where you
             begin based on what you already know.{" "}
-            <strong className="text-ink">
+            <strong className="text-navy">
               Each level is a complete achievement with its own certificate.
             </strong>{" "}
             You are not expected to finish all three to be an informed advocate.
@@ -120,9 +120,9 @@ export default async function HomePage() {
       </section>
 
       {/* --- What the course includes --------------------------------------- */}
-      <section className="border-y border-sand-200 bg-white">
+      <section className="border-y border-line bg-white">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
-          <Display as="h2" className="text-title text-ink">
+          <Display as="h2" className="text-title text-navy">
             What&apos;s included
           </Display>
           <div className="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -153,16 +153,16 @@ export default async function HomePage() {
               },
             ].map((item) => (
               <div key={item.title}>
-                <h3 className="font-bold text-ink">{item.title}</h3>
-                <p className="mt-1.5 text-sm text-sand-600">{item.body}</p>
+                <h3 className="font-bold text-navy">{item.title}</h3>
+                <p className="mt-1.5 text-sm text-grey">{item.body}</p>
               </div>
             ))}
           </div>
 
-          <div className="mt-12 flex flex-wrap items-center gap-3 rounded-card border border-sand-200 bg-sand-50 p-6">
+          <div className="mt-12 flex flex-wrap items-center gap-3 rounded-card border border-line bg-white p-6">
             <div className="flex-1">
-              <h3 className="font-bold text-ink">A certificate for each level</h3>
-              <p className="mt-1 text-sm text-sand-600">
+              <h3 className="font-bold text-navy">A certificate for each level</h3>
+              <p className="mt-1 text-sm text-grey">
                 {certificateTitles.join(", ")}. Each is verifiable from its certificate
                 ID.
               </p>
@@ -180,7 +180,7 @@ export default async function HomePage() {
 
       {/* --- The ten questions ---------------------------------------------- */}
       <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
-        <Display as="h2" className="text-title text-ink">
+        <Display as="h2" className="text-title text-navy">
           By the end, you&apos;ll be able to answer
         </Display>
         <ol className="mt-8 grid gap-x-10 gap-y-4 sm:grid-cols-2">
@@ -196,11 +196,11 @@ export default async function HomePage() {
             "How do I talk about donation?",
             "How can I become part of the solution?",
           ].map((q, i) => (
-            <li key={q} className="flex items-baseline gap-4 border-b border-sand-200 pb-3">
-              <span className="font-display text-2xl text-pink-300">
+            <li key={q} className="flex items-baseline gap-4 border-b border-line pb-3">
+              <span className="font-display text-2xl text-pink">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <span className="font-medium text-ink">{q}</span>
+              <span className="font-medium text-navy">{q}</span>
             </li>
           ))}
         </ol>
@@ -210,9 +210,9 @@ export default async function HomePage() {
             {session ? "Choose your level" : "Create your account"}
           </ButtonLink>
           {!session ? (
-            <p className="mt-3 text-sm text-sand-500">
+            <p className="mt-3 text-sm text-grey">
               Already started?{" "}
-              <Link href="/login" className="font-semibold text-pink-600 underline">
+              <Link href="/login" className="font-semibold text-pink underline">
                 Sign in
               </Link>
             </p>

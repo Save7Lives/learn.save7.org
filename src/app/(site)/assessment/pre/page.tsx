@@ -30,7 +30,7 @@ export default async function BaselinePage() {
   if (questions.length === 0) {
     return (
       <div className="mx-auto max-w-2xl px-5 py-14 sm:px-8">
-        <p className="rounded-xl border border-red-200 bg-incorrect-soft px-4 py-3 text-sm font-medium text-incorrect">
+        <p className="rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-medium text-incorrect">
           The baseline questions aren&apos;t available right now. Please try again later.
         </p>
       </div>

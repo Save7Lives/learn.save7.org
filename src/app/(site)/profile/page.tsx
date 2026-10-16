@@ -43,16 +43,16 @@ export default async function ProfilePage() {
   return (
     <div className="mx-auto max-w-2xl px-5 py-12 sm:px-8">
       <Eyebrow>My profile</Eyebrow>
-      <Display as="h1" className="mt-4 text-display text-ink">
+      <Display as="h1" className="mt-4 text-display text-navy">
         {profile.name}
       </Display>
-      <p className="mt-3 text-sand-600">
+      <p className="mt-3 text-grey">
         Your name is the only thing here that appears anywhere else: on your
         certificate.
       </p>
 
       <Card className="mt-8 p-6">
-        <h2 className="font-display text-2xl text-ink">Your name</h2>
+        <h2 className="font-display text-2xl text-navy">Your name</h2>
         <ProfileForm
           action={updateProfileAction}
           firstName={profile.firstName}
@@ -62,16 +62,16 @@ export default async function ProfilePage() {
       </Card>
 
       <Card className="mt-6 p-6">
-        <h2 className="font-display text-2xl text-ink">Account</h2>
+        <h2 className="font-display text-2xl text-navy">Account</h2>
         <dl className="mt-4 space-y-4 text-sm">
           <div>
-            <dt className="font-semibold text-ink">Email address</dt>
-            <dd className="mt-0.5 text-sand-600">{profile.email}</dd>
-            <dd className="mt-1 text-xs text-sand-500">
+            <dt className="font-semibold text-navy">Email address</dt>
+            <dd className="mt-0.5 text-grey">{profile.email}</dd>
+            <dd className="mt-1 text-xs text-grey">
               This is how you sign in, so it cannot be changed here. Email{" "}
               <a
                 href="mailto:info@save7.org"
-                className="font-semibold text-pink-600 underline"
+                className="font-semibold text-pink underline"
               >
                 info@save7.org
               </a>{" "}
@@ -79,16 +79,16 @@ export default async function ProfilePage() {
             </dd>
           </div>
           <div>
-            <dt className="font-semibold text-ink">Learning with Save7 since</dt>
-            <dd className="mt-0.5 text-sand-600">{joined}</dd>
+            <dt className="font-semibold text-navy">Learning with Save7 since</dt>
+            <dd className="mt-0.5 text-grey">{joined}</dd>
           </div>
           <div>
-            <dt className="font-semibold text-ink">Your information</dt>
-            <dd className="mt-0.5 text-sand-600">
+            <dt className="font-semibold text-navy">Your information</dt>
+            <dd className="mt-0.5 text-grey">
               {profile.popiaConsentAt
                 ? "You agreed that Save7 may store your name, email, date of birth and course progress."
                 : "No consent is recorded on this account."}{" "}
-              <Link href="/privacy" className="font-semibold text-pink-600 underline">
+              <Link href="/privacy" className="font-semibold text-pink underline">
                 How we handle your information
               </Link>
             </dd>
@@ -97,7 +97,7 @@ export default async function ProfilePage() {
       </Card>
 
       <p className="mt-8 text-sm">
-        <Link href="/dashboard" className="font-semibold text-pink-600 underline">
+        <Link href="/dashboard" className="font-semibold text-pink underline">
           Back to my progress
         </Link>
       </p>

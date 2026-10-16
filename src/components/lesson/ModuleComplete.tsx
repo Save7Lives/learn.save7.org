@@ -47,27 +47,27 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
     <div>
       {/* The module opened with this question. Closing the loop on it is the
           point of the step. */}
-      <Card className="border-teal-100 bg-teal-50 p-6">
-        <Eyebrow className="text-teal-deep">The question this module asked</Eyebrow>
-        <p className="mt-2 text-lg font-medium text-ink">{coreQuestion}</p>
-        <p className="mt-3 text-sm text-sand-700">
+      <Card className="border-teal-line bg-teal-50 p-6">
+        <Eyebrow className="text-teal-ink">The question this module asked</Eyebrow>
+        <p className="mt-2 text-lg font-medium text-navy">{coreQuestion}</p>
+        <p className="mt-3 text-sm text-grey">
           Could you answer that in a conversation now, in your own words? That is the
           only test that matters here.
         </p>
       </Card>
 
-      <section className="mt-8 border-t border-sand-200 pt-6">
-        <Display as="h3" className="text-xl text-ink">
+      <section className="mt-8 border-t border-line pt-6">
+        <Display as="h3" className="text-xl text-navy">
           {alreadyComplete ? "You've completed this module" : "Ready to mark it complete?"}
         </Display>
 
         {alreadyComplete ? (
-          <p className="mt-2 text-sand-700">
+          <p className="mt-2 text-grey">
             This module is recorded as complete. You can revisit any step at any time.
             Nothing is locked once you have been through it.
           </p>
         ) : (
-          <p className="mt-2 text-sand-700">
+          <p className="mt-2 text-grey">
             Marking the module complete records your progress, so you can stop here and
             pick up later without losing your place.
           </p>
@@ -77,10 +77,10 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
             towards the Certificate (#16), so say so here rather than let "complete"
             imply it. */}
         {!quizPassed ? (
-          <p className="mt-3 text-sm text-sand-600">
+          <p className="mt-3 text-sm text-grey">
             You haven&apos;t passed this Stage&apos;s quiz yet. It&apos;s in the Check step,
             and passing every Stage Quiz in {levelTitle} earns the{" "}
-            <strong className="text-ink">&ldquo;{certificateTitle}&rdquo;</strong> certificate.
+            <strong className="text-navy">&ldquo;{certificateTitle}&rdquo;</strong> certificate.
           </p>
         ) : null}
 
@@ -88,25 +88,25 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
           {isLastInLevel ? (
             <>
               <Badge tone="pink">Last module in {levelTitle}</Badge>
-              <p className="text-sm text-sand-600">
+              <p className="text-sm text-grey">
                 Your certificate is on the {levelTitle} page once every Stage Quiz in it is
                 passed.
               </p>
             </>
           ) : nextModuleTitle ? (
-            <p className="text-sm text-sand-600">
+            <p className="text-sm text-grey">
               Next up:{" "}
-              <strong className="text-ink">{nextModuleTitle}</strong>. The button below
+              <strong className="text-navy">{nextModuleTitle}</strong>. The button below
               takes you straight there.
             </p>
           ) : null}
         </div>
 
-        <p className="mt-4 text-sm text-sand-500">
+        <p className="mt-4 text-sm text-grey">
           Or go back to{" "}
           <Link
             href={`/levels/${levelSlug}`}
-            className="font-semibold text-pink-600 underline"
+            className="font-semibold text-pink underline"
           >
             all modules in {levelTitle}
           </Link>

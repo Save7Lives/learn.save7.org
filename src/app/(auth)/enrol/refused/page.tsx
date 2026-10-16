@@ -17,10 +17,10 @@ export default function EnrolRefusedPage() {
     <div>
       <Eyebrow>Save7</Eyebrow>
       <Display className="mt-3">18 or older only</Display>
-      <p className="mt-4 text-ink" role="alert">
+      <p className="mt-4 text-navy" role="alert">
         You must be 18 or older to register for this course.
       </p>
-      <p className="mt-4 text-ink/70">
+      <p className="mt-4 text-grey">
         We have not kept the date of birth you entered, and your enrolment on the course
         has been removed. You have been signed out.
       </p>

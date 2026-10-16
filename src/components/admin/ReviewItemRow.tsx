@@ -56,8 +56,8 @@ export function ReviewItemRow({
           : item.status === "REJECTED"
             ? "border-incorrect/30"
             : item.severity === 1
-              ? "border-review/40"
-              : "border-sand-200",
+              ? "border-pink"
+              : "border-line",
       )}
     >
       <div className="flex flex-wrap items-start gap-3">
@@ -73,20 +73,20 @@ export function ReviewItemRow({
             {item.severity === 1 ? (
               <Badge tone="review">Blocks launch</Badge>
             ) : null}
-            <span className="text-xs text-sand-500">{item.location}</span>
-            <span className="text-xs text-sand-400">· {item.entityType}</span>
+            <span className="text-xs text-grey">{item.location}</span>
+            <span className="text-xs text-grey">· {item.entityType}</span>
           </div>
 
-          <p className="mt-2 text-sm text-ink">{item.claim}</p>
+          <p className="mt-2 text-sm text-navy">{item.claim}</p>
 
           {item.sourceHint ? (
-            <p className="mt-1.5 text-xs text-sand-500">
+            <p className="mt-1.5 text-xs text-grey">
               <span className="font-semibold">Source needed:</span> {item.sourceHint}
             </p>
           ) : null}
 
           {item.status !== "NEEDS_VERIFICATION" ? (
-            <p className="mt-1.5 text-xs text-sand-500">
+            <p className="mt-1.5 text-xs text-grey">
               {item.status === "APPROVED" ? "Approved" : "Rejected"}
               {item.reviewedByName ? ` by ${item.reviewedByName}` : ""}
               {item.reviewedAt
@@ -106,7 +106,7 @@ export function ReviewItemRow({
             type="button"
             aria-expanded={expanded}
             onClick={() => setExpanded((v) => !v)}
-            className="text-sm font-semibold text-pink-600 underline"
+            className="text-sm font-semibold text-pink underline"
           >
             {expanded ? "Close" : "Review"}
           </button>
@@ -114,10 +114,10 @@ export function ReviewItemRow({
       </div>
 
       {expanded ? (
-        <div className="mt-4 border-t border-sand-200 pt-4">
+        <div className="mt-4 border-t border-line pt-4">
           <label
             htmlFor={`notes-${item.id}`}
-            className="block text-xs font-bold uppercase tracking-wider text-sand-500"
+            className="block text-xs font-bold uppercase tracking-wider text-grey"
           >
             Reviewer notes
           </label>
@@ -126,7 +126,7 @@ export function ReviewItemRow({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
-            className="mt-1.5 w-full rounded-xl border border-sand-300 bg-white p-3 text-sm text-ink"
+            className="mt-1.5 w-full rounded-xl border border-line-strong bg-white p-3 text-sm text-navy"
             placeholder="Record the source you verified against, or why this was rejected."
           />
           <div className="mt-3 flex flex-wrap gap-2">

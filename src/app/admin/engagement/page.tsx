@@ -75,17 +75,17 @@ export default async function EngagementPage() {
             const overrun =
               m.medianSeconds !== null && m.medianSeconds > m.estMinutes * 60 * 1.5;
             return [
-              <span key="t" className="font-semibold text-ink">
+              <span key="t" className="font-semibold text-navy">
                 {m.order}. {m.title}
               </span>,
-              <span key="l" className="whitespace-nowrap text-xs text-sand-500">
+              <span key="l" className="whitespace-nowrap text-xs text-grey">
                 {m.levelTitle}
               </span>,
               m.started,
               <span key="c">
                 {m.completed}
                 {m.completionRatePct !== null ? (
-                  <span className="text-sand-400"> ({m.completionRatePct}%)</span>
+                  <span className="text-grey"> ({m.completionRatePct}%)</span>
                 ) : null}
               </span>,
               m.dropped > 0 ? (
@@ -93,14 +93,14 @@ export default async function EngagementPage() {
                   {m.dropped}
                 </Badge>
               ) : (
-                <span key="d" className="text-sand-400">
+                <span key="d" className="text-grey">
                   0
                 </span>
               ),
-              <span key="m" className={overrun ? "font-semibold text-review" : undefined}>
+              <span key="m" className={overrun ? "font-semibold text-navy" : undefined}>
                 {formatMinutes(m.medianSeconds)}
               </span>,
-              <span key="e" className="text-sand-400">
+              <span key="e" className="text-grey">
                 {m.estMinutes} min
               </span>,
             ];
@@ -114,18 +114,18 @@ export default async function EngagementPage() {
         description="Deliberate omissions, documented so nobody assumes the data exists."
         className="mt-4"
       >
-        <ul className="space-y-2 text-sm text-sand-600">
+        <ul className="space-y-2 text-sm text-grey">
           <li>
-            · <strong className="text-ink">No IP addresses or device details.</strong>{" "}
+            · <strong className="text-navy">No IP addresses or device details.</strong>{" "}
             The event log stores neither, by design. See the privacy notice.
           </li>
           <li>
-            · <strong className="text-ink">No video engagement yet.</strong> Watch-time
+            · <strong className="text-navy">No video engagement yet.</strong> Watch-time
             reporting needs the video asset first; the hooks are in place in the
             ChapterVideo component.
           </li>
           <li>
-            · <strong className="text-ink">No individual behavioural profiles.</strong>{" "}
+            · <strong className="text-navy">No individual behavioural profiles.</strong>{" "}
             Save7 sees aggregates and per-module figures, not a timeline of one
             learner&apos;s actions.
           </li>

@@ -221,7 +221,7 @@ export function GoogleSignIn({
       </Button>
 
       {error ? (
-        <p className="text-sm text-crit" role="alert">
+        <p className="text-sm text-incorrect" role="alert">
           {error}
           {needsRegistration ? (
             <>
@@ -234,7 +234,7 @@ export function GoogleSignIn({
         </p>
       ) : null}
 
-      <p className="text-sm text-ink/60">
+      <p className="text-sm text-grey">
         Save7 uses your Google account, so there is no password to remember. You need to
         register before your first sign-in.
       </p>

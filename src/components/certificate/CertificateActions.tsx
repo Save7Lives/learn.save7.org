@@ -154,7 +154,7 @@ export function CertificateActions({
           Copy verification link
         </Button>
       </div>
-      <p aria-live="polite" className="mt-3 min-h-5 text-sm text-sand-600">
+      <p aria-live="polite" className="mt-3 min-h-5 text-sm text-grey">
         {status}
       </p>
     </div>

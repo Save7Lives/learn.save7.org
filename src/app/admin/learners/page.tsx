@@ -140,10 +140,10 @@ export default async function LearnersPage() {
               (a) => a.kind === "POST" && a.attemptNo === 1,
             );
             return [
-              <span key="n" className="font-semibold text-ink">
+              <span key="n" className="font-semibold text-navy">
                 {learner.name}
               </span>,
-              <span key="d" className="whitespace-nowrap text-xs text-sand-500">
+              <span key="d" className="whitespace-nowrap text-xs text-grey">
                 {learner.createdAt.toLocaleDateString("en-ZA")}
               </span>,
               baseline ? (
@@ -151,14 +151,14 @@ export default async function LearnersPage() {
                   {baseline}
                 </span>
               ) : (
-                <span key="b" className="text-sand-400">Not taken</span>
+                <span key="b" className="text-grey">Not taken</span>
               ),
               posts.length > 0 ? (
                 <span key="p">
                   {posts.map((p) => `${p.scorePct}%`).join(" · ")}
                 </span>
               ) : (
-                <span key="p" className="text-sand-400">
+                <span key="p" className="text-grey">
                   n/a
                 </span>
               ),
@@ -174,7 +174,7 @@ export default async function LearnersPage() {
                   ))}
                 </span>
               ) : (
-                <span key="c" className="text-sand-400">
+                <span key="c" className="text-grey">
                   n/a
                 </span>
               ),

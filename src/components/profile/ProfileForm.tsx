@@ -58,7 +58,7 @@ export function ProfileForm({
         />
       </div>
 
-      <p className="text-sm text-sand-600">
+      <p className="text-sm text-grey">
         {hasCertificates
           ? "This is the name on your certificate. Correcting it here updates the certificates you have already earned."
           : "This is the name that will appear on your certificate."}
@@ -67,12 +67,12 @@ export function ProfileForm({
       {/* aria-live so the outcome is announced, not just shown. */}
       <div aria-live="polite">
         {state?.error ? (
-          <p className="rounded-xl border border-pink/30 bg-pink/5 px-4 py-3 text-sm font-semibold text-pink-600">
+          <p className="rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-semibold text-pink">
             {state.error}
           </p>
         ) : null}
         {state?.savedName ? (
-          <p className="rounded-xl border border-teal/40 bg-teal/10 px-4 py-3 text-sm font-semibold text-ink">
+          <p className="rounded-xl border border-teal-line bg-teal-50 px-4 py-3 text-sm font-semibold text-navy">
             Saved. Your name is now {state.savedName}.
           </p>
         ) : null}
@@ -92,14 +92,14 @@ function Field({
 }: React.ComponentProps<"input"> & { label: string; name: string }) {
   return (
     <div>
-      <label htmlFor={name} className="mb-1.5 block text-sm font-semibold text-ink">
+      <label htmlFor={name} className="mb-1.5 block text-sm font-semibold text-navy">
         {label}
       </label>
       <input
         id={name}
         name={name}
         type="text"
-        className="min-h-11 w-full rounded-xl border border-sand-300 bg-white px-4 text-ink placeholder:text-sand-400"
+        className="min-h-11 w-full rounded-xl border border-line-strong bg-white px-4 text-navy placeholder:text-grey"
         {...rest}
       />
     </div>

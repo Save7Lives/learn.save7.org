@@ -25,19 +25,19 @@ export function BaselineResults({
       <table className="w-full border-collapse text-sm">
         <caption className="sr-only">Your baseline scores, by level and overall, for each sitting</caption>
         <thead>
-          <tr className="border-b border-sand-200 text-left">
-            <th scope="col" className="py-2 pr-4 font-semibold text-sand-500">
+          <tr className="border-b border-line text-left">
+            <th scope="col" className="py-2 pr-4 font-semibold text-grey">
               Sitting
             </th>
             {state.levels.map((level) => (
-              <th key={level.slug} scope="col" className="px-3 py-2 text-right font-semibold text-sand-500">
+              <th key={level.slug} scope="col" className="px-3 py-2 text-right font-semibold text-grey">
                 <span className="inline-flex items-center gap-1.5">
                   <span aria-hidden="true" className={cx("size-2 rounded-full", TIER_META[level.tier]?.dotClass)} />
                   {level.title}
                 </span>
               </th>
             ))}
-            <th scope="col" className="py-2 pl-3 text-right font-semibold text-ink">
+            <th scope="col" className="py-2 pl-3 text-right font-semibold text-navy">
               Overall
             </th>
           </tr>
@@ -47,17 +47,17 @@ export function BaselineResults({
             <tr
               key={sitting.sittingNo}
               className={cx(
-                "border-b border-sand-100 last:border-b-0",
-                highlight === sitting.sittingNo && "bg-pink-50/60",
+                "border-b border-line last:border-b-0",
+                highlight === sitting.sittingNo && "bg-pink-50",
               )}
             >
-              <th scope="row" className="py-2.5 pr-4 text-left font-medium text-ink">
+              <th scope="row" className="py-2.5 pr-4 text-left font-medium text-navy">
                 {sittingLabel(state, sitting)}
               </th>
               {state.levels.map((level) => {
                 const s = sitting.levelScores[level.slug];
                 return (
-                  <td key={level.slug} className="px-3 py-2.5 text-right tabular-nums text-sand-700">
+                  <td key={level.slug} className="px-3 py-2.5 text-right tabular-nums text-grey">
                     {s ? (
                       <>
                         {percent(s.score, s.max)}%
@@ -72,9 +72,9 @@ export function BaselineResults({
                   </td>
                 );
               })}
-              <td className="py-2.5 pl-3 text-right font-semibold tabular-nums text-ink">
+              <td className="py-2.5 pl-3 text-right font-semibold tabular-nums text-navy">
                 {sitting.totalPct}%
-                <span className="ml-1.5 text-xs font-normal text-sand-500">
+                <span className="ml-1.5 text-xs font-normal text-grey">
                   {sitting.totalScore}/{sitting.totalMax}
                 </span>
               </td>

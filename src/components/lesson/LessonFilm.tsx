@@ -30,7 +30,7 @@ export function LessonFilm({ filmKey }: { filmKey: string | null | undefined }) 
   const megabytes = Math.round(film.sizeBytes / 1_000_000);
 
   return (
-    <figure className="mb-8 overflow-hidden rounded-card border border-sand-200 bg-white">
+    <figure className="mb-8 overflow-hidden rounded-card border border-line bg-white">
       <CaptionedVideo
         src={video}
         type={film.video.type}
@@ -42,40 +42,40 @@ export function LessonFilm({ filmKey }: { filmKey: string | null | undefined }) 
       />
 
       <figcaption className="p-5">
-        <p className="text-xs font-bold uppercase tracking-wider text-sand-600">
+        <p className="text-xs font-bold uppercase tracking-wider text-grey">
           Watch · {minutes} minutes · {megabytes} MB
         </p>
-        <p className="mt-1 font-bold text-ink">{film.title}</p>
-        <p className="mt-1 text-sm text-sand-600">
+        <p className="mt-1 font-bold text-navy">{film.title}</p>
+        <p className="mt-1 text-sm text-grey">
           It downloads only when you press play, and captions are on. The film
           reinforces all three Stages in this Level.
         </p>
 
-        <div role="note" className="mt-4 rounded-xl border border-review/30 bg-review-soft p-4">
-          <h3 className="text-sm font-bold text-ink">Where the film and this course differ</h3>
-          <p className="mt-1 text-sm text-sand-700">
+        <div role="note" className="mt-4 rounded-xl border border-pink bg-pink-50 p-4">
+          <h3 className="text-sm font-bold text-navy">Where the film and this course differ</h3>
+          <p className="mt-1 text-sm text-grey">
             Three details in the film don&apos;t match what this course teaches. Go with
             the course: it follows the sources, and so does the Stage Quiz.
           </p>
           <ul className="mt-3 space-y-2">
             {film.corrections.map((c) => (
-              <li key={c.course} className="text-sm text-sand-700">
+              <li key={c.course} className="text-sm text-grey">
                 The film says <em>{c.film}</em>. The course says{" "}
-                <strong className="text-ink">{c.course}</strong>. {c.why}
+                <strong className="text-navy">{c.course}</strong>. {c.why}
               </li>
             ))}
           </ul>
         </div>
 
         <details className="mt-4">
-          <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-pink-600 underline">
+          <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-pink underline">
             Read the transcript
           </summary>
           <div
             role="region"
             aria-label={`Transcript of ${film.title}`}
             tabIndex={0}
-            className="prose-save7 mt-2 max-h-96 overflow-y-auto rounded-xl border border-sand-200 p-4 text-sm"
+            className="prose-save7 mt-2 max-h-96 overflow-y-auto rounded-xl border border-line p-4 text-sm"
           >
             {film.transcript.map((paragraph, i) => (
               <p key={i}>{paragraph}</p>

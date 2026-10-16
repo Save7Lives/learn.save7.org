@@ -71,7 +71,7 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
     <div className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
       <Link
         href="/#levels"
-        className="text-sm font-semibold text-sand-500 underline hover:text-ink"
+        className="text-sm font-semibold text-grey underline hover:text-navy"
       >
         ← All levels
       </Link>
@@ -91,11 +91,11 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
           ) : null}
         </div>
 
-        <Display as="h1" className="mt-4 text-display text-ink">
+        <Display as="h1" className="mt-4 text-display text-navy">
           {level.title}
         </Display>
-        <p className="mt-3 max-w-2xl text-lg text-sand-700">{level.goal}</p>
-        <p className="mt-2 text-sm text-sand-500">
+        <p className="mt-3 max-w-2xl text-lg text-grey">{level.goal}</p>
+        <p className="mt-2 text-sm text-grey">
           {level.estMinMinutes}–{level.estMaxMinutes} minutes · {level.modules.length}{" "}
           modules · earns the &ldquo;{level.certificateTitle}&rdquo; certificate
         </p>
@@ -103,10 +103,10 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
 
       <Card className="mt-8 p-5">
         <div className="mb-2 flex items-baseline justify-between text-sm">
-          <span className="font-semibold text-ink">
+          <span className="font-semibold text-navy">
             {progress.stagesPassed} of {progress.modulesTotal} Stage Quizzes passed
           </span>
-          <span className="text-sand-500">{progress.percentComplete}%</span>
+          <span className="text-grey">{progress.percentComplete}%</span>
         </div>
         <ProgressBar
           value={progress.percentComplete}
@@ -129,7 +129,7 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
             <Card as="li" key={mod.slug} className="p-0">
               <Link
                 href={`/levels/${levelSlug}/modules/${mod.slug}`}
-                className="flex items-start gap-4 p-5 transition hover:bg-sand-50"
+                className="flex items-start gap-4 p-5 transition hover:bg-line/30"
               >
                 <span
                   aria-hidden="true"
@@ -138,8 +138,8 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
                     isDone
                       ? "bg-correct text-white"
                       : isStarted
-                        ? "bg-pink-button text-white"
-                        : "bg-sand-200 text-sand-600",
+                        ? "bg-pink text-white"
+                        : "bg-line text-grey",
                   )}
                 >
                   {isDone ? "✓" : mod.order}
@@ -147,7 +147,7 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
 
                 <span className="flex-1">
                   <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold text-ink">{mod.title}</span>
+                    <span className="font-bold text-navy">{mod.title}</span>
                     {isDone ? (
                       <Badge tone="correct">Quiz passed</Badge>
                     ) : quizFailed ? (
@@ -156,15 +156,15 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
                       <Badge tone="pink">In progress</Badge>
                     ) : null}
                   </span>
-                  <span className="mt-1 block text-sm text-sand-600">
+                  <span className="mt-1 block text-sm text-grey">
                     {mod.coreQuestion}
                   </span>
-                  <span className="mt-1.5 block text-xs text-sand-400">
+                  <span className="mt-1.5 block text-xs text-grey">
                     About {mod.estMinutes} minutes
                   </span>
                 </span>
 
-                <span aria-hidden="true" className="shrink-0 self-center text-sand-400">
+                <span aria-hidden="true" className="shrink-0 self-center text-grey">
                   →
                 </span>
               </Link>
@@ -177,17 +177,17 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
       <Card
         className={cx(
           "mt-8 p-6",
-          allPassed ? "border-pink-200 bg-pink-50/40" : "bg-sand-100/60",
+          allPassed ? "border-pink-line bg-pink-50" : "bg-line/40",
         )}
       >
         <Eyebrow>Certificate</Eyebrow>
-        <Display as="h2" className="mt-3 text-title text-ink">
+        <Display as="h2" className="mt-3 text-title text-navy">
           {level.certificateTitle} certificate
         </Display>
 
         {certificatePublicId ? (
           <>
-            <p className="mt-3 text-sand-700">
+            <p className="mt-3 text-grey">
               You&apos;ve passed every Stage Quiz in {level.title}.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
@@ -202,12 +202,12 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
             </div>
           </>
         ) : allPassed ? (
-          <p className="mt-3 text-sand-700">
+          <p className="mt-3 text-grey">
             You&apos;ve passed every Stage Quiz, but we couldn&apos;t issue your certificate just
             now. Refresh this page to try again.
           </p>
         ) : (
-          <p className="mt-3 text-sand-600">
+          <p className="mt-3 text-grey">
             Pass the Stage Quiz in each of the {progress.modulesTotal} modules to earn it. Each
             one is in its module&apos;s Check step: {progress.modulesTotal - progress.stagesPassed}{" "}
             to go.

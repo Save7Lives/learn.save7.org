@@ -33,19 +33,19 @@ export default async function IntroductionPage() {
   return (
     <article>
       {/* --- Header -------------------------------------------------------- */}
-      <header className="border-b border-sand-200 bg-white">
+      <header className="border-b border-line bg-white">
         <div className="mx-auto max-w-3xl px-5 py-16 sm:px-8 sm:py-20">
           <Eyebrow>Course introduction</Eyebrow>
-          <Display as="h1" className="mt-5 text-display text-ink">
+          <Display as="h1" className="mt-5 text-display text-navy">
             Before you begin
           </Display>
-          <p className="mt-6 text-lg text-sand-700">
+          <p className="mt-6 text-lg text-grey">
             Some people join Save7 already understanding the transplant landscape in South
             Africa. Others have never been exposed to the organ donation crisis. What
             everyone has in common is a passion for educating others about organ donation
             and transplantation.
           </p>
-          <p className="mt-4 text-lg text-sand-700">
+          <p className="mt-4 text-lg text-grey">
             This course gives you the knowledge to speak about it confidently.
           </p>
         </div>
@@ -54,11 +54,11 @@ export default async function IntroductionPage() {
       <div className="mx-auto max-w-3xl px-5 py-16 sm:px-8">
         {/* --- Philosophy -------------------------------------------------- */}
         <section>
-          <Display as="h2" className="text-title text-ink">
+          <Display as="h2" className="text-title text-navy">
             The Save7 position
           </Display>
-          <blockquote className="mt-5 border-l-3 border-teal-500 bg-teal-50 py-5 pl-6 pr-5">
-            <p className="text-lg font-medium text-ink">
+          <blockquote className="mt-5 border-l-3 border-teal-ink bg-teal-50 py-5 pl-6 pr-5">
+            <p className="text-lg font-medium text-navy">
               Whether it is for awareness campaigns or a private conversation with family
               and friends, the most important part is simply starting the conversation.
             </p>
@@ -81,10 +81,10 @@ export default async function IntroductionPage() {
 
         {/* --- Three levels ------------------------------------------------ */}
         <section className="mt-16">
-          <Display as="h2" className="text-title text-ink">
+          <Display as="h2" className="text-title text-navy">
             Three levels, three achievements
           </Display>
-          <p className="mt-4 text-sand-600">
+          <p className="mt-4 text-grey">
             The course is a pathway, not a single block. We recommend the levels in order,
             but you can start wherever suits what you already know, and stopping after any
             level is a complete outcome, not an abandoned one.
@@ -106,7 +106,7 @@ export default async function IntroductionPage() {
                     >
                       {i + 1}
                     </span>
-                    <Display as="h3" className="text-xl text-ink">
+                    <Display as="h3" className="text-xl text-navy">
                       {level.title}
                     </Display>
                     <Badge
@@ -115,15 +115,15 @@ export default async function IntroductionPage() {
                     >
                       {meta.label}
                     </Badge>
-                    <span className="text-sm text-sand-500">
+                    <span className="text-sm text-grey">
                       {level.estMinMinutes}–{level.estMaxMinutes} min
                     </span>
                   </div>
-                  <p className="mt-3 text-sand-700">{level.goal}</p>
-                  <p className="mt-3 text-sm text-sand-500">
+                  <p className="mt-3 text-grey">{level.goal}</p>
+                  <p className="mt-3 text-sm text-grey">
                     Stages: {level.modules.map((m) => m.title).join(" · ")}
                   </p>
-                  <p className="mt-3 text-sm font-semibold text-ink">
+                  <p className="mt-3 text-sm font-semibold text-navy">
                     Earns the &ldquo;{level.certificateTitle}&rdquo; certificate.
                   </p>
                 </Card>
@@ -134,7 +134,7 @@ export default async function IntroductionPage() {
 
         {/* --- What's included --------------------------------------------- */}
         <section className="mt-16">
-          <Display as="h2" className="text-title text-ink">
+          <Display as="h2" className="text-title text-navy">
             What the course includes
           </Display>
           <dl className="mt-6 space-y-5">
@@ -172,9 +172,9 @@ export default async function IntroductionPage() {
                 "One per level, with a unique ID that can be verified online.",
               ],
             ].map(([title, body]) => (
-              <div key={title} className="border-b border-sand-200 pb-5">
-                <dt className="font-bold text-ink">{title}</dt>
-                <dd className="mt-1 text-sand-600">{body}</dd>
+              <div key={title} className="border-b border-line pb-5">
+                <dt className="font-bold text-navy">{title}</dt>
+                <dd className="mt-1 text-grey">{body}</dd>
               </div>
             ))}
           </dl>
@@ -182,10 +182,10 @@ export default async function IntroductionPage() {
 
         {/* --- How each module works ---------------------------------------- */}
         <section className="mt-16">
-          <Display as="h2" className="text-title text-ink">
+          <Display as="h2" className="text-title text-navy">
             How each Stage works
           </Display>
-          <p className="mt-4 text-sand-600">
+          <p className="mt-4 text-grey">
             Every Stage follows the same shape, so you always know where you are.
           </p>
           <ol className="mt-6 space-y-3">
@@ -202,12 +202,12 @@ export default async function IntroductionPage() {
               ],
             ].map(([title, body], i) => (
               <li key={title} className="flex gap-4">
-                <span className="font-display text-xl text-pink-300">
+                <span className="font-display text-xl text-pink">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <span>
-                  <strong className="text-ink">{title}</strong>
-                  <span className="text-sand-600">: {body}</span>
+                  <strong className="text-navy">{title}</strong>
+                  <span className="text-grey">: {body}</span>
                 </span>
               </li>
             ))}
@@ -216,13 +216,13 @@ export default async function IntroductionPage() {
 
         {/* --- Next step ---------------------------------------------------- */}
         <section className="mt-16">
-          <Display as="h2" className="text-title text-ink">
+          <Display as="h2" className="text-title text-navy">
             Ready?
           </Display>
           {session ? (
             baseline?.completed ? (
               <>
-                <p className="mt-4 text-sand-600">
+                <p className="mt-4 text-grey">
                   You have already completed the baseline assessment. Pick up wherever you
                   left off.
                 </p>
@@ -237,7 +237,7 @@ export default async function IntroductionPage() {
               </>
             ) : (
               <>
-                <p className="mt-4 text-sand-600">
+                <p className="mt-4 text-grey">
                   Start with the baseline assessment. Twenty questions, no pass mark, and
                   it is what makes your knowledge improvement measurable. The levels open
                   as soon as it&apos;s done.
@@ -251,7 +251,7 @@ export default async function IntroductionPage() {
             )
           ) : (
             <>
-              <p className="mt-4 text-sand-600">
+              <p className="mt-4 text-grey">
                 Create an account so your progress, scores and certificate can be saved.
                 It takes a name and an email.
               </p>
@@ -265,7 +265,7 @@ export default async function IntroductionPage() {
               </div>
             </>
           )}
-          <p className="mt-6 text-sm text-sand-500">
+          <p className="mt-6 text-sm text-grey">
             <Link href="/privacy" className="underline">
               What we do with your information
             </Link>

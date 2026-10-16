@@ -40,7 +40,7 @@ export default async function EnrolPage(props: PageProps<"/enrol">) {
       {asking === "date-of-birth" ? (
         <>
           <Display className="mt-3">Your date of birth</Display>
-          <p className="mt-4 text-ink/70">
+          <p className="mt-4 text-grey">
             Before you start, Save7 needs two things it did not ask when you signed in:
             your date of birth, then your consent to record your progress.
           </p>
@@ -51,7 +51,7 @@ export default async function EnrolPage(props: PageProps<"/enrol">) {
       ) : (
         <>
           <Display className="mt-3">Your information</Display>
-          <p className="mt-4 text-ink/70">
+          <p className="mt-4 text-grey">
             Last step. Save7 needs your consent before it can record your progress or
             issue a certificate.
           </p>
@@ -61,7 +61,7 @@ export default async function EnrolPage(props: PageProps<"/enrol">) {
         </>
       )}
 
-      <form action={signOutAction} className="mt-8 text-sm text-ink/60">
+      <form action={signOutAction} className="mt-8 text-sm text-grey">
         Signed in as {session.email}.{" "}
         <button type="submit" className="underline">
           Sign out
