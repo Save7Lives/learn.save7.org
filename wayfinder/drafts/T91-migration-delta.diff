@@ -1,0 +1,61 @@
+260,262d259
+< 
+< **The video.**
+< *The Journey of a Gift*: Save7''s explainer, following a donation from the hospital bedside through to the recipient. Assigned in Stage 3, and worth watching at any point in this Level.
+578,581c575
+< Groote Schuur Hospital''s living kidney donor information brochure, published with the [SATS position statements](https://sats.org.za/position-statements/) as part of its kidney exchange programme documents. Plain-language, South African, and honest about risk.
+< 
+< **The video.**
+< *The Journey of a Gift*: Save7''s explainer. Several of the myths in this Stage are answered, without being named, simply by watching what actually happens.', NULL, NULL
+---
+> Groote Schuur Hospital''s living kidney donor information brochure, published with the [SATS position statements](https://sats.org.za/position-statements/) as part of its kidney exchange programme documents. Plain-language, South African, and honest about risk.', NULL, NULL
+620c614,650
+< Two facts frame everything that follows. **Organ donation can only happen in a clinical setting**, in practice an intensive care unit. And **donation is not a single decision at a single moment**: it is a process that has to be supported from the beginning, which is why so much of it depends on people knowing what to do before anything happens.', 'journey-of-a-gift', NULL
+---
+> Two facts frame everything that follows. **Organ donation can only happen in a clinical setting**, in practice an intensive care unit. And **donation is not a single decision at a single moment**: it is a process that has to be supported from the beginning, which is why so much of it depends on people knowing what to do before anything happens.
+> 
+> ## The journey of a gift
+> 
+> It helps to see the whole thing from the beginning. A donation is a journey with a start, a series of checks, a conversation and an end, and the steps that follow take each part in turn.
+> 
+> ### It starts with a need
+> 
+> Behind every transplant is a person whose body cannot keep going without one. Someone whose kidneys, liver, heart or lungs have failed. Someone badly burned who needs donated skin to live. Someone who cannot see and is waiting for a cornea. For many of them a transplant is not one option among several. It is the only one.
+> 
+> One donor can save up to seven lives through organ donation (two kidneys, a liver, a heart, two lungs and a pancreas) and improve up to fifty more through tissue donation. Those are the Organ Donor Foundation''s published figures, and they are the ones this course uses.
+> 
+> ### Then a moment that has to be certain
+> 
+> For organs, the journey begins with a death that doctors have determined. The best known case is brain death. It is not a coma and not a vegetative state. It is the complete and irreversible loss of all brain function, including the brainstem, which controls breathing. A person who has been determined brain dead has died. The heart keeps beating only because a ventilator is supplying oxygen, and the South African guidelines say there is no documented case of anyone who met the preconditions and criteria for brain death regaining any brain function.
+> 
+> Donation can also follow circulatory death, where a decision has been taken to withdraw life-sustaining treatment and death is expected to follow.
+> 
+> ### Then the checks
+> 
+> None of this is informal. It is governed by the National Health Act and the regulations made under it. Death has to be established by at least two doctors, at least one of them registered as a doctor for five years or more. Each tests independently, and none of them may take part in a transplant from that person. If the death was unnatural, say from an accident, the Forensic Pathology Service must also authorise what may be recovered.
+> 
+> The teams are kept separate on purpose. The doctors and nurses treating a patient are not the people who would recover or transplant organs, so everyone caring for a patient is working only on keeping that patient alive.
+> 
+> ### Then a conversation
+> 
+> A trained transplant coordinator is involved early. But the family is told about the death first, and donation is raised separately, once they have had time to take it in. There is no false hope, no misleading information and no rush. In South African practice, hospitals approach the family in every case, and a family''s refusal is respected, which is why telling your family what you want matters so much.
+> 
+> ### Then the gift
+> 
+> Organs are recovered in a hospital and transplanted within hours. Tissue (corneas, bone, skin and heart valves) can be recovered in a far wider range of settings and stored, so it can reach people later. The family does not pay for the donation: the costs of recovery are carried by the hospital or the tissue bank from the point consent is given. Donation is voluntary, and trading in human tissue is a criminal offence in South Africa. Nobody is paid, and nobody can be.
+> 
+> ### What it leaves behind
+> 
+> A cornea can let someone see their children''s faces again. Donated bone can help a person walk without pain. Skin grafts keep people with terrible burns alive. One person''s decision, supported by their family in the worst moment of their lives, can save up to seven lives and improve up to fifty more.
+> 
+> That is why the advice at the end of this Stage is in two halves: register, and then tell your family. The register records the decision. The conversation is what your family will be asked to act on.', NULL, NULL
+776,778c806
+<   '**Watch this one.** *The Journey of a Gift*: Save7''s explainer, following a donation from the hospital bedside through to the recipient. It is the single most useful thing to watch on this Level, and it reinforces all three Stages rather than only this one.
+< 
+< Everything below is optional, for anyone who wants more.
+---
+>   'Everything below is optional, for anyone who wants more.
+13543c13571
+<   if n <> 1 then raise exception 'expected 1 lesson(s) with a film, found %', n; end if;
+---
+>   if n <> 0 then raise exception 'expected 0 lesson(s) with a film, found %', n; end if;
