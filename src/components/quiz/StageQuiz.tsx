@@ -146,7 +146,7 @@ export function StageQuiz({
 
       <div aria-live="polite">
         {error ? (
-          <p className="mt-4 rounded-xl border border-red-200 bg-incorrect-soft px-4 py-3 text-sm font-medium text-incorrect">
+          <p className="mt-4 rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-medium text-incorrect">
             {error}
           </p>
         ) : null}
@@ -179,7 +179,7 @@ function Status({
   return (
     <Card className="p-6 sm:p-8">
       <div className="flex flex-wrap items-center gap-3">
-        <p className="text-xs font-bold uppercase tracking-wider text-sand-500">Stage Quiz</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-grey">Stage Quiz</p>
         {passedAt ? (
           <Badge tone="correct">Passed</Badge>
         ) : latest ? (
@@ -188,7 +188,7 @@ function Status({
       </div>
 
       {passedAt ? (
-        <p className="mt-3 text-ink">
+        <p className="mt-3 text-navy">
           You passed this Stage&apos;s quiz on{" "}
           {passedAt.toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" })}.
           {latest && !latest.passed
@@ -196,13 +196,13 @@ function Status({
             : ""}
         </p>
       ) : latest ? (
-        <p className="mt-3 text-ink">
+        <p className="mt-3 text-navy">
           Your last attempt scored {latest.scoreRaw} of {latest.scoreMax}. You need {need} of{" "}
           {STAGE_QUIZ_SIZE} to pass. A new attempt gives you questions you didn&apos;t see last
           time.
         </p>
       ) : (
-        <p className="mt-3 text-ink">
+        <p className="mt-3 text-navy">
           {STAGE_QUIZ_SIZE} questions on this Stage. Get {need} right to pass. You can try as
           many times as you like, and each new attempt gives you questions you didn&apos;t see
           the time before.
@@ -210,9 +210,9 @@ function Status({
       )}
 
       {!passedAt ? (
-        <p className="mt-3 text-sm text-sand-600">
+        <p className="mt-3 text-sm text-grey">
           Passing every Stage Quiz in this Level earns the{" "}
-          <strong className="text-ink">&ldquo;{certificateTitle}&rdquo;</strong> certificate. It
+          <strong className="text-navy">&ldquo;{certificateTitle}&rdquo;</strong> certificate. It
           doesn&apos;t hold you back: you can carry on to the next step whenever you like.
         </p>
       ) : null}
@@ -274,10 +274,10 @@ function Result({
           <Badge tone={passed ? "correct" : everPassed ? "neutral" : "incorrect"}>
             {passed ? "Passed" : everPassed ? "Practice attempt" : "Not passed yet"}
           </Badge>
-          <p className="mt-3 text-lg font-bold text-ink">
+          <p className="mt-3 text-lg font-bold text-navy">
             You got {result.scoreRaw} of {result.scoreMax}.
           </p>
-          <p className="mt-2 text-sand-700">
+          <p className="mt-2 text-grey">
             {passed
               ? "Well done. The explanations below are worth a read, even for the ones you got right."
               : everPassed
@@ -287,8 +287,8 @@ function Result({
         </div>
 
         {certificatePublicId ? (
-          <div className="mt-5 rounded-xl border border-pink-200 bg-pink-50 p-4">
-            <p className="text-ink">
+          <div className="mt-5 rounded-xl border border-pink-line bg-pink-50 p-4">
+            <p className="text-navy">
               That was the last Stage Quiz in this Level. You&apos;ve earned the{" "}
               <strong>&ldquo;{certificateTitle}&rdquo;</strong> certificate.
             </p>
@@ -323,17 +323,17 @@ function MarkedQuestion({ answer, index }: { answer: GradedAnswer; index: number
     <li>
       <Card className="p-5 sm:p-6">
         <div className="flex items-baseline gap-3">
-          <span aria-hidden="true" className="font-display text-lg text-pink-600">
+          <span aria-hidden="true" className="font-display text-lg text-pink">
             {String(index + 1).padStart(2, "0")}
           </span>
           <div className="flex-1">
             {answer.scenario ? (
-              <p className="mb-3 border-l-3 border-teal-500 bg-teal-50 py-2.5 pl-3.5 pr-3 text-sm italic text-ink">
+              <p className="mb-3 border-l-3 border-teal-ink bg-teal-50 py-2.5 pl-3.5 pr-3 text-sm italic text-navy">
                 {answer.scenario}
               </p>
             ) : null}
 
-            <p className="font-bold text-ink">{answer.prompt}</p>
+            <p className="font-bold text-navy">{answer.prompt}</p>
 
             <ul className="mt-4 space-y-2">
               {answer.choices.map((choice) => {
@@ -343,14 +343,14 @@ function MarkedQuestion({ answer, index }: { answer: GradedAnswer; index: number
                     <div
                       className={cx(
                         "flex items-start gap-3 rounded-xl border-2 px-4 py-3",
-                        state === "correct" && "border-correct bg-correct-soft",
-                        state === "wrong" && "border-incorrect bg-incorrect-soft",
-                        state === "idle" && "border-sand-200 bg-white",
+                        state === "correct" && "border-correct bg-teal-50",
+                        state === "wrong" && "border-incorrect bg-pink-50",
+                        state === "idle" && "border-line bg-white",
                       )}
                     >
-                      <span className="flex-1 text-ink">{choice.text}</span>
+                      <span className="flex-1 text-navy">{choice.text}</span>
                       {choice.wasSelected ? (
-                        <span className="shrink-0 text-xs font-semibold text-sand-600">
+                        <span className="shrink-0 text-xs font-semibold text-grey">
                           Your answer
                         </span>
                       ) : null}
@@ -366,14 +366,14 @@ function MarkedQuestion({ answer, index }: { answer: GradedAnswer; index: number
                     {/* Per-choice feedback on what they chose: why a tempting wrong
                         answer is tempting teaches more than a bare "incorrect". */}
                     {choice.wasSelected && choice.feedback ? (
-                      <p className="mt-1.5 pl-4 text-sm text-sand-600">{choice.feedback}</p>
+                      <p className="mt-1.5 pl-4 text-sm text-grey">{choice.feedback}</p>
                     ) : null}
                   </li>
                 );
               })}
             </ul>
 
-            <div className="mt-4 rounded-xl bg-sand-100/70 p-4">
+            <div className="mt-4 rounded-xl bg-line/40 p-4">
               <Badge tone={answer.isCorrect ? "correct" : "incorrect"}>
                 {answer.isCorrect
                   ? "Correct"
@@ -381,7 +381,7 @@ function MarkedQuestion({ answer, index }: { answer: GradedAnswer; index: number
                     ? "Not answered"
                     : "Not quite"}
               </Badge>
-              <p className="mt-2.5 text-sm text-ink">{answer.explanation}</p>
+              <p className="mt-2.5 text-sm text-navy">{answer.explanation}</p>
             </div>
           </div>
         </div>

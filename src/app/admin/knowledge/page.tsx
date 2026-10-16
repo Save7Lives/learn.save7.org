@@ -68,7 +68,7 @@ export default async function KnowledgePage() {
               label: b.bucket,
               value: b.count,
             }))}
-            tone="ink"
+            tone="navy"
             valueSuffix=" learners"
           />
         </Section>
@@ -103,7 +103,7 @@ export default async function KnowledgePage() {
             "Pass rate",
           ]}
           rows={knowledge.perLevel.map((l) => [
-            <span key="t" className="font-semibold text-ink">
+            <span key="t" className="font-semibold text-navy">
               {l.title}
             </span>,
             l.postCount,
@@ -138,10 +138,10 @@ export default async function KnowledgePage() {
           caption="Most commonly missed questions"
           columns={["Question", "Where", "Topic", "Wrong", "Rate"]}
           rows={missed.map((q) => [
-            <span key="p" className="text-ink">
+            <span key="p" className="text-navy">
               {q.prompt}
             </span>,
-            <span key="w" className="whitespace-nowrap text-xs text-sand-500">
+            <span key="w" className="whitespace-nowrap text-xs text-grey">
               {q.scope === "PRE"
                 ? "Baseline"
                 : q.moduleTitle
@@ -157,7 +157,7 @@ export default async function KnowledgePage() {
               className={
                 q.incorrectRatePct >= 60
                   ? "font-bold text-incorrect"
-                  : "font-semibold text-ink"
+                  : "font-semibold text-navy"
               }
             >
               {q.incorrectRatePct}%

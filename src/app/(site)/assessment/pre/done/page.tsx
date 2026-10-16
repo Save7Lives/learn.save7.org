@@ -42,21 +42,21 @@ export default async function BaselineDonePage() {
   return (
     <div className="mx-auto max-w-2xl px-5 py-16 sm:px-8">
       <Eyebrow>Baseline recorded</Eyebrow>
-      <Display as="h1" className="mt-5 text-display text-ink">
+      <Display as="h1" className="mt-5 text-display text-navy">
         {isFirst ? <>That&apos;s your starting point</> : <>Here&apos;s what changed</>}
       </Display>
 
       <Card className="mt-8 p-6 sm:p-8">
-        <p className="text-sm font-semibold text-sand-500">
+        <p className="text-sm font-semibold text-grey">
           {isFirst ? "Before the course" : `Sitting ${latest.sittingNo} of 4`}
         </p>
-        <p className="mt-1 font-display text-6xl text-ink">{latest.totalPct}%</p>
-        <p className="mt-2 text-sm text-sand-500">
+        <p className="mt-1 font-display text-6xl text-navy">{latest.totalPct}%</p>
+        <p className="mt-2 text-sm text-grey">
           {latest.totalScore} of {latest.totalMax} questions
           {isFirst ? null : (
             <>
               {" · "}
-              <span className="font-semibold text-ink">
+              <span className="font-semibold text-navy">
                 {change >= 0 ? "+" : ""}
                 {change} points
               </span>{" "}
@@ -65,27 +65,27 @@ export default async function BaselineDonePage() {
           )}
         </p>
 
-        <div className="mt-6 border-t border-sand-200 pt-5">
+        <div className="mt-6 border-t border-line pt-5">
           <BaselineResults state={baseline} highlight={latest.sittingNo} />
         </div>
 
-        <div className="mt-6 border-t border-sand-200 pt-5">
+        <div className="mt-6 border-t border-line pt-5">
           {isFirst ? (
             <>
-              <p className="text-sand-700">
+              <p className="text-grey">
                 There is no pass mark here, and this is not a grade. It is a measurement taken
                 before you learned anything, which is exactly what makes the later sittings
                 meaningful. You&apos;ll sit the same questions again after each level you
                 finish.
               </p>
-              <p className="mt-3 text-sand-700">
+              <p className="mt-3 text-grey">
                 {latest.totalPct < 50
                   ? "A low baseline is genuinely the best place to start from. You have the most to gain."
                   : "You already know some of this. The course will fill in the parts that are harder to pick up casually: brain death, the law, and how to handle a difficult conversation."}
               </p>
             </>
           ) : (
-            <p className="text-sand-700">
+            <p className="text-grey">
               Each row is the same {latest.totalMax} questions, so the difference between rows is what
               you learned. A level you haven&apos;t studied yet usually moves least. That is
               expected, not a shortfall.
@@ -95,8 +95,8 @@ export default async function BaselineDonePage() {
       </Card>
 
       {baseline.due !== null ? (
-        <Card className="mt-6 border-pink-200 bg-pink-50/50 p-6">
-          <p className="text-sand-700">
+        <Card className="mt-6 border-pink-line bg-pink-50 p-6">
+          <p className="text-grey">
             You&apos;ve finished a level since your last sitting, so sitting {baseline.due} is
             ready whenever you are.
           </p>
@@ -109,12 +109,12 @@ export default async function BaselineDonePage() {
       <div className="mt-10">
         {isFirst ? (
           <>
-            <Display as="h2" className="text-title text-ink">
+            <Display as="h2" className="text-title text-navy">
               Now choose where to begin
             </Display>
-            <p className="mt-3 text-sand-600">
+            <p className="mt-3 text-grey">
               We recommend starting with{" "}
-              <strong className="text-ink">{nextLevel?.title ?? "Beginner"}</strong>, but you
+              <strong className="text-navy">{nextLevel?.title ?? "Beginner"}</strong>, but you
               can start at any level.
             </p>
           </>

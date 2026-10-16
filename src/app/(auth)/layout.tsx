@@ -7,26 +7,26 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       {/* Ink panel. Teal is legible here, which is the only place the brand
           guidelines permit it to carry text. Hidden on small screens so the form
           is the first thing a phone user sees. */}
-      <aside className="on-ink relative hidden flex-col justify-between bg-ink p-12 text-cream lg:flex">
+      <aside className="on-navy relative hidden flex-col justify-between bg-navy p-12 text-white lg:flex">
         <Link href="/" className="w-44">
           <Save7Logo variant="horizontal" className="h-auto w-full" priority />
         </Link>
 
         <div className="max-w-md">
-          <p className="font-display text-5xl leading-[0.95] text-cream">
+          <p className="font-display text-5xl leading-[0.95] text-white">
             One decision
             <br />
             can save
             <br />
             <span className="text-teal">seven lives.</span>
           </p>
-          <p className="mt-6 text-cream/70">
+          <p className="mt-6 text-white/70">
             Save7 Learn is Save7&apos;s organ donation and transplantation
             awareness course. Three levels, each a complete achievement on its own.
           </p>
         </div>
 
-        <p className="text-sm text-cream/50">
+        <p className="text-sm text-white/70">
           Save7 · A South African organ donation awareness initiative
         </p>
       </aside>

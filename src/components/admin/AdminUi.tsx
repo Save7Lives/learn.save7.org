@@ -11,11 +11,11 @@ export function PageTitle({
 }) {
   return (
     <div className="mb-6">
-      <h1 className="font-display text-3xl uppercase tracking-tight text-ink">
+      <h1 className="font-display text-3xl tracking-tight text-navy">
         {title}
       </h1>
       {description ? (
-        <p className="mt-1.5 max-w-2xl text-sm text-sand-600">{description}</p>
+        <p className="mt-1.5 max-w-2xl text-sm text-grey">{description}</p>
       ) : null}
     </div>
   );
@@ -34,18 +34,18 @@ export function StatCard({
 }) {
   const tones = {
     neutral: "bg-white",
-    pink: "bg-pink-50 border-pink-200",
-    teal: "bg-teal-50 border-teal-100",
-    warn: "bg-review-soft border-amber-200",
+    pink: "bg-pink-50 border-pink-line",
+    teal: "bg-teal-50 border-teal-line",
+    warn: "bg-pink-50 border-pink-line",
   } as const;
 
   return (
     <Card className={cx("p-5", tones[tone])}>
-      <p className="text-xs font-bold uppercase tracking-wider text-sand-500">
+      <p className="text-xs font-bold uppercase tracking-wider text-grey">
         {label}
       </p>
-      <p className="mt-1.5 font-display text-4xl text-ink">{value}</p>
-      {sub ? <p className="mt-0.5 text-xs text-sand-500">{sub}</p> : null}
+      <p className="mt-1.5 font-display text-4xl text-navy">{value}</p>
+      {sub ? <p className="mt-0.5 text-xs text-grey">{sub}</p> : null}
     </Card>
   );
 }
@@ -68,15 +68,15 @@ export function BarChart({
   data: Array<{ label: string; value: number | null; sub?: string }>;
   max?: number;
   valueSuffix?: string;
-  tone?: "pink" | "teal" | "ink";
+  tone?: "pink" | "teal" | "navy";
   emptyMessage?: string;
 }) {
   const values = data.map((d) => d.value ?? 0);
   const ceiling = max ?? Math.max(1, ...values);
-  const fill = { pink: "bg-pink", teal: "bg-teal-deep", ink: "bg-ink" }[tone];
+  const fill = { pink: "bg-pink", teal: "bg-teal-ink", navy: "bg-navy" }[tone];
 
   if (data.length === 0 || values.every((v) => v === 0)) {
-    return <p className="text-sm text-sand-500">{emptyMessage}</p>;
+    return <p className="text-sm text-grey">{emptyMessage}</p>;
   }
 
   return (
@@ -84,14 +84,14 @@ export function BarChart({
       {data.map((row) => (
         <li key={row.label}>
           <div className="mb-1 flex items-baseline justify-between gap-4">
-            <span className="text-sm text-ink">{row.label}</span>
-            <span className="shrink-0 text-sm font-bold text-ink">
+            <span className="text-sm text-navy">{row.label}</span>
+            <span className="shrink-0 text-sm font-bold text-navy">
               {row.value === null ? "n/a" : `${row.value}${valueSuffix}`}
             </span>
           </div>
           <div
             aria-hidden="true"
-            className="h-2.5 w-full overflow-hidden rounded-pill bg-sand-200"
+            className="h-2.5 w-full overflow-hidden rounded-pill bg-line"
           >
             <div
               className={cx("h-full rounded-pill", fill)}
@@ -101,7 +101,7 @@ export function BarChart({
             />
           </div>
           {row.sub ? (
-            <p className="mt-0.5 text-xs text-sand-500">{row.sub}</p>
+            <p className="mt-0.5 text-xs text-grey">{row.sub}</p>
           ) : null}
         </li>
       ))}
@@ -122,9 +122,9 @@ export function Section({
 }) {
   return (
     <Card className={cx("p-6", className)}>
-      <h2 className="font-bold text-ink">{title}</h2>
+      <h2 className="font-bold text-navy">{title}</h2>
       {description ? (
-        <p className="mt-1 text-sm text-sand-600">{description}</p>
+        <p className="mt-1 text-sm text-grey">{description}</p>
       ) : null}
       <div className="mt-5">{children}</div>
     </Card>
@@ -143,7 +143,7 @@ export function DataTable({
   emptyMessage?: string;
 }) {
   if (rows.length === 0) {
-    return <p className="text-sm text-sand-500">{emptyMessage}</p>;
+    return <p className="text-sm text-grey">{emptyMessage}</p>;
   }
 
   return (
@@ -151,12 +151,12 @@ export function DataTable({
       <table className="w-full min-w-[38rem] border-collapse text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>
-          <tr className="border-b-2 border-sand-300">
+          <tr className="border-b-2 border-line-strong">
             {columns.map((column) => (
               <th
                 key={column}
                 scope="col"
-                className="whitespace-nowrap py-2 pr-4 text-xs font-bold uppercase tracking-wider text-sand-500"
+                className="whitespace-nowrap py-2 pr-4 text-xs font-bold uppercase tracking-wider text-grey"
               >
                 {column}
               </th>
@@ -165,9 +165,9 @@ export function DataTable({
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className="border-b border-sand-200 align-top">
+            <tr key={i} className="border-b border-line align-top">
               {row.map((cell, j) => (
-                <td key={j} className="py-2.5 pr-4 text-sand-700">
+                <td key={j} className="py-2.5 pr-4 text-grey">
                   {cell}
                 </td>
               ))}

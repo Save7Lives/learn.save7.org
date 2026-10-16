@@ -29,16 +29,16 @@ export function DateOfBirthForm({ action, next }: { action: Action; next: string
           type="date"
           required
           max={new Date().toISOString().slice(0, 10)}
-          className="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2"
+          className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2"
         />
-        <span className="mt-1 block text-xs text-ink/60">
+        <span className="mt-1 block text-xs text-grey">
           This course is for adults. You must be 18 or older. There is no exception, so
           please use your real date of birth.
         </span>
       </label>
 
       {state?.error ? (
-        <p className="text-sm text-crit" role="alert">
+        <p className="text-sm text-incorrect" role="alert">
           {state.error}
         </p>
       ) : null}
@@ -64,11 +64,11 @@ export function ConsentForm({ action, next }: { action: Action; next: string }) 
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="next" value={next} />
 
-      <details className="rounded-lg border border-ink/15 px-4 py-3 text-sm">
+      <details className="rounded-lg border border-line px-4 py-3 text-sm">
         <summary className="cursor-pointer font-medium">
           What Save7 keeps, and who can see it
         </summary>
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-ink/80">
+        <ul className="mt-3 list-disc space-y-2 pl-5 text-navy">
           <li>
             <strong>Your name and email address</strong>, from your Google account. Your
             name is printed on your certificates, and you can correct it in your profile.
@@ -109,7 +109,7 @@ export function ConsentForm({ action, next }: { action: Action; next: string }) 
       </label>
 
       {state?.error ? (
-        <p className="text-sm text-crit" role="alert">
+        <p className="text-sm text-incorrect" role="alert">
           {state.error}
         </p>
       ) : null}

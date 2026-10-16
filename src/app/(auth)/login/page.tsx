@@ -24,7 +24,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
     <div>
       <Eyebrow>Save7 Learn</Eyebrow>
       <Display className="mt-3">Sign in</Display>
-      <p className="mt-4 text-ink/70">
+      <p className="mt-4 text-grey">
         With the same Google account Save7 knows you by. Volunteers, staff and learners all
         sign in here.
       </p>

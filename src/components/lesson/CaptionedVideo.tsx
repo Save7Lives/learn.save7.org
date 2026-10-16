@@ -65,7 +65,7 @@ export function CaptionedVideo({
       crossOrigin="anonymous"
       poster={poster}
       title={title}
-      className="aspect-video w-full bg-ink"
+      className="aspect-video w-full bg-navy"
     >
       <source src={src} type={type} />
       <track

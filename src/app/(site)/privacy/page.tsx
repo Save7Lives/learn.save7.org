@@ -30,17 +30,17 @@ export default function PrivacyPage() {
   return (
     <article className="mx-auto max-w-3xl px-5 py-16 sm:px-8">
       <Eyebrow>Privacy</Eyebrow>
-      <Display as="h1" className="mt-5 text-display text-ink">
+      <Display as="h1" className="mt-5 text-display text-navy">
         Your information
       </Display>
-      <p className="mt-6 text-lg text-sand-700">
+      <p className="mt-6 text-lg text-grey">
         Short version: we store your name, your email address, your date of birth, and how
         you are getting on with the course. We do not sell it, we do not track you around
         the internet, and you can ask us to delete it.
       </p>
 
       <section className="mt-14">
-        <Display as="h2" className="text-title text-ink">
+        <Display as="h2" className="text-title text-navy">
           What we collect
         </Display>
         <div className="mt-6 overflow-x-auto">
@@ -49,16 +49,16 @@ export default function PrivacyPage() {
               Information collected, and the reason for each
             </caption>
             <thead>
-              <tr className="border-b-2 border-sand-300">
-                <th scope="col" className="py-2.5 pr-4 font-bold text-ink">
+              <tr className="border-b-2 border-line-strong">
+                <th scope="col" className="py-2.5 pr-4 font-bold text-navy">
                   What
                 </th>
-                <th scope="col" className="py-2.5 pr-4 font-bold text-ink">
+                <th scope="col" className="py-2.5 pr-4 font-bold text-navy">
                   Why
                 </th>
               </tr>
             </thead>
-            <tbody className="text-sand-700">
+            <tbody className="text-grey">
               {[
                 ["Your name", "To greet you, and to print on your certificate."],
                 ["Your email address", "To sign you in. It is your account identifier."],
@@ -107,8 +107,8 @@ export default function PrivacyPage() {
                   "Whether it was accepted and, if not, why. Your email address and the internet address the attempt came from are kept only as salted hashes, which are enough to count repeated attempts but are not a copy of either address. So the registration form can turn away floods of fake sign-ups.",
                 ],
               ].map(([what, why]) => (
-                <tr key={what} className="border-b border-sand-200">
-                  <th scope="row" className="py-3 pr-4 align-top font-semibold text-ink">
+                <tr key={what} className="border-b border-line">
+                  <th scope="row" className="py-3 pr-4 align-top font-semibold text-navy">
                     {what}
                   </th>
                   <td className="py-3 pr-4 align-top">{why}</td>
@@ -120,7 +120,7 @@ export default function PrivacyPage() {
       </section>
 
       <section className="mt-14">
-        <Display as="h2" className="text-title text-ink">
+        <Display as="h2" className="text-title text-navy">
           What we deliberately do not collect
         </Display>
         <ul className="prose-save7 mt-5">
@@ -149,7 +149,7 @@ export default function PrivacyPage() {
       </section>
 
       <section className="mt-14">
-        <Display as="h2" className="text-title text-ink">
+        <Display as="h2" className="text-title text-navy">
           How Save7 uses it
         </Display>
         <div className="prose-save7 mt-5">
@@ -182,7 +182,7 @@ export default function PrivacyPage() {
       </section>
 
       <section className="mt-14">
-        <Display as="h2" className="text-title text-ink">
+        <Display as="h2" className="text-title text-navy">
           Your certificate is public, on purpose
         </Display>
         <div className="prose-save7 mt-5">
@@ -192,18 +192,14 @@ export default function PrivacyPage() {
             whether it is still valid. Nothing else: not your email, not your scores, not
             your answers.
           </p>
-          <p>
-            If you would prefer your certificate not to be verifiable, tell us and we will
-            revoke it.
-          </p>
         </div>
       </section>
 
       <section className="mt-14">
-        <Display as="h2" className="text-title text-ink">
+        <Display as="h2" className="text-title text-navy">
           Your rights under POPIA
         </Display>
-        <p className="mt-4 text-sand-600">
+        <p className="mt-4 text-grey">
           South Africa&apos;s Protection of Personal Information Act gives you the right to:
         </p>
         <ul className="prose-save7 mt-4">
@@ -213,26 +209,26 @@ export default function PrivacyPage() {
           <li>withdraw the consent you gave;</li>
           <li>complain to the Information Regulator if you are not satisfied.</li>
         </ul>
-        <p className="mt-5 text-sand-600">
+        <p className="mt-5 text-grey">
           Deleting your account removes your name, email, answers and progress. Your
           certificate is revoked at the same time, so it will no longer verify.
         </p>
       </section>
 
       <section className="mt-14">
-        <Display as="h2" className="text-title text-ink">
+        <Display as="h2" className="text-title text-navy">
           Consent
         </Display>
-        <p className="mt-4 text-sand-600">
+        <p className="mt-4 text-grey">
           We record the moment you consented, when you tick the box at registration or, if
           you signed in without registering, on the screen that asks before you start. We
           do not treat visiting the site, or ignoring a banner, as consent.
         </p>
       </section>
 
-      <Card className="mt-14 border-review/30 bg-review-soft p-6">
+      <Card className="mt-14 border-pink bg-pink-50 p-6">
         <Badge tone="review">Pending Save7 review</Badge>
-        <h2 className="mt-3 font-bold text-ink">Before this course is published</h2>
+        <h2 className="mt-3 font-bold text-navy">Before this course is published</h2>
         <div className="prose-save7 mt-2 text-sm">
           <p>
             This page accurately describes what the application does, and it is written to

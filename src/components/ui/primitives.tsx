@@ -21,20 +21,14 @@ const BUTTON_BASE =
   "min-h-11 px-6 py-2.5 disabled:opacity-50 disabled:pointer-events-none";
 
 const BUTTON_VARIANTS = {
-  /**
-   * Pink. One per screen, on the single most important action.
-   *
-   * Uses --color-pink-button rather than brand pink: white on brand pink is
-   * 4.31:1, marginally under the 4.5:1 minimum for a button label. The shade is
-   * imperceptibly different and the label is now legible to everyone.
-   */
-  primary: "bg-pink-button text-white hover:bg-pink-600 active:bg-pink-700 shadow-sm",
-  /** Ink. For confident secondary actions. */
-  ink: "bg-ink text-cream hover:bg-sand-800",
-  outline: "border-2 border-ink/15 text-ink hover:border-ink/40 hover:bg-white",
-  /** For use on ink surfaces, where teal becomes legible. */
-  onInk: "bg-teal text-ink hover:bg-teal-100 font-bold",
-  quiet: "text-sand-600 hover:text-ink hover:bg-sand-100",
+  /** Pink. One per screen, on the single most important action. White on pink is 4.80:1. */
+  primary: "bg-pink text-white hover:bg-navy shadow-sm",
+  /** Navy. For confident secondary actions. */
+  navy: "bg-navy text-white hover:bg-navy/90",
+  outline: "border-2 border-line-strong text-navy hover:border-navy hover:bg-white",
+  /** For use on navy surfaces, where teal becomes legible. */
+  onNavy: "bg-teal text-navy hover:bg-teal-100 font-medium",
+  quiet: "text-grey hover:text-navy hover:bg-line/50",
 } as const;
 
 type ButtonVariant = keyof typeof BUTTON_VARIANTS;
@@ -93,7 +87,7 @@ export function Card({
   return (
     <As
       className={cx(
-        "rounded-card border border-sand-200 bg-white shadow-[0_1px_2px_rgba(17,17,17,0.04)]",
+        "rounded-card border border-line bg-white shadow-[0_1px_2px_rgba(17,17,17,0.04)]",
         className,
       )}
     >
@@ -116,7 +110,7 @@ export function Display({
   return <As className={cx("font-display", className)}>{children}</As>;
 }
 
-/** A small all-caps label. Uses Inter, not Anton — Anton is headlines only. */
+/** A small all-caps label, in Montserrat 700. */
 export function Eyebrow({
   children,
   className,
@@ -127,7 +121,7 @@ export function Eyebrow({
   return (
     <p
       className={cx(
-        "text-xs font-bold uppercase tracking-[0.14em] text-sand-500",
+        "font-display text-xs font-bold uppercase tracking-[0.07em] text-grey",
         className,
       )}
     >
@@ -148,13 +142,13 @@ export function Badge({
   className?: string;
 }) {
   const tones = {
-    neutral: "bg-sand-100 text-sand-700 border-sand-200",
-    // teal-deep, not brand teal: brand teal is illegible on white.
-    teal: "bg-teal-50 text-teal-deep border-teal-100",
-    pink: "bg-pink-50 text-pink-700 border-pink-200",
-    review: "bg-review-soft text-review border-amber-200",
-    correct: "bg-correct-soft text-correct border-teal-100",
-    incorrect: "bg-incorrect-soft text-incorrect border-red-200",
+    neutral: "bg-line/50 text-grey border-line",
+    // Navy text: brand teal is illegible on white.
+    teal: "bg-teal-50 text-navy border-teal-line",
+    pink: "bg-pink-50 text-navy border-pink-line",
+    review: "bg-pink-50 text-navy border-pink-line",
+    correct: "bg-teal-50 text-correct border-teal-line",
+    incorrect: "bg-pink-50 text-incorrect border-pink-line",
   } as const;
 
   return (
@@ -214,11 +208,11 @@ export function AwaitingContent({ className }: { className?: string }) {
   return (
     <div
       className={cx(
-        "rounded-xl border border-dashed border-sand-300 bg-sand-100/60 px-4 py-3 text-sm text-sand-600",
+        "rounded-xl border border-dashed border-line-strong bg-line/40 px-4 py-3 text-sm text-grey",
         className,
       )}
     >
-      <span className="font-semibold text-sand-700">Content pending.</span> This will be
+      <span className="font-semibold text-grey">Content pending.</span> This will be
       written from the Save7 study guide. It is intentionally blank rather than filled with
       unverified text.
     </div>
@@ -233,24 +227,24 @@ export const TIER_META: Record<
 > = {
   BEGINNER: {
     label: "Beginner",
-    dotClass: "bg-level-beginner",
-    textClass: "text-level-beginner",
-    softClass: "bg-level-beginner-soft",
-    borderClass: "border-level-beginner/25",
+    dotClass: "bg-teal",
+    textClass: "text-teal-ink",
+    softClass: "bg-teal-50",
+    borderClass: "border-teal-line",
   },
   INTERMEDIATE: {
     label: "Intermediate",
-    dotClass: "bg-level-intermediate",
-    textClass: "text-level-intermediate",
-    softClass: "bg-level-intermediate-soft",
-    borderClass: "border-level-intermediate/25",
+    dotClass: "bg-teal",
+    textClass: "text-teal-ink",
+    softClass: "bg-teal-50",
+    borderClass: "border-teal-line",
   },
   ADVANCED: {
     label: "Advanced",
-    dotClass: "bg-level-advanced",
-    textClass: "text-level-advanced",
-    softClass: "bg-level-advanced-soft",
-    borderClass: "border-level-advanced/25",
+    dotClass: "bg-teal",
+    textClass: "text-teal-ink",
+    softClass: "bg-teal-50",
+    borderClass: "border-teal-line",
   },
 };
 
@@ -274,19 +268,19 @@ export function ProgressBar({
   /** 0–100. */
   value: number;
   label: string;
-  tone?: "pink" | "teal" | "ink";
+  tone?: "pink" | "teal" | "navy";
   className?: string;
 }) {
   const clamped = Math.max(0, Math.min(100, Math.round(value)));
   const fill = {
     pink: "bg-pink",
-    teal: "bg-teal-deep",
-    ink: "bg-ink",
+    teal: "bg-teal-ink",
+    navy: "bg-navy",
   }[tone];
 
   return (
     <div
-      className={cx("h-2 w-full overflow-hidden rounded-pill bg-sand-200", className)}
+      className={cx("h-2 w-full overflow-hidden rounded-pill bg-line", className)}
       role="progressbar"
       aria-valuenow={clamped}
       aria-valuemin={0}

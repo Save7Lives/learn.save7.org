@@ -56,7 +56,7 @@ export function LevelCard({
       as="article"
       className={cx(
         "flex flex-col p-6 transition hover:shadow-[0_8px_30px_rgba(17,17,17,0.07)] sm:p-7",
-        recommended && "ring-2 ring-pink-200",
+        recommended && "ring-2 ring-pink-line",
       )}
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -71,32 +71,32 @@ export function LevelCard({
         {complete ? <Badge tone="correct">Complete</Badge> : null}
       </div>
 
-      <Display as="h3" className="mt-4 text-title text-ink">
+      <Display as="h3" className="mt-4 text-title text-navy">
         {level.title}
       </Display>
-      <p className="mt-2 text-sm text-sand-600">{level.strapline}</p>
+      <p className="mt-2 text-sm text-grey">{level.strapline}</p>
 
-      <dl className="mt-5 space-y-3 border-t border-sand-200 pt-5 text-sm">
+      <dl className="mt-5 space-y-3 border-t border-line pt-5 text-sm">
         <div className="flex gap-3">
-          <dt className="w-24 shrink-0 font-semibold text-sand-500">You&apos;ll be able to</dt>
-          <dd className="text-sand-700">{level.goal}</dd>
+          <dt className="w-24 shrink-0 font-semibold text-grey">You&apos;ll be able to</dt>
+          <dd className="text-grey">{level.goal}</dd>
         </div>
         <div className="flex gap-3">
-          <dt className="w-24 shrink-0 font-semibold text-sand-500">Time</dt>
-          <dd className="text-sand-700">
+          <dt className="w-24 shrink-0 font-semibold text-grey">Time</dt>
+          <dd className="text-grey">
             {level.estMinMinutes}–{level.estMaxMinutes} minutes · {level.modules.length}{" "}
             Stages
           </dd>
         </div>
         <div className="flex gap-3">
-          <dt className="w-24 shrink-0 font-semibold text-sand-500">Earns</dt>
-          <dd className="font-semibold text-ink">
+          <dt className="w-24 shrink-0 font-semibold text-grey">Earns</dt>
+          <dd className="font-semibold text-navy">
             &ldquo;{level.certificateTitle}&rdquo; certificate
           </dd>
         </div>
       </dl>
 
-      <ul className="mt-5 space-y-1.5 text-sm text-sand-600">
+      <ul className="mt-5 space-y-1.5 text-sm text-grey">
         {level.modules.map((m) => (
           <li key={m.slug} className="flex gap-2.5">
             <span
@@ -113,13 +113,13 @@ export function LevelCard({
       {progress && started ? (
         <div className="mb-4">
           <div className="mb-2 flex items-baseline justify-between text-xs font-semibold">
-            <span className="text-sand-500">
+            <span className="text-grey">
               {progress.stagesPassed} of {progress.modulesTotal} Stages passed
             </span>
             {progress.certificatePublicId ? (
               <Link
                 href={`/certificate/${progress.certificatePublicId}`}
-                className="text-pink-600 underline"
+                className="text-pink underline"
               >
                 View certificate
               </Link>

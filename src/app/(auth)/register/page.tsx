@@ -21,7 +21,7 @@ export default async function RegisterPage() {
     <div>
       <Eyebrow>Save7 Learn</Eyebrow>
       <Display className="mt-3">Register</Display>
-      <p className="mt-4 text-ink/70">
+      <p className="mt-4 text-grey">
         You need your name, an email and your date of birth. This course is 18+ only. There
         is no password. You sign in with Google afterwards, using the address you give here.
       </p>

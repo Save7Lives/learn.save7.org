@@ -96,15 +96,15 @@ export default async function AdminOverviewPage() {
       {/* Content review is surfaced on the overview because unverified medical and
           legal claims are the single biggest risk in this course. */}
       {review.blockingLaunch > 0 ? (
-        <div className="mt-6 rounded-card border-2 border-review/40 bg-review-soft p-5">
+        <div className="mt-6 rounded-card border-2 border-pink bg-pink-50 p-5">
           <div className="flex flex-wrap items-center gap-3">
             <Badge tone="review">Before public launch</Badge>
-            <p className="flex-1 text-sm text-ink">
+            <p className="flex-1 text-sm text-navy">
               <strong>{review.blockingLaunch} claims</strong> still need verification
               against authoritative sources. Learners currently see a &ldquo;pending
               review&rdquo; badge wherever this applies.
             </p>
-            <ButtonLink href="/admin/content-review" size="sm" variant="ink">
+            <ButtonLink href="/admin/content-review" size="sm" variant="navy">
               Review them
             </ButtonLink>
           </div>
@@ -135,20 +135,20 @@ export default async function AdminOverviewPage() {
           description="A question most learners fail is usually a teaching problem in the module before it."
         >
           {missed.length === 0 ? (
-            <p className="text-sm text-sand-500">
+            <p className="text-sm text-grey">
               Not enough answers recorded yet.
             </p>
           ) : (
             <ul className="space-y-3">
               {missed.map((q) => (
-                <li key={q.questionId} className="border-b border-sand-200 pb-3">
+                <li key={q.questionId} className="border-b border-line pb-3">
                   <div className="flex items-baseline justify-between gap-4">
-                    <p className="text-sm text-ink">{q.prompt}</p>
-                    <span className="shrink-0 font-display text-xl text-pink-600">
+                    <p className="text-sm text-navy">{q.prompt}</p>
+                    <span className="shrink-0 font-display text-xl text-pink">
                       {q.incorrectRatePct}%
                     </span>
                   </div>
-                  <p className="mt-0.5 text-xs text-sand-500">
+                  <p className="mt-0.5 text-xs text-grey">
                     {q.incorrect} of {q.answered} wrong · {q.topicTag}
                     {q.moduleTitle ? ` · ${q.moduleTitle}` : ""}
                   </p>
@@ -159,7 +159,7 @@ export default async function AdminOverviewPage() {
           <p className="mt-4">
             <Link
               href="/admin/knowledge"
-              className="text-sm font-semibold text-pink-600 underline"
+              className="text-sm font-semibold text-pink underline"
             >
               See the full list
             </Link>
@@ -173,11 +173,11 @@ export default async function AdminOverviewPage() {
           description="Where learners most often start a module and do not finish it."
           className="mt-4"
         >
-          <p className="text-ink">
+          <p className="text-navy">
             <strong>{dropOff.title}</strong>{" "}
-            <span className="text-sand-500">({dropOff.levelTitle})</span>
+            <span className="text-grey">({dropOff.levelTitle})</span>
           </p>
-          <p className="mt-1 text-sm text-sand-600">
+          <p className="mt-1 text-sm text-grey">
             {dropOff.dropped} of {dropOff.started} learners who started this module have
             not completed it
             {dropOff.completionRatePct !== null
@@ -188,7 +188,7 @@ export default async function AdminOverviewPage() {
           <p className="mt-3">
             <Link
               href="/admin/engagement"
-              className="text-sm font-semibold text-pink-600 underline"
+              className="text-sm font-semibold text-pink underline"
             >
               See every module
             </Link>

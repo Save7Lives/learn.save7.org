@@ -1,22 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Anton, Inter } from "next/font/google";
+import { Lexend, Montserrat } from "next/font/google";
 import "./globals.css";
 
 /**
- * Save7's two official typefaces. Anton is loaded as a display face only — see
- * globals.css, where it is scoped to .font-display so it can never leak into
- * body copy, which the brand kit explicitly forbids.
+ * Learn's two typefaces (#68): Montserrat for headings, Lexend for body and UI.
+ * Montserrat is loaded at 700 and 800 only, the two weights the type scale uses.
  */
-const anton = Anton({
-  weight: "400",
+const montserrat = Montserrat({
+  weight: ["700", "800"],
   subsets: ["latin"],
-  variable: "--font-anton",
+  variable: "--font-montserrat",
   display: "swap",
 });
 
-const inter = Inter({
+const lexend = Lexend({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-lexend",
   display: "swap",
 });
 
@@ -50,8 +49,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en-ZA" className={`${anton.variable} ${inter.variable}`}>
-      <body className="min-h-dvh bg-sand-50 text-ink antialiased">
+    <html lang="en-ZA" className={`${montserrat.variable} ${lexend.variable}`}>
+      <body className="min-h-dvh bg-white text-navy antialiased">
         <a href="#main" className="skip-link">
           Skip to main content
         </a>
