@@ -85,7 +85,7 @@ export const beginnerLevel: LevelStructure = {
     {
       slug: "why-donation-matters",
       number: 1,
-      title: "Why Donation Matters",
+      title: "Why donation matters",
       coreQuestion: "Why do people need donated organs and tissues, and how short is South Africa?",
       estMinutes: 8,
       lessons: [
@@ -101,7 +101,7 @@ export const beginnerLevel: LevelStructure = {
     {
       slug: "busting-the-myths",
       number: 2,
-      title: "Busting the Myths",
+      title: "Busting the myths",
       coreQuestion: "Which widely-held beliefs about donation are false, and what is actually true?",
       estMinutes: 15,
       lessons: [
@@ -117,7 +117,7 @@ export const beginnerLevel: LevelStructure = {
     {
       slug: "how-donation-works",
       number: 3,
-      title: "How Donation Actually Works",
+      title: "How donation actually works",
       coreQuestion: "In plain language, how does donation actually happen?",
       estMinutes: 8,
       lessons: [
@@ -149,7 +149,7 @@ export const intermediateLevel: LevelStructure = {
     {
       slug: "how-donation-happens",
       number: 1,
-      title: "How Donation Happens: The Process",
+      title: "How donation happens: the process",
       coreQuestion: "From referral to recovery, how does the donation process actually run?",
       estMinutes: 15,
       lessons: [
@@ -166,7 +166,7 @@ export const intermediateLevel: LevelStructure = {
     {
       slug: "consent-whose-decision",
       number: 2,
-      title: "Consent: Whose Decision and How",
+      title: "Consent: whose decision and how",
       coreQuestion: "Who may consent to donation, and what does registering actually guarantee?",
       estMinutes: 10,
       lessons: [
@@ -182,7 +182,7 @@ export const intermediateLevel: LevelStructure = {
     {
       slug: "sa-legal-framework",
       number: 3,
-      title: "The South African Legal Framework",
+      title: "The South African legal framework",
       coreQuestion: "What does South African law actually require for donation?",
       estMinutes: 12,
       lessons: [
@@ -198,7 +198,7 @@ export const intermediateLevel: LevelStructure = {
     {
       slug: "ethics-and-end-of-life",
       number: 4,
-      title: "Ethics of Donation and End-of-Life Care",
+      title: "Ethics of donation and end-of-life care",
       coreQuestion: "How does donation sit alongside end-of-life care, and what makes it ethical?",
       estMinutes: 12,
       lessons: [
@@ -230,7 +230,7 @@ export const advancedLevel: LevelStructure = {
     {
       slug: "coordinator-role",
       number: 1,
-      title: "The Transplant/Donation Coordinator's Role",
+      title: "The transplant/donation coordinator's role",
       coreQuestion: "What does a transplant or donation coordinator actually do, and when?",
       estMinutes: 10,
       lessons: [
@@ -246,7 +246,7 @@ export const advancedLevel: LevelStructure = {
     {
       slug: "donation-conversation",
       number: 2,
-      title: "Having the Donation Conversation",
+      title: "Having the donation conversation",
       coreQuestion: "How is the donation conversation actually conducted with a family?",
       estMinutes: 15,
       lessons: [
@@ -262,7 +262,7 @@ export const advancedLevel: LevelStructure = {
     {
       slug: "consent-ethics-in-depth",
       number: 3,
-      title: "Consent and End-of-Life Ethics, In Depth",
+      title: "Consent and end-of-life ethics, in depth",
       coreQuestion: "At depth, what makes consent to donation valid?",
       estMinutes: 12,
       lessons: [
@@ -278,7 +278,7 @@ export const advancedLevel: LevelStructure = {
     {
       slug: "public-advocacy",
       number: 4,
-      title: "Public Advocacy: Equity, Media, and Community Trust",
+      title: "Public advocacy: equity, media, and community trust",
       coreQuestion: "How is donation advocated for in public without breaking trust?",
       estMinutes: 12,
       lessons: [
