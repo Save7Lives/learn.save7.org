@@ -736,12 +736,12 @@ index 37bd8ce..851e61c 100644
  /* A single, unmistakable focus treatment everywhere. Keyboard learners must
 diff --git a/src/components/course/BaselineLevelRows.tsx b/src/components/course/BaselineLevelRows.tsx
 new file mode 100644
-index 0000000..b38b3c3
+index 0000000..a714539
 --- /dev/null
 +++ b/src/components/course/BaselineLevelRows.tsx
 @@ -0,0 +1,136 @@
 +import { percent, sittingLabel, type BaselineState, type Sitting } from "@/lib/baseline";
-+import { StepDot } from "@/components/ui/status";
++import { StepDot, type RailState } from "@/components/portal/Portal";
 +
 +type State = Pick<BaselineState, "sittings" | "levels" | "levelsCompleted">;
 +
@@ -843,7 +843,7 @@ index 0000000..b38b3c3
 +      {Array.from({ length: max }, (_, i) => {
 +        const n = i + 1;
 +        const taken = state.sittings.find((s) => s.sittingNo === n) ?? null;
-+        const dot = n < current ? "done" : n === current ? "now" : "todo";
++        const dot: RailState = n < current ? "passed" : n === current ? "current" : "todo";
 +        const note = taken ? sittingLabel(state, taken) : "Not yet";
 +        const status = n === current ? "this sitting" : n < current ? "taken" : "not yet taken";
 +        return (
@@ -878,15 +878,15 @@ index 0000000..b38b3c3
 +}
 diff --git a/src/components/course/BaselineRecorded.tsx b/src/components/course/BaselineRecorded.tsx
 new file mode 100644
-index 0000000..3c9edcf
+index 0000000..e2085d9
 --- /dev/null
 +++ b/src/components/course/BaselineRecorded.tsx
-@@ -0,0 +1,133 @@
+@@ -0,0 +1,134 @@
 +import { MAX_SITTINGS, type BaselineState } from "@/lib/baseline";
 +import { BaselineLevelRows, SittingStepper } from "@/components/course/BaselineLevelRows";
 +import { ButtonLink, Card, Eyebrow } from "@/components/ui/primitives";
 +import { HeroArt } from "@/components/ui/HeroArt";
-+import { StatusPill } from "@/components/ui/status";
++import { StatusPill } from "@/components/portal/Portal";
 +
 +/**
 + * The Baseline's results screen, given a learner's Sittings and the Level to
@@ -910,7 +910,7 @@ index 0000000..3c9edcf
 +    <div className="relative overflow-hidden pb-14 pt-[132px] sm:pt-14">
 +      <HeroArt />
 +      <div className="relative z-10 mx-auto max-w-[640px] px-5 sm:px-8">
-+        <Eyebrow tone="pink">Baseline recorded</Eyebrow>
++        <Eyebrow className="text-pink">Baseline recorded</Eyebrow>
 +        <h1 className="t-display mt-2 text-navy sm:max-w-[14ch]">
 +          {isFirst ? <>That&apos;s your starting point</> : <>Here&apos;s what changed</>}
 +        </h1>
@@ -926,14 +926,15 @@ index 0000000..3c9edcf
 +            {latest.totalScore} of {latest.totalMax} questions
 +          </p>
 +          {isFirst ? null : (
-+            <StatusPill
-+              tone={change >= 0 ? "good" : "none"}
-+              icon={change >= 0 ? "check" : "info"}
-+              className="mt-3"
-+            >
-+              {change >= 0 ? "+" : "\u2212"}
-+              {Math.abs(change)} points since your first sitting ({first.totalPct}%)
-+            </StatusPill>
++            <p className="mt-3">
++              <StatusPill
++                tone={change >= 0 ? "done" : "progress"}
++                icon={change >= 0 ? "check" : "info"}
++              >
++                {change >= 0 ? "+" : "\u2212"}
++                {Math.abs(change)} points since your first sitting ({first.totalPct}%)
++              </StatusPill>
++            </p>
 +          )}
 +
 +          {isFirst ? null : (
@@ -1017,16 +1018,15 @@ index 0000000..3c9edcf
 +}
 diff --git a/src/components/course/BaselineSitting.tsx b/src/components/course/BaselineSitting.tsx
 new file mode 100644
-index 0000000..ade8fe6
+index 0000000..8db9702
 --- /dev/null
 +++ b/src/components/course/BaselineSitting.tsx
-@@ -0,0 +1,136 @@
+@@ -0,0 +1,135 @@
 +"use client";
 +
 +import { useState, useTransition } from "react";
-+import { Button, Eyebrow } from "@/components/ui/primitives";
++import { Button, Eyebrow, NumberPill } from "@/components/ui/primitives";
 +import { HeroArt } from "@/components/ui/HeroArt";
-+import { NumberPill } from "@/components/ui/status";
 +import { QuizRunner } from "@/components/quiz/QuizRunner";
 +import type { ClientQuestion } from "@/lib/quiz";
 +
@@ -1120,7 +1120,7 @@ index 0000000..ade8fe6
 +    <div className="relative overflow-hidden pb-8 pt-[132px] sm:pt-14">
 +      <HeroArt />
 +      <div className="relative z-10 mx-auto max-w-[680px] px-5 sm:px-8">
-+        <Eyebrow tone="pink">
++        <Eyebrow className="text-pink">
 +          {first ? "Baseline assessment" : `Baseline assessment · ${of}`}
 +        </Eyebrow>
 +        <h1 className="t-display mt-2 text-navy sm:max-w-[14ch]">
@@ -1138,7 +1138,7 @@ index 0000000..ade8fe6
 +              key={point.title}
 +              className="flex items-start gap-3.5 rounded-2xl border border-line bg-white p-4"
 +            >
-+              <NumberPill n={i + 1} />
++              <NumberPill n={i + 1} tone="teal" />
 +              <div>
 +                <h2 className="t-h4 mb-1 mt-0.5 text-navy">{point.title}</h2>
 +                <p className="text-[0.9375rem] leading-[1.55] text-grey">{point.text}</p>
@@ -1157,8 +1157,44 @@ index 0000000..ade8fe6
 +    </div>
 +  );
 +}
+diff --git a/src/components/course/IconCircle.tsx b/src/components/course/IconCircle.tsx
+new file mode 100644
+index 0000000..488ea6f
+--- /dev/null
++++ b/src/components/course/IconCircle.tsx
+@@ -0,0 +1,30 @@
++import { Icon, type IconName } from "@/components/ui/icons";
++import { cx } from "@/components/ui/primitives";
++
++/**
++ * An icon in a tinted circle (#73). Editorial-only: the Portal's `IconChip` is a square
++ * chip. `pink-100` and `teal-100` carry icons only, never text (#68), so a circle never
++ * holds a word.
++ */
++export function IconCircle({
++  name,
++  tone,
++  className,
++}: {
++  name: IconName;
++  tone: "pink" | "teal";
++  className?: string;
++}) {
++  return (
++    <span
++      aria-hidden="true"
++      className={cx(
++        "grid size-11 shrink-0 place-items-center rounded-full",
++        tone === "pink" ? "bg-pink-100 text-pink" : "bg-teal-100 text-teal-ink",
++        className,
++      )}
++    >
++      <Icon name={name} className="size-6 shrink-0" />
++    </span>
++  );
++}
 diff --git a/src/components/layout/SiteHeader.tsx b/src/components/layout/SiteHeader.tsx
-index e7dd795..d48a3cd 100644
+index 1670266..fbc2298 100644
 --- a/src/components/layout/SiteHeader.tsx
 +++ b/src/components/layout/SiteHeader.tsx
 @@ -17,7 +17,7 @@ export async function SiteHeader({ className }: { className?: string }) {
@@ -1191,7 +1227,7 @@ index 3ebd20b..a4d35b7 100644
    if (lesson.kind === "CHECK") {
      return <Wrapped prose={prose}>{stageQuiz ?? null}</Wrapped>;
 diff --git a/src/components/lesson/LessonFilm.tsx b/src/components/lesson/LessonFilm.tsx
-index 987eb9e..afb28ed 100644
+index 987eb9e..b5ce54e 100644
 --- a/src/components/lesson/LessonFilm.tsx
 +++ b/src/components/lesson/LessonFilm.tsx
 @@ -1,3 +1,4 @@
@@ -1217,7 +1253,7 @@ index 987eb9e..afb28ed 100644
 -      <figcaption className="p-5">
 -        <p className="text-xs font-bold uppercase tracking-wider text-grey">
 +      <figcaption className="px-5 pt-4 sm:p-[18px]">
-+        <Eyebrow tone="teal">
++        <Eyebrow className="text-teal-ink">
            Watch · {minutes} minutes · {megabytes} MB
 -        </p>
 -        <p className="mt-1 font-bold text-navy">{film.title}</p>
@@ -1277,15 +1313,15 @@ index 9fb4b47..df7e9cb 100644
        return `<p>${inline(trimmed).replace(/\n/g, "<br />")}</p>`;
      })
 diff --git a/src/components/lesson/ModuleComplete.tsx b/src/components/lesson/ModuleComplete.tsx
-index e639311..0daf3f8 100644
+index e639311..f5fa79d 100644
 --- a/src/components/lesson/ModuleComplete.tsx
 +++ b/src/components/lesson/ModuleComplete.tsx
 @@ -1,13 +1,16 @@
 -import Link from "next/link";
 -import { Badge, Card, Display, Eyebrow } from "@/components/ui/primitives";
 +import { Card, Eyebrow } from "@/components/ui/primitives";
-+import { IconChip } from "@/components/ui/icons";
-+import { StatusPill } from "@/components/ui/status";
++import { StatusPill } from "@/components/portal/Portal";
++import { IconCircle } from "@/components/course/IconCircle";
 +import { GoToStepLink } from "@/components/lesson/StepNav";
  
  export type ModuleCompleteContext = {
@@ -1361,7 +1397,7 @@ index e639311..0daf3f8 100644
 +      {/* The Stage opened with this question. Closing the loop on it is the point
 +          of the step. */}
 +      <Card className="border-teal-line bg-teal-50 p-5">
-+        <Eyebrow tone="teal">The question this Stage asked</Eyebrow>
++        <Eyebrow className="text-teal-ink">The question this Stage asked</Eyebrow>
 +        <p className="mt-2 text-lg font-medium leading-7 text-navy">{coreQuestion}</p>
 +        <p className="mt-2.5 text-sm text-grey">
 +          Could you answer that in a conversation now, in your own words? That is the only test that
@@ -1407,7 +1443,7 @@ index e639311..0daf3f8 100644
 -        ) : null}
 +        <Card className="mt-[18px] border-pink-line bg-pink-50 p-5">
 +          <div className="flex items-start gap-3.5">
-+            <IconChip name="award" tone="pink" />
++            <IconCircle name="award" tone="pink" />
 +            <div>
 +              <h4 className="t-h4 mb-1 text-navy">
 +                {quizPassed
@@ -1441,7 +1477,7 @@ index e639311..0daf3f8 100644
 -              </p>
 -            </>
 -          ) : nextModuleTitle ? (
-+            <StatusPill tone="none" icon="flag">
++            <StatusPill tone="progress" icon="flag">
 +              Last Stage in {levelTitle} Level
 +            </StatusPill>
 +          ) : null}
@@ -1469,7 +1505,7 @@ index e639311..0daf3f8 100644
      </div>
    );
 diff --git a/src/components/lesson/ModuleRunner.tsx b/src/components/lesson/ModuleRunner.tsx
-index 325fd6c..4eccf91 100644
+index 325fd6c..1ae430a 100644
 --- a/src/components/lesson/ModuleRunner.tsx
 +++ b/src/components/lesson/ModuleRunner.tsx
 @@ -2,14 +2,12 @@
@@ -1773,7 +1809,7 @@ index 325fd6c..4eccf91 100644
 +                  {pending ? "Saving…" : nextStageTitle ? "Next Stage" : backLabel}
 +                </Button>
 +                <p className="inline-flex items-center gap-1.5 text-sm font-medium text-correct">
-+                  <Icon name="check-circle" size="sm" />
++                  <Icon name="check-circle" className="size-4 shrink-0 stroke-[2.25]" />
 +                  You&apos;ve already finished this Stage
 +                </p>
 +              </>
@@ -1857,14 +1893,14 @@ index 325fd6c..4eccf91 100644
 +}
 diff --git a/src/components/lesson/StageHeader.tsx b/src/components/lesson/StageHeader.tsx
 new file mode 100644
-index 0000000..e63ec7a
+index 0000000..171f85c
 --- /dev/null
 +++ b/src/components/lesson/StageHeader.tsx
 @@ -0,0 +1,118 @@
 +import Link from "next/link";
 +import { Eyebrow } from "@/components/ui/primitives";
 +import { Icon } from "@/components/ui/icons";
-+import { StepDot, type DotState } from "@/components/ui/status";
++import { StepDot, type RailState } from "@/components/portal/Portal";
 +
 +/** One Stage of the Level, as the stepper needs it. */
 +export type RunnerStage = {
@@ -1914,11 +1950,11 @@ index 0000000..e63ec7a
 +          href={`/levels/${levelSlug}`}
 +          className="-ml-1 inline-flex min-h-11 items-center gap-1.5 px-1 text-[0.9375rem] font-medium text-teal-ink hover:text-navy"
 +        >
-+          <Icon name="back" size="sm" />
++          <Icon name="arrow-left" className="size-4 shrink-0 stroke-[2.25]" />
 +          {levelTitle} Level
 +        </Link>
 +
-+        <Eyebrow tone="teal">
++        <Eyebrow className="text-teal-ink">
 +          {levelTitle} Level · Stage {stageNumber} of {stageCount}
 +        </Eyebrow>
 +        <h1 className="t-h1 mt-0.5 text-navy">{stageTitle}</h1>
@@ -1926,11 +1962,11 @@ index 0000000..e63ec7a
 +
 +        <p className="mt-3 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-sm text-grey">
 +          <span className="inline-flex items-center gap-1.5">
-+            <Icon name="clock" size="sm" />
++            <Icon name="clock" className="size-4 shrink-0 stroke-[2.25]" />
 +            About {estMinutes} minutes
 +          </span>
 +          <span className="inline-flex items-center gap-1.5">
-+            <Icon name="list" size="sm" />
++            <Icon name="list" className="size-4 shrink-0 stroke-[2.25]" />
 +            {stepCount} steps
 +          </span>
 +        </p>
@@ -1938,7 +1974,7 @@ index 0000000..e63ec7a
 +        <ol aria-label={`Stages in ${levelTitle} Level`} className="mt-4 flex sm:mt-5">
 +          {stages.map((stage, i) => {
 +            const isCurrent = stage.slug === currentSlug;
-+            const state: DotState = isCurrent ? "now" : stage.passed ? "done" : "todo";
++            const state: RailState = isCurrent ? "current" : stage.passed ? "passed" : "todo";
 +            const status = isCurrent
 +              ? stage.passed
 +                ? "You are here, quiz passed"
@@ -1981,7 +2017,7 @@ index 0000000..e63ec7a
 +}
 diff --git a/src/components/lesson/StepNav.tsx b/src/components/lesson/StepNav.tsx
 new file mode 100644
-index 0000000..e543b50
+index 0000000..7aa7081
 --- /dev/null
 +++ b/src/components/lesson/StepNav.tsx
 @@ -0,0 +1,28 @@
@@ -2009,21 +2045,21 @@ index 0000000..e543b50
 +      className="inline-flex min-h-11 items-center gap-1.5 text-base font-medium text-pink underline underline-offset-4 hover:text-navy"
 +    >
 +      {children}
-+      <Icon name="arrow" size="sm" />
++      <Icon name="arrow" className="size-4 shrink-0 stroke-[2.25]" />
 +    </button>
 +  );
 +}
 diff --git a/src/components/lesson/StepRail.tsx b/src/components/lesson/StepRail.tsx
 new file mode 100644
-index 0000000..3ac3777
+index 0000000..cea47b4
 --- /dev/null
 +++ b/src/components/lesson/StepRail.tsx
-@@ -0,0 +1,156 @@
+@@ -0,0 +1,138 @@
 +"use client";
 +
 +import { useState } from "react";
 +import { Icon } from "@/components/ui/icons";
-+import { StepDot, type DotState } from "@/components/ui/status";
++import { RailStepper, StepDot, type RailState } from "@/components/portal/Portal";
 +import { cx } from "@/components/ui/primitives";
 +
 +export type RailStep = {
@@ -2037,9 +2073,10 @@ index 0000000..3ac3777
 + * screen while the site header scrolls away.
 + *
 + * On a phone it is "Step 2 of 7" over the step's short name, an "All steps" button
-+ * and a 4px progress line, about 52px of the screen. "All steps" opens a vertical
-+ * dotted list: a number per step, a check once read. From 40rem it is the labelled
-+ * stepper instead, with no button to press.
++ * and a 4px progress line, about 52px of the screen. "All steps" opens the same
++ * vertical dotted rail stepper My Progress uses for a Level's Stages: a number per
++ * step, a check once read. From 40rem it is the labelled stepper instead, with no
++ * button to press.
 + *
 + * Both are in the DOM and CSS picks one, so there is no layout flash and no
 + * window-width state to keep in step with the server render. The hidden one is
@@ -2059,7 +2096,8 @@ index 0000000..3ac3777
 +}) {
 +  const [open, setOpen] = useState(false);
 +  const current = steps[index];
-+  const stateOf = (i: number): DotState => (i === index ? "now" : visited.has(i) ? "done" : "todo");
++  const stateOf = (i: number): RailState =>
++    i === index ? "current" : visited.has(i) ? "passed" : "todo";
 +
 +  return (
 +    <nav
@@ -2088,8 +2126,10 @@ index 0000000..3ac3777
 +              All steps
 +              <Icon
 +                name="chev"
-+                size="sm"
-+                className={cx("transition-transform", open && "rotate-180")}
++                className={cx(
++                  "size-4 shrink-0 stroke-[2.25] transition-transform",
++                  open && "rotate-180",
++                )}
 +              />
 +            </button>
 +          </div>
@@ -2101,42 +2141,20 @@ index 0000000..3ac3777
 +          />
 +        </div>
 +        {open ? (
-+          <div className="mx-auto max-w-[680px] px-5">
-+            <ol id="step-list" className="py-1.5 pb-3">
-+              {steps.map((step, i) => {
-+                const state = stateOf(i);
-+                return (
-+                  <li
-+                    key={step.id}
-+                    className={cx(
-+                      "relative",
-+                      // The dotted line joining this dot to the one above it.
-+                      i > 0 &&
-+                        "before:absolute before:left-[15px] before:top-[-14px] before:h-7 before:border-l-[3px] before:border-dotted before:border-line-strong before:content-['']",
-+                    )}
-+                  >
-+                    <button
-+                      type="button"
-+                      aria-current={i === index ? "step" : undefined}
-+                      onClick={() => {
-+                        setOpen(false);
-+                        onSelect(i);
-+                      }}
-+                      className={cx(
-+                        "relative flex min-h-[52px] w-full items-center gap-3.5 rounded-[10px] py-1.5 text-left text-base text-navy",
-+                        i === index && "font-semibold",
-+                      )}
-+                    >
-+                      <StepDot state={state} n={i + 1} />
-+                      <span>{step.label}</span>
-+                      <span className="ml-auto text-[0.8125rem] font-normal text-grey">
-+                        {i === index ? "You are here" : visited.has(i) ? "Read" : ""}
-+                      </span>
-+                    </button>
-+                  </li>
-+                );
-+              })}
-+            </ol>
++          <div id="step-list" className="mx-auto max-w-[680px] px-5 pb-3">
++            <RailStepper
++              label="All steps in this Stage"
++              steps={steps.map((step, i) => ({
++                key: step.id,
++                title: step.label,
++                state: stateOf(i),
++                status: i === index ? "You are here" : visited.has(i) ? "Read" : "Not read yet",
++                onSelect: () => {
++                  setOpen(false);
++                  onSelect(i);
++                },
++              }))}
++            />
 +          </div>
 +        ) : null}
 +      </div>
@@ -2175,15 +2193,105 @@ index 0000000..3ac3777
 +    </nav>
 +  );
 +}
+diff --git a/src/components/portal/Portal.tsx b/src/components/portal/Portal.tsx
+index 066f7e2..e29e858 100644
+--- a/src/components/portal/Portal.tsx
++++ b/src/components/portal/Portal.tsx
+@@ -149,8 +149,48 @@ export type RailStep = {
+   /** The status word beside the title. */
+   status: string;
+   href?: string;
++  /** Makes the row a button instead of a link: the reader's "All steps" list (#74). */
++  onSelect?: () => void;
+ };
+ 
++/**
++ * A numbered stepper dot: passed (teal fill, check), current (thick navy ring), todo
++ * (grey ring) or locked (dashed, lock). Fill, ring and weight tell them apart, never
++ * colour alone. Shared by the rail stepper here, the reader's Stage and step steppers
++ * and the Baseline's Sitting stepper (#74), so there is one dot.
++ */
++export function StepDot({
++  n,
++  state,
++  className,
++}: {
++  n: number;
++  state: RailState;
++  className?: string;
++}) {
++  return (
++    <span
++      aria-hidden="true"
++      className={cx(
++        "relative grid size-8 shrink-0 place-items-center rounded-full font-display text-sm font-bold",
++        state === "passed" && "bg-teal text-navy",
++        state === "current" && "border-[3px] border-navy bg-white text-navy",
++        state === "todo" && "border-2 border-line-strong bg-white text-grey",
++        state === "locked" && "border-2 border-dashed border-line-strong bg-white text-grey",
++        className,
++      )}
++    >
++      {state === "passed" ? (
++        <Icon name="check" className="size-4 shrink-0 stroke-[2.5]" />
++      ) : state === "locked" ? (
++        <Icon name="lock" className="size-4 shrink-0 stroke-[2.5]" />
++      ) : (
++        n
++      )}
++    </span>
++  );
++}
++
+ /**
+  * A vertical rail of numbered steps on a dotted connector. A passed step is a
+  * filled pill with a check, the current one is ringed in navy, a locked one is
+@@ -163,24 +203,7 @@ export function RailStepper({ steps, label }: { steps: RailStep[]; label: string
+         const last = i === steps.length - 1;
+         const body = (
+           <>
+-            <span
+-              aria-hidden="true"
+-              className={cx(
+-                "relative grid size-8 shrink-0 place-items-center rounded-full font-display text-sm font-bold",
+-                step.state === "passed" && "bg-teal text-navy",
+-                step.state === "current" && "border-[3px] border-navy bg-white text-navy",
+-                step.state === "todo" && "border-2 border-line-strong bg-white text-grey",
+-                step.state === "locked" && "border-2 border-dashed border-line-strong bg-white text-grey",
+-              )}
+-            >
+-              {step.state === "passed" ? (
+-                <Icon name="check" className="size-4 stroke-[2.5]" />
+-              ) : step.state === "locked" ? (
+-                <Icon name="lock" className="size-4 stroke-[2.5]" />
+-              ) : (
+-                i + 1
+-              )}
+-            </span>
++            <StepDot n={i + 1} state={step.state} />
+             <span className="block">
+               <span className="block pt-[5px] text-[0.9375rem] font-medium leading-snug text-navy underline-offset-[3px] group-hover:underline">
+                 {step.title}
+@@ -209,6 +232,10 @@ export function RailStepper({ steps, label }: { steps: RailStep[]; label: string
+               <Link href={step.href} className={cx(cls, "group")}>
+                 {body}
+               </Link>
++            ) : step.onSelect ? (
++              <button type="button" onClick={step.onSelect} className={cx(cls, "group w-full text-left")}>
++                {body}
++              </button>
+             ) : (
+               <div className={cls}>{body}</div>
+             )}
 diff --git a/src/components/quiz/QuizParts.tsx b/src/components/quiz/QuizParts.tsx
 new file mode 100644
-index 0000000..fb73ad8
+index 0000000..ba3b09f
 --- /dev/null
 +++ b/src/components/quiz/QuizParts.tsx
-@@ -0,0 +1,221 @@
+@@ -0,0 +1,235 @@
 +import type { ReactNode } from "react";
 +import { cx } from "@/components/ui/primitives";
-+import { Icon, IconChip } from "@/components/ui/icons";
++import { Icon } from "@/components/ui/icons";
 +
 +/**
 + * The pieces a Stage Quiz and the Baseline share (#74): the progress strip, the
@@ -2257,7 +2365,12 @@ index 0000000..fb73ad8
 +        className,
 +      )}
 +    >
-+      <IconChip name="info" size="scenario" />
++      <span
++        aria-hidden="true"
++        className="grid size-8 shrink-0 place-items-center rounded-full bg-teal-100 text-teal-ink"
++      >
++        <Icon name="info" className="size-4 shrink-0 stroke-[2.25]" />
++      </span>
 +      <span>{children}</span>
 +    </p>
 +  );
@@ -2315,7 +2428,10 @@ index 0000000..fb73ad8
 +        )}
 +      >
 +        <span className="group-has-[:checked]:hidden">{LETTERS[index]}</span>
-+        <Icon name="check" size="sm" className="hidden group-has-[:checked]:block" />
++        <Icon
++          name="check"
++          className="hidden size-4 shrink-0 stroke-[2.25] group-has-[:checked]:block"
++        />
 +      </span>
 +      <span className="min-w-0 flex-1 text-navy">{text}</span>
 +    </label>
@@ -2382,7 +2498,13 @@ index 0000000..fb73ad8
 +          !ok && !bad && "border-line-strong bg-white text-navy",
 +        )}
 +      >
-+        {ok ? <Icon name="check" size="sm" /> : bad ? <Icon name="x" size="sm" /> : LETTERS[index]}
++        {ok ? (
++          <Icon name="check" className="size-4 shrink-0 stroke-[2.25]" />
++        ) : bad ? (
++          <Icon name="x" className="size-4 shrink-0 stroke-[2.25]" />
++        ) : (
++          LETTERS[index]
++        )}
 +      </span>
 +      <span className="min-w-0 flex-1 text-navy">
 +        {text}
@@ -2394,7 +2516,7 @@ index 0000000..fb73ad8
 +              bad && "text-incorrect",
 +            )}
 +          >
-+            <Icon name={ok ? "check" : "x"} size="sm" />
++            <Icon name={ok ? "check" : "x"} className="size-4 shrink-0 stroke-[2.25]" />
 +            {words}
 +          </span>
 +        ) : null}
@@ -2403,7 +2525,7 @@ index 0000000..fb73ad8
 +  );
 +}
 diff --git a/src/components/quiz/QuizRunner.tsx b/src/components/quiz/QuizRunner.tsx
-index ece1538..27f74a6 100644
+index ece1538..82be57f 100644
 --- a/src/components/quiz/QuizRunner.tsx
 +++ b/src/components/quiz/QuizRunner.tsx
 @@ -1,7 +1,9 @@
@@ -2412,7 +2534,7 @@ index ece1538..27f74a6 100644
  import { useMemo, useState, useTransition } from "react";
 -import { Badge, Button, Card, Display, cx } from "@/components/ui/primitives";
 +import { Button, Eyebrow, cx } from "@/components/ui/primitives";
-+import { StatusPill } from "@/components/ui/status";
++import { StatusPill } from "@/components/portal/Portal";
 +import { QuizChoice, QuizProgress, ScenarioBox } from "@/components/quiz/QuizParts";
  import type { ClientQuestion } from "@/lib/quiz";
  
@@ -2473,7 +2595,7 @@ index ece1538..27f74a6 100644
  
    const question = questions[index];
    const isMulti = question?.kind === "MULTI";
-@@ -84,72 +94,81 @@ export function QuizRunner({
+@@ -84,72 +94,77 @@ export function QuizRunner({
      });
    }
  
@@ -2525,11 +2647,7 @@ index ece1538..27f74a6 100644
 -          })}
 -        </ol>
 +      <div>
-+        {eyebrow ? (
-+          <Eyebrow tone="teal" className="mb-3.5">
-+            {eyebrow}
-+          </Eyebrow>
-+        ) : null}
++        {eyebrow ? <Eyebrow className="mb-3.5 text-teal-ink">{eyebrow}</Eyebrow> : null}
 +        <div className={PAPER}>
 +          <Heading className="t-h2 text-navy">Check before you submit</Heading>
 +          <p className="mt-2 text-base leading-6 text-grey">
@@ -2566,7 +2684,7 @@ index ece1538..27f74a6 100644
 +                    </span>
 +                    <span className="flex-1">{q.prompt}</span>
 +                    {done ? (
-+                      <StatusPill tone="good" icon="check">
++                      <StatusPill tone="done" icon="check">
 +                        Answered
 +                      </StatusPill>
 +                    ) : (
@@ -2616,7 +2734,7 @@ index ece1538..27f74a6 100644
          </div>
        </div>
      );
-@@ -159,111 +178,63 @@ export function QuizRunner({
+@@ -159,111 +174,59 @@ export function QuizRunner({
  
    // --- Question step --------------------------------------------------------
    return (
@@ -2645,19 +2763,15 @@ index ece1538..27f74a6 100644
 -          ))}
 -        </ol>
 -      </div>
--
++    <div>
++      {eyebrow ? <Eyebrow className="mb-3.5 text-teal-ink">{eyebrow}</Eyebrow> : null}
++      {index === 0 && intro ? <p className="mb-3.5 text-sm text-grey">{intro}</p> : null}
+ 
 -      {index === 0 && intro ? (
 -        <p className="mb-6 rounded-xl border border-line bg-white px-4 py-3 text-sm text-grey">
 -          {intro}
 -        </p>
-+    <div>
-+      {eyebrow ? (
-+        <Eyebrow tone="teal" className="mb-3.5">
-+          {eyebrow}
-+        </Eyebrow>
-       ) : null}
-+      {index === 0 && intro ? <p className="mb-3.5 text-sm text-grey">{intro}</p> : null}
-+
+-      ) : null}
 +      <div className={PAPER}>
 +        <QuizProgress total={total} current={index} answered={answered} />
  
@@ -2722,7 +2836,7 @@ index ece1538..27f74a6 100644
            </div>
          </fieldset>
 -      </Card>
--
+ 
 -      <div className="mt-6 flex items-center gap-3">
 -        <Button
 -          variant="outline"
@@ -2731,7 +2845,7 @@ index ece1538..27f74a6 100644
 -        >
 -          Back
 -        </Button>
- 
+-
 -        {index < total - 1 ? (
 -          <Button onClick={() => setIndex((i) => Math.min(total - 1, i + 1))}>
 -            Next
@@ -2774,23 +2888,24 @@ index ece1538..27f74a6 100644
    );
  }
 diff --git a/src/components/quiz/StageQuiz.tsx b/src/components/quiz/StageQuiz.tsx
-index c1bb1c9..f8cdd12 100644
+index c1bb1c9..9cd2b9b 100644
 --- a/src/components/quiz/StageQuiz.tsx
 +++ b/src/components/quiz/StageQuiz.tsx
-@@ -1,8 +1,11 @@
+@@ -1,8 +1,12 @@
  "use client";
  
  import { useEffect, useRef, useState, useTransition } from "react";
 -import { Badge, Button, ButtonLink, Card, cx } from "@/components/ui/primitives";
 +import { Button, ButtonLink, Card, Eyebrow } from "@/components/ui/primitives";
-+import { IconChip } from "@/components/ui/icons";
-+import { StatusPill } from "@/components/ui/status";
++import { Icon } from "@/components/ui/icons";
++import { StatusPill } from "@/components/portal/Portal";
++import { IconCircle } from "@/components/course/IconCircle";
  import { QuizRunner } from "@/components/quiz/QuizRunner";
 +import { MarkedChoice, ScenarioBox, type MarkedState } from "@/components/quiz/QuizParts";
  import { STAGE_QUIZ_SIZE } from "@/lib/constants";
  import type { AttemptResult, GradedAnswer, StageQuizState } from "@/lib/quiz";
  import type { StageQuizOutcome, StageQuizPaper } from "@/app/(site)/levels/actions";
-@@ -113,7 +116,7 @@ export function StageQuiz({
+@@ -113,7 +117,7 @@ export function StageQuiz({
            questions={view.paper.questions}
            attemptId={view.paper.attemptId}
            title="Stage Quiz"
@@ -2799,7 +2914,7 @@ index c1bb1c9..f8cdd12 100644
            intro={
              view.paper.attemptNo > 1
                ? `Attempt ${view.paper.attemptNo}. ${view.paper.questions.length} questions, and you need ${needed(passMarkPct, view.paper.questions.length)} right to pass.`
-@@ -177,52 +180,71 @@ function Status({
+@@ -177,52 +181,71 @@ function Status({
    const latest = state?.latest ?? null;
  
    return (
@@ -2807,14 +2922,14 @@ index c1bb1c9..f8cdd12 100644
 -      <div className="flex flex-wrap items-center gap-3">
 -        <p className="text-xs font-bold uppercase tracking-wider text-grey">Stage Quiz</p>
 +    <section
-+      aria-labelledby="stage-quiz-status"
++      aria-label="Stage Quiz"
 +      className="rounded-[18px] border border-line px-5 py-[22px] sm:px-6"
 +    >
 +      <div className="flex flex-wrap items-center justify-between gap-3">
-+        <Eyebrow id="stage-quiz-status">Stage Quiz</Eyebrow>
++        <Eyebrow>Stage Quiz</Eyebrow>
          {passedAt ? (
 -          <Badge tone="correct">Passed</Badge>
-+          <StatusPill tone="good" icon="check-circle">
++          <StatusPill tone="done" icon="check-circle">
 +            Passed
 +          </StatusPill>
          ) : latest ? (
@@ -2824,7 +2939,7 @@ index c1bb1c9..f8cdd12 100644
 +            Not passed yet
 +          </StatusPill>
 +        ) : (
-+          <StatusPill tone="none" icon="flag">
++          <StatusPill tone="progress" icon="flag">
 +            Not started
 +          </StatusPill>
 +        )}
@@ -2892,7 +3007,7 @@ index c1bb1c9..f8cdd12 100644
            {pending
              ? "Opening…"
              : state?.openAttemptId
-@@ -234,12 +256,28 @@ function Status({
+@@ -234,12 +257,33 @@ function Status({
                    : "Start the quiz"}
          </Button>
          {latest ? (
@@ -2917,13 +3032,18 @@ index c1bb1c9..f8cdd12 100644
 +}) {
 +  return (
 +    <li className="flex items-center gap-2 rounded-pill border border-teal-line bg-teal-50 py-1.5 pl-1.5 pr-3 text-sm font-medium text-navy sm:gap-3 sm:rounded-[14px] sm:px-3 sm:py-2.5 sm:text-[0.9375rem]">
-+      <IconChip name={icon} size="fact" />
++      <span
++        aria-hidden="true"
++        className="grid size-7 shrink-0 place-items-center rounded-full bg-teal-100 text-teal-ink sm:size-10"
++      >
++        <Icon name={icon} className="size-4 shrink-0 stroke-[2.25] sm:size-5 sm:stroke-[1.75]" />
++      </span>
 +      {children}
 +    </li>
    );
  }
  
-@@ -269,15 +307,28 @@ function Result({
+@@ -269,15 +313,28 @@ function Result({
  
    return (
      <div>
@@ -2936,11 +3056,11 @@ index c1bb1c9..f8cdd12 100644
 -          <p className="mt-3 text-lg font-bold text-navy">
 -            You got {result.scoreRaw} of {result.scoreMax}.
 +          {passed ? (
-+            <StatusPill tone="good" icon="check-circle">
++            <StatusPill tone="done" icon="check-circle">
 +              Passed
 +            </StatusPill>
 +          ) : everPassed ? (
-+            <StatusPill tone="practice" icon="refresh">
++            <StatusPill tone="progress" icon="refresh">
 +              Practice attempt
 +            </StatusPill>
 +          ) : (
@@ -2959,7 +3079,7 @@ index c1bb1c9..f8cdd12 100644
              {passed
                ? "Well done. The explanations below are worth a read, even for the ones you got right."
                : everPassed
-@@ -287,28 +338,43 @@ function Result({
+@@ -287,28 +344,43 @@ function Result({
          </div>
  
          {certificatePublicId ? (
@@ -2974,7 +3094,7 @@ index c1bb1c9..f8cdd12 100644
 -          </div>
 +          <Card className="mt-[18px] border-pink-line bg-pink-50 p-5">
 +            <div className="flex items-start gap-3.5">
-+              <IconChip name="award" tone="pink" />
++              <IconCircle name="award" tone="pink" />
 +              <div>
 +                <h4 className="t-h4 mb-1 text-navy">
 +                  You&apos;ve earned the &ldquo;{certificateTitle}&rdquo; certificate
@@ -3018,7 +3138,7 @@ index c1bb1c9..f8cdd12 100644
          {result.answers.map((answer, i) => (
            <MarkedQuestion key={answer.questionId} answer={answer} index={i} />
          ))}
-@@ -317,75 +383,66 @@ function Result({
+@@ -317,75 +389,66 @@ function Result({
    );
  }
  
@@ -3133,7 +3253,7 @@ index c1bb1c9..f8cdd12 100644
 +        }
 +      >
 +        {answer.isCorrect ? (
-+          <StatusPill tone="good" icon="check-circle">
++          <StatusPill tone="done" icon="check-circle">
 +            Correct
 +          </StatusPill>
 +        ) : unanswered ? (
@@ -3178,55 +3298,21 @@ index 0000000..a069a9e
 +  );
 +}
 diff --git a/src/components/ui/icons.tsx b/src/components/ui/icons.tsx
-new file mode 100644
-index 0000000..517f0ef
---- /dev/null
+index 87613d3..e75a199 100644
+--- a/src/components/ui/icons.tsx
 +++ b/src/components/ui/icons.tsx
-@@ -0,0 +1,150 @@
-+import type { ReactNode } from "react";
-+import { cx } from "@/components/ui/primitives";
-+
-+/**
-+ * The outline icon set (#68): 24px grid, 1.75px stroke, no fills, no stock
-+ * clip-art. Only the icons the reader, the Stage Quiz and the Baseline need live
-+ * here; add to it when a screen needs another, drawn the same way.
-+ *
-+ * Every icon is decorative. The word beside it, or an `aria-label` on its
-+ * control, carries the meaning, so a state is never colour or shape alone.
-+ */
-+const PATHS = {
-+  check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
+@@ -59,6 +59,39 @@ const PATHS = {
+     </>
+   ),
+   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
++  "arrow-left": <path d="M19 12H5M11 6l-6 6 6 6" />,
++  // Added for the reader, Stage Quiz and Baseline (#74).
 +  x: <path d="m6.5 6.5 11 11M17.5 6.5l-11 11" />,
 +  alert: (
 +    <>
 +      <path d="M12 3.5 21.5 20h-19z" />
 +      <path d="M12 10v4" />
 +      <path d="M12 17.2v.01" />
-+    </>
-+  ),
-+  info: (
-+    <>
-+      <circle cx="12" cy="12" r="9" />
-+      <path d="M12 11v5.5" />
-+      <path d="M12 7.6v.01" />
-+    </>
-+  ),
-+  "check-circle": (
-+    <>
-+      <circle cx="12" cy="12" r="9" />
-+      <path d="m8 12.5 2.7 2.7L16 9.5" />
-+    </>
-+  ),
-+  "x-circle": (
-+    <>
-+      <circle cx="12" cy="12" r="9" />
-+      <path d="m9 9 6 6M15 9l-6 6" />
-+    </>
-+  ),
-+  clock: (
-+    <>
-+      <circle cx="12" cy="12" r="9" />
-+      <path d="M12 7v5l3 2" />
 +    </>
 +  ),
 +  list: (
@@ -3250,91 +3336,13 @@ index 0000000..517f0ef
 +      <path d="M20 20v-4.5h-4.5" />
 +    </>
 +  ),
-+  award: (
-+    <>
-+      <circle cx="12" cy="9" r="6" />
-+      <path d="M8.6 14.2 7 22l5-3 5 3-1.6-7.8" />
-+    </>
-+  ),
++  flag: <path d="M5 21V4M5 4h11.5l-2.5 4 2.5 4H5" />,
 +  chev: <path d="m6 9 6 6 6-6" />,
-+  back: <path d="M19 12H5M11 6l-6 6 6 6" />,
-+  arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
-+  flag: <path d="M5 21V4M5 4h11l-2 4 2 4H5" />,
-+} satisfies Record<string, ReactNode>;
-+
-+export type IconName = keyof typeof PATHS;
-+
-+export function Icon({
-+  name,
-+  size = "md",
-+  className,
-+}: {
-+  name: IconName;
-+  /** `sm` is the 16px, heavier-stroked glyph that sits inside pills and dots. */
-+  size?: "sm" | "md" | "lg";
-+  className?: string;
-+}) {
-+  return (
-+    <svg
-+      viewBox="0 0 24 24"
-+      fill="none"
-+      stroke="currentColor"
-+      strokeLinecap="round"
-+      strokeLinejoin="round"
-+      strokeWidth={size === "sm" ? 2.25 : 1.75}
-+      aria-hidden="true"
-+      focusable="false"
-+      className={cx(
-+        "shrink-0",
-+        // A caller that sets its own size-* (responsive chips) owns the size.
-+        !className?.includes("size-") &&
-+          (size === "sm" ? "size-4" : size === "lg" ? "size-6" : "size-5"),
-+        className,
-+      )}
-+    >
-+      {PATHS[name]}
-+    </svg>
-+  );
-+}
-+
-+const CHIP_SIZES = {
-+  md: "size-10",
-+  /** The quiz's fact chips: small on a phone, full size from 40rem. */
-+  fact: "size-7 sm:size-10",
-+  /** A scenario box's info mark. */
-+  scenario: "size-8",
-+} as const;
-+
-+/** An outline icon in a tinted circle: the deck's icon treatment. */
-+export function IconChip({
-+  name,
-+  tone = "teal",
-+  size = "md",
-+  className,
-+}: {
-+  name: IconName;
-+  tone?: "teal" | "pink" | "neutral";
-+  size?: keyof typeof CHIP_SIZES;
-+  className?: string;
-+}) {
-+  return (
-+    <span
-+      aria-hidden="true"
-+      className={cx(
-+        "grid shrink-0 place-items-center rounded-full",
-+        CHIP_SIZES[size],
-+        tone === "teal" && "bg-teal-100 text-teal-ink",
-+        tone === "pink" && "bg-pink-100 text-pink",
-+        tone === "neutral" && "bg-line text-navy",
-+        className,
-+      )}
-+    >
-+      <Icon name={name} size={size === "md" ? "md" : "sm"} />
-+    </span>
-+  );
-+}
+ } as const;
+ 
+ export type IconName = keyof typeof PATHS;
 diff --git a/src/components/ui/primitives.tsx b/src/components/ui/primitives.tsx
-index 0f6fa57..46181af 100644
+index 0f6fa57..db5e80b 100644
 --- a/src/components/ui/primitives.tsx
 +++ b/src/components/ui/primitives.tsx
 @@ -16,7 +16,7 @@ export function cx(...parts: Array<string | false | null | undefined>): string {
@@ -3355,39 +3363,18 @@ index 0f6fa57..46181af 100644
  } as const;
  
  type ButtonVariant = keyof typeof BUTTON_VARIANTS;
-@@ -110,18 +112,29 @@ export function Display({
-   return <As className={cx("font-display", className)}>{children}</As>;
- }
- 
--/** A small all-caps label, in Montserrat 700. */
-+/**
-+ * A small all-caps label, in Montserrat 700. Grey by default; `teal` and `pink`
-+ * are the text colours the README allows on white, `pink-50` and `teal-50`.
-+ */
- export function Eyebrow({
-   children,
-   className,
-+  tone = "grey",
-+  id,
- }: {
-   children: ReactNode;
-   className?: string;
-+  tone?: "grey" | "teal" | "pink";
-+  id?: string;
- }) {
+@@ -121,7 +123,9 @@ export function Eyebrow({
    return (
      <p
-+      id={id}
        className={cx(
 -        "font-display text-xs font-bold uppercase tracking-[0.07em] text-grey",
-+        "font-(family-name:--font-display) text-[0.8125rem] font-bold uppercase leading-[1.3] tracking-[0.07em]",
-+        tone === "grey" && "text-grey",
-+        tone === "teal" && "text-teal-ink",
-+        tone === "pink" && "text-pink",
++        "font-display text-[0.8125rem] font-bold uppercase leading-snug tracking-[0.07em]",
++        // Grey unless the page sets a colour: two text-* classes would fight on order.
++        !className?.includes("text-") && "text-grey",
          className,
        )}
      >
-@@ -154,7 +167,7 @@ export function Badge({
+@@ -154,7 +158,7 @@ export function Badge({
    return (
      <span
        className={cx(
@@ -3396,109 +3383,37 @@ index 0f6fa57..46181af 100644
          tones[tone],
          className,
        )}
-diff --git a/src/components/ui/status.tsx b/src/components/ui/status.tsx
-new file mode 100644
-index 0000000..f78ea16
---- /dev/null
-+++ b/src/components/ui/status.tsx
-@@ -0,0 +1,97 @@
-+import type { ReactNode } from "react";
-+import { cx } from "@/components/ui/primitives";
-+import { Icon, type IconName } from "@/components/ui/icons";
-+
-+/**
-+ * The status pill, the stepper dot and the numbered pill (#74).
-+ *
-+ * Each one says its state in words or a glyph as well as colour, which is the rule
-+ * for every state in the reader, the Stage Quiz and the Baseline: a pill is a tint,
-+ * a hairline, an icon and navy text; a dot is a check, a ring or a number.
-+ */
-+
-+const PILL_TONES = {
-+  /** Not started: white with a strong hairline. */
-+  none: { surface: "border-line-strong bg-white", icon: "text-navy" },
-+  /** Not passed yet, Not answered: pink-50. */
-+  warn: { surface: "border-pink-line bg-pink-50", icon: "text-pink" },
-+  /** Passed, Answered, Correct: teal-50. */
-+  good: { surface: "border-teal-line bg-teal-50", icon: "text-teal-ink" },
-+  /** Practice attempt: white with a strong hairline and a grey icon. */
-+  practice: { surface: "border-line-strong bg-white", icon: "text-grey" },
-+} as const;
-+
-+export type StatusTone = keyof typeof PILL_TONES;
-+
-+export function StatusPill({
-+  tone,
-+  icon,
-+  children,
-+  className,
-+}: {
-+  tone: StatusTone;
-+  icon: IconName;
-+  children: ReactNode;
-+  className?: string;
-+}) {
-+  const t = PILL_TONES[tone];
-+  return (
-+    <span
-+      className={cx(
-+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-pill border py-1 pl-2 pr-3 text-[0.8125rem] font-medium leading-5 text-navy",
-+        t.surface,
-+        className,
-+      )}
-+    >
-+      <Icon name={icon} size="sm" className={t.icon} />
-+      {children}
-+    </span>
-+  );
-+}
-+
-+export type DotState = "done" | "now" | "todo";
-+
-+/**
-+ * One step on a dotted stepper: `teal` with a navy check when done, a navy ring for
-+ * where you are, a grey ring for the rest. The number shows on the last two, so a
-+ * stepper reads in order even with the colour taken away.
-+ */
-+export function StepDot({
-+  state,
+@@ -164,6 +168,30 @@ export function Badge({
+   );
+ }
+ 
++/** A numbered circle: teal with navy text, or pink with white text. Decorative. */
++export function NumberPill({
 +  n,
-+  className,
++  tone,
++  size = "md",
 +}: {
-+  state: DotState;
-+  n: number;
-+  className?: string;
++  n: number | string;
++  tone: "pink" | "teal";
++  size?: "sm" | "md";
 +}) {
 +  return (
 +    <span
 +      aria-hidden="true"
 +      className={cx(
-+        "grid size-8 shrink-0 place-items-center rounded-full font-(family-name:--font-display) text-sm font-bold leading-none",
-+        state === "done" && "bg-teal text-navy",
-+        state === "now" && "border-[3px] border-navy bg-white text-navy",
-+        state === "todo" && "border-2 border-line-strong bg-white text-grey",
-+        className,
-+      )}
-+    >
-+      {state === "done" ? <Icon name="check" size="sm" /> : n}
-+    </span>
-+  );
-+}
-+
-+/** A teal circle with a navy numeral: the deck's numbered pill. */
-+export function NumberPill({ n, className }: { n: number; className?: string }) {
-+  return (
-+    <span
-+      aria-hidden="true"
-+      className={cx(
-+        "grid size-8 shrink-0 place-items-center rounded-full bg-teal font-(family-name:--font-display) text-sm font-bold leading-none text-navy",
-+        className,
++        "inline-grid shrink-0 place-items-center rounded-full font-display font-bold",
++        size === "md" ? "size-8 text-sm" : "size-6 text-xs",
++        tone === "pink" ? "bg-pink text-white" : "bg-teal text-navy",
 +      )}
 +    >
 +      {n}
 +    </span>
 +  );
 +}
++
+ /**
+  * The "pending Save7 review" marker.
+  *
 diff --git a/src/lib/constants.ts b/src/lib/constants.ts
 index 9572707..4637fe9 100644
 --- a/src/lib/constants.ts
