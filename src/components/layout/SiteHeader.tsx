@@ -17,7 +17,7 @@ export async function SiteHeader({ className }: { className?: string }) {
   return (
     <header
       className={cx(
-        "sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur",
+        "site-header sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur",
         className,
       )}
     >

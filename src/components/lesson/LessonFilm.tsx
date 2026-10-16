@@ -1,3 +1,4 @@
+import { Eyebrow } from "@/components/ui/primitives";
 import { CaptionedVideo } from "@/components/lesson/CaptionedVideo";
 import { filmFor } from "@/lib/films";
 import { mediaUrl } from "@/lib/media";
@@ -30,7 +31,9 @@ export function LessonFilm({ filmKey }: { filmKey: string | null | undefined }) 
   const megabytes = Math.round(film.sizeBytes / 1_000_000);
 
   return (
-    <figure className="mb-8 overflow-hidden rounded-card border border-line bg-white">
+    // Full width on a phone: no card border or radius, and the page gutter is
+    // taken back so the player runs edge to edge (#74). From 40rem it is a card.
+    <figure className="-mx-5 mb-7 bg-white sm:mx-0 sm:overflow-hidden sm:rounded-[18px] sm:border sm:border-line">
       <CaptionedVideo
         src={video}
         type={film.video.type}
@@ -41,11 +44,11 @@ export function LessonFilm({ filmKey }: { filmKey: string | null | undefined }) 
         title={film.title}
       />
 
-      <figcaption className="p-5">
-        <p className="text-xs font-bold uppercase tracking-wider text-grey">
+      <figcaption className="px-5 pt-4 sm:p-[18px]">
+        <Eyebrow className="text-teal-ink">
           Watch · {minutes} minutes · {megabytes} MB
-        </p>
-        <p className="mt-1 font-bold text-navy">{film.title}</p>
+        </Eyebrow>
+        <p className="t-h3 mt-1 text-navy">{film.title}</p>
         <p className="mt-1 text-sm text-grey">
           It downloads only when you press play, and captions are on. The film
           reinforces all three Stages in this Level.

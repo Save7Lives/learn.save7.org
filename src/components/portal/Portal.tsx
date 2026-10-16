@@ -159,13 +159,15 @@ export type RailStep = {
   /** The status word beside the title. */
   status: string;
   href?: string;
+  /** Makes the row a button instead of a link: the reader's "All steps" list (#74). */
+  onSelect?: () => void;
 };
 
 /**
  * A numbered stepper dot: passed (teal fill, check), current (thick navy ring), todo
  * (grey ring) or locked (dashed, lock). Fill, ring and weight tell them apart, never
- * colour alone. Shared by the rail stepper here and the Editorial pages' course map
- * and Level timeline (#73), so there is one dot.
+ * colour alone. Shared by the rail stepper here, the reader's Stage and step steppers
+ * and the Baseline's Sitting stepper (#74), so there is one dot.
  */
 export function StepDot({
   n,
@@ -240,6 +242,10 @@ export function RailStepper({ steps, label }: { steps: RailStep[]; label: string
               <Link href={step.href} className={cx(cls, "group")}>
                 {body}
               </Link>
+            ) : step.onSelect ? (
+              <button type="button" onClick={step.onSelect} className={cx(cls, "group w-full text-left")}>
+                {body}
+              </button>
             ) : (
               <div className={cls}>{body}</div>
             )}

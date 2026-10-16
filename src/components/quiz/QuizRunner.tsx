@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Badge, Button, Card, Display, cx } from "@/components/ui/primitives";
+import { Button, Eyebrow, cx } from "@/components/ui/primitives";
+import { StatusPill } from "@/components/portal/Portal";
+import { QuizChoice, QuizProgress, ScenarioBox } from "@/components/quiz/QuizParts";
 import type { ClientQuestion } from "@/lib/quiz";
 
 /**
@@ -11,17 +13,21 @@ import type { ClientQuestion } from "@/lib/quiz";
  * twenty-question form is a wall; one question per screen keeps the reading
  * measure short and makes progress legible. A review step before submitting means
  * nobody submits by accident, and unanswered questions are easy to find.
+ *
+ * It sizes itself to its parent: the Stage page's column, or the Baseline page's.
  */
 
 export type QuizRunnerProps = {
   questions: ClientQuestion[];
   attemptId: string;
   title: string;
-  /** Framing shown before the first question. */
+  /** A line above the first question, such as "Attempt 2" on a Stage Quiz retake. */
   intro?: string;
+  /** A teal-ink eyebrow above the paper, such as "Baseline assessment · Sitting 1 of 4". */
+  eyebrow?: string;
   submitLabel?: string;
-  /** The review step's heading level: h2 when the runner sits inside a lesson page. */
-  headingAs?: "h1" | "h2";
+  /** The review step's heading level: h3 when the runner sits inside a lesson step. */
+  headingAs?: "h1" | "h2" | "h3";
   /**
    * Grades the attempt. A page-level quiz passes a server action that redirects;
    * an inline one passes a function that stores the result and returns nothing.
@@ -31,11 +37,15 @@ export type QuizRunnerProps = {
 
 type Answers = Record<string, string[]>;
 
+/** The card a paper's screens sit in: a hairline and 18px corners. */
+const PAPER = "rounded-[18px] border border-line px-5 py-[22px] sm:px-6";
+
 export function QuizRunner({
   questions,
   attemptId,
   title,
   intro,
+  eyebrow,
   submitLabel = "Submit answers",
   headingAs = "h1",
   onSubmit,
@@ -47,11 +57,11 @@ export function QuizRunner({
   const [pending, startTransition] = useTransition();
 
   const total = questions.length;
-  const answeredCount = useMemo(
-    () => questions.filter((q) => (answers[q.id]?.length ?? 0) > 0).length,
+  const answered = useMemo(
+    () => questions.map((q) => (answers[q.id]?.length ?? 0) > 0),
     [questions, answers],
   );
-  const unanswered = questions.filter((q) => (answers[q.id]?.length ?? 0) === 0);
+  const unansweredCount = answered.filter((a) => !a).length;
 
   const question = questions[index];
   const isMulti = question?.kind === "MULTI";
@@ -84,72 +94,77 @@ export function QuizRunner({
     });
   }
 
+  const Heading = headingAs;
+
   // --- Review step ----------------------------------------------------------
   if (reviewing) {
     return (
-      <div className="mx-auto max-w-2xl">
-        <Display as={headingAs} className="text-title text-navy">
-          Check before you submit
-        </Display>
-        <p className="mt-3 text-grey">
-          {unanswered.length === 0
-            ? "All questions answered. You can change any of them before submitting."
-            : `${unanswered.length} question${unanswered.length === 1 ? "" : "s"} still unanswered. Unanswered questions are marked incorrect, so it's worth going back.`}
-        </p>
+      <div>
+        {eyebrow ? <Eyebrow className="mb-3.5 text-teal-ink">{eyebrow}</Eyebrow> : null}
+        <div className={PAPER}>
+          <Heading className="t-h2 text-navy">Check before you submit</Heading>
+          <p className="mt-2 text-base leading-6 text-grey">
+            {unansweredCount === 0
+              ? "All questions answered. You can change any of them before submitting."
+              : `${unansweredCount} question${unansweredCount === 1 ? "" : "s"} still unanswered. Unanswered questions are marked not correct, so it is worth going back.`}
+          </p>
 
-        <ol className="mt-8 space-y-2">
-          {questions.map((q, i) => {
-            const done = (answers[q.id]?.length ?? 0) > 0;
-            return (
-              <li key={q.id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIndex(i);
-                    setReviewing(false);
-                  }}
-                  className={cx(
-                    "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition",
-                    done
-                      ? "border-line bg-white hover:border-line-strong"
-                      : "border-pink bg-pink-50 hover:border-navy",
-                  )}
-                >
-                  <span className="w-6 shrink-0 font-display text-lg text-grey">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span className="flex-1 text-sm text-navy">{q.prompt}</span>
-                  {done ? (
-                    <Badge tone="neutral">Answered</Badge>
-                  ) : (
-                    <Badge tone="review">Not answered</Badge>
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ol>
+          <ol className="mt-5 grid gap-2.5">
+            {questions.map((q, i) => {
+              const done = answered[i];
+              return (
+                <li key={q.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIndex(i);
+                      setReviewing(false);
+                    }}
+                    className={cx(
+                      "flex min-h-14 w-full items-center gap-3 rounded-[14px] border px-3.5 py-3 text-left text-[0.9375rem] leading-[1.4] text-navy",
+                      done ? "border-line-strong bg-white" : "border-pink bg-pink-50",
+                    )}
+                  >
+                    <span className="w-7 shrink-0 font-(family-name:--font-display) text-[0.9375rem] font-semibold leading-none text-navy">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="flex-1">{q.prompt}</span>
+                    {done ? (
+                      <StatusPill tone="done" icon="check">
+                        Answered
+                      </StatusPill>
+                    ) : (
+                      <StatusPill tone="warn" icon="alert">
+                        Not answered
+                      </StatusPill>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
 
-        <div aria-live="polite">
-          {error ? (
-            <p className="mt-6 rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-medium text-incorrect">
-              {error}
-            </p>
-          ) : null}
-        </div>
+          <div aria-live="polite">
+            {error ? (
+              <p className="mt-5 rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-medium text-incorrect">
+                {error}
+              </p>
+            ) : null}
+          </div>
 
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Button size="lg" onClick={submit} disabled={pending}>
-            {pending ? "Submitting…" : submitLabel}
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => setReviewing(false)}
-            disabled={pending}
-          >
-            Keep editing
-          </Button>
+          <div className="mt-[22px] flex flex-wrap items-center gap-2.5">
+            <Button size="lg" onClick={submit} disabled={pending}>
+              {pending ? "Submitting…" : submitLabel}
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setReviewing(false)}
+              disabled={pending}
+            >
+              Keep editing
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -159,111 +174,59 @@ export function QuizRunner({
 
   // --- Question step --------------------------------------------------------
   return (
-    <div className="mx-auto max-w-2xl">
-      {/* Progress. aria-live announces movement for screen reader users. */}
-      <div className="mb-8">
-        <div className="mb-2 flex items-baseline justify-between">
-          <p className="text-sm font-semibold text-grey" aria-live="polite">
-            Question {index + 1} of {total}
-          </p>
-          <p className="text-sm text-grey">{answeredCount} answered</p>
-        </div>
-        <ol className="flex gap-1" aria-hidden="true">
-          {questions.map((q, i) => (
-            <li
-              key={q.id}
-              className={cx(
-                "h-1.5 flex-1 rounded-pill transition-colors",
-                i === index
-                  ? "bg-pink"
-                  : (answers[q.id]?.length ?? 0) > 0
-                    ? "bg-pink-100"
-                    : "bg-line",
-              )}
-            />
-          ))}
-        </ol>
-      </div>
+    <div>
+      {eyebrow ? <Eyebrow className="mb-3.5 text-teal-ink">{eyebrow}</Eyebrow> : null}
+      {index === 0 && intro ? <p className="mb-3.5 text-sm text-grey">{intro}</p> : null}
 
-      {index === 0 && intro ? (
-        <p className="mb-6 rounded-xl border border-line bg-white px-4 py-3 text-sm text-grey">
-          {intro}
-        </p>
-      ) : null}
+      <div className={PAPER}>
+        <QuizProgress total={total} current={index} answered={answered} />
 
-      <Card className="p-6 sm:p-8">
         {question.scenario ? (
-          <p className="mb-4 border-l-3 border-teal-ink bg-teal-50 py-3 pl-4 pr-3 text-sm italic text-navy">
-            {question.scenario}
-          </p>
+          <ScenarioBox className="mb-[18px]">{question.scenario}</ScenarioBox>
         ) : null}
 
-        <fieldset>
-          <legend className="text-lg font-bold text-navy">{question.prompt}</legend>
-          {isMulti ? (
-            <p className="mt-1.5 text-sm text-grey">Select all that apply.</p>
-          ) : null}
+        <fieldset className="m-0 min-w-0 border-0 p-0">
+          <legend className="t-h3 p-0 text-navy">{question.prompt}</legend>
+          {isMulti ? <p className="mt-1.5 text-sm text-grey">Select all that apply.</p> : null}
 
-          <div className="mt-5 space-y-2.5">
-            {question.choices.map((choice) => {
-              const isSelected = selected.includes(choice.id);
-              return (
-                <label
-                  key={choice.id}
-                  className={cx(
-                    "flex cursor-pointer items-start gap-3 rounded-xl border-2 px-4 py-3.5 transition",
-                    isSelected
-                      ? "border-pink bg-pink-50"
-                      : "border-line bg-white hover:border-line-strong",
-                  )}
-                >
-                  <input
-                    type={isMulti ? "checkbox" : "radio"}
-                    name={question.id}
-                    value={choice.id}
-                    checked={isSelected}
-                    onChange={() => toggle(choice.id)}
-                    className="mt-1 size-4 shrink-0 accent-pink"
-                  />
-                  <span className={cx("text-navy", isSelected && "font-medium")}>
-                    {choice.text}
-                  </span>
-                </label>
-              );
-            })}
+          <div className="mt-[18px] grid gap-2.5">
+            {question.choices.map((choice, i) => (
+              <QuizChoice
+                key={choice.id}
+                index={i}
+                text={choice.text}
+                name={question.id}
+                value={choice.id}
+                multi={isMulti}
+                checked={selected.includes(choice.id)}
+                onChange={() => toggle(choice.id)}
+              />
+            ))}
           </div>
         </fieldset>
-      </Card>
 
-      <div className="mt-6 flex items-center gap-3">
-        <Button
-          variant="outline"
-          onClick={() => setIndex((i) => Math.max(0, i - 1))}
-          disabled={index === 0}
-        >
-          Back
-        </Button>
-
-        {index < total - 1 ? (
-          <Button onClick={() => setIndex((i) => Math.min(total - 1, i + 1))}>
-            Next
+        <div className="mt-[22px] flex flex-wrap items-center gap-2.5">
+          <Button
+            variant="outline"
+            onClick={() => setIndex((i) => Math.max(0, i - 1))}
+            disabled={index === 0}
+          >
+            Back
           </Button>
-        ) : (
-          <Button onClick={() => setReviewing(true)}>Review answers</Button>
-        )}
 
-        <button
-          type="button"
-          onClick={() => setReviewing(true)}
-          className="ml-auto inline-flex min-h-11 items-center text-sm font-semibold text-grey underline hover:text-navy"
-        >
-          Review all
-        </button>
+          {index < total - 1 ? (
+            <Button onClick={() => setIndex((i) => Math.min(total - 1, i + 1))}>Next</Button>
+          ) : (
+            <Button onClick={() => setReviewing(true)}>Review answers</Button>
+          )}
+
+          <Button variant="tertiary" onClick={() => setReviewing(true)} className="ml-auto">
+            Review all
+          </Button>
+        </div>
       </div>
 
-      <p className="mt-6 text-xs text-grey">
-        {title} · Your answers are saved when you submit.
-      </p>
+      <p className="mt-4 text-sm text-grey">{title} · Your answers are saved when you submit.</p>
     </div>
   );
 }

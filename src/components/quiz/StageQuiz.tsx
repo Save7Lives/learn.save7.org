@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Badge, Button, ButtonLink, Card, cx } from "@/components/ui/primitives";
+import { Button, ButtonLink, Card, Eyebrow } from "@/components/ui/primitives";
+import { Icon } from "@/components/ui/icons";
+import { StatusPill } from "@/components/portal/Portal";
+import { IconCircle } from "@/components/course/IconCircle";
 import { QuizRunner } from "@/components/quiz/QuizRunner";
+import { MarkedChoice, ScenarioBox, type MarkedState } from "@/components/quiz/QuizParts";
 import { STAGE_QUIZ_SIZE } from "@/lib/constants";
 import type { AttemptResult, GradedAnswer, StageQuizState } from "@/lib/quiz";
 import type { StageQuizOutcome, StageQuizPaper } from "@/app/(site)/levels/actions";
@@ -113,7 +117,7 @@ export function StageQuiz({
           questions={view.paper.questions}
           attemptId={view.paper.attemptId}
           title="Stage Quiz"
-          headingAs="h2"
+          headingAs="h3"
           intro={
             view.paper.attemptNo > 1
               ? `Attempt ${view.paper.attemptNo}. ${view.paper.questions.length} questions, and you need ${needed(passMarkPct, view.paper.questions.length)} right to pass.`
@@ -177,52 +181,71 @@ function Status({
   const latest = state?.latest ?? null;
 
   return (
-    <Card className="p-6 sm:p-8">
-      <div className="flex flex-wrap items-center gap-3">
-        <p className="text-xs font-bold uppercase tracking-wider text-grey">Stage Quiz</p>
+    <section
+      aria-label="Stage Quiz"
+      className="rounded-[18px] border border-line px-5 py-[22px] sm:px-6"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Eyebrow>Stage Quiz</Eyebrow>
         {passedAt ? (
-          <Badge tone="correct">Passed</Badge>
+          <StatusPill tone="done" icon="check-circle">
+            Passed
+          </StatusPill>
         ) : latest ? (
-          <Badge tone="review">Not passed yet</Badge>
-        ) : null}
+          <StatusPill tone="warn" icon="x-circle">
+            Not passed yet
+          </StatusPill>
+        ) : (
+          <StatusPill tone="progress" icon="flag">
+            Not started
+          </StatusPill>
+        )}
       </div>
 
+      <h3 className="t-h3 mt-3 text-navy">
+        {passedAt ? "You have passed this Stage" : latest ? "Nearly there" : "Ready when you are"}
+      </h3>
+
       {passedAt ? (
-        <p className="mt-3 text-navy">
+        <p className="mt-1.5 text-base leading-[1.6] text-grey">
           You passed this Stage&apos;s quiz on{" "}
-          {passedAt.toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" })}.
+          {passedAt.toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" })}
+          .
           {latest && !latest.passed
             ? ` Your latest practice attempt scored ${latest.scoreRaw} of ${latest.scoreMax}, and that doesn't change your pass.`
             : ""}
         </p>
       ) : latest ? (
-        <p className="mt-3 text-navy">
+        <p className="mt-1.5 text-base leading-[1.6] text-grey">
           Your last attempt scored {latest.scoreRaw} of {latest.scoreMax}. You need {need} of{" "}
           {STAGE_QUIZ_SIZE} to pass. A new attempt gives you questions you didn&apos;t see last
           time.
         </p>
       ) : (
-        <p className="mt-3 text-navy">
-          {STAGE_QUIZ_SIZE} questions on this Stage. Get {need} right to pass. You can try as
-          many times as you like, and each new attempt gives you questions you didn&apos;t see
-          the time before.
+        <p className="mt-1.5 text-base leading-[1.6] text-grey">
+          {STAGE_QUIZ_SIZE} questions on this Stage. Get {need} right to pass. You can try as many
+          times as you like, and each new attempt gives you questions you didn&apos;t see the time
+          before.
         </p>
       )}
+
+      <ul className="mb-1.5 mt-4 flex flex-wrap gap-2 sm:grid sm:grid-cols-3 sm:gap-2.5">
+        <Fact icon="list">{STAGE_QUIZ_SIZE} questions</Fact>
+        <Fact icon="target">{need} right to pass</Fact>
+        <Fact icon="refresh">Retry as often as you like</Fact>
+      </ul>
 
       {!passedAt ? (
         <p className="mt-3 text-sm text-grey">
           Passing every Stage Quiz in this Level earns the{" "}
-          <strong className="text-navy">&ldquo;{certificateTitle}&rdquo;</strong> certificate. It
-          doesn&apos;t hold you back: you can carry on to the next step whenever you like.
+          <span className="font-medium text-navy">&ldquo;{certificateTitle}&rdquo;</span>{" "}
+          certificate. It doesn&apos;t hold you back: you can carry on to the next step whenever you
+          like.
         </p>
       ) : null}
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Button
-          onClick={onStart}
-          disabled={pending}
-          variant={passedAt ? "outline" : "primary"}
-        >
+      <div className="mt-[18px] flex flex-wrap items-center gap-3">
+        <Button onClick={onStart} disabled={pending} variant={passedAt ? "outline" : "primary"}>
           {pending
             ? "Opening…"
             : state?.openAttemptId
@@ -234,12 +257,33 @@ function Status({
                   : "Start the quiz"}
         </Button>
         {latest ? (
-          <Button variant="quiet" onClick={() => onReview(latest.attemptId)} disabled={pending}>
+          <Button variant="tertiary" onClick={() => onReview(latest.attemptId)} disabled={pending}>
             Review your last attempt
           </Button>
         ) : null}
       </div>
-    </Card>
+    </section>
+  );
+}
+
+/** One of the three facts on the status card: a chip on a phone, a tile from 40rem. */
+function Fact({
+  icon,
+  children,
+}: {
+  icon: "list" | "target" | "refresh";
+  children: React.ReactNode;
+}) {
+  return (
+    <li className="flex items-center gap-2 rounded-pill border border-teal-line bg-teal-50 py-1.5 pl-1.5 pr-3 text-sm font-medium text-navy sm:gap-3 sm:rounded-[14px] sm:px-3 sm:py-2.5 sm:text-[0.9375rem]">
+      <span
+        aria-hidden="true"
+        className="grid size-7 shrink-0 place-items-center rounded-full bg-teal-100 text-teal-ink sm:size-10"
+      >
+        <Icon name={icon} className="size-4 shrink-0 stroke-[2.25] sm:size-5 sm:stroke-[1.75]" />
+      </span>
+      {children}
+    </li>
   );
 }
 
@@ -269,15 +313,28 @@ function Result({
 
   return (
     <div>
-      <Card className="p-6 sm:p-8">
+      <section className="rounded-[18px] border border-line px-5 py-[22px] sm:px-6">
         <div aria-live="polite">
-          <Badge tone={passed ? "correct" : everPassed ? "neutral" : "incorrect"}>
-            {passed ? "Passed" : everPassed ? "Practice attempt" : "Not passed yet"}
-          </Badge>
-          <p className="mt-3 text-lg font-bold text-navy">
-            You got {result.scoreRaw} of {result.scoreMax}.
+          {passed ? (
+            <StatusPill tone="done" icon="check-circle">
+              Passed
+            </StatusPill>
+          ) : everPassed ? (
+            <StatusPill tone="progress" icon="refresh">
+              Practice attempt
+            </StatusPill>
+          ) : (
+            <StatusPill tone="warn" icon="x-circle">
+              Not passed yet
+            </StatusPill>
+          )}
+          <p className="t-display mt-2 text-navy">
+            {result.scoreRaw}{" "}
+            <span className="font-sans text-base font-medium tracking-normal text-grey">
+              of {result.scoreMax}
+            </span>
           </p>
-          <p className="mt-2 text-grey">
+          <p className="mt-2 text-base leading-[1.6] text-grey">
             {passed
               ? "Well done. The explanations below are worth a read, even for the ones you got right."
               : everPassed
@@ -287,28 +344,43 @@ function Result({
         </div>
 
         {certificatePublicId ? (
-          <div className="mt-5 rounded-xl border border-pink-line bg-pink-50 p-4">
-            <p className="text-navy">
-              That was the last Stage Quiz in this Level. You&apos;ve earned the{" "}
-              <strong>&ldquo;{certificateTitle}&rdquo;</strong> certificate.
-            </p>
-            <ButtonLink href={`/certificate/${certificatePublicId}`} className="mt-3">
-              View my certificate
-            </ButtonLink>
-          </div>
+          <Card className="mt-[18px] border-pink-line bg-pink-50 p-5">
+            <div className="flex items-start gap-3.5">
+              <IconCircle name="award" tone="pink" />
+              <div>
+                <h4 className="t-h4 mb-1 text-navy">
+                  You&apos;ve earned the &ldquo;{certificateTitle}&rdquo; certificate
+                </h4>
+                <p className="mb-3 text-sm text-grey">
+                  That was the last Stage Quiz in this Level.
+                </p>
+                <ButtonLink href={`/certificate/${certificatePublicId}`}>
+                  View my certificate
+                </ButtonLink>
+              </div>
+            </div>
+          </Card>
         ) : null}
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Button onClick={onRetry} disabled={pending} variant={passed || everPassed ? "outline" : "primary"}>
-            {pending ? "Opening…" : passed || everPassed ? "Take it again for practice" : "Try again"}
+        <div className="mt-[18px] flex flex-wrap items-center gap-3">
+          <Button
+            onClick={onRetry}
+            disabled={pending}
+            variant={passed || everPassed ? "outline" : "primary"}
+          >
+            {pending
+              ? "Opening…"
+              : passed || everPassed
+                ? "Take it again for practice"
+                : "Try again"}
           </Button>
-          <Button variant="quiet" onClick={onDone} disabled={pending}>
+          <Button variant="tertiary" onClick={onDone} disabled={pending}>
             Done
           </Button>
         </div>
-      </Card>
+      </section>
 
-      <ol className="mt-6 space-y-4">
+      <ol className="mt-[22px] grid gap-4">
         {result.answers.map((answer, i) => (
           <MarkedQuestion key={answer.questionId} answer={answer} index={i} />
         ))}
@@ -317,75 +389,66 @@ function Result({
   );
 }
 
-/** One question as marked. The same states QuizBlock uses for an inline check. */
+function stateOf(choice: GradedAnswer["choices"][number]): MarkedState {
+  if (choice.isCorrect) return choice.wasSelected ? "yours-correct" : "correct-missed";
+  return choice.wasSelected ? "yours-not-correct" : "not-chosen";
+}
+
+/** One question as marked: the choices in their six states, then the explanation. */
 function MarkedQuestion({ answer, index }: { answer: GradedAnswer; index: number }) {
+  const multi = answer.choices.filter((c) => c.isCorrect).length > 1;
+  const unanswered = answer.selectedChoiceIds.length === 0;
+
   return (
-    <li>
-      <Card className="p-5 sm:p-6">
-        <div className="flex items-baseline gap-3">
-          <span aria-hidden="true" className="font-display text-lg text-pink">
-            {String(index + 1).padStart(2, "0")}
-          </span>
-          <div className="flex-1">
-            {answer.scenario ? (
-              <p className="mb-3 border-l-3 border-teal-ink bg-teal-50 py-2.5 pl-3.5 pr-3 text-sm italic text-navy">
-                {answer.scenario}
-              </p>
-            ) : null}
-
-            <p className="font-bold text-navy">{answer.prompt}</p>
-
-            <ul className="mt-4 space-y-2">
-              {answer.choices.map((choice) => {
-                const state = choice.isCorrect ? "correct" : choice.wasSelected ? "wrong" : "idle";
-                return (
-                  <li key={choice.id}>
-                    <div
-                      className={cx(
-                        "flex items-start gap-3 rounded-xl border-2 px-4 py-3",
-                        state === "correct" && "border-correct bg-teal-50",
-                        state === "wrong" && "border-incorrect bg-pink-50",
-                        state === "idle" && "border-line bg-white",
-                      )}
-                    >
-                      <span className="flex-1 text-navy">{choice.text}</span>
-                      {choice.wasSelected ? (
-                        <span className="shrink-0 text-xs font-semibold text-grey">
-                          Your answer
-                        </span>
-                      ) : null}
-                      {state === "correct" ? (
-                        <span
-                          aria-label="Correct answer"
-                          className="shrink-0 text-sm font-bold text-correct"
-                        >
-                          ✓
-                        </span>
-                      ) : null}
-                    </div>
-                    {/* Per-choice feedback on what they chose: why a tempting wrong
-                        answer is tempting teaches more than a bare "incorrect". */}
-                    {choice.wasSelected && choice.feedback ? (
-                      <p className="mt-1.5 pl-4 text-sm text-grey">{choice.feedback}</p>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-
-            <div className="mt-4 rounded-xl bg-line/40 p-4">
-              <Badge tone={answer.isCorrect ? "correct" : "incorrect"}>
-                {answer.isCorrect
-                  ? "Correct"
-                  : answer.selectedChoiceIds.length === 0
-                    ? "Not answered"
-                    : "Not quite"}
-              </Badge>
-              <p className="mt-2.5 text-sm text-navy">{answer.explanation}</p>
-            </div>
-          </div>
+    <li className="rounded-[18px] border border-line px-4 py-[18px]">
+      <div className="flex items-baseline gap-3">
+        <span
+          aria-hidden="true"
+          className="font-(family-name:--font-display) text-lg font-extrabold leading-none text-navy"
+        >
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <div className="min-w-0 flex-1">
+          {answer.scenario ? <ScenarioBox className="mb-3">{answer.scenario}</ScenarioBox> : null}
+          <p className="t-h4 text-navy">{answer.prompt}</p>
         </div>
-      </Card>
+      </div>
+      {multi ? <p className="ml-[34px] mt-1.5 text-sm text-grey">Select all that apply.</p> : null}
+
+      <ul className="mt-[18px] grid gap-2.5">
+        {answer.choices.map((choice, i) => (
+          <li key={choice.id}>
+            <MarkedChoice index={i} text={choice.text} state={stateOf(choice)} multi={multi} />
+            {/* Per-choice feedback on what they chose: why a tempting wrong
+                answer is tempting teaches more than a bare "incorrect". */}
+            {choice.wasSelected && choice.feedback ? (
+              <p className="ml-11 mt-1.5 text-[0.9375rem] text-grey">{choice.feedback}</p>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+
+      <div
+        className={
+          "mt-3.5 rounded-[14px] border p-3.5 text-[0.9375rem] leading-[1.55] text-navy " +
+          (answer.isCorrect ? "border-teal-line bg-teal-50" : "border-pink-line bg-pink-50")
+        }
+      >
+        {answer.isCorrect ? (
+          <StatusPill tone="done" icon="check-circle">
+            Correct
+          </StatusPill>
+        ) : unanswered ? (
+          <StatusPill tone="warn" icon="alert">
+            Not answered
+          </StatusPill>
+        ) : (
+          <StatusPill tone="warn" icon="x-circle">
+            Not quite
+          </StatusPill>
+        )}
+        <p className="mt-2">{answer.explanation}</p>
+      </div>
     </li>
   );
 }
