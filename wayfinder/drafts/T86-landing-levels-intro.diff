@@ -739,21 +739,51 @@ index 37bd8ce..01ae3f6 100644
  }
  
  /* Long-form lesson prose. Constrained measure because a 90-character line is
+diff --git a/src/components/course/AwardNode.tsx b/src/components/course/AwardNode.tsx
+new file mode 100644
+index 0000000..b102aba
+--- /dev/null
++++ b/src/components/course/AwardNode.tsx
+@@ -0,0 +1,22 @@
++import { Icon } from "@/components/ui/icons";
++import { cx } from "@/components/ui/primitives";
++
++/**
++ * The node that closes a Level on the dotted stepper (#73): the Certificate, filled
++ * teal once it is earned. Editorial-only. The Stage dots on the same line are the
++ * Portal's `StepDot`, shared rather than built twice.
++ */
++export function AwardNode({ earned, className }: { earned: boolean; className?: string }) {
++  return (
++    <span
++      aria-hidden="true"
++      className={cx(
++        "grid size-8 shrink-0 place-items-center rounded-full",
++        earned ? "bg-teal text-navy" : "bg-teal-100 text-teal-ink",
++        className,
++      )}
++    >
++      <Icon name="award" className="size-4 shrink-0 stroke-[2.25]" />
++    </span>
++  );
++}
 diff --git a/src/components/course/ClosingBand.tsx b/src/components/course/ClosingBand.tsx
 new file mode 100644
-index 0000000..bd561ea
+index 0000000..71fb481
 --- /dev/null
 +++ b/src/components/course/ClosingBand.tsx
-@@ -0,0 +1,24 @@
+@@ -0,0 +1,26 @@
 +import type { ReactNode } from "react";
-+import { Card, Display } from "@/components/ui/primitives";
++import { PortalCard } from "@/components/portal/Portal";
++import { Display } from "@/components/ui/primitives";
 +
 +/** The closing "Ready?" band, on `pink-50`. `children` is the action: the page's one pink button. */
 +export function ClosingBand({ text, children }: { text: ReactNode; children: ReactNode }) {
 +  return (
 +    <section className="pt-14 min-[760px]:pt-[4.75rem]">
 +      <div className="mx-auto max-w-[73.75rem] px-[1.125rem] min-[760px]:px-6">
-+        <Card
++        <PortalCard
++          plain
 +          tone="pink"
 +          className="flex flex-wrap items-center justify-between gap-x-8 gap-y-[1.125rem] rounded-3xl p-6 min-[760px]:px-9 min-[760px]:py-8"
 +        >
@@ -764,14 +794,14 @@ index 0000000..bd561ea
 +            <div className="mt-1.5 text-grey">{text}</div>
 +          </div>
 +          {children}
-+        </Card>
++        </PortalCard>
 +      </div>
 +    </section>
 +  );
 +}
 diff --git a/src/components/course/CourseMap.tsx b/src/components/course/CourseMap.tsx
 new file mode 100644
-index 0000000..cdf8ffb
+index 0000000..e5ed96d
 --- /dev/null
 +++ b/src/components/course/CourseMap.tsx
 @@ -0,0 +1,118 @@
@@ -779,7 +809,8 @@ index 0000000..cdf8ffb
 +import { cx } from "@/components/ui/primitives";
 +import type { LevelWithProgress } from "@/lib/course";
 +import { levelState, recommendedLevelSlug, stageWord } from "./levelState";
-+import { AwardNode, StepDot } from "./Stepper";
++import { StepDot } from "@/components/portal/Portal";
++import { AwardNode } from "./AwardNode";
 +
 +/**
 + * The course map (#73): three Level groups on one dotted connector, a dot for each
@@ -823,7 +854,7 @@ index 0000000..cdf8ffb
 +                    <Node key={m.slug} firstOfMap={li === 0 && i === 0} firstOfGroup={i === 0}>
 +                      <StepDot
 +                        n={i + 1}
-+                        state={st.passed[i] ? "done" : isNext ? "now" : "todo"}
++                        state={st.passed[i] ? "passed" : isNext ? "current" : "todo"}
 +                      />
 +                      <span className="sr-only">
 +                        Stage {i + 1}, {m.title}: {stageWord(st.passed[i], isNext)}
@@ -847,8 +878,8 @@ index 0000000..cdf8ffb
 +
 +      {anyStarted ? (
 +        <div aria-hidden="true" className="mx-1 mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.8125rem] text-grey">
-+          <Key><StepDot n={1} state="done" className="size-5 text-[0.6875rem]" />Quiz passed</Key>
-+          <Key><StepDot n={3} state="now" className="size-5 text-[0.6875rem]" />Up next</Key>
++          <Key><StepDot n={1} state="passed" className="size-5 text-[0.6875rem]" />Quiz passed</Key>
++          <Key><StepDot n={3} state="current" className="size-5 text-[0.6875rem]" />Up next</Key>
 +          <Key><StepDot n={4} state="todo" className="size-5 text-[0.6875rem]" />Not started</Key>
 +          <Key><AwardNode earned className="size-5" />Certificate earned</Key>
 +        </div>
@@ -892,7 +923,6 @@ index 0000000..cdf8ffb
 +    </li>
 +  );
 +}
-+
 diff --git a/src/components/course/HeroDecoration.tsx b/src/components/course/HeroDecoration.tsx
 new file mode 100644
 index 0000000..aa70969
@@ -932,13 +962,14 @@ index 0000000..aa70969
 +}
 diff --git a/src/components/course/HowItWorks.tsx b/src/components/course/HowItWorks.tsx
 new file mode 100644
-index 0000000..792db3a
+index 0000000..6b467ae
 --- /dev/null
 +++ b/src/components/course/HowItWorks.tsx
-@@ -0,0 +1,82 @@
+@@ -0,0 +1,83 @@
 +import Link from "next/link";
 +import { Icon } from "@/components/ui/icons";
-+import { Card, Display, NumberPill } from "@/components/ui/primitives";
++import { PortalCard } from "@/components/portal/Portal";
++import { Display, NumberPill } from "@/components/ui/primitives";
 +
 +/** Four cards, in the order a learner meets them. Wording is the introduction's own. */
 +const STEPS = [
@@ -996,18 +1027,18 @@ index 0000000..792db3a
 +              <span className="relative mb-3.5 self-center">
 +                <NumberPill n={i + 1} tone={i % 2 === 0 ? "pink" : "teal"} />
 +              </span>
-+              <Card className="flex-1 rounded-[1.25rem] p-[1.375rem]">
++              <PortalCard plain className="flex-1 rounded-[1.25rem] p-[1.375rem]">
 +                <h3 className="font-display text-lg font-bold leading-tight text-navy">
 +                  {step.title}
 +                </h3>
 +                <p className="mt-1.5 text-[0.9375rem] text-grey">{step.body}</p>
-+              </Card>
++              </PortalCard>
 +            </li>
 +          ))}
 +        </ol>
 +
 +        <p className="mt-[1.375rem] flex max-w-[72ch] items-start gap-2.5 text-[0.9375rem] text-grey">
-+          <Icon name="clock" className="mt-0.5 text-teal-ink" />
++          <Icon name="clock" className="mt-0.5 size-5 shrink-0 text-teal-ink" />
 +          <span>
 +            <strong className="font-medium text-navy">The same baseline, again.</strong> After
 +            each level you finish, so you can see what changed. It is optional, and it never
@@ -1018,17 +1049,54 @@ index 0000000..792db3a
 +    </section>
 +  );
 +}
+diff --git a/src/components/course/IconCircle.tsx b/src/components/course/IconCircle.tsx
+new file mode 100644
+index 0000000..488ea6f
+--- /dev/null
++++ b/src/components/course/IconCircle.tsx
+@@ -0,0 +1,30 @@
++import { Icon, type IconName } from "@/components/ui/icons";
++import { cx } from "@/components/ui/primitives";
++
++/**
++ * An icon in a tinted circle (#73). Editorial-only: the Portal's `IconChip` is a square
++ * chip. `pink-100` and `teal-100` carry icons only, never text (#68), so a circle never
++ * holds a word.
++ */
++export function IconCircle({
++  name,
++  tone,
++  className,
++}: {
++  name: IconName;
++  tone: "pink" | "teal";
++  className?: string;
++}) {
++  return (
++    <span
++      aria-hidden="true"
++      className={cx(
++        "grid size-11 shrink-0 place-items-center rounded-full",
++        tone === "pink" ? "bg-pink-100 text-pink" : "bg-teal-100 text-teal-ink",
++        className,
++      )}
++    >
++      <Icon name={name} className="size-6 shrink-0" />
++    </span>
++  );
++}
 diff --git a/src/components/course/IntroductionView.tsx b/src/components/course/IntroductionView.tsx
 new file mode 100644
-index 0000000..599ba48
+index 0000000..7dccf32
 --- /dev/null
 +++ b/src/components/course/IntroductionView.tsx
-@@ -0,0 +1,249 @@
+@@ -0,0 +1,250 @@
 +import Link from "next/link";
-+import { IconCircle, type IconName } from "@/components/ui/icons";
++import { type IconName } from "@/components/ui/icons";
 +import { ButtonLink, Display, NumberPill } from "@/components/ui/primitives";
 +import type { LevelWithProgress } from "@/lib/course";
 +import { ClosingBand } from "./ClosingBand";
++import { IconCircle } from "./IconCircle";
 +import { CourseMap } from "./CourseMap";
 +import { LevelCard } from "./LevelCard";
 +import { recommendedLevelSlug } from "./levelState";
@@ -1433,29 +1501,28 @@ index 0000000..c5aff08
 +  );
 +}
 diff --git a/src/components/course/LevelCard.tsx b/src/components/course/LevelCard.tsx
-index 35c4e70..2bc2efc 100644
+index 35c4e70..830195a 100644
 --- a/src/components/course/LevelCard.tsx
 +++ b/src/components/course/LevelCard.tsx
-@@ -1,14 +1,15 @@
+@@ -1,14 +1,13 @@
  import Link from "next/link";
-+import { Icon } from "@/components/ui/icons";
++import { PortalCard, StatusPill } from "@/components/portal/Portal";
  import {
 -  Badge,
    ButtonLink,
-   Card,
+-  Card,
    Display,
 +  NumberPill,
    ProgressBar,
 -  TIER_META,
 +  RecommendedPill,
-+  StatusPill,
    cx,
  } from "@/components/ui/primitives";
 -import type { LevelTier } from "@/lib/constants";
  import type { LevelProgressSummary } from "@/lib/course";
  
  /**
-@@ -18,6 +19,11 @@ import type { LevelProgressSummary } from "@/lib/course";
+@@ -18,6 +17,11 @@ import type { LevelProgressSummary } from "@/lib/course";
   * unfinished fragment, so each card leads with what the learner will be able to
   * *do*, and names its own certificate. Nothing here implies the level is a step
   * toward something more legitimate.
@@ -1467,7 +1534,7 @@ index 35c4e70..2bc2efc 100644
   */
  export function LevelCard({
    level,
-@@ -27,7 +33,6 @@ export function LevelCard({
+@@ -27,7 +31,6 @@ export function LevelCard({
  }: {
    level: {
      slug: string;
@@ -1475,7 +1542,7 @@ index 35c4e70..2bc2efc 100644
      title: string;
      strapline: string;
      goal: string;
-@@ -40,9 +45,7 @@ export function LevelCard({
+@@ -40,9 +43,7 @@ export function LevelCard({
    signedIn: boolean;
    recommended?: boolean;
  }) {
@@ -1486,19 +1553,21 @@ index 35c4e70..2bc2efc 100644
    const complete = progress?.status === "COMPLETE";
  
    const href = signedIn
-@@ -51,75 +54,74 @@ export function LevelCard({
+@@ -51,75 +52,75 @@ export function LevelCard({
        : `/levels/${level.slug}`
      : `/register?next=${encodeURIComponent(`/levels/${level.slug}`)}`;
  
 +  const divider = recommended ? "border-pink-line" : "border-line";
 +
    return (
-     <Card
+-    <Card
++    <PortalCard
        as="article"
 -      className={cx(
 -        "flex flex-col p-6 transition hover:shadow-[0_8px_30px_rgba(17,17,17,0.07)] sm:p-7",
 -        recommended && "ring-2 ring-pink-line",
 -      )}
++      plain
 +      tone={recommended ? "pink" : "white"}
 +      className="flex flex-col rounded-[1.375rem] p-6 sm:p-[1.625rem]"
      >
@@ -1519,11 +1588,11 @@ index 35c4e70..2bc2efc 100644
 +        {recommended && !started ? (
 +          <RecommendedPill>Recommended start</RecommendedPill>
 +        ) : complete ? (
-+          <StatusPill tone="done" icon={<Icon name="check-circle" className="size-[0.9rem]" strokeWidth={2.25} />}>
++          <StatusPill tone="done" icon="check-circle">
 +            Complete
 +          </StatusPill>
 +        ) : started ? (
-+          <StatusPill tone="progress" icon={<Icon name="clock" className="size-[0.9rem]" strokeWidth={2.25} />}>
++          <StatusPill tone="progress" icon="clock">
 +            In progress
 +          </StatusPill>
 +        ) : null}
@@ -1606,7 +1675,7 @@ index 35c4e70..2bc2efc 100644
                >
                  View certificate
                </Link>
-@@ -128,21 +130,17 @@ export function LevelCard({
+@@ -128,22 +129,18 @@ export function LevelCard({
            <ProgressBar
              value={progress.percentComplete}
              label={`${level.title} progress`}
@@ -1629,28 +1698,23 @@ index 35c4e70..2bc2efc 100644
 -            : `Start ${meta.label}`}
 +        {complete ? "Review this level" : started ? "Continue" : `Start ${level.title}`}
        </ButtonLink>
-     </Card>
+-    </Card>
++    </PortalCard>
    );
+ }
 diff --git a/src/components/course/LevelOverview.tsx b/src/components/course/LevelOverview.tsx
 new file mode 100644
-index 0000000..9c80e14
+index 0000000..7c29239
 --- /dev/null
 +++ b/src/components/course/LevelOverview.tsx
-@@ -0,0 +1,244 @@
+@@ -0,0 +1,238 @@
 +import Link from "next/link";
 +import { Icon } from "@/components/ui/icons";
-+import {
-+  ButtonLink,
-+  Card,
-+  Display,
-+  Eyebrow,
-+  ProgressBar,
-+  StatusPill,
-+  cx,
-+} from "@/components/ui/primitives";
++import { PortalCard, StatusPill, StepDot } from "@/components/portal/Portal";
++import { ButtonLink, Display, Eyebrow, ProgressBar, cx } from "@/components/ui/primitives";
 +import type { LevelWithProgress } from "@/lib/course";
 +import type { StageQuizState } from "@/lib/quiz";
-+import { AwardNode, StepDot } from "./Stepper";
++import { AwardNode } from "./AwardNode";
 +
 +/**
 + * The Level overview (#73): a sticky summary beside a dotted timeline of Stage rows that
@@ -1694,7 +1758,7 @@ index 0000000..9c80e14
 +        href="/#levels"
 +        className="mb-[1.625rem] inline-flex items-center gap-2 font-medium text-teal-ink underline underline-offset-[3px]"
 +      >
-+        <Icon name="arrow-left" />
++        <Icon name="arrow-left" className="size-5 shrink-0" />
 +        All levels
 +      </Link>
 +
@@ -1703,12 +1767,12 @@ index 0000000..9c80e14
 +        {progress.status === "COMPLETE" || certificatePublicId ? (
 +          <div className="mt-3 flex flex-wrap gap-2">
 +            {progress.status === "COMPLETE" ? (
-+              <StatusPill tone="done" icon={<Icon name="check-circle" className="size-[0.9rem]" strokeWidth={2.25} />}>
++              <StatusPill tone="done" icon="check-circle">
 +                Complete
 +              </StatusPill>
 +            ) : null}
 +            {certificatePublicId ? (
-+              <StatusPill tone="done" icon={<Icon name="award" className="size-[0.9rem]" strokeWidth={2.25} />}>
++              <StatusPill tone="done" icon="award">
 +                Certificate earned
 +              </StatusPill>
 +            ) : null}
@@ -1721,15 +1785,15 @@ index 0000000..9c80e14
 +        <p className="mb-[1.125rem] max-w-[56ch] text-lg leading-[1.7] text-grey">{level.goal}</p>
 +        <ul className="mb-[1.875rem] flex list-none flex-wrap gap-x-[1.625rem] gap-y-2.5 p-0 text-[0.9375rem]">
 +          <li className="flex items-center gap-2">
-+            <Icon name="clock" className="text-teal-ink" />
++            <Icon name="clock" className="size-5 shrink-0 text-teal-ink" />
 +            {level.estMinMinutes} to {level.estMaxMinutes} minutes
 +          </li>
 +          <li className="flex items-center gap-2">
-+            <Icon name="book" className="text-teal-ink" />
++            <Icon name="book" className="size-5 shrink-0 text-teal-ink" />
 +            {level.modules.length} Stages
 +          </li>
 +          <li className="flex items-center gap-2">
-+            <Icon name="award" className="text-teal-ink" />
++            <Icon name="award" className="size-5 shrink-0 text-teal-ink" />
 +            Earns the &ldquo;{level.certificateTitle}&rdquo; certificate
 +          </li>
 +        </ul>
@@ -1737,8 +1801,9 @@ index 0000000..9c80e14
 +
 +      <div className="grid items-start gap-7 min-[1000px]:grid-cols-[0.7fr_1.3fr] min-[1000px]:gap-11">
 +        {/* --- Summary: sticky beside the timeline, first on a phone ----------- */}
-+        <Card
++        <PortalCard
 +          as="aside"
++          plain
 +          tone="teal"
 +          className="rounded-[1.375rem] p-[1.625rem] min-[1000px]:sticky min-[1000px]:top-6"
 +        >
@@ -1774,7 +1839,7 @@ index 0000000..9c80e14
 +              {anyStarted ? "Continue" : "Start"} Stage {nextIndex + 1}
 +            </ButtonLink>
 +          ) : null}
-+        </Card>
++        </PortalCard>
 +
 +        {/* --- Timeline: a dotted line, a Stage row on each node, the Certificate last --- */}
 +        <ol className="relative m-0 list-none p-0 pl-12 before:absolute before:bottom-[3.75rem] before:left-[15px] before:top-[34px] before:border-l-[3px] before:border-dotted before:border-line-strong before:content-[''] min-[760px]:pl-[3.75rem]">
@@ -1791,7 +1856,7 @@ index 0000000..9c80e14
 +              <li key={mod.slug} className="relative mb-4">
 +                <StepDot
 +                  n={i + 1}
-+                  state={isDone ? "done" : isNext ? "now" : "todo"}
++                  state={isDone ? "passed" : isNext ? "current" : "todo"}
 +                  className="absolute -left-12 top-[18px] shadow-[0_0_0_6px_white] min-[760px]:-left-[3.75rem]"
 +                />
 +                <Link
@@ -1808,15 +1873,15 @@ index 0000000..9c80e14
 +                      <span className="sr-only">Stage {i + 1}: </span>
 +                      {mod.title}
 +                      {isDone ? (
-+                        <StatusPill tone="done" icon={<Icon name="check-circle" className="size-[0.9rem]" strokeWidth={2.25} />}>
++                        <StatusPill tone="done" icon="check-circle">
 +                          Quiz passed
 +                        </StatusPill>
 +                      ) : quizFailed ? (
-+                        <StatusPill tone="warn" icon={<Icon name="alert" className="size-[0.9rem]" strokeWidth={2.25} />}>
++                        <StatusPill tone="warn" icon="alert">
 +                          Quiz not passed yet
 +                        </StatusPill>
 +                      ) : isStarted ? (
-+                        <StatusPill tone="progress" icon={<Icon name="clock" className="size-[0.9rem]" strokeWidth={2.25} />}>
++                        <StatusPill tone="progress" icon="clock">
 +                          In progress
 +                        </StatusPill>
 +                      ) : null}
@@ -1828,7 +1893,7 @@ index 0000000..9c80e14
 +                  </span>
 +                  <span className="inline-flex items-center gap-1.5 self-center text-[0.9375rem] font-medium text-navy">
 +                    {isDone ? "Review" : isStarted || quizFailed ? "Continue" : "Start"}
-+                    <Icon name="arrow" />
++                    <Icon name="arrow" className="size-5 shrink-0" />
 +                  </span>
 +                </Link>
 +              </li>
@@ -1841,7 +1906,7 @@ index 0000000..9c80e14
 +              earned={allPassed}
 +              className="absolute -left-12 top-[18px] shadow-[0_0_0_6px_white] min-[760px]:-left-[3.75rem]"
 +            />
-+            <Card tone={allPassed ? "pink" : "teal"} className="rounded-[1.375rem] p-5 min-[760px]:p-7">
++            <PortalCard plain tone={allPassed ? "pink" : "teal"} className="rounded-[1.375rem] p-5 min-[760px]:p-7">
 +              <Eyebrow className={allPassed ? "text-pink" : "text-teal-ink"}>Certificate</Eyebrow>
 +              <Display as="h2" className="mb-2 mt-1.5 text-[1.5rem] font-bold leading-[1.22] tracking-tight text-navy min-[760px]:text-[1.75rem]">
 +                {level.certificateTitle} certificate
@@ -1874,7 +1939,7 @@ index 0000000..9c80e14
 +                  one is the &ldquo;Check your understanding&rdquo; step of its Stage: {toGo} to go.
 +                </p>
 +              )}
-+            </Card>
++            </PortalCard>
 +          </li>
 +        </ol>
 +      </div>
@@ -1939,70 +2004,9 @@ index 0000000..b296d33
 +    </blockquote>
 +  );
 +}
-diff --git a/src/components/course/Stepper.tsx b/src/components/course/Stepper.tsx
-new file mode 100644
-index 0000000..32b3bcb
---- /dev/null
-+++ b/src/components/course/Stepper.tsx
-@@ -0,0 +1,55 @@
-+import { Icon } from "@/components/ui/icons";
-+import { cx } from "@/components/ui/primitives";
-+
-+/**
-+ * The dotted stepper's two nodes (#73). Editorial-only pieces: the Portal's rail
-+ * stepper (#85) is a different thing, so these are not shared with it.
-+ *
-+ * A Stage dot has three states, told by fill, ring and weight, never by colour alone:
-+ * passed (teal fill, check), up next (navy ring, thick) and not started (grey ring).
-+ * The up-next ring marks exactly one Stage on a page, the recommended Level's.
-+ */
-+export type StepState = "done" | "now" | "todo";
-+
-+export function StepDot({
-+  n,
-+  state,
-+  className,
-+}: {
-+  /** The Stage's number within its Level (numbers restart per Level). */
-+  n: number;
-+  state: StepState;
-+  className?: string;
-+}) {
-+  return (
-+    <span
-+      aria-hidden="true"
-+      className={cx(
-+        "relative grid size-8 shrink-0 place-items-center rounded-full font-display text-sm font-bold",
-+        // One background per state: two bg-* classes would fight on stylesheet order.
-+        state === "done" && "bg-teal text-navy",
-+        state === "now" && "border-[3px] border-navy bg-white text-navy",
-+        state === "todo" && "border-2 border-line-strong bg-white text-grey",
-+        className,
-+      )}
-+    >
-+      {state === "done" ? <Icon name="check" className="size-4" strokeWidth={2.5} /> : n}
-+    </span>
-+  );
-+}
-+
-+/** The node that closes a Level: the Certificate, filled teal once it is earned. */
-+export function AwardNode({ earned, className }: { earned: boolean; className?: string }) {
-+  return (
-+    <span
-+      aria-hidden="true"
-+      className={cx(
-+        "grid size-8 shrink-0 place-items-center rounded-full",
-+        earned ? "bg-teal text-navy" : "bg-teal-100 text-teal-ink",
-+        className,
-+      )}
-+    >
-+      <Icon name="award" className="size-4" strokeWidth={2.25} />
-+    </span>
-+  );
-+}
 diff --git a/src/components/course/levelState.ts b/src/components/course/levelState.ts
 new file mode 100644
-index 0000000..51ecbee
+index 0000000..33c5361
 --- /dev/null
 +++ b/src/components/course/levelState.ts
 @@ -0,0 +1,31 @@
@@ -2016,8 +2020,8 @@ index 0000000..51ecbee
 + * visitor has no progress, so every Stage is not started and `next` is the first.
 + */
 +export function levelState(level: LevelWithProgress) {
-+  const passedSlugs = new Set(level.progress?.passedStageSlugs ?? []);
-+  const passed = level.modules.map((m) => passedSlugs.has(m.slug));
++  const states = level.progress?.stageStates ?? {};
++  const passed = level.modules.map((m) => states[m.slug] === "PASSED");
 +  const next = passed.indexOf(false);
 +  return {
 +    passed,
@@ -2037,52 +2041,126 @@ index 0000000..51ecbee
 +export function stageWord(passed: boolean, isNext: boolean): string {
 +  return passed ? "quiz passed" : isNext ? "up next" : "not started";
 +}
-diff --git a/src/components/ui/icons.tsx b/src/components/ui/icons.tsx
-new file mode 100644
-index 0000000..5fc0f8d
---- /dev/null
-+++ b/src/components/ui/icons.tsx
-@@ -0,0 +1,127 @@
-+import type { ReactNode } from "react";
-+import { cx } from "@/components/ui/primitives";
-+
+diff --git a/src/components/portal/Portal.tsx b/src/components/portal/Portal.tsx
+index 066f7e2..f6971b6 100644
+--- a/src/components/portal/Portal.tsx
++++ b/src/components/portal/Portal.tsx
+@@ -18,12 +18,19 @@ export const PORTAL_SHADOW = "shadow-[0_1px_2px_rgba(12,23,59,0.05),0_6px_18px_r
+ export function PortalCard({
+   as: As = "div",
+   tone = "white",
++  plain,
+   className,
+   children,
+   ...rest
+ }: {
+   as?: "div" | "section" | "article" | "li" | "aside";
+-  tone?: "white" | "pink";
++  /** White, `pink-50` (the one thing to do next) or `teal-50` (a quiet summary). */
++  tone?: "white" | "pink" | "teal";
++  /**
++   * Just the border and fill: no padding, radius or shadow. The Editorial pages (#73)
++   * set their own, so two competing padding classes never fight on stylesheet order.
++   */
++  plain?: boolean;
+   className?: string;
+   children: ReactNode;
+   "aria-label"?: string;
+@@ -31,8 +38,11 @@ export function PortalCard({
+   return (
+     <As
+       className={cx(
+-        "rounded-card border p-5 sm:px-6",
+-        tone === "pink" ? "border-pink-line bg-pink-50" : cx("border-line bg-white", PORTAL_SHADOW),
++        !plain && "rounded-card p-5 sm:px-6",
++        "border",
++        tone === "pink" && "border-pink-line bg-pink-50",
++        tone === "teal" && "border-teal-line bg-teal-50",
++        tone === "white" && cx("border-line bg-white", !plain && PORTAL_SHADOW),
+         className,
+       )}
+       {...rest}
+@@ -151,6 +161,44 @@ export type RailStep = {
+   href?: string;
+ };
+ 
 +/**
-+ * Outline icons for the Editorial Register: one stroke weight, round caps, no fills.
-+ * Always decorative (`aria-hidden`); the words beside them carry the meaning.
++ * A numbered stepper dot: passed (teal fill, check), current (thick navy ring), todo
++ * (grey ring) or locked (dashed, lock). Fill, ring and weight tell them apart, never
++ * colour alone. Shared by the rail stepper here and the Editorial pages' course map
++ * and Level timeline (#73), so there is one dot.
 + */
-+const PATHS = {
-+  book: (
-+    <>
-+      <path d="M2.5 4.5h6A3.5 3.5 0 0 1 12 8v12.5a2.5 2.5 0 0 0-2.5-2.5h-7z" />
-+      <path d="M21.5 4.5h-6A3.5 3.5 0 0 0 12 8v12.5a2.5 2.5 0 0 1 2.5-2.5h7z" />
-+    </>
-+  ),
-+  award: (
-+    <>
-+      <circle cx="12" cy="9" r="6" />
-+      <path d="M8.6 14.2 7 22l5-3 5 3-1.6-7.8" />
-+    </>
-+  ),
-+  users: (
-+    <>
-+      <circle cx="9" cy="8" r="3.5" />
-+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
-+      <circle cx="17.5" cy="9" r="2.5" />
-+      <path d="M17.5 14a5 5 0 0 1 4 5" />
-+    </>
-+  ),
-+  clock: (
-+    <>
-+      <circle cx="12" cy="12" r="9" />
-+      <path d="M12 7v5l3 2" />
-+    </>
-+  ),
-+  "check-circle": (
-+    <>
-+      <circle cx="12" cy="12" r="9" />
-+      <path d="m8 12.5 2.7 2.7L16 9.5" />
-+    </>
-+  ),
++export function StepDot({
++  n,
++  state,
++  className,
++}: {
++  n: number;
++  state: RailState;
++  className?: string;
++}) {
++  return (
++    <span
++      aria-hidden="true"
++      className={cx(
++        "relative grid size-8 shrink-0 place-items-center rounded-full font-display text-sm font-bold",
++        state === "passed" && "bg-teal text-navy",
++        state === "current" && "border-[3px] border-navy bg-white text-navy",
++        state === "todo" && "border-2 border-line-strong bg-white text-grey",
++        state === "locked" && "border-2 border-dashed border-line-strong bg-white text-grey",
++        className,
++      )}
++    >
++      {state === "passed" ? (
++        <Icon name="check" className="size-4 shrink-0 stroke-[2.5]" />
++      ) : state === "locked" ? (
++        <Icon name="lock" className="size-4 shrink-0 stroke-[2.5]" />
++      ) : (
++        n
++      )}
++    </span>
++  );
++}
++
+ /**
+  * A vertical rail of numbered steps on a dotted connector. A passed step is a
+  * filled pill with a check, the current one is ringed in navy, a locked one is
+@@ -163,24 +211,7 @@ export function RailStepper({ steps, label }: { steps: RailStep[]; label: string
+         const last = i === steps.length - 1;
+         const body = (
+           <>
+-            <span
+-              aria-hidden="true"
+-              className={cx(
+-                "relative grid size-8 shrink-0 place-items-center rounded-full font-display text-sm font-bold",
+-                step.state === "passed" && "bg-teal text-navy",
+-                step.state === "current" && "border-[3px] border-navy bg-white text-navy",
+-                step.state === "todo" && "border-2 border-line-strong bg-white text-grey",
+-                step.state === "locked" && "border-2 border-dashed border-line-strong bg-white text-grey",
+-              )}
+-            >
+-              {step.state === "passed" ? (
+-                <Icon name="check" className="size-4 stroke-[2.5]" />
+-              ) : step.state === "locked" ? (
+-                <Icon name="lock" className="size-4 stroke-[2.5]" />
+-              ) : (
+-                i + 1
+-              )}
+-            </span>
++            <StepDot n={i + 1} state={step.state} />
+             <span className="block">
+               <span className="block pt-[5px] text-[0.9375rem] font-medium leading-snug text-navy underline-offset-[3px] group-hover:underline">
+                 {step.title}
+diff --git a/src/components/ui/icons.tsx b/src/components/ui/icons.tsx
+index 87613d3..46dcae6 100644
+--- a/src/components/ui/icons.tsx
++++ b/src/components/ui/icons.tsx
+@@ -59,6 +59,35 @@ const PATHS = {
+     </>
+   ),
+   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
++  "arrow-left": <path d="M19 12H5M11 6l-6 6 6 6" />,
++  // Added for the Editorial pages (#86).
 +  alert: (
 +    <>
 +      <path d="M12 3.5 21.5 20h-19z" />
@@ -2090,16 +2168,6 @@ index 0000000..5fc0f8d
 +      <path d="M12 17.2v.01" />
 +    </>
 +  ),
-+  check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
-+  chart: <path d="M4 20V11M10 20V4M16 20v-7M22 20H2" />,
-+  search: (
-+    <>
-+      <circle cx="11" cy="11" r="6.5" />
-+      <path d="m20 20-4.2-4.2" />
-+    </>
-+  ),
-+  arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
-+  "arrow-left": <path d="M19 12H5M11 6l-6 6 6 6" />,
 +  file: (
 +    <>
 +      <path d="M14 3.5H7A2.5 2.5 0 0 0 4.5 6v12A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5V9z" />
@@ -2114,64 +2182,17 @@ index 0000000..5fc0f8d
 +    </>
 +  ),
 +  flag: <path d="M5 21V4M5 4h11.5l-2.5 4 2.5 4H5" />,
-+} satisfies Record<string, ReactNode>;
-+
-+export type IconName = keyof typeof PATHS;
-+
-+export function Icon({
-+  name,
-+  className,
-+  strokeWidth = 1.75,
-+}: {
-+  name: IconName;
-+  className?: string;
-+  strokeWidth?: number;
-+}) {
-+  return (
-+    <svg
-+      viewBox="0 0 24 24"
-+      fill="none"
-+      stroke="currentColor"
-+      strokeWidth={strokeWidth}
-+      strokeLinecap="round"
-+      strokeLinejoin="round"
-+      aria-hidden="true"
-+      focusable="false"
-+      className={cx("size-5 shrink-0", className)}
-+    >
-+      {PATHS[name]}
-+    </svg>
-+  );
-+}
-+
-+/**
-+ * An icon in a tinted circle. `pink-100` and `teal-100` carry icons only, never text
-+ * (#68), so this is the one place those fills are used.
-+ */
-+export function IconCircle({
-+  name,
-+  tone,
-+  className,
-+}: {
-+  name: IconName;
-+  tone: "pink" | "teal";
-+  className?: string;
-+}) {
-+  return (
-+    <span
-+      aria-hidden="true"
-+      className={cx(
-+        "grid size-11 shrink-0 place-items-center rounded-full",
-+        tone === "pink" ? "bg-pink-100 text-pink" : "bg-teal-100 text-teal-ink",
-+        className,
-+      )}
-+    >
-+      <Icon name={name} className="size-6" />
-+    </span>
-+  );
-+}
++  search: (
++    <>
++      <circle cx="11" cy="11" r="6.5" />
++      <path d="m20 20-4.2-4.2" />
++    </>
++  ),
+ } as const;
+ 
+ export type IconName = keyof typeof PATHS;
 diff --git a/src/components/ui/primitives.tsx b/src/components/ui/primitives.tsx
-index 0f6fa57..2f08c87 100644
+index 0f6fa57..cb99c3a 100644
 --- a/src/components/ui/primitives.tsx
 +++ b/src/components/ui/primitives.tsx
 @@ -26,6 +26,8 @@ const BUTTON_VARIANTS = {
@@ -2183,43 +2204,6 @@ index 0f6fa57..2f08c87 100644
    /** For use on navy surfaces, where teal becomes legible. */
    onNavy: "bg-teal text-navy hover:bg-teal-100 font-medium",
    quiet: "text-grey hover:text-navy hover:bg-line/50",
-@@ -75,25 +77,25 @@ export function ButtonLink({
- 
- // --- Surfaces --------------------------------------------------------------
- 
-+const CARD_TONES = {
-+  white: "border-line bg-white shadow-[0_1px_2px_rgba(17,17,17,0.04)]",
-+  pink: "border-pink-line bg-pink-50",
-+  teal: "border-teal-line bg-teal-50",
-+} as const;
-+
- export function Card({
-   className,
-   children,
-   as: As = "div",
-+  tone = "white",
- }: {
-   className?: string;
-   children: ReactNode;
--  as?: "div" | "article" | "section" | "li";
-+  as?: "div" | "article" | "section" | "li" | "aside";
-+  /** White, `pink-50` (the one thing to do next) or `teal-50` (a quiet summary). */
-+  tone?: keyof typeof CARD_TONES;
- }) {
--  return (
--    <As
--      className={cx(
--        "rounded-card border border-line bg-white shadow-[0_1px_2px_rgba(17,17,17,0.04)]",
--        className,
--      )}
--    >
--      {children}
--    </As>
--  );
-+  return <As className={cx("rounded-card border", CARD_TONES[tone], className)}>{children}</As>;
- }
- 
- // --- Typography ------------------------------------------------------------
 @@ -121,7 +123,9 @@ export function Eyebrow({
    return (
      <p
@@ -2231,47 +2215,10 @@ index 0f6fa57..2f08c87 100644
          className,
        )}
      >
-@@ -164,6 +168,76 @@ export function Badge({
+@@ -164,6 +168,39 @@ export function Badge({
    );
  }
  
-+/**
-+ * A status as a tint, a hairline, an icon and navy text: never colour alone (#73).
-+ * Shared by the Level cards, the Level overview and the Stage rows.
-+ */
-+const STATUS_TONES = {
-+  done: "border-teal-line bg-teal-50 [&>svg]:text-teal-ink",
-+  progress: "border-line-strong bg-white [&>svg]:text-navy",
-+  warn: "border-pink-line bg-pink-50 [&>svg]:text-pink",
-+  plain: "border-line bg-white text-grey",
-+} as const;
-+
-+export function StatusPill({
-+  tone,
-+  icon,
-+  children,
-+  className,
-+}: {
-+  tone: keyof typeof STATUS_TONES;
-+  icon: ReactNode;
-+  children: ReactNode;
-+  className?: string;
-+}) {
-+  return (
-+    <span
-+      className={cx(
-+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-pill border py-[3px] pl-2 pr-2.5 text-[0.8125rem] font-medium",
-+        tone !== "plain" && "text-navy",
-+        STATUS_TONES[tone],
-+        className,
-+      )}
-+    >
-+      {icon}
-+      {children}
-+    </span>
-+  );
-+}
-+
 +/** The solid pink pill that marks the one recommended Level. White on pink is 4.80:1. */
 +export function RecommendedPill({ children }: { children: ReactNode }) {
 +  return (
@@ -2308,24 +2255,3 @@ index 0f6fa57..2f08c87 100644
  /**
   * The "pending Save7 review" marker.
   *
-diff --git a/src/lib/course.ts b/src/lib/course.ts
-index 892e74e..c4751b2 100644
---- a/src/lib/course.ts
-+++ b/src/lib/course.ts
-@@ -153,6 +153,8 @@ export type LevelProgressSummary = {
-   modulesTotal: number;
-   /** Stages whose Stage Quiz is passed. This is what completes the Level (#16). */
-   stagesPassed: number;
-+  /** Which Stages those are, for the course map and the Level cards. Already read for the count. */
-+  passedStageSlugs: string[];
-   certificatePublicId: string | null;
-   /** The module to resume at, or the first module if not started. */
-   nextModuleSlug: string | null;
-@@ -260,6 +262,7 @@ export async function getPathwayForUser(userId: string | null) {
-         modulesComplete,
-         modulesTotal,
-         stagesPassed,
-+        passedStageSlugs: mandatory.filter((m) => passedModuleIds.has(m.id)).map((m) => m.slug),
-         certificatePublicId: certByLevel.get(level.id) ?? null,
-         nextModuleSlug,
-       },
