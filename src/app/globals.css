@@ -93,8 +93,69 @@ body {
   }
 }
 
-/* Long-form lesson prose. Constrained measure because a 90-character line is
-   the fastest way to make an awareness course feel like a textbook. */
+/* The README's type scale (#68), for headings that are not .font-display's 800.
+   Phone sizes first, the wide sizes from 40rem. Colour is the caller's: navy. */
+.t-display,
+.t-h1,
+.t-h2,
+.t-h3,
+.t-h4 {
+  font-family: var(--font-display);
+  margin: 0;
+}
+.t-display {
+  font-weight: 800;
+  font-size: 2rem;
+  line-height: 2.25rem;
+  letter-spacing: -0.02em;
+}
+.t-h1 {
+  font-weight: 800;
+  font-size: 1.75rem;
+  line-height: 2.0625rem;
+  letter-spacing: -0.015em;
+}
+.t-h2 {
+  font-weight: 700;
+  font-size: 1.375rem;
+  line-height: 1.75rem;
+  letter-spacing: -0.01em;
+}
+.t-h3 {
+  font-weight: 700;
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+}
+.t-h4 {
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.375rem;
+}
+@media (width >= 40rem) {
+  .t-display {
+    font-size: 3rem;
+    line-height: 3.25rem;
+  }
+  .t-h1 {
+    font-size: 2.25rem;
+    line-height: 2.5625rem;
+  }
+  .t-h2 {
+    font-size: 1.75rem;
+    line-height: 2.125rem;
+  }
+  .t-h3 {
+    font-size: 1.375rem;
+    line-height: 1.75rem;
+  }
+  .t-h4 {
+    font-size: 1.125rem;
+    line-height: 1.4375rem;
+  }
+}
+
+/* Plain running text on a public page (the course introduction, the privacy
+   page): paragraphs and flat lists only. Lesson prose is .lesson-prose below. */
 .prose-save7 {
   max-width: 68ch;
 }
@@ -107,20 +168,6 @@ body {
 .prose-save7 strong {
   color: var(--color-navy);
   font-weight: 500;
-}
-.prose-save7 h2,
-.prose-save7 h3 {
-  color: var(--color-navy);
-  font-family: var(--font-display);
-  font-weight: 700;
-  line-height: 1.25;
-  margin-top: 1.8em;
-}
-.prose-save7 h2 {
-  font-size: 1.35rem;
-}
-.prose-save7 h3 {
-  font-size: 1.125rem;
 }
 .prose-save7 ul,
 .prose-save7 ol {
@@ -141,85 +188,244 @@ body {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.prose-save7 blockquote {
-  border-left: 3px solid var(--color-teal-ink);
-  padding-left: 1rem;
-  font-size: 1.15rem;
-  line-height: 1.5;
+
+/* --- Lesson prose (#74) -----------------------------------------------------
+   Lexend 18/31.5 in grey on plain white, about 62 characters wide. Emphasis is
+   navy at 500, never bold. Markdown.tsx emits a lesson's ## as <h3> and ### as
+   <h4>: the Stage title is the page's H1 and the step's title its H2. */
+.lesson-prose {
+  max-width: 62ch;
+  font-size: 1.125rem;
+  line-height: 1.75;
+  color: var(--color-grey);
+}
+.lesson-prose > :first-child {
+  margin-top: 0;
+}
+.lesson-prose p {
+  margin: 0 0 1.1em;
+}
+.lesson-prose strong {
   color: var(--color-navy);
+  font-weight: 500;
+}
+.lesson-prose h3,
+.lesson-prose h4 {
+  color: var(--color-navy);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+.lesson-prose h3 {
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+  margin: 1.9em 0 0.6em;
+}
+.lesson-prose h4 {
+  font-size: 1rem;
+  line-height: 1.375rem;
+  margin: 1.6em 0 0.5em;
+}
+.lesson-prose a {
+  color: var(--color-teal-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.lesson-prose code {
+  font-size: 0.9em;
+  background: var(--color-line);
+  color: var(--color-navy);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+.lesson-prose ul {
+  margin: 0 0 1.2em;
+  padding-left: 1.3em;
+  list-style: disc;
+}
+.lesson-prose ul li {
+  margin-bottom: 0.5em;
+  padding-left: 0.2em;
+}
+.lesson-prose ul li::marker {
+  color: var(--color-teal-ink);
+}
+/* A numbered list is numbered pills: teal circles with navy numerals. */
+.lesson-prose ol {
+  list-style: none;
+  counter-reset: lesson-n;
+  margin: 0 0 1.2em;
+  padding: 0;
+}
+.lesson-prose ol li {
+  counter-increment: lesson-n;
+  position: relative;
+  padding-left: 46px;
+  margin-bottom: 0.9em;
+  min-height: 32px;
+}
+.lesson-prose ol li::before {
+  content: counter(lesson-n);
+  position: absolute;
+  left: 0;
+  top: 0.12em;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-teal);
+  color: var(--color-navy);
+  font: 700 0.875rem/1 var(--font-display);
+}
+/* A quotation is a teal-50 card with a 5px teal-ink bar. */
+.lesson-prose blockquote {
+  margin: 1.4em 0;
+  padding: 16px 18px;
+  background: var(--color-teal-50);
+  border: 1px solid var(--color-teal-line);
+  border-left: 5px solid var(--color-teal-ink);
+  border-radius: 0 14px 14px 0;
+  color: var(--color-navy);
+  font-size: 1.0625rem;
+  line-height: 1.6;
 }
 
-/* Tables (Markdown.tsx). A plain table from `sm` up. Below it, each body row is a
-   card: the row header on top, then every cell under its column header, which
-   comes from the cell's data-label. The header row is hidden there because each
-   cell now carries its own label. */
-.prose-save7 table {
+/* The Key takeaways step: each bullet is a teal-50 row with an outline check in a
+   teal-100 circle. It is the one kind that gets its own look, and it is applied by
+   kind in LessonBody, so the lesson's Markdown is a plain list and does not change. */
+/* The Markdown renderer gives each blank-line-separated bullet its own <ul>, so the
+   gap between rows is this margin, not a grid gap. */
+.lesson-prose.takeaways ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+}
+.lesson-prose.takeaways ul li {
+  position: relative;
+  margin: 0;
+  padding: 16px 16px 16px 66px;
+  border-radius: 16px;
+  background: var(--color-teal-50);
+  border: 1px solid var(--color-teal-line);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+.lesson-prose.takeaways ul li::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--color-teal-100);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300807b' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+  background-size: 20px 20px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Tables (Markdown.tsx). A plain table from 40rem up. Below it, each body row is a
+   card: the row header as its title, then every cell under its column header in
+   small capitals, read from the cell's data-label. The header row is hidden there
+   (visually only) because each cell now carries its own label. */
+.lesson-prose table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   line-height: 1.5;
+  margin: 0 0 1.6em;
+  color: var(--color-grey);
 }
-.prose-save7 th,
-.prose-save7 td {
+.lesson-prose th,
+.lesson-prose td {
   text-align: left;
   vertical-align: top;
 }
-.prose-save7 th {
-  color: var(--color-navy);
-  font-weight: 700;
-}
-.prose-save7 td {
+.lesson-prose thead th {
+  font: 600 0.75rem/1.3 var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--color-grey);
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--color-navy);
+  vertical-align: bottom;
+}
+.lesson-prose tbody th {
+  font: 600 0.9375rem/1.4 var(--font-display);
+  color: var(--color-navy);
+  padding: 12px;
+  border-bottom: 1px solid var(--color-line);
+  width: 18%;
+}
+.lesson-prose td {
+  padding: 12px;
+  border-bottom: 1px solid var(--color-line);
 }
 
 @media (width < 40rem) {
-  .prose-save7 table,
-  .prose-save7 tbody,
-  .prose-save7 tr,
-  .prose-save7 th,
-  .prose-save7 td {
+  .lesson-prose table,
+  .lesson-prose tbody,
+  .lesson-prose tr,
+  .lesson-prose th,
+  .lesson-prose td {
     display: block;
+    width: auto;
   }
-  .prose-save7 thead {
-    display: none;
+  .lesson-prose thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
-  .prose-save7 tbody tr {
+  .lesson-prose tbody tr {
     border: 1px solid var(--color-line);
-    border-radius: var(--radius-card);
-    background: #fff;
-    padding: 1rem;
+    border-radius: 14px;
+    padding: 14px 16px 6px;
+    margin-bottom: 12px;
+    background: var(--color-white);
   }
-  .prose-save7 tbody tr + tr {
-    margin-top: 0.75rem;
+  .lesson-prose tbody th {
+    padding: 0 0 8px;
+    border: 0;
+    font-size: 1.0625rem;
+    width: auto;
   }
-  .prose-save7 tbody th {
-    padding-bottom: 0.25rem;
+  .lesson-prose td {
+    padding: 0 0 10px;
+    border: 0;
   }
-  .prose-save7 td {
-    padding-top: 0.5rem;
-  }
-  .prose-save7 td::before {
+  .lesson-prose td::before {
     content: attr(data-label);
     display: block;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
+    font: 600 0.75rem/1.3 var(--font-display);
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--color-grey);
+    margin-bottom: 2px;
+  }
+  .lesson-prose td:empty {
+    display: none;
   }
 }
 
 @media (width >= 40rem) {
-  .prose-save7 th,
-  .prose-save7 td {
-    padding: 0.75rem;
-    border-bottom: 1px solid var(--color-line);
+  .lesson-prose h3 {
+    font-size: 1.375rem;
+    line-height: 1.75rem;
   }
-  .prose-save7 thead th {
-    border-bottom: 2px solid var(--color-line-strong);
-    vertical-align: bottom;
-    font-size: 0.875rem;
+  .lesson-prose h4 {
+    font-size: 1.125rem;
+    line-height: 1.4375rem;
   }
+}
+
+/* The site header scrolls away in the reader and only the step rail sticks (#74).
+   The header is shared by every page and is sticky in the layout, so the reader
+   turns that off for itself: the runner's root carries data-reader. */
+body:has([data-reader]) .site-header {
+  position: static;
 }
 
 /* --- Accessibility ------------------------------------------------------- */

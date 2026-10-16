@@ -16,7 +16,7 @@ export function cx(...parts: Array<string | false | null | undefined>): string {
 // --- Buttons ---------------------------------------------------------------
 
 const BUTTON_BASE =
-  "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition " +
+  "inline-flex items-center justify-center gap-2 rounded-full font-medium transition " +
   // 44px minimum touch target: a significant share of learners are on a phone.
   "min-h-11 px-6 py-2.5 disabled:opacity-50 disabled:pointer-events-none";
 
@@ -31,6 +31,8 @@ const BUTTON_VARIANTS = {
   /** For use on navy surfaces, where teal becomes legible. */
   onNavy: "bg-teal text-navy hover:bg-teal-100 font-medium",
   quiet: "text-grey hover:text-navy hover:bg-line/50",
+  /** A link-weight action: teal-ink, underlined. For "Back to the Level" and "Review your last attempt". */
+  tertiary: "text-teal-ink underline underline-offset-4 hover:text-navy px-2",
 } as const;
 
 type ButtonVariant = keyof typeof BUTTON_VARIANTS;
@@ -158,7 +160,7 @@ export function Badge({
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-0.5 text-xs font-semibold",
+        "inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-0.5 text-xs font-medium",
         tones[tone],
         className,
       )}

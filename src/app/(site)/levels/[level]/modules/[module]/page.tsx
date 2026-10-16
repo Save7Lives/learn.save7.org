@@ -7,8 +7,6 @@ import { getStageQuizStates } from "@/lib/quiz";
 import { ModuleRunner, type RunnerLesson } from "@/components/lesson/ModuleRunner";
 import { LessonBody } from "@/components/lesson/LessonBody";
 import { StageQuiz } from "@/components/quiz/StageQuiz";
-import { TIER_META } from "@/components/ui/primitives";
-import type { LevelTier } from "@/lib/constants";
 import {
   completeModuleAction,
   readStageQuizAction,
@@ -27,7 +25,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { level, module: moduleSlug } = await props.params;
   const data = await getModuleForUser(null, level, moduleSlug);
-  if (!data) return { title: "Module not found" };
+  if (!data) return { title: "Stage not found" };
   return { title: data.module.title, description: data.module.coreQuestion };
 }
 
@@ -47,12 +45,13 @@ export default async function ModulePage(
   if (!data) notFound();
 
   const { level, module: mod, siblings, progress } = data;
-  const tier = level.tier as LevelTier;
 
-  // The CHECK step is this Stage's quiz. Only where the learner stands is read
-  // here; the paper is drawn when they open it, so visiting a Stage never starts
-  // an attempt.
-  const quizState = (await getStageQuizStates([mod.id])).get(mod.id) ?? null;
+  // The CHECK step is this Stage's quiz, and the Stage stepper draws every Stage's
+  // dot from its quiz. Only where the learner stands is read here, for all the
+  // Level's Stages at once; the paper is drawn when they open it, so visiting a
+  // Stage never starts an attempt.
+  const quizStates = await getStageQuizStates(siblings.map((s) => s.slug));
+  const quizState = quizStates.get(mod.id) ?? null;
   const stageQuiz = (
     <StageQuiz
       stageSlug={mod.id}
@@ -65,15 +64,21 @@ export default async function ModulePage(
     />
   );
 
+  const stages = siblings.map((s) => ({
+    slug: s.slug,
+    title: s.title,
+    passed: quizStates.get(s.slug)?.passedAt != null,
+  }));
+
   const currentIndex = siblings.findIndex((s) => s.slug === moduleSlug);
   const nextSibling = siblings[currentIndex + 1] ?? null;
 
-  // The completion step is generated from the module's own data rather than
-  // authored per module, so it can never drift from the content above it.
+  // The Finish step is generated from the Stage's own data rather than authored
+  // per Stage, so it can never drift from the content above it.
   const moduleContext = {
-    moduleTitle: mod.title,
+    stageTitle: mod.title,
     coreQuestion: mod.coreQuestion,
-    nextModuleTitle: nextSibling?.title ?? null,
+    nextStageTitle: nextSibling?.title ?? null,
     levelTitle: level.title,
     levelSlug,
     isLastInLevel: nextSibling === null,
@@ -106,18 +111,17 @@ export default async function ModulePage(
       lessons={lessons}
       levelSlug={levelSlug}
       moduleSlug={moduleSlug}
-      moduleTitle={mod.title}
-      moduleNumber={mod.order}
+      stageTitle={mod.title}
+      stageNumber={mod.order}
+      stages={stages}
       coreQuestion={mod.coreQuestion}
       levelTitle={level.title}
-      tierLabel={TIER_META[tier].label}
-      tierDotClass={TIER_META[tier].dotClass}
       estMinutes={mod.estMinutes}
       isComplete={progress?.status === "COMPLETE"}
       initialLessonIndex={lastIndex >= 0 ? lastIndex : 0}
       onViewLesson={viewLessonAction}
       onComplete={completeModuleAction}
-      nextModuleTitle={nextSibling?.title ?? null}
+      nextStageTitle={nextSibling?.title ?? null}
     />
   );
 }

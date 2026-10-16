@@ -52,7 +52,14 @@ export function LessonBody(props: LessonBodyProps) {
 }
 
 function LessonContent({ lesson, stageQuiz, moduleContext }: LessonBodyProps) {
-  const prose = lesson.bodyMarkdown ? <Markdown source={lesson.bodyMarkdown} /> : null;
+  // Key takeaways is the one kind with its own look, so it is applied here by kind
+  // and the lesson's Markdown stays a plain list (globals.css, .takeaways).
+  const prose = lesson.bodyMarkdown ? (
+    <Markdown
+      source={lesson.bodyMarkdown}
+      className={lesson.kind === "TAKEAWAYS" ? "lesson-prose takeaways" : "lesson-prose"}
+    />
+  ) : null;
 
   if (lesson.kind === "CHECK") {
     return <Wrapped prose={prose}>{stageQuiz ?? null}</Wrapped>;

@@ -1,13 +1,16 @@
-import Link from "next/link";
-import { Badge, Card, Display, Eyebrow } from "@/components/ui/primitives";
+import { Card, Eyebrow } from "@/components/ui/primitives";
+import { StatusPill } from "@/components/portal/Portal";
+import { IconCircle } from "@/components/course/IconCircle";
+import { GoToStepLink } from "@/components/lesson/StepNav";
 
 export type ModuleCompleteContext = {
-  moduleTitle: string;
+  stageTitle: string;
   coreQuestion: string;
-  nextModuleTitle: string | null;
+  nextStageTitle: string | null;
+  /** The Level's name without the word Level: "Beginner". */
   levelTitle: string;
   levelSlug: string;
-  /** True when this is the last module in the level. */
+  /** True when this is the last Stage in the Level. */
   isLastInLevel: boolean;
   certificateTitle: string;
   alreadyComplete: boolean;
@@ -16,27 +19,30 @@ export type ModuleCompleteContext = {
 };
 
 /**
- * The final step of every module.
+ * The final step of every Stage.
  *
- * The brief asks for an explicit completion step rather than inferring completion
- * from scrolling, and this is it: a recap, then a deliberate action (the button
- * lives in the runner's footer, immediately below).
+ * The brief asks for an explicit finishing step rather than inferring it from
+ * scrolling, and this is it: the question the Stage opened with, then a deliberate
+ * action (the button lives in the runner's footer, immediately below).
  *
- * Everything here is derived from the module's own data — its core question and
- * its position in the level. Nothing is authored per module. That means
- * it cannot drift out of sync with the content, and it adds nothing to Save7's
- * review queue, which a thirteenth hand-written summary would.
+ * Everything here is derived from the Stage's own data — its core question and its
+ * position in the Level. Nothing is authored per Stage. That means it cannot drift
+ * out of sync with the content, and it adds nothing to Save7's review queue, which
+ * a thirteenth hand-written summary would.
  *
- * Recapping at the point of completion is also the pedagogically useful moment:
- * the learner is asked whether they could now answer the question the module
- * opened with, which is the only test that matters for this course.
+ * Closing the loop on the opening question is also the pedagogically useful moment:
+ * the learner is asked whether they could now answer it, which is the only test
+ * that matters for this course.
+ *
+ * Finishing records that the Stage was *read*. A Stage counts as complete when its
+ * Stage Quiz is passed (Progress Record, CONTEXT.md), and the pink card says so
+ * rather than let "finish" imply it.
  */
 export function ModuleComplete({ context }: { context: ModuleCompleteContext }) {
   const {
     coreQuestion,
-    nextModuleTitle,
+    nextStageTitle,
     levelTitle,
-    levelSlug,
     isLastInLevel,
     certificateTitle,
     alreadyComplete,
@@ -45,73 +51,65 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
 
   return (
     <div>
-      {/* The module opened with this question. Closing the loop on it is the
-          point of the step. */}
-      <Card className="border-teal-line bg-teal-50 p-6">
-        <Eyebrow className="text-teal-ink">The question this module asked</Eyebrow>
-        <p className="mt-2 text-lg font-medium text-navy">{coreQuestion}</p>
-        <p className="mt-3 text-sm text-grey">
-          Could you answer that in a conversation now, in your own words? That is the
-          only test that matters here.
+      {/* The Stage opened with this question. Closing the loop on it is the point
+          of the step. */}
+      <Card className="border-teal-line bg-teal-50 p-5">
+        <Eyebrow className="text-teal-ink">The question this Stage asked</Eyebrow>
+        <p className="mt-2 text-lg font-medium leading-7 text-navy">{coreQuestion}</p>
+        <p className="mt-2.5 text-sm text-grey">
+          Could you answer that in a conversation now, in your own words? That is the only test that
+          matters here.
         </p>
       </Card>
 
-      <section className="mt-8 border-t border-line pt-6">
-        <Display as="h3" className="text-xl text-navy">
-          {alreadyComplete ? "You've completed this module" : "Ready to mark it complete?"}
-        </Display>
+      <section className="mt-7">
+        <h3 className="t-h3 text-navy">
+          {alreadyComplete ? "You've finished this Stage" : "You've reached the end of this Stage"}
+        </h3>
+        <p className="mt-2 text-base leading-7 text-grey">
+          {alreadyComplete
+            ? "This Stage is recorded as read. You can revisit any step at any time. Nothing is locked once you have been through it."
+            : "Finishing records that you have read it, so you can stop here and pick up later without losing your place."}
+        </p>
 
-        {alreadyComplete ? (
-          <p className="mt-2 text-grey">
-            This module is recorded as complete. You can revisit any step at any time.
-            Nothing is locked once you have been through it.
-          </p>
-        ) : (
-          <p className="mt-2 text-grey">
-            Marking the module complete records your progress, so you can stop here and
-            pick up later without losing your place.
-          </p>
-        )}
-
-        {/* Reading a Stage and passing its quiz are separate: only the quiz counts
-            towards the Certificate (#16), so say so here rather than let "complete"
-            imply it. */}
-        {!quizPassed ? (
-          <p className="mt-3 text-sm text-grey">
-            You haven&apos;t passed this Stage&apos;s quiz yet. It&apos;s in the Check step,
-            and passing every Stage Quiz in {levelTitle} earns the{" "}
-            <strong className="text-navy">&ldquo;{certificateTitle}&rdquo;</strong> certificate.
-          </p>
-        ) : null}
+        <Card className="mt-[18px] border-pink-line bg-pink-50 p-5">
+          <div className="flex items-start gap-3.5">
+            <IconCircle name="award" tone="pink" />
+            <div>
+              <h4 className="t-h4 mb-1 text-navy">
+                {quizPassed
+                  ? "You've passed this Stage's quiz, so it counts as complete"
+                  : "A Stage counts as complete when you pass its quiz"}
+              </h4>
+              <p className="text-sm text-grey">
+                {quizPassed
+                  ? "Passing every Stage Quiz in "
+                  : "The Stage Quiz is in the Check step. Passing every Stage Quiz in "}
+                {levelTitle} Level earns the{" "}
+                <span className="font-medium text-navy">&ldquo;{certificateTitle}&rdquo;</span>{" "}
+                certificate.
+              </p>
+              {quizPassed ? null : (
+                <div className="mt-1.5">
+                  <GoToStepLink kind="CHECK">Go to the Stage Quiz</GoToStepLink>
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {isLastInLevel ? (
-            <>
-              <Badge tone="pink">Last module in {levelTitle}</Badge>
-              <p className="text-sm text-grey">
-                Your certificate is on the {levelTitle} page once every Stage Quiz in it is
-                passed.
-              </p>
-            </>
-          ) : nextModuleTitle ? (
+            <StatusPill tone="progress" icon="flag">
+              Last Stage in {levelTitle} Level
+            </StatusPill>
+          ) : null}
+          {!isLastInLevel && nextStageTitle ? (
             <p className="text-sm text-grey">
-              Next up:{" "}
-              <strong className="text-navy">{nextModuleTitle}</strong>. The button below
-              takes you straight there.
+              Next up: <span className="font-medium text-navy">{nextStageTitle}</span>.
             </p>
           ) : null}
         </div>
-
-        <p className="mt-4 text-sm text-grey">
-          Or go back to{" "}
-          <Link
-            href={`/levels/${levelSlug}`}
-            className="font-semibold text-pink underline"
-          >
-            all modules in {levelTitle}
-          </Link>
-          .
-        </p>
       </section>
     </div>
   );

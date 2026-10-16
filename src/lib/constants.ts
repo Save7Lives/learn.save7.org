@@ -14,7 +14,7 @@ export type UserRole = (typeof USER_ROLES)[number];
 export const LEVEL_TIERS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const;
 export type LevelTier = (typeof LEVEL_TIERS)[number];
 
-/** The seven-part spine every module follows. Order is data, not code. */
+/** The seven-part spine every Stage follows. Order is data, not code. */
 export const LESSON_KINDS = [
   "INTRO",
   "PRIMARY",
@@ -30,10 +30,10 @@ export const LESSON_KIND_LABELS: Record<LessonKind, string> = {
   INTRO: "Why this matters",
   PRIMARY: "Learn",
   TAKEAWAYS: "Key takeaways",
-  CHECK: "Check your understanding",
+  CHECK: "Check",
   STUDY_GUIDE: "Study guide",
   FURTHER_READING: "Further reading",
-  COMPLETE: "Complete module",
+  COMPLETE: "Finish",
 };
 
 export const RESOURCE_TYPES = [

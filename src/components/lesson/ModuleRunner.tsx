@@ -2,14 +2,12 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import {
-  Button,
-  Display,
-  Eyebrow,
-  ProgressBar,
-  cx,
-} from "@/components/ui/primitives";
+import { Button, cx } from "@/components/ui/primitives";
+import { Icon } from "@/components/ui/icons";
 import { LESSON_KIND_LABELS, type LessonKind } from "@/lib/constants";
+import { StageHeader, type RunnerStage } from "@/components/lesson/StageHeader";
+import { StepRail } from "@/components/lesson/StepRail";
+import { StepNavContext } from "@/components/lesson/StepNav";
 
 export type RunnerLesson = {
   id: string;
@@ -23,7 +21,7 @@ export type RunnerLesson = {
 /**
  * The lesson runner.
  *
- * One step at a time through the module's seven-part spine. A single long
+ * One step at a time through the Stage's seven-part spine. A single long
  * scrolling page was the alternative and it was worse on both counts that matter
  * here: on a phone it becomes an intimidating wall, and it makes "where am I?"
  * unanswerable.
@@ -31,33 +29,36 @@ export type RunnerLesson = {
  * All lesson content is rendered on the server and passed in as nodes. This
  * component only handles navigation and progress, which is why the answer keys for
  * the inline checks are never in its props.
+ *
+ * The route and the schema still say `module`; only what a learner reads says
+ * Stage (#74).
  */
 export function ModuleRunner({
   lessons,
   levelSlug,
   moduleSlug,
-  moduleTitle,
-  moduleNumber,
+  stageTitle,
+  stageNumber,
+  stages,
   coreQuestion,
   levelTitle,
-  tierLabel,
-  tierDotClass,
   estMinutes,
   isComplete,
   initialLessonIndex,
   onViewLesson,
   onComplete,
-  nextModuleTitle,
+  nextStageTitle,
 }: {
   lessons: RunnerLesson[];
   levelSlug: string;
   moduleSlug: string;
-  moduleTitle: string;
-  moduleNumber: number;
+  stageTitle: string;
+  stageNumber: number;
+  /** Every Stage in the Level, in order, with whether its quiz is passed. */
+  stages: RunnerStage[];
   coreQuestion: string;
+  /** The Level's name without the word Level: "Beginner". */
   levelTitle: string;
-  tierLabel: string;
-  tierDotClass: string;
   estMinutes: number;
   isComplete: boolean;
   initialLessonIndex: number;
@@ -66,14 +67,15 @@ export function ModuleRunner({
     lessonSlug: string,
     secondsOnPreviousStep: number,
   ) => Promise<void>;
-  onComplete: (
-    levelSlug: string,
-    moduleSlug: string,
-  ) => Promise<{ error?: string } | void>;
-  nextModuleTitle: string | null;
+  onComplete: (levelSlug: string, moduleSlug: string) => Promise<{ error?: string } | void>;
+  nextStageTitle: string | null;
 }) {
-  const [index, setIndex] = useState(
-    Math.min(Math.max(initialLessonIndex, 0), lessons.length - 1),
+  const startIndex = Math.min(Math.max(initialLessonIndex, 0), lessons.length - 1);
+  const [index, setIndex] = useState(startIndex);
+  // The steps the learner has been to, for the rail's checks. Resuming at step 5
+  // means steps 1 to 4 were read on the way.
+  const [visited, setVisited] = useState<ReadonlySet<number>>(
+    () => new Set(Array.from({ length: startIndex + 1 }, (_, i) => i)),
   );
   const [pending, startTransition] = useTransition();
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -85,11 +87,10 @@ export function ModuleRunner({
 
   const lesson = lessons[index];
   const isLastStep = index === lessons.length - 1;
-  const progressPct = ((index + 1) / lessons.length) * 100;
 
   // Record the view, and how long the previous step took. Time-on-step is the
-  // signal Save7 needs to find modules that are too long, so it is measured per
-  // step rather than per module.
+  // signal Save7 needs to find Stages that are too long, so it is measured per
+  // step rather than per Stage.
   useEffect(() => {
     if (!lesson) return;
     const seconds =
@@ -103,6 +104,7 @@ export function ModuleRunner({
 
   function go(nextIndex: number) {
     setIndex(nextIndex);
+    setVisited((prev) => new Set(prev).add(nextIndex));
     // Move focus to the new step's heading so keyboard and screen reader users
     // land in the content rather than staying on a button that has moved.
     requestAnimationFrame(() => {
@@ -116,7 +118,7 @@ export function ModuleRunner({
     startTransition(async () => {
       // An error escaping a transition reaches React's error boundary, which
       // replaces the entire page with "a client-side exception has occurred" —
-      // a learner who has just finished a module loses the module instead of
+      // a learner who has just finished a Stage loses the Stage instead of
       // being told to press the button again. Caught here so the failure stays
       // the size of the thing that failed.
       try {
@@ -133,7 +135,7 @@ export function ModuleRunner({
         // Logged so the browser console names the cause. Next redacts server
         // error messages in production, but the digest it does print can be
         // matched against the deployment's function logs.
-        console.error("Marking the module complete failed", error);
+        console.error("Finishing the Stage failed", error);
         setSaveError("We couldn't save your progress. Please try again.");
       }
     });
@@ -141,144 +143,112 @@ export function ModuleRunner({
 
   if (!lesson) return null;
 
+  const stepNav = {
+    goToKind: (kind: string) => {
+      const target = lessons.findIndex((l) => l.kind === kind);
+      if (target >= 0) go(target);
+    },
+  };
+  const isFinishStep = lesson.kind === "COMPLETE";
+  // The Finish step's heading comes from its kind, so it says "Stage" without a
+  // content migration to retitle every Stage's COMPLETE lesson.
+  const heading = isFinishStep ? "Finish this Stage" : lesson.title;
+  const backLabel = `Back to ${levelTitle} Level`;
+
   return (
-    <div>
-      {/* --- Module header ------------------------------------------------- */}
-      <header className="border-b border-line bg-white">
-        <div className="mx-auto max-w-3xl px-5 py-8 sm:px-8">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-            <Link
-              href={`/levels/${levelSlug}`}
-              className="inline-flex min-h-11 items-center gap-2 font-semibold text-grey hover:text-navy"
-            >
-              <span aria-hidden="true">←</span>
-              <span aria-hidden="true" className={cx("size-2 rounded-full", tierDotClass)} />
-              {levelTitle}
-            </Link>
-            <span aria-hidden="true" className="text-grey">
-              /
-            </span>
-            <span className="text-grey">
-              {tierLabel} · Module {moduleNumber}
-            </span>
+    // data-reader switches the site header off its sticky position (globals.css),
+    // so the step rail is the only thing that sticks.
+    <StepNavContext.Provider value={stepNav}>
+      <div data-reader>
+        <StageHeader
+          levelSlug={levelSlug}
+          levelTitle={levelTitle}
+          stageNumber={stageNumber}
+          stageCount={stages.length}
+          stageTitle={stageTitle}
+          coreQuestion={coreQuestion}
+          estMinutes={estMinutes}
+          stepCount={lessons.length}
+          stages={stages}
+          currentSlug={moduleSlug}
+        />
+
+        <StepRail
+          steps={lessons.map((step) => ({
+            id: step.id,
+            label: LESSON_KIND_LABELS[step.kind as LessonKind] ?? step.title,
+          }))}
+          index={index}
+          visited={visited}
+          onSelect={go}
+        />
+
+        {/* --- Step content --------------------------------------------------- */}
+        <div className="mx-auto max-w-[680px] px-5 pb-10 pt-7 sm:px-8">
+          <h2 ref={headingRef} tabIndex={-1} className="t-h2 mb-5 mt-1.5 text-navy outline-none">
+            {heading}
+          </h2>
+
+          <div className="animate-rise">{lesson.content}</div>
+
+          {/* --- Step navigation: inline after the content, not docked -------- */}
+          <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-line pt-[22px]">
+            {index > 0 ? (
+              <Button variant="outline" onClick={() => go(index - 1)}>
+                Back
+              </Button>
+            ) : null}
+
+            {!isLastStep ? (
+              <Button onClick={() => go(index + 1)}>Continue</Button>
+            ) : isComplete ? (
+              <>
+                <Button variant="navy" onClick={finish} disabled={pending}>
+                  {pending ? "Saving…" : nextStageTitle ? "Next Stage" : backLabel}
+                </Button>
+                <p className="inline-flex items-center gap-1.5 text-sm font-medium text-correct">
+                  <Icon name="check-circle" className="size-4 shrink-0 stroke-[2.25]" />
+                  You&apos;ve already finished this Stage
+                </p>
+              </>
+            ) : (
+              <Button onClick={finish} disabled={pending}>
+                {pending ? "Saving…" : "Finish this Stage"}
+              </Button>
+            )}
+
+            {isLastStep && isComplete && !nextStageTitle ? null : (
+              <Link
+                href={`/levels/${levelSlug}`}
+                className={cx(
+                  "inline-flex min-h-11 basis-full items-center px-2 text-base font-medium text-teal-ink underline underline-offset-4 hover:text-navy",
+                  "sm:ml-auto sm:basis-auto",
+                )}
+              >
+                {backLabel}
+              </Link>
+            )}
           </div>
 
-          <Display as="h1" className="mt-4 text-title text-navy">
-            {moduleTitle}
-          </Display>
-          <p className="mt-2 text-grey">{coreQuestion}</p>
-          <p className="mt-2 text-sm text-grey">
-            About {estMinutes} minutes · {lessons.length} steps
-          </p>
-        </div>
-      </header>
-
-      {/* --- Step rail ----------------------------------------------------- */}
-      <div className="sticky top-[57px] z-30 border-b border-line bg-white/95 backdrop-blur">
-        <div className="mx-auto max-w-3xl px-5 py-3 sm:px-8">
-          <nav aria-label="Module steps">
-            <ol className="flex gap-1.5 overflow-x-auto pb-1">
-              {lessons.map((step, i) => {
-                const isCurrent = i === index;
-                const isPast = i < index;
-                return (
-                  <li key={step.id} className="shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => go(i)}
-                      aria-current={isCurrent ? "step" : undefined}
-                      className={cx(
-                        "min-h-11 rounded-pill px-3 text-xs font-bold transition",
-                        isCurrent
-                          ? "bg-navy text-white"
-                          : isPast
-                            ? "bg-pink-50 text-pink"
-                            : "bg-line text-grey hover:bg-line",
-                      )}
-                    >
-                      {LESSON_KIND_LABELS[step.kind as LessonKind] ?? step.title}
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-          </nav>
-          <ProgressBar
-            value={progressPct}
-            label={`${moduleTitle} progress`}
-            className="mt-1"
-          />
-        </div>
-      </div>
-
-      {/* --- Step content --------------------------------------------------- */}
-      <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8">
-        <Eyebrow>
-          Step {index + 1} of {lessons.length}
-        </Eyebrow>
-        <h2
-          ref={headingRef}
-          tabIndex={-1}
-          className="mt-2 font-display text-3xl tracking-tight text-navy outline-none"
-        >
-          {lesson.title}
-        </h2>
-
-        <div className="mt-8 animate-rise">{lesson.content}</div>
-
-        {/* --- Step navigation --------------------------------------------- */}
-        <div className="mt-12 flex flex-wrap items-center gap-3 border-t border-line pt-6">
-          <Button
-            variant="outline"
-            onClick={() => go(index - 1)}
-            disabled={index === 0}
-          >
-            Back
-          </Button>
-
-          {!isLastStep ? (
-            <Button onClick={() => go(index + 1)}>Continue</Button>
-          ) : isComplete ? (
-            <>
-              <Button variant="navy" onClick={finish} disabled={pending}>
-                {pending ? "Saving…" : nextModuleTitle ? "Next module" : "Back to level"}
-              </Button>
-              <p className="text-sm font-semibold text-correct">
-                ✓ You&apos;ve already completed this module
+          {/* aria-live so a failed save is announced, not just drawn. */}
+          <div aria-live="polite">
+            {saveError ? (
+              <p className="mt-4 rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-medium text-incorrect">
+                {saveError}
               </p>
-            </>
-          ) : (
-            <Button onClick={finish} disabled={pending}>
-              {pending ? "Saving…" : "Mark module complete"}
-            </Button>
-          )}
+            ) : null}
+          </div>
 
-          <Link
-            href={`/levels/${levelSlug}`}
-            className="ml-auto inline-flex min-h-11 items-center text-sm font-semibold text-grey underline hover:text-navy"
-          >
-            All modules
-          </Link>
-        </div>
-
-        {/* aria-live so a failed save is announced, not just drawn. */}
-        <div aria-live="polite">
-          {saveError ? (
-            <p className="mt-4 rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-semibold text-pink">
-              {saveError}
+          {isLastStep && !isComplete ? (
+            <p className="mt-4 text-sm text-grey">
+              {nextStageTitle
+                ? `Finishing takes you on to "${nextStageTitle}".`
+                : `This is the last Stage in the Level.`}
             </p>
           ) : null}
         </div>
-
-        {isLastStep && !isComplete ? (
-          <p className="mt-4 text-sm text-grey">
-            {nextModuleTitle
-              ? `Completing this module takes you on to "${nextModuleTitle}".`
-              : "This is the last module in the level. Completing it unlocks the assessment."}
-          </p>
-        ) : null}
       </div>
-    </div>
+    </StepNavContext.Provider>
   );
 }
 

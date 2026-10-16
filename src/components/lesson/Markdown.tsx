@@ -4,7 +4,7 @@ import { parseTable, type Table } from "@/lib/markdown-table";
  * A deliberately tiny Markdown renderer.
  *
  * Lesson prose uses only paragraphs, bold, italic, inline code, links,
- * blockquotes, flat lists, ##/### headings and pipe tables. A full Markdown
+ * blockquotes, flat lists, ##/### headings (emitted as h3/h4) and pipe tables. A full Markdown
  * pipeline plus a sanitiser would be a large dependency and a real XSS surface
  * for a handful of features we control the input to.
  *
@@ -31,7 +31,7 @@ function inline(text: string): string {
       .replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>")
       .replace(/(^|[^_])_([^_]+)_/g, "$1<em>$2</em>")
       // `code`
-      .replace(/`([^`]+)`/g, '<code class="rounded bg-line/50 px-1 py-0.5 text-sm">$1</code>')
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
       // [text](https://…) — https only, so a link cannot become javascript:
       .replace(
         /\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g,
@@ -76,7 +76,7 @@ function table({ header, rows }: Table): string {
 
 export function Markdown({
   source,
-  className = "prose-save7",
+  className = "lesson-prose",
 }: {
   source: string;
   className?: string;
@@ -117,11 +117,15 @@ export function Markdown({
           .filter((line) => /^\d+\.\s/.test(line.trim()))
           .map((line) => `<li>${inline(line.trim().replace(/^\d+\.\s+/, ""))}</li>`)
           .join("");
-        return `<ol>${items}</ol>`;
+        // role="list": globals.css draws the numbers itself and removes list-style,
+        // and Safari drops a list's semantics when its list-style is none.
+        return `<ol role="list">${items}</ol>`;
       }
 
-      if (trimmed.startsWith("### ")) return `<h3>${inline(trimmed.slice(4))}</h3>`;
-      if (trimmed.startsWith("## ")) return `<h2>${inline(trimmed.slice(3))}</h2>`;
+      // A lesson's ## is the page's third heading level and its ### the fourth:
+      // the Stage title is the H1 and the step's title is the H2 (#74).
+      if (trimmed.startsWith("### ")) return `<h4>${inline(trimmed.slice(4))}</h4>`;
+      if (trimmed.startsWith("## ")) return `<h3>${inline(trimmed.slice(3))}</h3>`;
 
       return `<p>${inline(trimmed).replace(/\n/g, "<br />")}</p>`;
     })

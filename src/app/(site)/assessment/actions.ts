@@ -7,6 +7,24 @@ import type { SubmittedAnswer } from "@/lib/quiz";
 import { recordEvent } from "@/lib/progress";
 
 /**
+ * Record that the learner pressed Start on the before-you-start screen (#74).
+ *
+ * `quiz_start` used to fire when the page loaded. The page now opens on a screen
+ * that explains the Baseline, so a learner who reads it and leaves has not started
+ * a Sitting, and the event says "started" only once they press the button. It is
+ * written only when `sittingNo` is the Sitting owed now, so a stale tab cannot log
+ * a start for one that has been sat.
+ */
+export async function startBaselineSittingAction(sittingNo: number): Promise<void> {
+  const user = await requireUser();
+  const { due } = await getBaselineState(user.id);
+  if (due !== sittingNo) return;
+  await recordEvent(user.id, "quiz_start", {
+    metaJson: JSON.stringify({ kind: "BASELINE", sitting: sittingNo }),
+  });
+}
+
+/**
  * Record one Baseline Sitting.
  *
  * `sittingNo` is the Sitting the page was rendered for, passed through the
