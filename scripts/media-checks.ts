@@ -218,8 +218,6 @@ export function checkMedia(repoRoot = process.cwd()): MediaReport {
         errors.push(at(`captions could not be read: ${(e as Error).message}`));
       }
     }
-
-    if (film.corrections.length === 0) errors.push(at("the film has no corrections noted"));
   }
 
   return { errors, notes };

@@ -4,18 +4,12 @@ import { filmFor } from "@/lib/films";
 import { mediaUrl } from "@/lib/media";
 
 /**
- * A lesson's film: the player, the note on where the film and the course differ,
- * and the transcript.
+ * A lesson's film: the player, its caption and the transcript.
  *
  * The lesson names the film by registry key (`learn_lessons.component_key`, from
  * the `video:` front-matter field). The key is resolved through `src/lib/films.ts`
  * and nothing else, so content can't name a URL, and a key that is not registered
  * renders nothing rather than failing the Stage.
- *
- * Why the note is here and not in the lesson's prose (#58): it is a set of facts
- * about this film. Two of the three would make a learner answer a Stage Quiz item
- * wrongly, and the transcript is shown exactly as spoken, errors included, because
- * the note covers them.
  */
 export function LessonFilm({ filmKey }: { filmKey: string | null | undefined }) {
   const film = filmFor(filmKey);
@@ -53,22 +47,6 @@ export function LessonFilm({ filmKey }: { filmKey: string | null | undefined }) 
           It downloads only when you press play, and captions are on. The film
           reinforces all three Stages in this Level.
         </p>
-
-        <div role="note" className="mt-4 rounded-xl border border-pink bg-pink-50 p-4">
-          <h3 className="text-sm font-bold text-navy">Where the film and this course differ</h3>
-          <p className="mt-1 text-sm text-grey">
-            Three details in the film don&apos;t match what this course teaches. Go with
-            the course: it follows the sources, and so does the Stage Quiz.
-          </p>
-          <ul className="mt-3 space-y-2">
-            {film.corrections.map((c) => (
-              <li key={c.course} className="text-sm text-grey">
-                The film says <em>{c.film}</em>. The course says{" "}
-                <strong className="text-navy">{c.course}</strong>. {c.why}
-              </li>
-            ))}
-          </ul>
-        </div>
 
         <details className="mt-4">
           <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-pink underline">

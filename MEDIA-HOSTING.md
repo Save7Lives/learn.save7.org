@@ -31,7 +31,7 @@ Stage Quiz items the film would answer wrongly.
    A missing or unregistered key renders no film and never fails the Stage.
 
 Everything the page shows lives in the registry, in typed code: the three file paths,
-the title, length and size, the captions track, the transcript and the corrections.
+the title, length and size, the captions track, and the transcript.
 
 ## The files, and why their names are permanent
 
