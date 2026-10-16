@@ -192,10 +192,6 @@ export default function PrivacyPage() {
             whether it is still valid. Nothing else: not your email, not your scores, not
             your answers.
           </p>
-          <p>
-            If you would prefer your certificate not to be verifiable, tell us and we will
-            revoke it.
-          </p>
         </div>
       </section>
 

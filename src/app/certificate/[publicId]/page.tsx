@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { verifyCertificate } from "@/lib/certificates";
 import { siteUrl } from "@/lib/site";
-import { SAVE7_LOGO_HORIZONTAL_DATA_URI } from "@/lib/brand-assets";
 import { CertificateSheet } from "@/components/certificate/CertificateSheet";
 import { CertificateActions } from "@/components/certificate/CertificateActions";
 import { Badge, ButtonLink, Card, Display, Eyebrow } from "@/components/ui/primitives";
@@ -99,14 +98,10 @@ export default async function CertificatePage(
       <div className="print-sheet mt-8 overflow-hidden rounded-card border border-sand-200 bg-white shadow-sm">
         <CertificateSheet
           learnerName={cert.learnerName}
-          awardTitle={cert.awardTitle}
-          courseTitle={cert.courseTitle}
-          courseSubtitle="Organ Donation and Transplantation Awareness Course"
           levelTitle={cert.levelTitle}
           issuedAt={issuedAt}
           publicId={cert.publicId}
           verifyUrl={verifyUrl}
-          logoDataUri={SAVE7_LOGO_HORIZONTAL_DATA_URI}
           revoked={cert.revoked}
         />
       </div>
