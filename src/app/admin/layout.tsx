@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/authz";
-import { Save7Logo } from "@/components/ui/Save7Logo";
+import { Save7Lockup } from "@/components/ui/Save7Lockup";
 import { signOutAction } from "@/app/(auth)/actions";
 
 const TABS = [
@@ -31,7 +31,7 @@ export default async function AdminLayout({
       <header className="border-b border-line bg-white">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-5 py-3 sm:px-8">
           <Link href="/" aria-label="Save7 home" className="inline-flex min-h-11 items-center">
-            <Save7Logo variant="horizontal" className="h-4 w-auto" priority />
+            <Save7Lockup surface="white" className="text-base" />
           </Link>
           <span aria-hidden="true" className="h-5 w-px bg-line-strong" />
           <p className="text-sm font-bold text-navy">Save7 admin</p>

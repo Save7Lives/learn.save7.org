@@ -5,7 +5,7 @@ import { siteUrl } from "@/lib/site";
 import { CertificateSheet } from "@/components/certificate/CertificateSheet";
 import { CertificateActions } from "@/components/certificate/CertificateActions";
 import { Badge, ButtonLink, Card, Display, Eyebrow } from "@/components/ui/primitives";
-import { Save7Logo } from "@/components/ui/Save7Logo";
+import { Save7Lockup } from "@/components/ui/Save7Lockup";
 
 // Rendered per request, never prerendered: this route reads runtime configuration
 // (Supabase URL and key, SITE_URL) which Vercel supplies per environment. A
@@ -46,8 +46,8 @@ export default async function CertificatePage(
   if (!cert) {
     return (
       <div className="mx-auto max-w-xl px-5 py-20 sm:px-8">
-        <Link href="/" className="inline-block w-36">
-          <Save7Logo variant="horizontal" className="h-auto w-full" />
+        <Link href="/" aria-label="Save7 Learn home" className="inline-flex">
+          <Save7Lockup surface="white" className="text-xl" />
         </Link>
         <Display as="h1" className="mt-10 text-display text-navy">
           No certificate found
@@ -74,8 +74,8 @@ export default async function CertificatePage(
   return (
     <div className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
       <div className="no-print">
-        <Link href="/" className="inline-block w-36">
-          <Save7Logo variant="horizontal" className="h-auto w-full" />
+        <Link href="/" aria-label="Save7 Learn home" className="inline-flex">
+          <Save7Lockup surface="white" className="text-xl" />
         </Link>
 
         <div className="mt-8 flex flex-wrap items-center gap-3">

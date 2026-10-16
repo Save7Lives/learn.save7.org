@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Save7Logo } from "@/components/ui/Save7Logo";
+import { Save7Lockup } from "@/components/ui/Save7Lockup";
 
 export function SiteFooter() {
   return (
@@ -7,7 +7,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8">
         <div className="flex flex-col gap-10 sm:flex-row sm:justify-between">
           <div className="max-w-sm">
-            <Save7Logo variant="horizontal" className="h-5 w-auto" />
+            <Save7Lockup surface="navy" className="text-xl" />
             <p className="mt-5 font-display text-2xl leading-tight text-white">
               One decision can save <span className="text-teal">seven lives.</span>
             </p>
