@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { Save7Logo } from "@/components/ui/Save7Logo";
+import { Save7Lockup } from "@/components/ui/Save7Lockup";
 import { ButtonLink, cx } from "@/components/ui/primitives";
 import { getSession } from "@/lib/auth";
 import { signOutAction } from "@/app/(auth)/actions";
 
 /**
- * The app bar. Uses the horizontal lockup, per the brand guidelines.
+ * The app bar: the vector mark with a live wordmark (#40).
  *
  * Navigation is intentionally sparse. This is a course, not a portal — the most
  * useful thing on the screen is almost always the next lesson, so the header
@@ -22,14 +22,10 @@ export async function SiteHeader({ className }: { className?: string }) {
       )}
     >
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2 sm:gap-4 sm:px-8 sm:py-3">
-        <Link href="/" className="inline-flex min-h-11 shrink-0 items-center" aria-label="Save7 home">
-          <Save7Logo variant="horizontal" className="h-4 w-auto sm:h-5" priority />
+        <Link href="/" className="inline-flex min-h-11 shrink-0 items-center gap-2" aria-label="Save7 Learn home">
+          <Save7Lockup surface="white" className="text-lg sm:text-xl" />
+          <span className="hidden text-sm font-semibold text-grey sm:inline">Learn</span>
         </Link>
-
-        <span aria-hidden="true" className="hidden h-5 w-px bg-line-strong sm:block" />
-        <p className="hidden text-sm font-semibold text-grey sm:block">
-          Save7 Learn
-        </p>
 
         <nav className="ml-auto flex items-center gap-0.5 sm:gap-2">
           {session ? (

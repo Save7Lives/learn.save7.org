@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Save7Logo } from "@/components/ui/Save7Logo";
+import { Save7Lockup } from "@/components/ui/Save7Lockup";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,8 +8,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           guidelines permit it to carry text. Hidden on small screens so the form
           is the first thing a phone user sees. */}
       <aside className="on-navy relative hidden flex-col justify-between bg-navy p-12 text-white lg:flex">
-        <Link href="/" className="w-44">
-          <Save7Logo variant="horizontal" className="h-auto w-full" priority />
+        <Link href="/" aria-label="Save7 Learn home" className="inline-flex">
+          <Save7Lockup surface="navy" className="text-2xl" />
         </Link>
 
         <div className="max-w-md">
@@ -33,8 +33,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       <main id="main" className="flex items-center justify-center px-5 py-12 sm:px-8">
         <div className="w-full max-w-md">
-          <Link href="/" className="mb-10 block w-36 lg:hidden">
-            <Save7Logo variant="horizontal" className="h-auto w-full" priority />
+          <Link href="/" aria-label="Save7 Learn home" className="mb-10 inline-flex lg:hidden">
+            <Save7Lockup surface="white" className="text-xl" />
           </Link>
           {children}
         </div>
