@@ -21,15 +21,6 @@
  * Storage bucket `learn-media`, under `media/`.
  */
 
-export type FilmCorrection = {
-  /** What the film says, as it says it. */
-  film: string;
-  /** What the course teaches instead. */
-  course: string;
-  /** Why they differ. */
-  why: string;
-};
-
 export type Film = {
   title: string;
   durationSeconds: number;
@@ -40,11 +31,6 @@ export type Film = {
   captions: { src: string; srclang: string; label: string };
   /** The spoken words, one paragraph per utterance, exactly as supplied in T04. */
   transcript: readonly string[];
-  /**
-   * Where the film contradicts the course. Shown beside the player. A set of
-   * facts about the film, so it lives with the film and not in lesson prose.
-   */
-  corrections: readonly FilmCorrection[];
 };
 
 export const FILMS = {
@@ -55,23 +41,6 @@ export const FILMS = {
     video: { src: "/media/journey-of-a-gift.5e5b3bab.mp4", type: "video/mp4" },
     poster: { src: "/media/journey-of-a-gift.91c4e4f6.jpg", type: "image/jpeg" },
     captions: { src: "/media/journey-of-a-gift.en.9cfe81c6.vtt", srclang: "en", label: "English" },
-    corrections: [
-      {
-        film: "over 65 lives transformed through tissue donation",
-        course: "up to fifty",
-        why: "Fifty is the Organ Donor Foundation's published figure. The larger number could not be traced to a source.",
-      },
-      {
-        film: "a state pathologist has to sign off after an accidental death",
-        course: "the Forensic Pathology Service authorises it",
-        why: "The state pathologist's office no longer performs that function.",
-      },
-      {
-        film: "by law, there is absolutely no financial cost to the donor's family",
-        course: "no cost, in practice",
-        why: "The hospital or tissue bank carries the cost, but neither the National Health Act nor its regulations says who pays.",
-      },
-    ],
     transcript: [
       "So today we're going to talk about something really profound. We're not looking at organ donation as some cold, clinical procedure, but as what it really is: a deeply human story. This is the story of a gift and the incredible journey it takes.",
       "Let me just start by asking you a question. What do you think is the single greatest gift one person can possibly give to another? It's a pretty big question, right? Well, the answer is even bigger, and it really comes in two parts.",
