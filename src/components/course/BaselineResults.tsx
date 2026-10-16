@@ -6,9 +6,9 @@ import { TIER_META, cx } from "@/components/ui/primitives";
  * overall score, one row per Sitting. With one Sitting it is the breakdown; with
  * more, the rows are the trend.
  *
- * A table rather than a chart. At one to four points a line says nothing a row of
- * numbers does not, and a table stays readable without CSS and to a screen reader.
- * The full trend chart belongs to the progress dashboard's own build (#17).
+ * The table twin of the My progress trend chart (#71): the same Sittings as the
+ * chart, kept for a screen reader and for anyone who would rather read the numbers.
+ * It also stands alone where a chart would say nothing, on the assessment results.
  */
 export function BaselineResults({
   state,

@@ -145,6 +145,8 @@ export async function getPathway() {
   return { course, levels };
 }
 
+export type StageState = "PASSED" | "STARTED" | "NOT_STARTED";
+
 export type LevelProgressSummary = {
   status: ProgressStatus;
   percentComplete: number;
@@ -153,6 +155,8 @@ export type LevelProgressSummary = {
   modulesTotal: number;
   /** Stages whose Stage Quiz is passed. This is what completes the Level (#16). */
   stagesPassed: number;
+  /** Where each Stage stands, by Stage slug: quiz passed, opened but not passed, or untouched. */
+  stageStates: Record<string, StageState>;
   certificatePublicId: string | null;
   /** The module to resume at, or the first module if not started. */
   nextModuleSlug: string | null;
@@ -260,6 +264,16 @@ export async function getPathwayForUser(userId: string | null) {
         modulesComplete,
         modulesTotal,
         stagesPassed,
+        stageStates: Object.fromEntries(
+          level.modules.map((m): [string, StageState] => [
+            m.slug,
+            passedModuleIds.has(m.id)
+              ? "PASSED"
+              : startedModuleIds.has(m.id)
+                ? "STARTED"
+                : "NOT_STARTED",
+          ]),
+        ),
         certificatePublicId: certByLevel.get(level.id) ?? null,
         nextModuleSlug,
       },
