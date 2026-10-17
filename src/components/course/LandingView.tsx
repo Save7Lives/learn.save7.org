@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ButtonLink, Display } from "@/components/ui/primitives";
 import type { LevelWithProgress } from "@/lib/course";
 import { ClosingBand } from "./ClosingBand";
+import { CommunityBand } from "./CommunityBand";
 import { CourseMap } from "./CourseMap";
 import { HowItWorks } from "./HowItWorks";
 import { LevelCard } from "./LevelCard";
@@ -16,11 +17,14 @@ export function LandingView({
   levels,
   signedIn,
   baselinePending,
+  communityUrl = null,
 }: {
   levels: LevelWithProgress[];
   signedIn: boolean;
   /** Signed in and the first Baseline Sitting not yet done. */
   baselinePending: boolean;
+  /** The WhatsApp community invite (T94); null hides the card. */
+  communityUrl?: string | null;
 }) {
   // Recommend the first level they haven't finished, so the card that carries the
   // pink CTA is always the genuinely useful one.
@@ -128,6 +132,8 @@ export function LandingView({
           </ol>
         </div>
       </section>
+
+      {communityUrl ? <CommunityBand href={communityUrl} /> : null}
 
       {/* --- Closing band ---------------------------------------------------- */}
       <ClosingBand
