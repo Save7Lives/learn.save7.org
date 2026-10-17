@@ -170,7 +170,7 @@ src/
   app/
     (site)/          learner-facing pages
     (auth)/          sign in / register
-    admin/           Save7 analytics, guarded in the layout
+    admin/           Overview, Students, Eligibility rule, Content review; guarded in the layout
     api/quiz/check   server-side grading for inline checks
     certificate/     public verification, its own bare layout for printing
   components/
@@ -185,7 +185,7 @@ src/
     quiz.ts          the quiz engine
     baseline.ts      Baseline Sittings, when one is due, and Improvement read off them
     certificates.ts  issuance and verification
-    analytics.ts     admin reporting
+    admin/           the Admin's reads (data.ts) and the Growth Indicators (model.ts)
     supabase/        server + browser clients, one project config
   db/
     rows.ts          the shape of every row this app reads
@@ -228,8 +228,7 @@ Markdown, and git keeps them.
 - **Only the Baseline feeds reported improvement.** Stage Quiz retakes are
   unlimited, because passing every Stage Quiz in a Level earns its Certificate. If
   they counted, Save7's headline learning gain would drift upward forever and the
-  platform's central claim would be unfalsifiable. (A few admin Stage Quiz columns
-  still read `attempt_no = 1`. They are not the improvement figure.)
+  platform's central claim would be unfalsifiable.
 - **Multi-select requires an exact set match.** Partial credit would teach
   learners to select everything.
 - **Improvement compares a learner's first Sitting with a later one.** Every

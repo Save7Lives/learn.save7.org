@@ -138,8 +138,8 @@ into a data leak. **Never introduce one here.**
 - **Improvement is the Baseline's, and nothing else feeds it** (#54). It is Sitting
   1 against a later Sitting of the same twenty questions. Stage Quiz retakes are
   unlimited for certificates and must never feed the impact numbers, or the
-  platform's central claim becomes unfalsifiable. Some admin Stage Quiz columns
-  still read POST `attempt_no = 1` as a Level score; see `analytics.ts`.
+  platform's central claim becomes unfalsifiable. The Admin reads Improvement from
+  Baseline Sittings only (`src/lib/admin/model.ts`).
 - **A Sitting is written once, and the bank is frozen once anyone has sat it.**
   `learn_baseline_sittings` has no insert or update policy, and a CHECK plus a
   UNIQUE cap it at four. Editing a Baseline question's prompt or options after a

@@ -119,12 +119,18 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   Level is completed and never required (`dueSitting()` in `src/lib/baseline.ts`).
 - **Improvement is Sitting 1 against a later Sitting of the same paper.** It is
   derived at read time (`levelImprovement()` in `src/lib/baseline.ts`, read by
-  `src/lib/analytics.ts`) and never stored. Stage Quiz retakes are unlimited, because
+  `src/lib/admin/model.ts`) and never stored. Stage Quiz retakes are unlimited, because
   passing every Stage Quiz in a Level is what earns its Certificate, so they must
   never feed the impact numbers.
-  `analytics.ts` and the admin learners page still read POST `attempt_no = 1` for a
-  few Stage Quiz figures; the map's admin-indicator audit owns them, and they are
-  not Improvement.
+  The Admin's Stage Quiz pass rate counts Students who attempted and who passed
+  (`quiz_passed_at`), never an attempt number.
+- **Admin is the Portal Register** (`src/app/admin`, `src/lib/admin`): Overview (#18's five
+  Growth Indicators, Stage drop-off, most missed questions), Students, a Student's
+  Progress Record, the Eligibility rule and Content review. The numbers are pure
+  functions in `src/lib/admin/model.ts`; the reads are in `data.ts`. A Student's
+  "last active" is the newest `learn_events` row, since `learners.last_seen_at` is
+  stamped only at enrolment. The Eligibility Rule is only ever inserted
+  (`learn_eligibility_rules` has no update policy).
 - **Do not edit a Baseline question's prompt or options once anyone has sat it.**
   The same twenty questions come back at every Sitting, so a changed one makes
   later Sittings a different paper without saying so (save7-os `0116` refuses to
