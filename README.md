@@ -424,6 +424,59 @@ Documented rather than half-built:
 
 ---
 
+## End-to-end tests
+
+```bash
+npm run e2e          # headless; builds the app, starts everything, runs, stops everything
+npm run e2e:headed   # the same with a visible browser
+```
+
+`npm run e2e` walks the whole learner journey in a real browser: register as an adult,
+sign in, Baseline Sitting 1, read a Stage, fail a Stage Quiz and pass it, finish the
+Level, download the Certificate, and verify it as a signed-out stranger. A second file
+checks that the fixtures for other people (a Student, an Admin, the Owner, a stranger,
+a Student with no consent) work, so further journeys have something to start from.
+
+**It touches no production data.** The app is started with its Supabase URL pointed at
+a gateway on `localhost`, so the browser and the server only ever talk to your own
+machine:
+
+- **A private Postgres 17** (Homebrew's, in `.e2e/`, loopback only, its own port)
+  holds the real Learn schema. The Save7 OS migrations are replayed onto stubs for the
+  Supabase pieces (`auth.users` and the API roles), so row level security, the marking
+  functions and the sign-in triggers are the real ones. It is rebuilt only when a
+  migration changes, and each run gets a fresh copy.
+- **PostgREST**, the program Supabase puts in front of Postgres, serves it.
+- **A gateway** (`e2e/support/gateway.ts`) answers the app's `/auth/v1`, `/rest/v1` and
+  `/functions/v1` calls. It runs the real `register-learner` Edge Function unmodified,
+  and it is the test session: where Google would vouch for a person it takes the
+  identity from a cookie the test sets, and refuses with none. The app still goes
+  through its normal Google redirect and PKCE exchange. Nothing in `src/` knows the
+  gateway exists, and its tokens are signed with a throwaway secret, so there is no
+  switch a production build could be given to turn it on. The server refuses to start
+  if any environment variable names a hosted Supabase project.
+
+**Needs:** Node, Homebrew `postgresql@17` and `postgrest` (`brew install postgresql@17
+postgrest`), Playwright's Chromium (`npx playwright install chromium`), and a checkout of
+the Save7 OS repository, found at `../save7-os` or `~/Desktop/Save7 Course/save7-os`, or
+named by `SAVE7_OS_DIR`. A migration that needs an ops table the replay does not have
+stops the run with its file name: add its number to `SKIPPED` in `e2e/support/save7-os.ts`.
+
+**Adding a journey:** a new file in `e2e/tests/` that imports `test` and `expect` from
+`e2e/fixtures.ts`. `e2e/support/people.ts` makes people (`newIdentity`,
+`arrangeRegisteredLearner`, `arrangeAdmin`, `chooseGoogleAccount`), each with an
+address of their own so tests can run in parallel. The `quiz` fixture fills in a paper.
+The `db` fixture is a superuser connection for arranging state and for the answer key,
+which no browser can read. Use it to decide what to click, never to assert. Assert only
+what a visitor, Student or Admin could see.
+
+Ports can be moved with `E2E_PG_PORT`, `E2E_POSTGREST_PORT`, `E2E_GATEWAY_PORT` and
+`E2E_APP_PORT`. `E2E_REUSE_SERVERS=1` attaches to servers already running on those ports,
+which is faster while writing a test and is opt-in because a stale server could be
+pointed elsewhere. Traces and screenshots of a failure are in `.e2e/results/`.
+
+---
+
 ## Verification
 
 The dated record is [DEPLOY.md](DEPLOY.md), *What has been verified, and what has not*;
@@ -443,8 +496,8 @@ this is its summary, as of 7 October 2026.
   on 7 October 2026).
 
 **Not verified:** anything behind sign-in on the live site, Google sign-in on
-`learn.save7.org`, marking against real data, and the end-to-end journey, which no
-suite covers any more.
+`learn.save7.org`, marking against real data, and marking against real data. The learner
+journey is covered by `npm run e2e` against a local database, not production.
 
 An earlier version of this section recorded a browser walkthrough of the previous
 build, its interactive components, and a contrast and responsive audit. It described
