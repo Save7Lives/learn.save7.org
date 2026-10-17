@@ -431,11 +431,28 @@ npm run e2e          # headless; builds the app, starts everything, runs, stops 
 npm run e2e:headed   # the same with a visible browser
 ```
 
-`npm run e2e` walks the whole learner journey in a real browser: register as an adult,
-sign in, Baseline Sitting 1, read a Stage, fail a Stage Quiz and pass it, finish the
-Level, download the Certificate, and verify it as a signed-out stranger. A second file
-checks that the fixtures for other people (a Student, an Admin, the Owner, a stranger,
-a Student with no consent) work, so further journeys have something to start from.
+`npm run e2e` runs three groups of tests in a real browser:
+
+- **The learner journey** (`learner-journey.spec.ts`): register as an adult, sign in,
+  Baseline Sitting 1, read a Stage, fail a Stage Quiz and pass it, finish the Level,
+  download the Certificate, and verify it as a signed-out stranger.
+- **Refusals, gating and the signed-out catalogue** (`refusals`, `consent-gating`,
+  `signed-out`, `people`): the 18+ refusal through the register form, straight at the
+  registration function and on the already-admitted path (with its terminal page),
+  consent and age gating in the app and in the database, what a visitor can and
+  cannot read (the Levels and Stages yes; Stage prose and answer keys no), and the
+  fixtures for each kind of person.
+- **The Admin journeys** (`tests/admin/`): Overview figures, the Students filters and
+  search, the drill-down, the Eligibility Rule (a new version each save, never empty),
+  content review sign-off under the Admin's name, the Owner granting and revoking Admin,
+  and the refusals for an ordinary Admin and for revoking the Owner.
+
+The Admin files read and change what the whole site shares (the cohort the Overview
+counts, the one Owner, the rule's versions), so they cannot run beside other tests. They
+are two more Playwright projects (`admin-cohort`, then `admin-governance`) that start
+after everything else has finished and run one test at a time. `admin-cohort` empties the
+Students first and arranges a small cohort it knows exactly. Run one on its own, without
+the others before it, with `npx playwright test --project=admin-cohort --no-deps`.
 
 **It touches no production data.** The app is started with its Supabase URL pointed at
 a gateway on `localhost`, so the browser and the server only ever talk to your own
@@ -464,11 +481,29 @@ stops the run with its file name: add its number to `SKIPPED` in `e2e/support/sa
 
 **Adding a journey:** a new file in `e2e/tests/` that imports `test` and `expect` from
 `e2e/fixtures.ts`. `e2e/support/people.ts` makes people (`newIdentity`,
-`arrangeRegisteredLearner`, `arrangeAdmin`, `chooseGoogleAccount`), each with an
-address of their own so tests can run in parallel. The `quiz` fixture fills in a paper.
-The `db` fixture is a superuser connection for arranging state and for the answer key,
-which no browser can read. Use it to decide what to click, never to assert. Assert only
-what a visitor, Student or Admin could see.
+`arrangeRegisteredLearner`, `arrangeAdmin`, `chooseGoogleAccount`, `signInWithGoogle`,
+`openSignedIn` for a second person in the same test), each with an address of their own
+so tests can run in parallel. `newIdentity("x", { domain: "save7.org" })` is a staff
+member, whom the sign-in trigger admits without a registration. `e2e/support/learning.ts`
+arranges progress (`sitBaseline`, `takeStageQuiz`, `completeLevel`) through the
+database's own marking functions, as that Student, so it is real progress. `e2e/support/rest.ts`
+talks to the API as an anonymous visitor or as a signed-in person (`api`, `tokenFor`),
+for "the database refuses this" checks that a hand-written client would meet. The `quiz`
+fixture fills in a paper. The `db` fixture is a superuser connection for arranging state
+and for the answer key, which no browser can read. Use it to decide what to click, never
+to assert what a person sees. Assert only what a visitor, Student or Admin could see, or
+(for a refusal) what the API answers. A test that changes anything the whole site shares
+belongs in `tests/admin/`.
+
+**Signed-in accessibility audit.** `e2e/support/test-session.mjs` is the test-session helper
+`scripts/a11y/session.mjs` looks for. It arranges a Student (Baseline sat, one Stage
+passed) or an Admin in the end-to-end database and walks the app's own sign-in, so
+`npm run audit:a11y` can render the pages behind sign-in. It needs the end-to-end stack
+up: start the backend with `node node_modules/tsx/dist/cli.mjs e2e/support/serve.ts`, the app
+with `env $(node node_modules/tsx/dist/cli.mjs e2e/support/app-env.ts) npm run start -- -p 3107`
+(after `npm run build` under the same `env`), then
+`A11Y_BASE_URL=http://localhost:3107 npm run audit:a11y`. Stop both when done. Without
+the stack running, the audit's signed-in pages fail with a connection error.
 
 Ports can be moved with `E2E_PG_PORT`, `E2E_POSTGREST_PORT`, `E2E_GATEWAY_PORT` and
 `E2E_APP_PORT`. `E2E_REUSE_SERVERS=1` attaches to servers already running on those ports,

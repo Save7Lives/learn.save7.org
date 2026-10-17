@@ -264,13 +264,32 @@ export const MISSED_MINIMUM = 3;
  */
 export async function loadMissedQuestions(limit = 5): Promise<MissedQuestion[]> {
   const supabase = await supabaseServer();
+  /* The question text comes from `learn_questions_pub`: `learn_questions` itself has
+     no grant for any signed-in role (it holds the explanations beside the answer
+     keys), so reading it, as this once did, returned nothing for every Admin. The
+     answer rows are the Admin's to read (`learn_answers_own`), so they are read apart
+     and paged: the API caps a response, and one row is written per question answered. */
   const [questions, modules] = await Promise.all([
-    supabase
-      .from("learn_questions")
-      .select("id, prompt, module_slug, learn_answers(was_correct)")
-      .eq("scope", "POST"),
+    supabase.from("learn_questions_pub").select("id, prompt, module_slug").eq("scope", "POST"),
     supabase.from("learn_modules").select("slug, title"),
   ]);
+  const tally = new Map<string, { answered: number; missed: number }>();
+  for (let from = 0; ; from += ANSWER_BATCH) {
+    const { data, error } = await supabase
+      .from("learn_answers")
+      .select("question_id, was_correct")
+      .order("id")
+      .range(from, from + ANSWER_BATCH - 1);
+    if (error) throw new Error(`Could not read the answers: ${error.message}`);
+    const rows = (data ?? []) as unknown as Array<{ question_id: string; was_correct: boolean }>;
+    for (const a of rows) {
+      const t = tally.get(a.question_id) ?? { answered: 0, missed: 0 };
+      t.answered += 1;
+      if (!a.was_correct) t.missed += 1;
+      tally.set(a.question_id, t);
+    }
+    if (rows.length < ANSWER_BATCH) break;
+  }
   const titles = new Map(
     ((modules.data ?? []) as unknown as Array<{ slug: string; title: string }>).map((m) => [m.slug, m.title]),
   );
@@ -278,11 +297,9 @@ export async function loadMissedQuestions(limit = 5): Promise<MissedQuestion[]> 
     id: string;
     prompt: string;
     module_slug: string | null;
-    learn_answers: Array<{ was_correct: boolean }> | null;
   }>)
     .map((q) => {
-      const answered = q.learn_answers?.length ?? 0;
-      const missed = (q.learn_answers ?? []).filter((a) => !a.was_correct).length;
+      const { answered, missed } = tally.get(q.id) ?? { answered: 0, missed: 0 };
       return {
         id: q.id,
         prompt: q.prompt,
@@ -296,5 +313,7 @@ export async function loadMissedQuestions(limit = 5): Promise<MissedQuestion[]> 
     .sort((a, b) => b.missedPct - a.missedPct || b.answered - a.answered)
     .slice(0, limit);
 }
+
+const ANSWER_BATCH = 1000;
 
 export type { Sitting };
