@@ -53,8 +53,11 @@ jobs:
 
   # Accessibility and contrast audit (#29): renders the public pages at 375 and 1024 px
   # and fails on a colour pair under WCAG AA, text under 12px or horizontal scroll, after
-  # a self-test that plants each defect and checks the audit catches it. Signed-in pages
-  # are in scripts/a11y/pages.mjs and run once a test-session helper exists.
+  # a self-test that plants each defect and checks the audit catches it.
+  # PUBLIC PAGES ONLY, on purpose: the signed-in pages (scripts/a11y/pages.mjs) need the
+  # end-to-end stack (Postgres 17, PostgREST, the gateway) and CI has none of it, so
+  # A11Y_PUBLIC_ONLY=1 skips them by name and says so. They are audited locally; the
+  # commands are in README.md, "Signed-in accessibility audit".
   # The app reads only the public Supabase values in .env.example (anon key, by design).
   accessibility:
     runs-on: ubuntu-latest
@@ -83,3 +86,5 @@ jobs:
           cat app.log; exit 1
 
       - run: npm run audit:a11y
+        env:
+          A11Y_PUBLIC_ONLY: "1"

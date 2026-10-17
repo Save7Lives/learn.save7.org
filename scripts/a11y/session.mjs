@@ -1,13 +1,15 @@
 // Test-session hook for the signed-in pages.
 //
-// Contract (what #28's end-to-end suite is expected to provide, or what this file
-// should import from it): a module whose default export is
+// Contract: a module whose default export is
 //
 //   async function applyTestSession(context, { baseUrl, role })   // role: "student" | "admin"
 //
 // that puts the cookies of a signed-in test user on a Playwright BrowserContext.
-// Point A11Y_SESSION_HELPER at it (a path, relative to the repository root), or put
-// it at one of the default locations below. With neither, signed-in pages are skipped.
+// The helper is e2e/support/test-session.mjs (the first default below), which arranges
+// the person in the end-to-end database and walks the app's own sign-in, so it needs
+// the end-to-end stack running (README, "Signed-in accessibility audit"). Point
+// A11Y_SESSION_HELPER at another module (a path, relative to the repository root) to
+// replace it. With no helper found, signed-in pages are skipped.
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";

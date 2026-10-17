@@ -1,13 +1,14 @@
 // The audit's page list, as data. Add a page here and the audit covers it.
 //
-//   auth: "public"  renders without a session, so CI audits it today.
+//   auth: "public"  renders without a session, so CI audits it.
 //   auth: "learner" needs a signed-in Student (test session, role "student").
 //   auth: "admin"   needs a signed-in Admin   (test session, role "admin").
 //
 // vocabulary: true also fails the page if its visible text says "module(s)" (Stage, not module).
 //
-// Signed-in pages are skipped, with a TODO line, until a test-session helper exists
-// (see scripts/a11y/session.mjs). Once #28's helper lands they run with no change here.
+// Signed-in pages need the end-to-end stack (database, gateway) and the helper in
+// e2e/support/test-session.mjs, so they are audited locally and skipped, by name, when
+// A11Y_PUBLIC_ONLY=1 (what CI sets). See README, "Signed-in accessibility audit".
 export const VIEWPORTS = [
   { name: "375", width: 375, height: 812 },
   { name: "1024", width: 1024, height: 768 },
