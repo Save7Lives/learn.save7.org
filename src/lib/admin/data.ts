@@ -2,6 +2,7 @@ import "server-only";
 
 import { SITTING_COLUMNS, mapSitting, type Sitting } from "@/lib/baseline";
 import { supabaseServer } from "@/lib/supabase/server";
+import { loadActorNames } from "@/lib/admin/actors";
 import type {
   Catalogue,
   EligibilityRule,
@@ -220,7 +221,7 @@ type RuleRow = {
   version: number;
   required_flags: string[];
   created_at: string;
-  people: { name: string } | null;
+  created_by_user: string | null;
 };
 
 /** Every version, newest first. The current rule is the highest version (#83). */
@@ -228,13 +229,15 @@ export async function loadRules(): Promise<EligibilityRule[]> {
   const supabase = await supabaseServer();
   const { data } = await supabase
     .from("learn_eligibility_rules")
-    .select("version, required_flags, created_at, people(name)")
+    .select("version, required_flags, created_at, created_by_user")
     .order("version", { ascending: false });
-  return ((data ?? []) as unknown as RuleRow[]).map((r) => ({
+  const rows = (data ?? []) as unknown as RuleRow[];
+  const names = await loadActorNames(rows.map((r) => r.created_by_user));
+  return rows.map((r) => ({
     version: r.version,
     requiredFlags: r.required_flags,
     createdAt: new Date(r.created_at),
-    createdByName: r.people?.name ?? null,
+    createdByName: (r.created_by_user && names.get(r.created_by_user)) || null,
   }));
 }
 

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/authz";
 import { supabaseServer } from "@/lib/supabase/server";
 import { levelFlag } from "@/lib/admin/flags";
+import { currentUserId } from "@/lib/admin/actors";
 
 export type RuleFormState = { error?: string } | undefined;
 
@@ -12,8 +13,8 @@ export type RuleFormState = { error?: string } | undefined;
  *
  * Never an edit: the only write is an insert into `learn_eligibility_rules`, which
  * has no update or delete policy, so an old version cannot change even from here. The
- * version number is the database's (`nextval`), and `created_by` must be the
- * caller's own `people` id or the insert policy refuses it. Saving re-evaluates every
+ * version number is the database's (`nextval`), and `created_by_user` must be the
+ * caller's own sign-in or the insert policy refuses it (T98). Saving re-evaluates every
  * Student under the new rule (#83's trigger), so this action does not touch signals.
  *
  * Checked again here, not only in the editor: a rule with no flags would make every
@@ -27,7 +28,7 @@ export async function saveEligibilityRuleAction(
   await requireAdmin();
   const supabase = await supabaseServer();
 
-  const [levels, current, person] = await Promise.all([
+  const [levels, current, userId] = await Promise.all([
     supabase.from("learn_levels").select("slug").order("position"),
     supabase
       .from("learn_eligibility_rules")
@@ -35,7 +36,7 @@ export async function saveEligibilityRuleAction(
       .order("version", { ascending: false })
       .limit(1)
       .maybeSingle(),
-    supabase.rpc("app_person_id"),
+    currentUserId(),
   ]);
 
   const allowed = ((levels.data ?? []) as Array<{ slug: string }>).map((l) => levelFlag(l.slug));
@@ -57,12 +58,11 @@ export async function saveEligibilityRuleAction(
     return { error: "That is already the current rule. Change a flag to save a new version." };
   }
 
-  const createdBy = person.data as string | null;
-  if (!createdBy) return { error: "Your account is not linked to a Save7 staff record, so it cannot save a rule." };
+  if (!userId) return { error: "Your session has ended. Sign in again to save the rule." };
 
   const { data, error } = await supabase
     .from("learn_eligibility_rules")
-    .insert({ required_flags: flags, created_by: createdBy })
+    .insert({ required_flags: flags, created_by_user: userId })
     .select("version")
     .single();
   if (error || !data) return { error: "The rule could not be saved. Nothing was changed." };

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getReviewSummary } from "@/lib/admin/review";
+import { loadActorNames } from "@/lib/admin/actors";
 import { supabaseServer } from "@/lib/supabase/server";
 import { StatCard } from "@/components/portal/Portal";
 import { PageHeader, Panel } from "@/components/portal/Panel";
@@ -27,7 +28,7 @@ export const metadata: Metadata = { title: "Content review" };
  * mechanism.
  *
  * A decision recorded on this page is the only kind with a name and a date on it
- * (cleared_by, cleared_at). An emitter approval carries neither, and the emit only
+ * (cleared_by_user, cleared_at). An emitter approval carries neither, and the emit only
  * ever promotes an outstanding item, so it never reverts a decision made here.
  *
  * Nothing learner-facing reads this table, so an unapproved item reaches learners
@@ -49,7 +50,7 @@ export default async function ContentReviewPage(
       let query = supabase
         .from("learn_review_items")
         .select(
-          "id, location, claim, category, status, severity, source_hint, notes, entity_type, entity_ref, cleared_at, people(name)",
+          "id, location, claim, category, status, severity, source_hint, notes, entity_type, entity_ref, cleared_at, cleared_by_user",
         )
         // Severity first, so the launch-blocking items are always at the top.
         .order("severity")
@@ -60,7 +61,7 @@ export default async function ContentReviewPage(
       if (categoryFilter) query = query.eq("category", categoryFilter);
 
       const { data } = await query;
-      return ((data ?? []) as unknown as Array<{
+      const rows = (data ?? []) as unknown as Array<{
         id: string;
         location: string;
         claim: string;
@@ -72,11 +73,11 @@ export default async function ContentReviewPage(
         entity_type: string;
         entity_ref: string;
         cleared_at: string | null;
-        /* The staff member who signed it off, embedded through cleared_by's
-           foreign key into `people`. Readable here because this page is staff
-           only; a learner reading `people` gets nothing. */
-        people: { name: string } | null;
-      }>).map((r) => ({
+        /* The Admin who signed it off, by sign-in; named below. */
+        cleared_by_user: string | null;
+      }>;
+      const names = await loadActorNames(rows.map((r) => r.cleared_by_user));
+      return rows.map((r) => ({
         id: r.id,
         location: r.location,
         claim: r.claim,
@@ -88,7 +89,7 @@ export default async function ContentReviewPage(
         entityType: r.entity_type,
         entityRef: r.entity_ref,
         reviewedAt: r.cleared_at,
-        reviewedByName: r.people?.name ?? null,
+        reviewedByName: (r.cleared_by_user && names.get(r.cleared_by_user)) || null,
       }));
     })(),
   ]);

@@ -197,7 +197,9 @@ export type ReviewItemRow = {
   severity: number;
   source_hint: string | null;
   cleared_at: string | null;
+  /** A `people` id, kept for history. New decisions set `cleared_by_user` (save7-os 0135). */
   cleared_by: string | null;
+  cleared_by_user: string | null;
   notes: string | null;
 };
 
