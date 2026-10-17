@@ -250,6 +250,7 @@ declare
   total int;
   seen int;
   ok boolean;
+  me text := current_user;   -- the role to come back to: `reset role` would go to the login role, which may not own these
 begin
   /* Structure. */
   if not (select relrowsecurity from pg_class where oid = 'learn_admins'::regclass) then
@@ -295,7 +296,8 @@ begin
      person is played as the `authenticated` role, which is how the app reaches the
      functions: the role that runs a migration is not one of the roles the grants
      above were written for, so calling them as it would test the wrong thing. The
-     table itself is read back as the migration role, since no client may read it. */
+     table itself is read back as the role the migration runs as (captured above, not
+     `reset role`, which returns to the login role), since no client may read it. */
   begin
     insert into learners (email, first_name, name) values (s1::text || '@save7.org', 'Probe', 'Probe One') returning id into l1;
     insert into learners (email, first_name, name) values (s2::text || '@save7.org', 'Probe', 'Probe Two') returning id into l2;
@@ -323,7 +325,7 @@ begin
     if not ok then raise exception 'a plain Student granted Admin'; end if;
     select count(*) into seen from learners;
     if seen <> 1 then raise exception 'a plain Student sees % Students, not 1', seen; end if;
-    reset role;
+    execute format('set local role %I', me);
 
     /* The Owner grants. */
     perform set_config('request.jwt.claims', json_build_object('sub', owner_id, 'role', 'authenticated')::text, true);
@@ -338,7 +340,7 @@ begin
     ok := false;
     begin perform learn_grant_admin(gen_random_uuid()); exception when no_data_found then ok := true; end;
     if not ok then raise exception 'granted Admin to nobody'; end if;
-    reset role;
+    execute format('set local role %I', me);
     select count(*) into n from learn_admins where user_id = s1 and role = 'admin';
     if n <> 1 then raise exception 'the grant did not land once'; end if;
 
@@ -365,7 +367,7 @@ begin
     ok := false;
     begin insert into learn_admins (user_id, role) values (s2, 'admin'); exception when insufficient_privilege then ok := sqlerrm like '%learn_admins%'; end;
     if not ok then raise exception 'a client wrote learn_admins'; end if;
-    reset role;
+    execute format('set local role %I', me);
 
     /* The Owner revokes the Admin, and cannot revoke the Owner. */
     perform set_config('request.jwt.claims', json_build_object('sub', owner_id, 'role', 'authenticated')::text, true);
@@ -378,7 +380,7 @@ begin
     begin perform learn_revoke_admin(lo); exception when check_violation then ok := true; end;
     if not ok then raise exception 'the Owner was revoked'; end if;
     perform learn_revoke_admin(l1);
-    reset role;
+    execute format('set local role %I', me);
     select count(*) into n from learn_admins where user_id = s1;
     if n <> 0 then raise exception 'the revoke did not remove the Admin'; end if;
 
