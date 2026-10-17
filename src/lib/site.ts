@@ -1,3 +1,6 @@
+/** The Learn site's own origin, used when nothing usable is configured. */
+const CANONICAL_ORIGIN = "https://learn.save7.org";
+
 /**
  * The canonical public origin.
  *
@@ -13,6 +16,25 @@ export function siteUrl(): string {
   const configured = process.env.SITE_URL ?? process.env.NEXT_PUBLIC_SITE_URL;
   const raw = configured?.trim().replace(/\/$/, "");
   // An unedited placeholder is not an origin.
-  if (!raw || raw.includes("REPLACE_WITH")) return "https://save7.org";
+  if (!raw || raw.includes("REPLACE_WITH")) return CANONICAL_ORIGIN;
+  // Vercel's default hostname is where the project was first deployed, not where
+  // Save7 sends people. On the production deployment it is a leftover placeholder,
+  // and a certificate that names it points its checker at the wrong host. Preview
+  // deployments (VERCEL_ENV=preview) and local runs keep whatever they were given.
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.VERCEL_ENV !== "preview" &&
+    isVercelDefaultHost(raw)
+  ) {
+    return CANONICAL_ORIGIN;
+  }
   return raw;
+}
+
+function isVercelDefaultHost(origin: string): boolean {
+  try {
+    return new URL(origin).hostname.endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
 }

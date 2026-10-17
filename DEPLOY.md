@@ -463,6 +463,12 @@ certificate verification links are built from.
 changed to `https://learn.save7.org` and the project redeployed. That step is still
 to do.**
 
+As a safety net, `src/lib/site.ts` ignores a `*.vercel.app` value on the production
+deployment and uses `https://learn.save7.org` instead, so a leftover placeholder no
+longer prints on a certificate. Preview deployments and local runs keep the value they
+are given. The safety net is not the fix: set the variables, so the value is what you
+meant and not what the code fell back to.
+
 Until it is done, the verification link shown on a certificate names the placeholder
 host rather than the domain Save7 intends people to use. The link is built each time
 the certificate page is rendered, so changing the variable corrects the page from then
