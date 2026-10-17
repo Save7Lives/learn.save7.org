@@ -16,7 +16,9 @@
     "media:upload": "tsx scripts/upload-media.ts",
     "audit:a11y": "node scripts/a11y/audit.mjs",
     "audit:a11y:selftest": "node scripts/a11y/audit.mjs --selftest",
-    "check:vocabulary": "tsx scripts/check-stage-vocabulary.ts"
+    "check:vocabulary": "tsx scripts/check-stage-vocabulary.ts",
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^3.3.0",
@@ -30,6 +32,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",

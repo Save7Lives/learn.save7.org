@@ -222,16 +222,13 @@ The single source of truth is `save7-os/supabase/migrations/`, applied with
 npm run typecheck && npm run lint && npm run build
 ```
 
-**The end-to-end journey suite is gone.** It drove a learner through the whole
-course against the local SQLite file and asserted 53 behaviours, including every
-assessment-integrity guarantee, and it was removed with the database it depended on.
-Nothing equivalent runs against Supabase yet — so the rules above are enforced by
-the migrations and checked by nothing that runs on every change.
-
-**Treat that as the standing risk when touching `src/lib/` or any `learn_*`
-function.** Walk the journey manually: register, the first Baseline Sitting, a Stage
-and its Stage Quiz, the Certificate, the admin dashboards. A pushed branch gets a
-Vercel preview deployment, which is the closest thing to the real host.
+**`npm run e2e` runs the learner journey** in a browser against a private local
+Postgres holding the real Learn schema (README.md, "End-to-end tests"). It registers,
+signs in, sits Baseline Sitting 1, reads a Stage, fails and passes a Stage Quiz,
+completes the Level, downloads the Certificate and verifies it. It needs no Supabase
+values and touches no production data. It does not cover the Admin dashboards or the
+other assessment-integrity guarantees yet (T36), so for those, and for anything that
+only the real host shows, walk the journey by hand on a Vercel preview.
 
 ## Design
 
