@@ -44,4 +44,9 @@ jobs:
       # transcript's words, the registry's size and duration are the file's (#61).
       - run: npm run media:check
 
+      # Dependency advisories: fails on anything high or critical (the same threshold as
+      # `npm audit --audit-level=high`) unless scripts/audit-allowlist.json accepts it
+      # with a reason and an expiry date. See docs/dependency-advisories.md (#30).
+      - run: node scripts/audit-gate.mjs
+
       - run: npm run build
