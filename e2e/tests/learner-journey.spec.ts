@@ -56,7 +56,7 @@ test("a learner registers, sits the Baseline, completes a Level and is verified"
   await page.getByRole("textbox", { name: /^Date of birth/ }).fill("1990-04-12");
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Register" }).click();
-  await expect(page.getByText("You're registered")).toBeVisible();
+  await expect(page.getByText(/You.re registered/)).toBeVisible();
 
   // ── Sign in ───────────────────────────────────────────────────────────────
   await chooseGoogleAccount(context, me);
