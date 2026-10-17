@@ -54,8 +54,12 @@ The only account type on learn.save7.org; anyone taking the Course. "Volunteer" 
 _Avoid_: Volunteer, Learner, User
 
 **Admin**
-A Save7 staff / program-coordinator account with oversight-only visibility into Students' progress. No content-management capability — content stays a separate, hand-edited concern outside this account type's scope. A single flat role, not tiered: every Admin sees the same global pool view (its Growth Indicators) and can drill into any Student's complete Progress Record unrestricted, and can edit the Eligibility Rule's required-flags list.
+A Learn account with oversight-only visibility into Students' progress. Admin is a Learn role, held in the Learn tables, and does not come from being Save7 OS staff: someone Gilbert adds to the ops app is not an Admin unless the Owner grants it. Every Admin is a Student first, so has a Progress Record. No content-management capability — content stays a separate, hand-edited concern outside this account type's scope. Every Admin sees the same global pool view (its Growth Indicators), can drill into any Student's complete Progress Record unrestricted, and can edit the Eligibility Rule's required-flags list. The one difference is the **Owner**.
 _Avoid_: Coordinator, Staff account
+
+**Owner**
+The one Admin who grants and revokes Admin, by pressing "Make admin" or "Remove admin" on a Student in the Students list. There is exactly one, seeded as `zubayr@save7.org`, and the Owner cannot be revoked by anyone. A granted Admin sees who the Owner is but has no buttons.
+_Avoid_: Super admin, Root
 
 **Growth Indicator**
 One of the aggregate, cohort-wide metrics Admin's pool view shows, derived at read time across every Student's Progress Record: cohort size, per-Level completion rate, per-Stage Quiz pass rate, average per-Level Baseline improvement, and cohort-wide Baseline trend. Scoped only to what the Progress Record already stores — distinct from the richer engagement metrics (time-on-task, login frequency, quiz-attempt history, etc.) still left as fog.
