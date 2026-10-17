@@ -112,7 +112,7 @@ export default async function ModulePage(
       levelSlug={levelSlug}
       moduleSlug={moduleSlug}
       stageTitle={mod.title}
-      stageNumber={mod.order}
+      stageNumber={currentIndex + 1}
       stages={stages}
       coreQuestion={mod.coreQuestion}
       levelTitle={level.title}
