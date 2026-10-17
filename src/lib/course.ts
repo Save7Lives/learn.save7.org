@@ -242,10 +242,11 @@ export async function getPathwayForUser(userId: string | null) {
     const percentComplete =
       modulesTotal === 0 ? 0 : Math.round((stagesPassed / modulesTotal) * 100);
 
-    // Resume at the first incomplete module; if all are done, stay on the last.
-    const firstIncomplete = level.modules.find((m) => !completeModuleIds.has(m.id));
+    // Resume at the first Stage whose quiz is not passed (what completes a Level,
+    // and what the Level page offers); if all are passed, stay on the last.
+    const firstUnpassed = mandatory.find((m) => !passedModuleIds.has(m.id));
     const nextModuleSlug =
-      firstIncomplete?.slug ?? level.modules[level.modules.length - 1]?.slug ?? null;
+      firstUnpassed?.slug ?? mandatory[mandatory.length - 1]?.slug ?? null;
 
     // A failed Stage Quiz writes no Stage row, only the Level's, so either counts.
     const started = level.modules.some((m) => startedModuleIds.has(m.id)) || lp !== undefined;
