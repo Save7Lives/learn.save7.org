@@ -53,8 +53,9 @@ reviewable SQL rather than as whatever a seed script happened to write.
 **Sign-in is a Google account**, verified by Supabase, on the same project the OS
 and the volunteer portal use — so a volunteer taking the course is one identity
 across all three sites. There is no password and no development admin account:
-admin access is held by Save7 staff, who are `people` rows with an `app_role`, and
-`app_is_staff()` is what the app asks.
+admin access is a Learn role: an Owner and the Admins the Owner grants from the
+Students list (`learn_admins`, save7-os 0134), and `learn_admin_role()` is what the
+app asks. Ops staff are not Learn Admins unless granted.
 
 Registration comes first and sign-in second, because a database trigger refuses
 an account for an address that is not already on a list. Register at `/register`,

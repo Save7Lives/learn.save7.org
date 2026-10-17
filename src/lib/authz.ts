@@ -56,6 +56,20 @@ export async function requireAdmin(): Promise<SessionUser> {
   return user;
 }
 
+/**
+ * Owner-only actions: granting and revoking Admin (T95). The database refuses anyone
+ * else too (`learn_grant_admin` and `learn_revoke_admin` check `learn_admin_role()`),
+ * so this is the early, quiet exit, and it 404s for the same reason requireAdmin does.
+ */
+export async function requireOwner(): Promise<SessionUser> {
+  const user = await requireAdmin();
+  if (user.adminRole !== "owner") {
+    const { notFound } = await import("next/navigation");
+    notFound();
+  }
+  return user;
+}
+
 async function apiSession(): Promise<
   { ok: true; user: SessionUser } | { ok: false; response: Response }
 > {

@@ -11,9 +11,9 @@ import type {
 } from "./model";
 
 /**
- * The Admin's reads (#84). Every query runs with the signed-in staff member's own
+ * The Admin's reads (#84). Every query runs with the signed-in Admin's own
  * JWT, so row level security is the boundary and `requireAdmin` in the layout is the
- * second layer: the `app_is_staff()` arm of each `learn_*` select policy is what
+ * second layer: the `learn_is_admin()` arm of each `learn_*` select policy is what
  * lets one query return every Student.
  *
  * Nothing here selects an email address, a date of birth or a raw answer (#72, #18).

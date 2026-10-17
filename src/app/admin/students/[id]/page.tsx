@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadActivity, loadCatalogue, loadRules, loadStudent } from "@/lib/admin/data";
+import { loadAdminRoster } from "@/lib/admin/roster";
+import { requireAdmin } from "@/lib/authz";
 import { StudentView } from "@/components/admin/StudentView";
 
 // Rendered per request, never prerendered: this route reads runtime configuration
@@ -20,7 +22,21 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
   const student = await loadStudent(id, catalogue);
   if (!student) notFound();
 
-  const [rules, activity] = await Promise.all([loadRules(), loadActivity(id)]);
+  const [viewer, roster, rules, activity] = await Promise.all([
+    requireAdmin(),
+    loadAdminRoster(),
+    loadRules(),
+    loadActivity(id),
+  ]);
 
-  return <StudentView student={student} catalogue={catalogue} rule={rules[0] ?? null} activity={activity} />;
+  return (
+    <StudentView
+      student={student}
+      catalogue={catalogue}
+      rule={rules[0] ?? null}
+      activity={activity}
+      adminRole={roster.byStudent[id] ?? null}
+      canGrant={viewer.adminRole === "owner"}
+    />
+  );
 }
