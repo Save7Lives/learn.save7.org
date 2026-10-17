@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import type { BrowserContext } from "@playwright/test";
+import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import type { Client } from "pg";
 
 import { APP_URL } from "./config";
@@ -19,13 +19,26 @@ export type Identity = {
   familyName: string;
 };
 
-export function newIdentity(label = "student", names?: { given?: string; family?: string }): Identity {
+export function newIdentity(
+  label = "student",
+  names?: {
+    given?: string;
+    family?: string;
+    /**
+     * The mail domain. The default, `.test`, can never be a real mailbox. Pass
+     * `save7.org` to be a staff member, whom the sign-in trigger admits without a
+     * registration (and who is therefore asked for a date of birth and consent on
+     * first entry). Still unique per call, so still safe to run in parallel.
+     */
+    domain?: string;
+  },
+): Identity {
   const tag = randomBytes(4).toString("hex");
   const givenName = names?.given ?? "Thandi";
   const familyName = names?.family ?? `Test${tag}`;
   return {
     // `.test` is reserved (RFC 2606): it can never be a real mailbox.
-    email: `${label}-${tag}@e2e.test`,
+    email: `${label}-${tag}@${names?.domain ?? "e2e.test"}`,
     name: `${givenName} ${familyName}`,
     givenName,
     familyName,
@@ -41,23 +54,69 @@ export async function chooseGoogleAccount(context: BrowserContext, who: Identity
   await context.addCookies([{ name: "e2e_identity", value, url: APP_URL }]);
 }
 
+/**
+ * Press the app's own "Continue with Google" on the sign-in page. Call after
+ * `chooseGoogleAccount`. Returns once the click is made; the test then asserts where
+ * the person lands. Real Google is never contacted: anything bound for it is aborted.
+ */
+export async function signInWithGoogle(page: Page, next?: string) {
+  await page.route("https://accounts.google.com/**", (route) => route.abort());
+  await page.goto(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+}
+
+/**
+ * A second (third...) person in the same test: a browser context of their own, signed
+ * in as them. For journeys where one person's action changes what another can see.
+ * Close the context when done.
+ */
+export async function openSignedIn(browser: Browser, baseURL: string | undefined, who: Identity) {
+  const context = await browser.newContext({ baseURL, viewport: { width: 1024, height: 900 } });
+  await chooseGoogleAccount(context, who);
+  const page = await context.newPage();
+  await signInWithGoogle(page);
+  await expect(page).toHaveURL(/\/dashboard$/);
+  return { context, page };
+}
+
 /** Registered as an adult with consent: what `register-learner` leaves behind. */
 export async function arrangeRegisteredLearner(
   db: Client,
   who: Identity,
-  options: { dateOfBirth?: string; consent?: boolean } = {},
+  options: {
+    /** `null` is "not yet asked", as for someone admitted by the sign-in trigger. */
+    dateOfBirth?: string | null;
+    consent?: boolean;
+    /** Backdate the signup, for the "Signed up" filters. */
+    signedUpDaysAgo?: number;
+  } = {},
 ) {
-  const { dateOfBirth = "1990-04-12", consent = true } = options;
+  const { dateOfBirth = "1990-04-12", consent = true, signedUpDaysAgo = 0 } = options;
   await db.query(
-    `insert into learners (email, first_name, last_name, name, date_of_birth, popia_consent_at)
-     values ($1, $2, $3, $4, $5, $6)
+    `insert into learners (email, first_name, last_name, name, date_of_birth, popia_consent_at, created_at)
+     values ($1, $2, $3, $4, $5, $6, now() - make_interval(days => $7::int))
      on conflict do nothing`,
-    [who.email, who.givenName, who.familyName, who.name, dateOfBirth, consent ? new Date() : null],
+    [
+      who.email,
+      who.givenName,
+      who.familyName,
+      who.name,
+      dateOfBirth,
+      consent ? new Date() : null,
+      signedUpDaysAgo,
+    ],
+  );
+  // The sign-in trigger links a Student to their account when the account is made. If
+  // the account came first (a kept database, or a Student re-arranged), link it here.
+  await db.query(
+    `update learners set user_id = (select id from auth.users where lower(email) = lower($1))
+      where lower(email) = lower($1) and user_id is null`,
+    [who.email],
   );
 }
 
 /** An auth account for this person, made the way a first sign-in makes it. */
-async function arrangeAuthUser(db: Client, who: Identity): Promise<string> {
+export async function arrangeAuthUser(db: Client, who: Identity): Promise<string> {
   const existing = await db.query<{ id: string }>(
     "select id from auth.users where lower(email) = lower($1)",
     [who.email],

@@ -222,13 +222,16 @@ The single source of truth is `save7-os/supabase/migrations/`, applied with
 npm run typecheck && npm run lint && npm run build
 ```
 
-**`npm run e2e` runs the learner journey** in a browser against a private local
-Postgres holding the real Learn schema (README.md, "End-to-end tests"). It registers,
-signs in, sits Baseline Sitting 1, reads a Stage, fails and passes a Stage Quiz,
-completes the Level, downloads the Certificate and verifies it. It needs no Supabase
-values and touches no production data. It does not cover the Admin dashboards or the
-other assessment-integrity guarantees yet (T36), so for those, and for anything that
-only the real host shows, walk the journey by hand on a Vercel preview.
+**`npm run e2e` runs the browser suite** against a private local Postgres holding the
+real Learn schema (README.md, "End-to-end tests"): the learner journey (register, sign
+in, Baseline Sitting 1, a Stage Quiz fail then pass, Level completion, Certificate
+download and verification), the 18+ refusal, consent gating, the signed-out catalogue,
+and the Admin journeys (Overview, Students filters, drill-down, Eligibility Rule, content
+review sign-off, Owner grant and revoke). It needs no Supabase values and touches no
+production data. Add a journey as a file in `e2e/tests/` that imports from
+`e2e/fixtures.ts`; one that changes what the whole site shares (the cohort, the Owner,
+the rule) goes in `e2e/tests/admin/`, which runs on its own after the rest. Anything that
+only the real host shows (Google sign-in, Vercel) is still a by-hand pass on a preview.
 
 ## Design
 

@@ -17,6 +17,7 @@ import { APP_URL, GATEWAY_URL, PORTS, appEnv } from "./e2e/support/config";
  * pointed somewhere else.
  */
 const reuseExistingServer = process.env.E2E_REUSE_SERVERS === "1";
+const chromium = { browserName: "chromium", viewport: { width: 1024, height: 900 } } as const;
 
 export default defineConfig({
   testDir: "./e2e/tests",
@@ -25,7 +26,7 @@ export default defineConfig({
   timeout: 180_000,
   expect: { timeout: 15_000 },
   // Tests share one database but each uses its own accounts, so they may run in
-  // parallel. The journey is one long test, so there is nothing to gain yet.
+  // parallel (see the projects below for the ones that cannot).
   fullyParallel: true,
   workers: process.env.CI ? 2 : undefined,
   forbidOnly: Boolean(process.env.CI),
@@ -37,7 +38,31 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  projects: [{ name: "chromium", use: { browserName: "chromium", viewport: { width: 1024, height: 900 } } }],
+  projects: [
+    // Everything that makes its own people and touches nothing shared. These run in
+    // parallel, against one database, each with accounts of its own.
+    { name: "chromium", testIgnore: "**/admin/**", use: chromium },
+
+    // The Admin journeys read and change what the whole site shares: the cohort the
+    // Overview counts, the one Owner, the Eligibility Rule's versions, the review
+    // register. They cannot share a database with anything running beside them, so each
+    // file is its own project, run on its own after the one before it, one test at a
+    // time. `--no-deps` runs one of them alone.
+    {
+      name: "admin-cohort",
+      testMatch: "**/admin/cohort.spec.ts",
+      dependencies: ["chromium"],
+      fullyParallel: false,
+      use: chromium,
+    },
+    {
+      name: "admin-governance",
+      testMatch: "**/admin/governance.spec.ts",
+      dependencies: ["admin-cohort"],
+      fullyParallel: false,
+      use: chromium,
+    },
+  ],
   webServer: [
     {
       command: "node node_modules/tsx/dist/cli.mjs e2e/support/serve.ts",

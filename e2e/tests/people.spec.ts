@@ -1,6 +1,11 @@
 import { test, expect } from "../fixtures";
-import { arrangeAdmin, arrangeRegisteredLearner, chooseGoogleAccount, newIdentity } from "../support/people";
-import type { Page } from "@playwright/test";
+import {
+  arrangeAdmin,
+  arrangeRegisteredLearner,
+  chooseGoogleAccount,
+  newIdentity,
+  signInWithGoogle as signIn,
+} from "../support/people";
 
 /**
  * Proof that the harness can be somebody other than a new Student, so the journeys
@@ -8,12 +13,6 @@ import type { Page } from "@playwright/test";
  * start from working fixtures. These are deliberately thin: they check each person
  * can sign in and land where their role puts them, nothing more.
  */
-async function signIn(page: Page) {
-  await page.route("https://accounts.google.com/**", (route) => route.abort());
-  await page.goto("/login");
-  await page.getByRole("button", { name: "Continue with Google" }).click();
-}
-
 test("a registered Student signs in and an Admin URL is hidden from them", async ({ page, context, db }) => {
   const student = newIdentity("student");
   await arrangeRegisteredLearner(db, student);
