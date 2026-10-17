@@ -54,3 +54,8 @@ prisma/dev.db-journal
 # not in git history: it is dead generated code, and the schema it came from is
 # preserved at docs/schema.prisma.superseded.
 docs/generated-prisma-client.superseded/
+
+# end-to-end suite: private Postgres cluster, build of the template, traces
+/.e2e/
+/test-results/
+/playwright-report/

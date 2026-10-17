@@ -1,0 +1,12 @@
+{
+  "_comment": "Accepted advisories, one entry per GHSA id. Every entry needs a reason and an expires date (YYYY-MM-DD); past that date CI fails again. See docs/dependency-advisories.md.",
+  "accepted": [
+    {
+      "id": "GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "reason": "No patched release exists (3.0.3 is the latest). Dev only: reached through eslint-config-next at lint time, never installed in production.",
+      "accepted": "2026-10-17",
+      "expires": "2027-01-17"
+    }
+  ]
+}

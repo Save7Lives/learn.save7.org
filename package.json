@@ -13,13 +13,18 @@
     "content:apply": "node scripts/apply-content.mjs",
     "media:check": "tsx scripts/check-media.ts",
     "media:verify": "tsx scripts/verify-media.ts",
-    "media:upload": "tsx scripts/upload-media.ts"
+    "media:upload": "tsx scripts/upload-media.ts",
+    "audit:a11y": "node scripts/a11y/audit.mjs",
+    "audit:a11y:selftest": "node scripts/a11y/audit.mjs --selftest",
+    "check:vocabulary": "tsx scripts/check-stage-vocabulary.ts",
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^3.3.0",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.3",
-    "next": "^16.3.6",
+    "next": "^16.4.2",
     "pdf-lib": "^1.17.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -27,6 +32,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",
@@ -35,6 +41,7 @@
     "eslint": "^9",
     "eslint-config-next": "^16.3.6",
     "pg": "^8.23.0",
+    "playwright": "^1.64.1",
     "server-only": "^0.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",

@@ -71,9 +71,9 @@ export function CourseMap({ levels }: { levels: LevelWithProgress[] }) {
 
       {anyStarted ? (
         <div aria-hidden="true" className="mx-1 mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.8125rem] text-grey">
-          <Key><StepDot n={1} state="passed" className="size-5 text-[0.6875rem]" />Quiz passed</Key>
-          <Key><StepDot n={3} state="current" className="size-5 text-[0.6875rem]" />Up next</Key>
-          <Key><StepDot n={4} state="todo" className="size-5 text-[0.6875rem]" />Not started</Key>
+          <Key><StepDot n={1} state="passed" className="size-5 text-[0.75rem]" />Quiz passed</Key>
+          <Key><StepDot n={3} state="current" className="size-5 text-[0.75rem]" />Up next</Key>
+          <Key><StepDot n={4} state="todo" className="size-5 text-[0.75rem]" />Not started</Key>
           <Key><AwardNode earned className="size-5" />Certificate earned</Key>
         </div>
       ) : (

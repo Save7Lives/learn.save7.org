@@ -380,12 +380,9 @@ admin route that re-seeded the course from the running app. Content is now appli
 by `supabase db push`, so a correction is `npm run content:emit` followed by a
 push — slower, and reviewable, which is the trade that was wanted.
 
-**The end-to-end journey suite is gone and needs rewriting.** It drove a learner
-through the previous build's journey, baseline → modules → level assessment →
-certificate → analytics, and asserted 53 behaviours against the local SQLite file.
-Nothing equivalent runs against Supabase yet, and that is the largest gap in this
-repo's verification. It needs a service-role key and a disposable learner; until
-then the marking rules are covered only by the probes inside the migrations.
+**The end-to-end suite** (`npm run e2e`, see *End-to-end tests* below) drives the learner
+journey and the Admin journeys against a private Postgres holding the real Learn schema.
+It is not run in CI, which has no Postgres, so run it before you merge.
 
 ---
 
@@ -424,6 +421,141 @@ Documented rather than half-built:
 
 ---
 
+## End-to-end tests
+
+```bash
+npm run e2e          # headless; builds the app, starts everything, runs, stops everything
+npm run e2e:headed   # the same with a visible browser
+```
+
+`npm run e2e` runs three groups of tests in a real browser:
+
+- **The learner journey** (`learner-journey.spec.ts`): register as an adult, sign in,
+  Baseline Sitting 1, read a Stage, fail a Stage Quiz and pass it, finish the Level,
+  download the Certificate, and verify it as a signed-out stranger.
+- **Refusals, gating and the signed-out catalogue** (`refusals`, `consent-gating`,
+  `signed-out`, `people`): the 18+ refusal through the register form, straight at the
+  registration function and on the already-admitted path (with its terminal page),
+  consent and age gating in the app and in the database, what a visitor can and
+  cannot read (the Levels and Stages yes; Stage prose and answer keys no), and the
+  fixtures for each kind of person.
+- **The Admin journeys** (`tests/admin/`): Overview figures, the Students filters and
+  search, the drill-down, the Eligibility Rule (a new version each save, never empty),
+  content review sign-off under the Admin's name, the Owner granting and revoking Admin,
+  and the refusals for an ordinary Admin and for revoking the Owner.
+
+The Admin files read and change what the whole site shares (the cohort the Overview
+counts, the one Owner, the rule's versions), so they cannot run beside other tests. They
+are two more Playwright projects (`admin-cohort`, then `admin-governance`) that start
+after everything else has finished and run one test at a time. `admin-cohort` empties the
+Students first and arranges a small cohort it knows exactly. Run one on its own, without
+the others before it, with `npx playwright test --project=admin-cohort --no-deps`.
+
+**It touches no production data.** The app is started with its Supabase URL pointed at
+a gateway on `localhost`, so the browser and the server only ever talk to your own
+machine:
+
+- **A private Postgres 17** (Homebrew's, in `.e2e/`, loopback only, its own port)
+  holds the real Learn schema. The Save7 OS migrations are replayed onto stubs for the
+  Supabase pieces (`auth.users` and the API roles), so row level security, the marking
+  functions and the sign-in triggers are the real ones. It is rebuilt only when a
+  migration changes, and each run gets a fresh copy.
+- **PostgREST**, the program Supabase puts in front of Postgres, serves it.
+- **A gateway** (`e2e/support/gateway.ts`) answers the app's `/auth/v1`, `/rest/v1` and
+  `/functions/v1` calls. It runs the real `register-learner` Edge Function unmodified,
+  and it is the test session: where Google would vouch for a person it takes the
+  identity from a cookie the test sets, and refuses with none. The app still goes
+  through its normal Google redirect and PKCE exchange. Nothing in `src/` knows the
+  gateway exists, and its tokens are signed with a throwaway secret, so there is no
+  switch a production build could be given to turn it on. The server refuses to start
+  if any environment variable names a hosted Supabase project.
+
+**Needs:** Node, Homebrew `postgresql@17` and `postgrest` (`brew install postgresql@17
+postgrest`), Playwright's Chromium (`npx playwright install chromium`), and a checkout of
+the Save7 OS repository, found at `../save7-os` or `~/Desktop/Save7 Course/save7-os`, or
+named by `SAVE7_OS_DIR`. A migration that needs an ops table the replay does not have
+stops the run with its file name: add its number to `SKIPPED` in `e2e/support/save7-os.ts`.
+
+**Adding a journey:** a new file in `e2e/tests/` that imports `test` and `expect` from
+`e2e/fixtures.ts`. `e2e/support/people.ts` makes people (`newIdentity`,
+`arrangeRegisteredLearner`, `arrangeAdmin`, `chooseGoogleAccount`, `signInWithGoogle`,
+`openSignedIn` for a second person in the same test), each with an address of their own
+so tests can run in parallel. `newIdentity("x", { domain: "save7.org" })` is a staff
+member, whom the sign-in trigger admits without a registration. `e2e/support/learning.ts`
+arranges progress (`sitBaseline`, `takeStageQuiz`, `completeLevel`) through the
+database's own marking functions, as that Student, so it is real progress. `e2e/support/rest.ts`
+talks to the API as an anonymous visitor or as a signed-in person (`api`, `tokenFor`),
+for "the database refuses this" checks that a hand-written client would meet. The `quiz`
+fixture fills in a paper. The `db` fixture is a superuser connection for arranging state
+and for the answer key, which no browser can read. Use it to decide what to click, never
+to assert what a person sees. Assert only what a visitor, Student or Admin could see, or
+(for a refusal) what the API answers. A test that changes anything the whole site shares
+belongs in `tests/admin/`.
+
+**Signed-in accessibility audit.** `e2e/support/test-session.mjs` is the test-session helper
+`scripts/a11y/session.mjs` looks for. It arranges a Student (Baseline sat, one Stage
+passed) or an Admin in the end-to-end database and walks the app's own sign-in, so
+`npm run audit:a11y` can render the pages behind sign-in at 375 and 1024 px. It needs the
+end-to-end stack, so it is run locally and **not in CI**: the CI accessibility job has no
+Postgres or PostgREST, so it sets `A11Y_PUBLIC_ONLY=1`, which audits the public pages and
+skips each signed-in page by name with a line saying why. To audit the signed-in pages,
+run this from the repository root (Needs, below, applies):
+
+```bash
+# 1. the backend: Postgres, PostgREST and the gateway (leave it running)
+node node_modules/tsx/dist/cli.mjs e2e/support/serve.ts &
+
+# 2. the app, built and started against that backend on port 3107
+env $(node node_modules/tsx/dist/cli.mjs e2e/support/app-env.ts) npm run build
+env $(node node_modules/tsx/dist/cli.mjs e2e/support/app-env.ts) npm run start -- -p 3107 &
+
+# 3. the audit: the self-test, then every public and signed-in page
+A11Y_BASE_URL=http://localhost:3107 npm run audit:a11y
+
+# 4. stop both
+lsof -ti :3107 | xargs kill
+pkill -f e2e/support/serve.ts
+```
+
+Without the stack running, the signed-in pages fail with a connection error rather than
+being skipped, on purpose: a green audit must mean they were checked. The first start
+replays the migrations and takes about 40 seconds. Rebuild the app (step 2) after a code
+change before auditing: an old `next start` on port 3107 serves a stale build.
+
+**Proving the journey can fail (#28).** A green journey means something only if it goes
+red when the thing it checks breaks. The two deliberate breaks the suite was checked with
+are repeatable, and each should fail `learner-journey.spec.ts` at the step named:
+
+1. *The Certificate page.* In `src/app/certificate/[publicId]/page.tsx`, change the badge
+   text `✓ Valid certificate` to anything else (for example `✓ Genuine certificate`), then
+   run `npx playwright test learner-journey`. It fails at
+   `getByText("Valid certificate")` in the "Certificate download" step. Revert the edit
+   with `git checkout src/app/certificate`.
+2. *The pass mark.* Replay the schema with one extra migration that sets
+   `learn_levels.pass_mark_pct = 1`, without touching the real Save7 OS checkout:
+
+   ```bash
+   OS=~/Desktop/"Save7 Course"/save7-os      # or wherever SAVE7_OS_DIR points
+   D=$(mktemp -d)
+   mkdir -p $D/supabase/migrations
+   for f in $OS/supabase/migrations/*.sql; do ln -s "$f" $D/supabase/migrations/; done
+   ln -s $OS/supabase/functions $D/supabase/functions
+   echo 'update learn_levels set pass_mark_pct = 1;' > $D/supabase/migrations/9999_break_pass_mark.sql
+   SAVE7_OS_DIR=$D npx playwright test learner-journey
+   rm -rf $D
+   ```
+
+   It fails at `getByText(/You need 4 to pass/)` in the "Stage Quiz: fail, then pass"
+   step, because the Stage Quiz now asks for 1. The next normal run replays the real
+   migrations again on its own (the template database is keyed by their hash).
+
+Ports can be moved with `E2E_PG_PORT`, `E2E_POSTGREST_PORT`, `E2E_GATEWAY_PORT` and
+`E2E_APP_PORT`. `E2E_REUSE_SERVERS=1` attaches to servers already running on those ports,
+which is faster while writing a test and is opt-in because a stale server could be
+pointed elsewhere. Traces and screenshots of a failure are in `.e2e/results/`.
+
+---
+
 ## Verification
 
 The dated record is [DEPLOY.md](DEPLOY.md), *What has been verified, and what has not*;
@@ -443,8 +575,8 @@ this is its summary, as of 7 October 2026.
   on 7 October 2026).
 
 **Not verified:** anything behind sign-in on the live site, Google sign-in on
-`learn.save7.org`, marking against real data, and the end-to-end journey, which no
-suite covers any more.
+`learn.save7.org`, and marking against real data. The learner
+journey is covered by `npm run e2e` against a local database, not production.
 
 An earlier version of this section recorded a browser walkthrough of the previous
 build, its interactive components, and a contrast and responsive audit. It described

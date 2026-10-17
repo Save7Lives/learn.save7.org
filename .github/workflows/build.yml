@@ -44,4 +44,47 @@ jobs:
       # transcript's words, the registry's size and duration are the file's (#61).
       - run: npm run media:check
 
+      # Dependency advisories: fails on anything high or critical (the same threshold as
+      # `npm audit --audit-level=high`) unless scripts/audit-allowlist.json accepts it
+      # with a reason and an expiry date. See docs/dependency-advisories.md (#30).
+      - run: node scripts/audit-gate.mjs
+
       - run: npm run build
+
+  # Accessibility and contrast audit (#29): renders the public pages at 375 and 1024 px
+  # and fails on a colour pair under WCAG AA, text under 12px or horizontal scroll, after
+  # a self-test that plants each defect and checks the audit catches it.
+  # PUBLIC PAGES ONLY, on purpose: the signed-in pages (scripts/a11y/pages.mjs) need the
+  # end-to-end stack (Postgres 17, PostgREST, the gateway) and CI has none of it, so
+  # A11Y_PUBLIC_ONLY=1 skips them by name and says so. They are audited locally; the
+  # commands are in README.md, "Signed-in accessibility audit".
+  # The app reads only the public Supabase values in .env.example (anon key, by design).
+  accessibility:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run check:vocabulary
+
+      - run: npx playwright install --with-deps chromium
+
+      - run: cp .env.example .env
+      - run: npm run build
+
+      - name: Start the app
+        run: |
+          npm start -- --port 3000 > app.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://localhost:3000/login && exit 0; sleep 1; done
+          cat app.log; exit 1
+
+      - run: npm run audit:a11y
+        env:
+          A11Y_PUBLIC_ONLY: "1"
