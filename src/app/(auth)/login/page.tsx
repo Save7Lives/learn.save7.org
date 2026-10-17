@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { GoogleSignIn } from "@/components/auth/GoogleSignIn";
-import { Display, Eyebrow } from "@/components/ui/primitives";
+import { AuthHeading } from "@/components/auth/AuthHeading";
 import { getSession } from "@/lib/auth";
 import { publicConfig } from "@/lib/supabase/config";
 
@@ -22,14 +22,12 @@ export default async function LoginPage(props: PageProps<"/login">) {
 
   return (
     <div>
-      <Eyebrow>Save7 Learn</Eyebrow>
-      <Display className="mt-3">Sign in</Display>
-      <p className="mt-4 text-grey">
+      <AuthHeading title="Sign in">
         With the same Google account Save7 knows you by. Volunteers, staff and learners all
         sign in here.
-      </p>
+      </AuthHeading>
 
-      <div className="mt-8">
+      <div className="mt-7">
         <GoogleSignIn config={publicConfig()} next={typeof next === "string" ? next : undefined} />
       </div>
     </div>

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
-import { ButtonLink, Display, Eyebrow } from "@/components/ui/primitives";
+import { AuthHeading } from "@/components/auth/AuthHeading";
+import { ButtonLink } from "@/components/ui/primitives";
+import { IconChip } from "@/components/ui/shared-parts";
 
 export const metadata: Metadata = { title: "18 or older only" };
 
@@ -15,16 +17,17 @@ export const metadata: Metadata = { title: "18 or older only" };
 export default function EnrolRefusedPage() {
   return (
     <div>
-      <Eyebrow>Save7</Eyebrow>
-      <Display className="mt-3">18 or older only</Display>
-      <p className="mt-4 text-navy" role="alert">
+      {/* Neutral, not an alert colour: this is a rule, not a mistake to fix. */}
+      <IconChip icon="shield" tone="neutral" className="mb-[18px]" />
+      <AuthHeading eyebrow="Save7" title="18 or older only" />
+      <p className="mt-3.5 font-medium text-navy" role="alert">
         You must be 18 or older to register for this course.
       </p>
-      <p className="mt-4 text-grey">
+      <p className="mt-3 text-grey">
         We have not kept the date of birth you entered, and your enrolment on the course
         has been removed. You have been signed out.
       </p>
-      <ButtonLink href="/" variant="outline" className="mt-8">
+      <ButtonLink href="/" variant="secondary" className="mt-7">
         Back to the homepage
       </ButtonLink>
     </div>

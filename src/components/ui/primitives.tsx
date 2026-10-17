@@ -28,6 +28,9 @@ const BUTTON_VARIANTS = {
   outline: "border-2 border-line-strong text-navy hover:border-navy hover:bg-white",
   /** Navy outline on white: the secondary button of the Editorial pages, beside a pink primary. */
   secondary: "border-2 border-navy bg-white text-navy hover:bg-line",
+  /** Google's own light theme: white fill, #747775 stroke, #1F1F1F text. Google's branding
+   * guidance puts its G on white, dark or neutral only, so this is never pink (#70). */
+  google: "border border-[#747775] bg-white font-medium text-[#1f1f1f] hover:bg-[#f4f4f4]",
   /** For use on navy surfaces, where teal becomes legible. */
   onNavy: "bg-teal text-navy hover:bg-teal-100 font-medium",
   quiet: "text-grey hover:text-navy hover:bg-line/50",
