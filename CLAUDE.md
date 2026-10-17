@@ -194,7 +194,9 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   the Students list. `learn_admin_role()` is what the app asks, and a revoked Admin
   loses the dashboards immediately rather than when a token expires. Ops staff
   (`app_is_staff()`) count only while no Owner exists. Saving an Eligibility Rule and
-  clearing a review item still need a `people` row, for attribution.
+  clearing a review item are recorded against the Admin's sign-in (`created_by_user`
+  and `cleared_by_user`, save7-os 0135), so no `people` row is needed; the old
+  `created_by` / `cleared_by` stay for history. Names come from `learn_actor_names()`.
 - **Analytics store no IP and no user agent.** `learn_events` is deliberately thin;
   the privacy notice promises this. Only Admins may read it.
 

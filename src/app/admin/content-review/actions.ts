@@ -2,6 +2,7 @@
 
 import { requireAdmin } from "@/lib/authz";
 import { supabaseServer } from "@/lib/supabase/server";
+import { currentUserId } from "@/lib/admin/actors";
 import type { ReviewStatus } from "@/lib/constants";
 
 /**
@@ -18,18 +19,17 @@ export async function setReviewStatusAction(
   await requireAdmin();
 
   const supabase = await supabaseServer();
-  /* `cleared_by` references `people(id)`, so it is the staff member's people id, not
-     the session's `learners` id (which is empty for staff who never enrolled). Writing
-     the learner id broke the foreign key, and the failure was never read, so no
-     decision here was ever recorded. */
-  const { data: personId } = await supabase.rpc("app_person_id");
-  if (!personId) throw new Error("Your account is not linked to a Save7 staff record.");
+  /* Recorded against the sign-in (T98), which every Admin has: `cleared_by` is a
+     `people` id, and an Admin who is only a Student has no such row. The update policy
+     refuses any id but the caller's own. */
+  const userId = await currentUserId();
+  if (!userId) throw new Error("Your session has ended. Sign in again.");
 
   const { error } = await supabase
     .from("learn_review_items")
     .update({
       status,
-      cleared_by: personId as string,
+      cleared_by_user: userId,
       cleared_at: new Date().toISOString(),
       ...(notes !== undefined ? { notes: notes.slice(0, 4000) } : {}),
     })
