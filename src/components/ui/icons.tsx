@@ -140,6 +140,14 @@ const PATHS = {
     </>
   ),
   back: <path d="M19 12H5M11 6l-6 6 6 6" />,
+  // Added for the sign-in, register and enrolment re-cut (#26); the privacy page reuses them.
+  eye: (
+    <>
+      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  heart: <path d="M12 20.5s-8.5-5-8.5-11A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8.5 2.5c0 6-8.5 11-8.5 11z" />,
   "log-out": (
     <>
       <path d="M9 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20H9" />

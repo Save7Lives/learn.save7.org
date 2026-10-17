@@ -1,44 +1,36 @@
 import Link from "next/link";
 import { Save7Lockup } from "@/components/ui/Save7Lockup";
 
+/**
+ * The public backdrop (#70): a white page carrying the landing page's corner blobs
+ * and circle pair, with one centred card. No navy surface. The blobs are decoration
+ * behind an opaque card and carry no text, so contrast is never measured against
+ * them. Under 560px only the teal circle remains, smaller.
+ */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-dvh lg:grid-cols-[1fr_1.1fr]">
-      {/* Ink panel. Teal is legible here, which is the only place the brand
-          guidelines permit it to carry text. Hidden on small screens so the form
-          is the first thing a phone user sees. */}
-      <aside className="on-navy relative hidden flex-col justify-between bg-navy p-12 text-white lg:flex">
-        <Link href="/" aria-label="Save7 Learn home" className="inline-flex">
-          <Save7Lockup surface="navy" className="text-2xl" />
+    <div className="relative min-h-dvh overflow-hidden bg-white">
+      <div aria-hidden="true" className="pointer-events-none">
+        <span className="absolute -right-[140px] -top-[130px] z-0 size-[260px] rounded-full bg-teal-100 min-[560px]:-right-[190px] min-[560px]:-top-[230px] min-[560px]:size-[520px]" />
+        <span className="absolute -bottom-[200px] -left-[170px] z-0 hidden size-[360px] rounded-full border border-pink-line bg-pink-50 min-[560px]:block" />
+        <span className="absolute right-16 top-[52px] z-0 hidden h-[90px] w-[120px] min-[560px]:block">
+          <span className="absolute right-0 top-0 size-[72px] rounded-full bg-teal" />
+          <span className="absolute bottom-0 left-0 size-10 rounded-full bg-pink" />
+        </span>
+      </div>
+
+      <div className="relative z-10 flex min-h-dvh flex-col items-center px-4 pb-9 pt-5 min-[560px]:px-8 min-[560px]:pb-14 min-[560px]:pt-[26px]">
+        <Link href="/" aria-label="Save7 Learn home" className="-my-2 inline-flex min-h-11 items-center self-start">
+          <Save7Lockup surface="white" className="text-2xl" />
         </Link>
 
-        <div className="max-w-md">
-          <p className="font-display text-5xl leading-[0.95] text-white">
-            One decision
-            <br />
-            can save
-            <br />
-            <span className="text-teal">seven lives.</span>
-          </p>
-          <p className="mt-6 text-white/70">
-            Save7 Learn is Save7&apos;s organ donation and transplantation
-            awareness course. Three levels, each a complete achievement on its own.
-          </p>
-        </div>
-
-        <p className="text-sm text-white/70">
-          Save7 · A South African organ donation awareness initiative
-        </p>
-      </aside>
-
-      <main id="main" className="flex items-center justify-center px-5 py-12 sm:px-8">
-        <div className="w-full max-w-md">
-          <Link href="/" aria-label="Save7 Learn home" className="mb-10 inline-flex lg:hidden">
-            <Save7Lockup surface="white" className="text-xl" />
-          </Link>
+        <main
+          id="main"
+          className="mt-[18px] w-full max-w-[480px] rounded-[20px] border border-line bg-white px-5 py-6 shadow-[0_1px_2px_rgba(12,23,59,0.05),0_10px_30px_rgba(12,23,59,0.06)] min-[560px]:mt-[22px] min-[560px]:p-9"
+        >
           {children}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

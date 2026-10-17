@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import type { FormState } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/primitives";
+import { ConsentRow, DisclosureCard, Field } from "@/components/ui/shared-parts";
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
 
@@ -19,29 +20,20 @@ export function DateOfBirthForm({ action, next }: { action: Action; next: string
   const [state, formAction, pending] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction}>
       <input type="hidden" name="next" value={next} />
 
-      <label className="block">
-        <span className="text-sm font-medium">Date of birth</span>
-        <input
-          name="dateOfBirth"
-          type="date"
-          required
-          max={new Date().toISOString().slice(0, 10)}
-          className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2"
-        />
-        <span className="mt-1 block text-xs text-grey">
-          This course is for adults. You must be 18 or older. There is no exception, so
-          please use your real date of birth.
-        </span>
-      </label>
-
-      {state?.error ? (
-        <p className="text-sm text-incorrect" role="alert">
-          {state.error}
-        </p>
-      ) : null}
+      <Field
+        id="dateOfBirth"
+        name="dateOfBirth"
+        label="Date of birth"
+        type="date"
+        required
+        autoComplete="bday"
+        max={new Date().toISOString().slice(0, 10)}
+        helper="This course is for adults. You must be 18 or older. There is no exception, so please use your real date of birth."
+        error={state?.error}
+      />
 
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Checking…" : "Continue"}
@@ -61,14 +53,11 @@ export function ConsentForm({ action, next }: { action: Action; next: string }) 
   const [state, formAction, pending] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} className="space-y-[18px]">
       <input type="hidden" name="next" value={next} />
 
-      <details className="rounded-lg border border-line px-4 py-3 text-sm">
-        <summary className="cursor-pointer font-medium">
-          What Save7 keeps, and who can see it
-        </summary>
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-navy">
+      <DisclosureCard title="What Save7 keeps, and who can see it">
+        <ul>
           <li>
             <strong>Your name and email address</strong>, from your Google account. Your
             name is printed on your certificates, and you can correct it in your profile.
@@ -92,27 +81,18 @@ export function ConsentForm({ action, next }: { action: Action; next: string }) 
             portal, where it counts towards your vetting.
           </li>
         </ul>
-        <p className="mt-3">
-          <a href="/privacy" className="underline">
+        <p>
+          <a href="/privacy" className="font-medium text-teal-ink underline underline-offset-[3px]">
             How we handle your information
           </a>
           , including your rights under POPIA.
         </p>
-      </details>
+      </DisclosureCard>
 
-      <label className="flex gap-3 text-sm">
-        <input type="checkbox" name="popiaConsent" className="mt-1" />
-        <span>
-          I agree that Save7 may store my name, email address, date of birth and course
-          progress so that my learning and certificate can be recorded.
-        </span>
-      </label>
-
-      {state?.error ? (
-        <p className="text-sm text-incorrect" role="alert">
-          {state.error}
-        </p>
-      ) : null}
+      <ConsentRow id="popiaConsent" name="popiaConsent" error={state?.error}>
+        I agree that Save7 may store my name, email address, date of birth and course
+        progress so that my learning and certificate can be recorded.
+      </ConsentRow>
 
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Saving…" : "Start the course"}
