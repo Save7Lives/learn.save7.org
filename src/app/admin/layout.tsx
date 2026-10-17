@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/authz";
+import { loadAdminRoster } from "@/lib/admin/roster";
 import { signOutAction } from "@/app/(auth)/actions";
 import { AdminShell } from "@/components/admin/AdminShell";
 
@@ -11,8 +12,9 @@ import { AdminShell } from "@/components/admin/AdminShell";
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await requireAdmin();
+  const roster = await loadAdminRoster();
   return (
-    <AdminShell email={admin.email} signOut={signOutAction}>
+    <AdminShell email={admin.email} ownerName={roster.ownerName} signOut={signOutAction}>
       {children}
     </AdminShell>
   );

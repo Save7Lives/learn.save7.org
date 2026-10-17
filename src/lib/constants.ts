@@ -11,6 +11,10 @@
 export const USER_ROLES = ["LEARNER", "ADMIN"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
+/** A Learn Admin is the Owner or an ordinary Admin (T95). The Owner alone grants and revokes. */
+export const ADMIN_ROLES = ["owner", "admin"] as const;
+export type AdminRole = (typeof ADMIN_ROLES)[number];
+
 export const LEVEL_TIERS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const;
 export type LevelTier = (typeof LEVEL_TIERS)[number];
 

@@ -13,11 +13,14 @@ import { AdminNav } from "./AdminNav";
  */
 export function AdminShell({
   email,
+  ownerName = null,
   signOut,
   pathname,
   children,
 }: {
   email: string;
+  /** Who the Owner is, so every Admin can see who grants access (T95). Null while no Owner exists. */
+  ownerName?: string | null;
   signOut: () => void | Promise<void>;
   /** Only for rendering a page without a router (the audit harness). */
   pathname?: string;
@@ -41,6 +44,11 @@ export function AdminShell({
           <p className="hidden truncate px-3 pb-1 text-[0.8125rem] text-grey min-[900px]:block" title={email}>
             {email}
           </p>
+          {ownerName ? (
+            <p className="hidden truncate px-3 pb-1 text-[0.8125rem] text-grey min-[900px]:block" title={`Owner: ${ownerName}`}>
+              Owner: {ownerName}
+            </p>
+          ) : null}
           <Link href="/" className={footLink}>
             <Icon name="book" />
             View course

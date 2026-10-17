@@ -17,10 +17,14 @@ import {
   type StudentRecord,
 } from "@/lib/admin/model";
 import { adminHref, formatPct, formatShortDate } from "@/lib/admin/format";
+import type { AdminRole } from "@/lib/constants";
+import { AdminRoleButton } from "./AdminRoleButton";
+import { AdminRoleMark } from "./AdminRoleMark";
 
 /**
  * Students (#72, #84): everyone who has signed up, most recent first, from the
- * Progress Record only. No email address, no date of birth and no "inactive" label:
+ * Progress Record only. The Role column marks Admins, and gives the Owner the
+ * button that makes or removes one (T95). No email address, no date of birth and no "inactive" label:
  * "last active" is the one engagement figure, because an Admin has to see who has
  * gone quiet (#81).
  */
@@ -78,6 +82,8 @@ export function StudentsView({
   matching,
   total,
   query,
+  roles,
+  canGrant,
 }: {
   catalogue: Catalogue;
   /** This page's Students. */
@@ -86,6 +92,10 @@ export function StudentsView({
   matching: number;
   total: number;
   query: StudentsQuery;
+  /** Student id to role, for the Students who are Admins (T95). */
+  roles: Record<string, AdminRole>;
+  /** True for the Owner, who alone sees "Make admin" and "Remove admin". */
+  canGrant: boolean;
 }) {
   const stagesTotal = catalogue.reduce((n, l) => n + l.stages.length, 0);
   const pages = Math.max(1, Math.ceil(matching / PAGE_SIZE));
@@ -151,10 +161,11 @@ export function StudentsView({
       <PortalCard as="section" aria-label="Students" className="min-w-0 sm:px-[22px] sm:py-5">
         <DataTable
           caption="Students, most recent signup first"
-          minWidth="62rem"
+          minWidth="70rem"
           empty="No Students match."
           columns={[
             { key: "s", header: "Student" },
+            { key: "ro", header: "Role", nowrap: true },
             { key: "su", header: "Signed up", nowrap: true },
             { key: "la", header: "Last active", nowrap: true },
             { key: "cl", header: "Current Level", nowrap: true },
@@ -174,6 +185,12 @@ export function StudentsView({
               cells: [
                 <span key="s" className="whitespace-nowrap">
                   {s.name}
+                </span>,
+                <span key="ro" className="inline-flex items-center gap-3">
+                  {roles[s.id] ? <AdminRoleMark role={roles[s.id]} /> : <span className="font-normal text-grey">Student</span>}
+                  {canGrant && roles[s.id] !== "owner" ? (
+                    <AdminRoleButton studentId={s.id} studentName={s.name} isAdmin={roles[s.id] === "admin"} />
+                  ) : null}
                 </span>,
                 formatShortDate(s.signedUpAt),
                 formatShortDate(s.lastActiveAt),

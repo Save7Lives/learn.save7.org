@@ -189,11 +189,14 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   bundle at build time, while `SITE_URL` is read on the server per request.
   Certificate links are built from it. Both are Vercel project environment variables
   (Production and Preview), and an edit reaches the site only after a redeploy.
-- **There is no admin account to create.** Admin is `app_is_staff()` — a `people`
-  row with an `app_role` on the Supabase project. A revoked staff member loses the
-  dashboards immediately rather than when a token expires.
+- **There is no admin account to create.** Admin is a Learn role in `learn_admins`
+  (save7-os 0134): one Owner, seeded by the migration, and Admins the Owner makes from
+  the Students list. `learn_admin_role()` is what the app asks, and a revoked Admin
+  loses the dashboards immediately rather than when a token expires. Ops staff
+  (`app_is_staff()`) count only while no Owner exists. Saving an Eligibility Rule and
+  clearing a review item still need a `people` row, for attribution.
 - **Analytics store no IP and no user agent.** `learn_events` is deliberately thin;
-  the privacy notice promises this. Only staff may read it.
+  the privacy notice promises this. Only Admins may read it.
 
 ## Changing the schema
 

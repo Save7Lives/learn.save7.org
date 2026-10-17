@@ -20,6 +20,9 @@ import {
 } from "@/lib/admin/model";
 import { formatDate, formatPct, formatPoints, formatShortDate, initials } from "@/lib/admin/format";
 import type { ActivityEvent } from "@/lib/admin/data";
+import type { AdminRole } from "@/lib/constants";
+import { AdminRoleButton } from "./AdminRoleButton";
+import { AdminRoleMark } from "./AdminRoleMark";
 
 /**
  * A Student's Progress Record, "where they are" first (#72, #84): the four stat cards,
@@ -44,12 +47,18 @@ export function StudentView({
   catalogue,
   rule,
   activity,
+  adminRole = null,
+  canGrant = false,
 }: {
   student: StudentRecord;
   catalogue: Catalogue;
   /** The current Eligibility Rule, or null before one is saved. */
   rule: EligibilityRule | null;
   activity: ActivityEvent[];
+  /** This Student's Admin role, or null for a Student who is not one (T95). */
+  adminRole?: AdminRole | null;
+  /** True for the Owner, who alone sees "Make admin" and "Remove admin". */
+  canGrant?: boolean;
 }) {
   const stagesTotal = catalogue.reduce((n, l) => n + l.stages.length, 0);
   const passed = stagesPassed(student);
@@ -92,6 +101,14 @@ export function StudentView({
           <p className="mt-1 text-sm text-grey">
             Signed up {formatDate(student.signedUpAt)} · {stateText} · Last active {formatDate(student.lastActiveAt)}
           </p>
+          {adminRole || (canGrant && adminRole !== "owner") ? (
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              {adminRole ? <AdminRoleMark role={adminRole} /> : null}
+              {canGrant && adminRole !== "owner" ? (
+                <AdminRoleButton studentId={student.id} studentName={student.name} isAdmin={adminRole === "admin"} />
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
 

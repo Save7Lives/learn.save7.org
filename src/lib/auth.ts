@@ -1,7 +1,7 @@
 import "server-only";
 
 import { supabaseServer } from "./supabase/server";
-import type { UserRole } from "./constants";
+import type { AdminRole, UserRole } from "./constants";
 
 /**
  * Session handling.
@@ -43,7 +43,10 @@ export type SessionUser = {
   id: string;
   email: string;
   name: string;
+  /** `"ADMIN"` for the Owner and every Learn Admin, whatever they were granted. */
   role: UserRole;
+  /** Which kind of Learn Admin, or null for a Student. Only the Owner grants and revokes. */
+  adminRole: AdminRole | null;
   enrolment: EnrolmentStep;
 };
 
@@ -57,10 +60,13 @@ export type SessionUser = {
  *      the token with the auth server, which is the difference between trusting a
  *      signature and trusting a cookie.
  *   2. the `learners` row, through RLS, which returns theirs and nobody else's.
- *   3. `app_is_staff()`, for the admin dashboards. Asked of the database rather
- *      than inferred from the email domain: staff status is a `people` row with an
- *      `app_role`, and a revoked staff member must lose the dashboards
- *      immediately rather than whenever a token expires.
+ *   3. `learn_admin_role()`, for the admin dashboards: `"owner"`, `"admin"` or null.
+ *      Asked of the database rather than inferred from the email domain, so a
+ *      revoked Admin loses the dashboards immediately rather than whenever a token
+ *      expires. Admin is a Learn role (`learn_admins`, save7-os 0134), not Save7 OS
+ *      staff status. The two combine in the database: while no Owner exists the
+ *      function falls back to `app_is_staff()`, and once one does, ops staff are not
+ *      Learn Admins unless the Owner grants it (T96).
  */
 export async function getSession(): Promise<SessionUser | null> {
   const supabase = await supabaseServer();
@@ -79,26 +85,29 @@ export async function getSession(): Promise<SessionUser | null> {
 
   // Signed in, but not enrolled. The caller decides what that means: the course
   // pages send them through enrolment, the admin pages do not care.
+  const { data: adminRoleData } = await supabase.rpc("learn_admin_role");
+  const adminRole: AdminRole | null =
+    adminRoleData === "owner" || adminRoleData === "admin" ? adminRoleData : null;
+
   if (!learner) {
-    const { data: isStaff } = await supabase.rpc("app_is_staff");
-    if (!isStaff) return null;
+    if (!adminRole) return null;
 
     return {
       id: "",
       email: user.email ?? "",
-      name: (user.user_metadata?.full_name as string) ?? user.email ?? "Save7 staff",
+      name: (user.user_metadata?.full_name as string) ?? user.email ?? "Save7 Admin",
       role: "ADMIN",
+      adminRole,
       enrolment: "complete",
     };
   }
-
-  const { data: isStaff } = await supabase.rpc("app_is_staff");
 
   return {
     id: learner.id,
     email: learner.email,
     name: learner.name,
-    role: isStaff ? "ADMIN" : "LEARNER",
+    role: adminRole ? "ADMIN" : "LEARNER",
+    adminRole,
     enrolment: !learner.date_of_birth
       ? "date-of-birth"
       : !learner.popia_consent_at

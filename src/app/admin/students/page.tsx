@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { loadCatalogue, loadStudents } from "@/lib/admin/data";
+import { loadAdminRoster } from "@/lib/admin/roster";
+import { requireAdmin } from "@/lib/authz";
 import {
   PAGE_SIZE,
   SIGNED_UP_OPTIONS,
@@ -30,7 +32,7 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
   const q = first(params.q).slice(0, 80);
   const requestedPage = Math.max(1, Number.parseInt(first(params.page), 10) || 1);
 
-  const students = await loadStudents(catalogue);
+  const [viewer, roster, students] = await Promise.all([requireAdmin(), loadAdminRoster(), loadStudents(catalogue)]);
   const now = new Date();
   const matching = searchStudents(
     students.filter((s) => inWindow(s, signed, now) && matchesLevel(s, level, catalogue)),
@@ -47,6 +49,8 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
       matching={matching.length}
       total={students.length}
       query={{ q, signed, level, page }}
+      roles={roster.byStudent}
+      canGrant={viewer.adminRole === "owner"}
     />
   );
 }
