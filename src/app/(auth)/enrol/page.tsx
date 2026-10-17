@@ -45,10 +45,7 @@ export default async function EnrolPage(props: PageProps<"/enrol">) {
 
       {asking === "date-of-birth" ? (
         <>
-          <AuthHeading
-            eyebrow="Finish enrolling · Step 1 of 2"
-            title="Your date of birth"
-          >
+          <AuthHeading eyebrow="Finish enrolling" title="Your date of birth">
             Before you start, Save7 needs two things it did not ask when you signed in:
             your date of birth, then your consent to record your progress.
           </AuthHeading>
@@ -58,7 +55,7 @@ export default async function EnrolPage(props: PageProps<"/enrol">) {
         </>
       ) : (
         <>
-          <AuthHeading eyebrow="Finish enrolling · Step 2 of 2" title="Your information">
+          <AuthHeading eyebrow="Finish enrolling" title="Your information">
             Last step. Save7 needs your consent before it can record your progress or
             issue a certificate.
           </AuthHeading>
@@ -76,7 +73,10 @@ export default async function EnrolPage(props: PageProps<"/enrol">) {
         <span>
           Signed in as <span className="font-medium text-navy">{session.email}</span>.
         </span>
-        <button type="submit" className="text-teal-ink underline underline-offset-[3px]">
+        <button
+          type="submit"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center px-1 text-teal-ink underline underline-offset-[3px]"
+        >
           Sign out
         </button>
       </form>

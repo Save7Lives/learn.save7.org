@@ -380,12 +380,9 @@ admin route that re-seeded the course from the running app. Content is now appli
 by `supabase db push`, so a correction is `npm run content:emit` followed by a
 push — slower, and reviewable, which is the trade that was wanted.
 
-**The end-to-end journey suite is gone and needs rewriting.** It drove a learner
-through the previous build's journey, baseline → modules → level assessment →
-certificate → analytics, and asserted 53 behaviours against the local SQLite file.
-Nothing equivalent runs against Supabase yet, and that is the largest gap in this
-repo's verification. It needs a service-role key and a disposable learner; until
-then the marking rules are covered only by the probes inside the migrations.
+**The end-to-end suite** (`npm run e2e`, see *End-to-end tests* below) drives the learner
+journey and the Admin journeys against a private Postgres holding the real Learn schema.
+It is not run in CI, which has no Postgres, so run it before you merge.
 
 ---
 
@@ -498,12 +495,59 @@ belongs in `tests/admin/`.
 **Signed-in accessibility audit.** `e2e/support/test-session.mjs` is the test-session helper
 `scripts/a11y/session.mjs` looks for. It arranges a Student (Baseline sat, one Stage
 passed) or an Admin in the end-to-end database and walks the app's own sign-in, so
-`npm run audit:a11y` can render the pages behind sign-in. It needs the end-to-end stack
-up: start the backend with `node node_modules/tsx/dist/cli.mjs e2e/support/serve.ts`, the app
-with `env $(node node_modules/tsx/dist/cli.mjs e2e/support/app-env.ts) npm run start -- -p 3107`
-(after `npm run build` under the same `env`), then
-`A11Y_BASE_URL=http://localhost:3107 npm run audit:a11y`. Stop both when done. Without
-the stack running, the audit's signed-in pages fail with a connection error.
+`npm run audit:a11y` can render the pages behind sign-in at 375 and 1024 px. It needs the
+end-to-end stack, so it is run locally and **not in CI**: the CI accessibility job has no
+Postgres or PostgREST, so it sets `A11Y_PUBLIC_ONLY=1`, which audits the public pages and
+skips each signed-in page by name with a line saying why. To audit the signed-in pages,
+run this from the repository root (Needs, below, applies):
+
+```bash
+# 1. the backend: Postgres, PostgREST and the gateway (leave it running)
+node node_modules/tsx/dist/cli.mjs e2e/support/serve.ts &
+
+# 2. the app, built and started against that backend on port 3107
+env $(node node_modules/tsx/dist/cli.mjs e2e/support/app-env.ts) npm run build
+env $(node node_modules/tsx/dist/cli.mjs e2e/support/app-env.ts) npm run start -- -p 3107 &
+
+# 3. the audit: the self-test, then every public and signed-in page
+A11Y_BASE_URL=http://localhost:3107 npm run audit:a11y
+
+# 4. stop both
+lsof -ti :3107 | xargs kill
+pkill -f e2e/support/serve.ts
+```
+
+Without the stack running, the signed-in pages fail with a connection error rather than
+being skipped, on purpose: a green audit must mean they were checked. The first start
+replays the migrations and takes about 40 seconds. Rebuild the app (step 2) after a code
+change before auditing: an old `next start` on port 3107 serves a stale build.
+
+**Proving the journey can fail (#28).** A green journey means something only if it goes
+red when the thing it checks breaks. The two deliberate breaks the suite was checked with
+are repeatable, and each should fail `learner-journey.spec.ts` at the step named:
+
+1. *The Certificate page.* In `src/app/certificate/[publicId]/page.tsx`, change the badge
+   text `✓ Valid certificate` to anything else (for example `✓ Genuine certificate`), then
+   run `npx playwright test learner-journey`. It fails at
+   `getByText("Valid certificate")` in the "Certificate download" step. Revert the edit
+   with `git checkout src/app/certificate`.
+2. *The pass mark.* Replay the schema with one extra migration that sets
+   `learn_levels.pass_mark_pct = 1`, without touching the real Save7 OS checkout:
+
+   ```bash
+   OS=~/Desktop/"Save7 Course"/save7-os      # or wherever SAVE7_OS_DIR points
+   D=$(mktemp -d)
+   mkdir -p $D/supabase/migrations
+   for f in $OS/supabase/migrations/*.sql; do ln -s "$f" $D/supabase/migrations/; done
+   ln -s $OS/supabase/functions $D/supabase/functions
+   echo 'update learn_levels set pass_mark_pct = 1;' > $D/supabase/migrations/9999_break_pass_mark.sql
+   SAVE7_OS_DIR=$D npx playwright test learner-journey
+   rm -rf $D
+   ```
+
+   It fails at `getByText(/You need 4 to pass/)` in the "Stage Quiz: fail, then pass"
+   step, because the Stage Quiz now asks for 1. The next normal run replays the real
+   migrations again on its own (the template database is keyed by their hash).
 
 Ports can be moved with `E2E_PG_PORT`, `E2E_POSTGREST_PORT`, `E2E_GATEWAY_PORT` and
 `E2E_APP_PORT`. `E2E_REUSE_SERVERS=1` attaches to servers already running on those ports,
@@ -531,7 +575,7 @@ this is its summary, as of 7 October 2026.
   on 7 October 2026).
 
 **Not verified:** anything behind sign-in on the live site, Google sign-in on
-`learn.save7.org`, marking against real data, and marking against real data. The learner
+`learn.save7.org`, and marking against real data. The learner
 journey is covered by `npm run e2e` against a local database, not production.
 
 An earlier version of this section recorded a browser walkthrough of the previous

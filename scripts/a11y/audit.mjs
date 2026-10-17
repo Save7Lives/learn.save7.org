@@ -8,7 +8,12 @@
 //   npm run audit:a11y:selftest     self-test only (needs no server)
 //
 // Needs a running app: A11Y_BASE_URL (default http://localhost:3000). Signed-in pages
-// run only when a test-session helper exists (scripts/a11y/session.mjs), else skip.
+// need the end-to-end stack behind the app and a test-session helper
+// (scripts/a11y/session.mjs; README, "Signed-in accessibility audit").
+//
+//   A11Y_PUBLIC_ONLY=1 npm run audit:a11y   public pages only; signed-in pages are
+//                                           skipped by name, with the reason (what CI
+//                                           runs, since CI has no database)
 import { chromium } from "playwright";
 import { auditInPage } from "./in-page.mjs";
 import { PAGES, VIEWPORTS } from "./pages.mjs";
@@ -16,6 +21,7 @@ import { loadSessionHelper } from "./session.mjs";
 
 const BASE = (process.env.A11Y_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const selftestOnly = process.argv.includes("--selftest");
+const publicOnly = /^(1|true|yes)$/i.test(process.env.A11Y_PUBLIC_ONLY ?? "");
 
 const problems = (r) => [
   ...r.fails.map((f) => `contrast ${f.ratio}:1 < ${f.need} (${f.fg} on ${f.bg}, ${f.n}x) "${f.sample}"`),
@@ -50,12 +56,15 @@ async function main() {
     if (!(await selfTest(browser))) { console.error("Self-test failed: the audit cannot be trusted."); process.exit(2); }
     if (selftestOnly) return;
 
-    const helper = await loadSessionHelper();
+    const helper = publicOnly ? null : await loadSessionHelper();
     let failed = 0, ran = 0, skipped = 0;
     for (const pg of PAGES) {
-      if (pg.auth !== "public" && !helper) {
+      if (pg.auth !== "public" && (publicOnly || !helper)) {
         skipped++;
-        console.log(`skip ${pg.name} (${pg.path}): TODO needs a test session (${pg.auth}); no helper yet, see scripts/a11y/session.mjs`);
+        const why = publicOnly
+          ? "A11Y_PUBLIC_ONLY is set (no database here); audit it locally, see README, Signed-in accessibility audit"
+          : "no test-session helper found, see scripts/a11y/session.mjs";
+        console.log(`skip ${pg.name} (${pg.path}): signed-in as ${pg.auth}; ${why}`);
         continue;
       }
       for (const vp of VIEWPORTS) {
@@ -85,7 +94,7 @@ async function main() {
         await context.close();
       }
     }
-    console.log(`\n${ran} renders, ${failed} failing, ${skipped} pages skipped (signed-in, no test session).`);
+    console.log(`\n${ran} renders, ${failed} failing, ${skipped} signed-in pages skipped${publicOnly ? " (A11Y_PUBLIC_ONLY)" : ""}.`);
     if (failed) process.exit(1);
   } finally {
     await browser.close();

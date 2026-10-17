@@ -222,6 +222,21 @@ The single source of truth is `save7-os/supabase/migrations/`, applied with
 npm run typecheck && npm run lint && npm run build
 ```
 
+These gates also run in CI; run them before you push a change that could trip them:
+
+- `npm run check:vocabulary` (`scripts/check-stage-vocabulary.ts`) fails on the word
+  "module(s)" in learner-facing strings under `src/` (the glossary says Stage). The
+  accessibility audit below also checks the rendered text of the pages marked
+  `vocabulary: true`.
+- `node scripts/audit-gate.mjs` runs `npm audit --json` and fails on any high or critical
+  advisory not accepted, with a reason and an expiry date, in `scripts/audit-allowlist.json`
+  (docs/dependency-advisories.md explains the threshold and the allowlist).
+- `npm run audit:a11y` renders the pages at 375 and 1024 px and fails on a colour pair
+  under WCAG AA, text under 12px or horizontal scroll, after a self-test that plants each
+  defect. CI runs the public pages only (`A11Y_PUBLIC_ONLY=1`); the signed-in pages are
+  audited locally against the end-to-end stack (README, "Signed-in accessibility audit").
+  `npm run audit:a11y:selftest` runs just the self-test and needs no server.
+
 **`npm run e2e` runs the browser suite** against a private local Postgres holding the
 real Learn schema (README.md, "End-to-end tests"): the learner journey (register, sign
 in, Baseline Sitting 1, a Stage Quiz fail then pass, Level completion, Certificate
@@ -235,7 +250,8 @@ only the real host shows (Google sign-in, Vercel) is still a by-hand pass on a p
 
 ## Design
 
-Brand kit is authoritative: **Anton** for display only (all-caps, never body copy),
-**Inter** for everything else. Pink `#ED0E69` sparingly; **teal `#16B9B4` is not
+Brand kit is authoritative: **Montserrat** for display and headings, **Lexend** for
+everything else (wayfinder spec #11). Bold is rare: headings, eyebrows, scores and the
+current item only; UI text and prose emphasis are Lexend 500. Little navy as a surface. Pink `#ED0E69` sparingly; **teal `#16B9B4` is not
 legible on white** — dark surfaces only. Tap targets ≥44px, keyboard-traversable
 interactives, no horizontal scroll at 375px.

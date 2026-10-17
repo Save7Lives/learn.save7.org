@@ -5,9 +5,8 @@ import { StatCard, PortalCard } from "@/components/portal/Portal";
 import { FilterBar, FilterGroup } from "@/components/portal/FilterChips";
 import { FigureRow, GroupHeading, Meter, Notice, PageHeader, Panel, SmallViewNotice } from "@/components/portal/Panel";
 import { CellSub, DataTable } from "@/components/portal/DataTable";
-import { SIGNED_UP_OPTIONS, SITTING_SLOTS, SMALL_VIEW, type Indicators, type SignedUpWindow } from "@/lib/admin/model";
+import { SIGNED_UP_OPTIONS, SITTING_SLOTS, SMALL_VIEW, type Indicators, type MissedQuestion, type SignedUpWindow } from "@/lib/admin/model";
 import { adminHref, formatPct, formatPoints } from "@/lib/admin/format";
-import type { MissedQuestion } from "@/lib/admin/data";
 
 /**
  * Overview (#72, #84): #18's five Growth Indicators, two supporting readouts (Stage

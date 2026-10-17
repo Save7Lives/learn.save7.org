@@ -222,6 +222,63 @@ export function searchStudents(students: StudentRecord[], query: string): Studen
 export const byNewestSignup = (a: StudentRecord, b: StudentRecord) =>
   b.signedUpAt.getTime() - a.signedUpAt.getTime();
 
+// --- Most missed questions ---------------------------------------------------
+
+export type MissedQuestion = {
+  id: string;
+  prompt: string;
+  stage: string | null;
+  answered: number;
+  missed: number;
+  missedPct: number;
+};
+
+/** A question needs this many answers before it can top the list: one wrong answer is not a pattern. */
+export const MISSED_MINIMUM = 3;
+
+/** Per question: how many times it was answered and how many of those were wrong. */
+export function tallyAnswers(
+  answers: Array<{ question_id: string; was_correct: boolean }>,
+): Map<string, { answered: number; missed: number }> {
+  const tally = new Map<string, { answered: number; missed: number }>();
+  for (const a of answers) {
+    const t = tally.get(a.question_id) ?? { answered: 0, missed: 0 };
+    t.answered += 1;
+    if (!a.was_correct) t.missed += 1;
+    tally.set(a.question_id, t);
+  }
+  return tally;
+}
+
+/**
+ * The most missed questions, worst first: at least `MISSED_MINIMUM` answers, at least
+ * one miss, ordered by share missed and then by how often it was answered.
+ */
+export function rankMissedQuestions(
+  questions: Array<{ id: string; prompt: string; module_slug: string | null }>,
+  stages: Array<{ slug: string; title: string }>,
+  answers: Array<{ question_id: string; was_correct: boolean }>,
+  limit: number,
+): MissedQuestion[] {
+  const tally = tallyAnswers(answers);
+  const titles = new Map(stages.map((m) => [m.slug, m.title]));
+  return questions
+    .map((q) => {
+      const { answered, missed } = tally.get(q.id) ?? { answered: 0, missed: 0 };
+      return {
+        id: q.id,
+        prompt: q.prompt,
+        stage: q.module_slug ? (titles.get(q.module_slug) ?? null) : null,
+        answered,
+        missed,
+        missedPct: answered > 0 ? Math.round((100 * missed) / answered) : 0,
+      };
+    })
+    .filter((q) => q.answered >= MISSED_MINIMUM && q.missed > 0)
+    .sort((a, b) => b.missedPct - a.missedPct || b.answered - a.answered)
+    .slice(0, limit);
+}
+
 // --- Baseline ---------------------------------------------------------------
 
 export const SITTING_SLOTS = ["At signup", "After Beginner", "After Intermediate", "After Advanced"];

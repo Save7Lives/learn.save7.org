@@ -245,7 +245,8 @@ export function Stepper({
           >
             <span
               className={cx(
-                "relative grid size-8 place-items-center rounded-full font-display text-sm font-bold leading-none",
+                "relative grid size-8 place-items-center rounded-full font-display text-sm leading-none",
+                state === "now" ? "font-bold" : "font-medium",
                 state === "done" ? "bg-teal text-navy" : "bg-white",
                 state === "now" && "border-[3px] border-navy text-navy",
                 state === "todo" && "border-2 border-line-strong text-grey",
