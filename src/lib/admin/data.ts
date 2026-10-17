@@ -3,12 +3,14 @@ import "server-only";
 import { SITTING_COLUMNS, mapSitting, type Sitting } from "@/lib/baseline";
 import { supabaseServer } from "@/lib/supabase/server";
 import { loadActorNames } from "@/lib/admin/actors";
-import type {
-  Catalogue,
-  EligibilityRule,
-  EligibilitySignal,
-  StageRecord,
-  StudentRecord,
+import {
+  rankMissedQuestions,
+  type Catalogue,
+  type EligibilityRule,
+  type EligibilitySignal,
+  type MissedQuestion,
+  type StageRecord,
+  type StudentRecord,
 } from "./model";
 
 /**
@@ -241,17 +243,11 @@ export async function loadRules(): Promise<EligibilityRule[]> {
   }));
 }
 
-export type MissedQuestion = {
-  id: string;
-  prompt: string;
-  stage: string | null;
-  answered: number;
-  missed: number;
-  missedPct: number;
-};
+/** One row of `learn_answers` as read here: which question, and whether it was answered correctly. */
+type AnswerRow = { question_id: string; was_correct: boolean };
 
-/** A question needs this many answers before it can top the list: one wrong answer is not a pattern. */
-export const MISSED_MINIMUM = 3;
+/** Rows per page of `learn_answers`: the API caps a response. */
+const ANSWER_BATCH = 1000;
 
 /**
  * The most commonly missed Stage Quiz questions.
@@ -273,7 +269,7 @@ export async function loadMissedQuestions(limit = 5): Promise<MissedQuestion[]> 
     supabase.from("learn_questions_pub").select("id, prompt, module_slug").eq("scope", "POST"),
     supabase.from("learn_modules").select("slug, title"),
   ]);
-  const tally = new Map<string, { answered: number; missed: number }>();
+  const answers: AnswerRow[] = [];
   for (let from = 0; ; from += ANSWER_BATCH) {
     const { data, error } = await supabase
       .from("learn_answers")
@@ -281,39 +277,16 @@ export async function loadMissedQuestions(limit = 5): Promise<MissedQuestion[]> 
       .order("id")
       .range(from, from + ANSWER_BATCH - 1);
     if (error) throw new Error(`Could not read the answers: ${error.message}`);
-    const rows = (data ?? []) as unknown as Array<{ question_id: string; was_correct: boolean }>;
-    for (const a of rows) {
-      const t = tally.get(a.question_id) ?? { answered: 0, missed: 0 };
-      t.answered += 1;
-      if (!a.was_correct) t.missed += 1;
-      tally.set(a.question_id, t);
-    }
+    const rows = (data ?? []) as unknown as AnswerRow[];
+    answers.push(...rows);
     if (rows.length < ANSWER_BATCH) break;
   }
-  const titles = new Map(
-    ((modules.data ?? []) as unknown as Array<{ slug: string; title: string }>).map((m) => [m.slug, m.title]),
+  return rankMissedQuestions(
+    (questions.data ?? []) as unknown as Array<{ id: string; prompt: string; module_slug: string | null }>,
+    (modules.data ?? []) as unknown as Array<{ slug: string; title: string }>,
+    answers,
+    limit,
   );
-  return ((questions.data ?? []) as unknown as Array<{
-    id: string;
-    prompt: string;
-    module_slug: string | null;
-  }>)
-    .map((q) => {
-      const { answered, missed } = tally.get(q.id) ?? { answered: 0, missed: 0 };
-      return {
-        id: q.id,
-        prompt: q.prompt,
-        stage: q.module_slug ? (titles.get(q.module_slug) ?? null) : null,
-        answered,
-        missed,
-        missedPct: answered > 0 ? Math.round((100 * missed) / answered) : 0,
-      };
-    })
-    .filter((q) => q.answered >= MISSED_MINIMUM && q.missed > 0)
-    .sort((a, b) => b.missedPct - a.missedPct || b.answered - a.answered)
-    .slice(0, limit);
 }
 
-const ANSWER_BATCH = 1000;
-
-export type { Sitting };
+export type { MissedQuestion, Sitting };

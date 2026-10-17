@@ -26,7 +26,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
         <main
           id="main"
-          className="mt-[18px] w-full max-w-[480px] rounded-[20px] border border-line bg-white px-5 py-6 shadow-[0_1px_2px_rgba(12,23,59,0.05),0_10px_30px_rgba(12,23,59,0.06)] min-[560px]:mt-[22px] min-[560px]:p-9"
+          className="mt-[18px] w-full max-w-[480px] rounded-[20px] border border-line bg-white px-5 py-6 shadow-[0_1px_2px_color-mix(in_srgb,var(--color-navy)_5%,transparent),0_10px_30px_color-mix(in_srgb,var(--color-navy)_6%,transparent)] min-[560px]:mt-[22px] min-[560px]:p-9"
         >
           {children}
         </main>
