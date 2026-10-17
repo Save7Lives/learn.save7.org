@@ -81,7 +81,7 @@ export function ReviewItemRow({
 
           {item.sourceHint ? (
             <p className="mt-1.5 text-xs text-grey">
-              <span className="font-semibold">Source needed:</span> {item.sourceHint}
+              <span className="font-medium">Source needed:</span> {item.sourceHint}
             </p>
           ) : null}
 
@@ -106,7 +106,7 @@ export function ReviewItemRow({
             type="button"
             aria-expanded={expanded}
             onClick={() => setExpanded((v) => !v)}
-            className="text-sm font-semibold text-pink underline"
+            className="text-sm font-medium text-pink underline"
           >
             {expanded ? "Close" : "Review"}
           </button>

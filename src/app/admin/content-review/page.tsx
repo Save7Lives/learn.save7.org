@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { getReviewSummary } from "@/lib/analytics";
+import { getReviewSummary } from "@/lib/admin/review";
 import { supabaseServer } from "@/lib/supabase/server";
-import { PageTitle, Section, StatCard } from "@/components/admin/AdminUi";
+import { StatCard } from "@/components/portal/Portal";
+import { PageHeader, Panel } from "@/components/portal/Panel";
+import { FilterGroup } from "@/components/portal/FilterChips";
 import { Badge } from "@/components/ui/primitives";
 import { ReviewItemRow } from "@/components/admin/ReviewItemRow";
 import { setReviewStatusAction } from "./actions";
@@ -100,53 +102,52 @@ export default async function ContentReviewPage(
 
   return (
     <>
-      <PageTitle
+      <PageHeader
         title="Content review"
-        description="Every Stage Quiz, Baseline and clinical gate question, generated from the content itself. A question is approved on generation only when it names the document it was checked against. Lesson prose is not listed here, and learners see no badge on an unapproved question."
+        lede="Every Stage Quiz, Baseline and clinical gate question, generated from the content itself. A question is approved on generation only when it names the document it was checked against. Lesson prose is not listed here, and learners see no badge on an unapproved question."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-4">
         <StatCard
           label="Needs verification"
-          value={summary.needsVerification}
+          value={String(summary.needsVerification)}
           sub={`of ${summary.total} registered claims`}
-          tone={summary.needsVerification > 0 ? "warn" : "neutral"}
+          icon="alert"
+          tint="pink"
         />
         <StatCard
           label="Blocking launch"
-          value={summary.blockingLaunch}
+          value={String(summary.blockingLaunch)}
           sub="Severity 1: must clear first"
-          tone={summary.blockingLaunch > 0 ? "warn" : "teal"}
+          icon="flag"
+          tint="teal"
         />
-        <StatCard label="Approved" value={summary.approved} tone="teal" />
+        <StatCard label="Approved" value={String(summary.approved)} sub="Named source or a person" icon="check-circle" tint="pink" />
         <StatCard
           label="By category"
-          value={summary.byCategory.reduce((s, c) => s + c.count, 0)}
+          value={String(summary.byCategory.reduce((s, c) => s + c.count, 0))}
           sub={summary.byCategory.map((c) => `${c.category}: ${c.count}`).join(" · ")}
+          icon="list"
+          tint="teal"
         />
       </div>
 
-      <Section
+      <Panel
         title="Register"
-        description="Your decision is recorded with your name and the date. Re-running the content generator never overrides an approval or a rejection made here."
-        className="mt-6"
+        lede="Your decision is recorded with your name and the date. Re-running the content generator never overrides an approval or a rejection made here."
+        className="mt-4"
       >
-        <nav aria-label="Filter by status" className="mb-5 flex flex-wrap gap-2">
-          {filters.map((filter) => (
-            <a
-              key={filter.status}
-              href={`/admin/content-review?status=${filter.status}`}
-              className={
-                filter.status === statusFilter
-                  ? "rounded-pill bg-navy px-3.5 py-1.5 text-sm font-semibold text-white"
-                  : "rounded-pill border border-line-strong bg-white px-3.5 py-1.5 text-sm font-semibold text-grey hover:border-navy"
-              }
-            >
-              {filter.label}
-              <span className="ml-1.5 opacity-60">{filter.count}</span>
-            </a>
-          ))}
-        </nav>
+        <div className="mb-5">
+          <FilterGroup
+            label="Status"
+            current={statusFilter}
+            options={filters.map((f) => ({
+              value: f.status,
+              label: `${f.label} ${f.count}`,
+              href: `/admin/content-review?status=${f.status}`,
+            }))}
+          />
+        </div>
 
         {items.length === 0 ? (
           <p className="text-sm text-grey">
@@ -180,15 +181,15 @@ export default async function ContentReviewPage(
         )}
 
         {items.length === 400 ? (
-          <p className="mt-4 text-xs text-grey">
+          <p className="mt-4 text-[0.8125rem] text-grey">
             Showing the first 400 items. Narrow the filter to see more.
           </p>
         ) : null}
-      </Section>
+      </Panel>
 
-      <Section
+      <Panel
         title="What must clear before launch"
-        description="Most of this is lesson prose, which the register above does not list, so it is read and signed off outside this page."
+        lede="Most of this is lesson prose, which the register above does not list, so it is read and signed off outside this page."
         className="mt-4"
       >
         <ul className="space-y-2 text-sm text-grey">
@@ -213,7 +214,7 @@ export default async function ContentReviewPage(
             in this course.
           </li>
         </ul>
-      </Section>
+      </Panel>
     </>
   );
 }

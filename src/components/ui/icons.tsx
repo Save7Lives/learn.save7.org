@@ -111,6 +111,41 @@ const PATHS = {
     </>
   ),
   chev: <path d="m6 9 6 6 6-6" />,
+  grid: (
+    <>
+      <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
+      <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
+      <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+      <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
+    </>
+  ),
+  users: (
+    <>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+      <circle cx="17.5" cy="9" r="2.5" />
+      <path d="M17.5 14a5 5 0 0 1 4 5" />
+    </>
+  ),
+  user: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </>
+  ),
+  shield: (
+    <>
+      <path d="M12 3 4.5 6v6c0 4.4 3.1 7.7 7.5 9 4.4-1.3 7.5-4.6 7.5-9V6z" />
+      <path d="m8.7 12 2.3 2.3 4.3-4.6" />
+    </>
+  ),
+  back: <path d="M19 12H5M11 6l-6 6 6 6" />,
+  "log-out": (
+    <>
+      <path d="M9 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20H9" />
+      <path d="M16 8l4 4-4 4M20 12H9" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof PATHS;

@@ -156,7 +156,7 @@ The journey row is the real gap. The rules it used to check are now enforced in 
 or in `src/lib/`, but nothing exercises them end to end. The Baseline's cap of four
 Sittings is a CHECK and a UNIQUE in 0110, and unanswered counting as incorrect is in
 the marking functions (first 0097). That Improvement comes only from Baseline
-Sittings is app code in `src/lib/analytics.ts`, not a database rule.
+Sittings is app code in `src/lib/admin/model.ts`, not a database rule.
 
 ---
 
