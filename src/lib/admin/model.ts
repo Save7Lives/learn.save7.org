@@ -1,4 +1,12 @@
-import { levelImprovement, percent, type Sitting } from "@/lib/baseline";
+import {
+  SITTING_SLOTS,
+  levelImprovement,
+  percent,
+  sittingLabel,
+  sittingName,
+  type Sitting,
+  type SittingContext,
+} from "@/lib/baseline";
 import { flagLabel, levelFlag, readsEligible } from "./flags";
 
 /**
@@ -46,6 +54,8 @@ export type StudentRecord = {
   /** Keyed by Stage slug. A Stage with no row has never been opened. */
   stages: Record<string, StageRecord>;
   levelCompletedAt: Record<string, Date | null>;
+  /** The Sitting owed now, as the Progress Record decides it (`baseline.sittingDue`). */
+  sittingDue: number | null;
   certificates: CertificateRecord[];
   signal: EligibilitySignal | null;
 };
@@ -281,6 +291,17 @@ export function rankMissedQuestions(
 
 // --- Baseline ---------------------------------------------------------------
 
-export const SITTING_SLOTS = ["At signup", "After Beginner", "After Intermediate", "After Advanced"];
+/** Slot names for the Overview, which adds Sittings up across Students. */
+export { SITTING_SLOTS, levelImprovement, percent, sittingLabel, sittingName };
 
-export { levelImprovement, percent };
+/** One Student's Sittings and Levels, in the shape `sittingLabel()` reads on the dashboard. */
+export function sittingContext(student: StudentRecord, catalogue: Catalogue): SittingContext {
+  return {
+    sittings: student.sittings,
+    levels: catalogue,
+    levelsCompleted: catalogue.flatMap((l) => {
+      const at = student.levelCompletedAt[l.slug];
+      return at ? [{ slug: l.slug, completedAt: at }] : [];
+    }),
+  };
+}

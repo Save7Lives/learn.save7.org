@@ -232,6 +232,7 @@ export function student(id: string, over: Partial<StudentRecord> = {}): StudentR
     sittings: [],
     stages: {},
     levelCompletedAt: {},
+    sittingDue: null,
     certificates: [],
     signal: null,
     ...over,

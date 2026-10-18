@@ -3,7 +3,7 @@ import {
   MAX_SITTINGS,
   levelImprovement,
   percent,
-  sittingLabel,
+  sittingSlots,
   type BaselineState,
 } from "@/lib/baseline";
 import type { StageState, LevelWithProgress } from "@/lib/course";
@@ -41,8 +41,6 @@ type Certificate = {
   issuedAt: Date;
   revokedAt: Date | null;
 };
-
-const SLOT_NAMES = ["At signup", "After Beginner", "After Intermediate", "After Advanced"];
 
 const formatDate = (d: Date) =>
   d.toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Johannesburg" });
@@ -283,33 +281,22 @@ function NextUp({ level, anyStarted }: { level: LevelWithProgress; anyStarted: b
 
 // --- Baseline ------------------------------------------------------------------
 
-function slotStatus(baseline: BaselineState, i: number): string {
-  const sitting = baseline.sittings.find((s) => s.sittingNo === i + 1);
-  if (sitting) return `${sitting.totalScore} of ${sitting.totalMax}`;
-  if (baseline.due === i + 1) return i === 0 ? "Do this first" : "Offered now";
-  return "Not yet";
-}
-
 function SlotRow({ baseline }: { baseline: BaselineState }) {
   return (
     <ol aria-label="The four Baseline Sittings" className="m-0 mt-3.5 grid list-none grid-cols-2 gap-2.5 p-0 min-[721px]:grid-cols-4">
-      {SLOT_NAMES.map((name, i) => {
-        const takenSlot = baseline.sittings.some((s) => s.sittingNo === i + 1);
-        const offered = baseline.due === i + 1;
-        return (
-          <li
-            key={name}
-            className={
-              takenSlot
-                ? "relative rounded-xl border border-line bg-white py-2.5 pl-4 pr-3 text-sm text-grey before:absolute before:bottom-2.5 before:left-0 before:top-2.5 before:w-1 before:rounded-r-[3px] before:bg-amber before:content-['']"
-                : "relative rounded-xl border-[1.5px] border-dashed border-line-strong bg-white py-2.5 pl-4 pr-3 text-sm text-grey"
-            }
-          >
-            <span className="block font-medium text-navy">{name}</span>
-            <span className={offered ? "font-medium text-pink" : undefined}>{slotStatus(baseline, i)}</span>
-          </li>
-        );
-      })}
+      {sittingSlots(baseline).map((slot) => (
+        <li
+          key={slot.sittingNo}
+          className={
+            slot.taken
+              ? "relative rounded-xl border border-line bg-white py-2.5 pl-4 pr-3 text-sm text-grey before:absolute before:bottom-2.5 before:left-0 before:top-2.5 before:w-1 before:rounded-r-[3px] before:bg-amber before:content-['']"
+              : "relative rounded-xl border-[1.5px] border-dashed border-line-strong bg-white py-2.5 pl-4 pr-3 text-sm text-grey"
+          }
+        >
+          <span className="block font-medium text-navy">{slot.name}</span>
+          <span className={slot.offered ? "font-medium text-pink" : undefined}>{slot.status}</span>
+        </li>
+      ))}
     </ol>
   );
 }
@@ -394,20 +381,13 @@ function Tile({ label, value, raw, total }: { label: string; value: string; raw:
 
 /** What the chart draws, from the same Sittings the table twin lists. */
 export function trendData(baseline: BaselineState): TrendData {
-  const slots = SLOT_NAMES.map((fixed, i) => {
-    const sitting = baseline.sittings.find((s) => s.sittingNo === i + 1);
-    return {
-      name: sitting ? sittingLabel(baseline, sitting) : fixed,
-      status: slotStatus(baseline, i),
-      taken: !!sitting,
-      offered: baseline.due === i + 1,
-    };
-  });
+  const all = sittingSlots(baseline);
+  const slots = all.map(({ name, status, taken, offered }) => ({ name, status, taken, offered }));
   const series = baseline.levels.map((level) => ({
     slug: level.slug,
     title: level.title,
-    values: SLOT_NAMES.map((_, i) => {
-      const s = baseline.sittings.find((x) => x.sittingNo === i + 1)?.levelScores[level.slug];
+    values: all.map(({ sittingNo }) => {
+      const s = baseline.sittings.find((x) => x.sittingNo === sittingNo)?.levelScores[level.slug];
       return s ? percent(s.score, s.max) : null;
     }),
   }));
