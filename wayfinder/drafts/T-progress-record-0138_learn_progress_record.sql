@@ -390,12 +390,12 @@ begin
 
   /* Everything below rolls back. */
   begin
-    insert into learners (email, first_name, name, active)
-         values (s_a::text   || '@save7.org', 'Probe', 'Probe Student A', true) returning id into l_a;
-    insert into learners (email, first_name, name, active)
-         values (s_b::text   || '@save7.org', 'Probe', 'Probe Student B', true) returning id into l_b;
-    insert into learners (email, first_name, name, active)
-         values (s_adm::text || '@save7.org', 'Probe', 'Probe Admin',     true) returning id into l_adm;
+    insert into learners (email, first_name, name, active, date_of_birth, popia_consent_at)
+         values (s_a::text   || '@save7.org', 'Probe', 'Probe Student A', true, date '1990-01-01', now()) returning id into l_a;
+    insert into learners (email, first_name, name, active, date_of_birth, popia_consent_at)
+         values (s_b::text   || '@save7.org', 'Probe', 'Probe Student B', true, date '1990-01-01', now()) returning id into l_b;
+    insert into learners (email, first_name, name, active, date_of_birth, popia_consent_at)
+         values (s_adm::text || '@save7.org', 'Probe', 'Probe Admin',     true, date '1990-01-01', now()) returning id into l_adm;
     insert into auth.users (id, email) values (s_a,   s_a::text   || '@save7.org') on conflict (id) do nothing;
     insert into auth.users (id, email) values (s_b,   s_b::text   || '@save7.org') on conflict (id) do nothing;
     insert into auth.users (id, email) values (s_adm, s_adm::text || '@save7.org') on conflict (id) do nothing;
