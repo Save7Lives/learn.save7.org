@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/authz";
-import { getBaselineState } from "@/lib/baseline";
-import { getModuleForUser } from "@/lib/course";
+import { getModule, getPathwayForUser } from "@/lib/course";
 import { getStageQuizStates } from "@/lib/quiz";
 import { ModuleRunner, type RunnerLesson } from "@/components/lesson/ModuleRunner";
 import { LessonBody } from "@/components/lesson/LessonBody";
@@ -24,7 +23,7 @@ export async function generateMetadata(
   props: PageProps<"/levels/[level]/modules/[module]">,
 ): Promise<Metadata> {
   const { level, module: moduleSlug } = await props.params;
-  const data = await getModuleForUser(null, level, moduleSlug);
+  const data = await getModule(level, moduleSlug);
   if (!data) return { title: "Stage not found" };
   return { title: data.module.title, description: data.module.coreQuestion };
 }
@@ -38,13 +37,23 @@ export default async function ModulePage(
   // The first Baseline Sitting is a gate: a "before" taken after reading a Stage
   // is not a before, and without it there is nothing to measure improvement
   // against (#54). Its score gates nothing, and no later Sitting is required.
-  const baseline = await getBaselineState(user.id);
-  if (!baseline.completed) redirect("/assessment/pre");
-
-  const data = await getModuleForUser(user.id, levelSlug, moduleSlug);
+  const [{ levels, position }, data] = await Promise.all([
+    getPathwayForUser(user.id),
+    getModule(levelSlug, moduleSlug),
+  ]);
+  if (!position.contentOpen) redirect("/assessment/pre");
   if (!data) notFound();
 
-  const { level, module: mod, siblings, progress } = data;
+  const { level, module: mod, siblings } = data;
+
+  // Where the Student stands on this Stage, from their Course Position. Read is the
+  // Read Mark and only decides where they resume; passed is the Stage Quiz, and only
+  // that is "finished".
+  const stagePosition = levels
+    .find((l) => l.slug === levelSlug)
+    ?.modules.find((m) => m.slug === moduleSlug)?.position;
+  const isRead = stagePosition?.read ?? false;
+  const isPassed = stagePosition?.state === "PASSED";
 
   // The CHECK step is this Stage's quiz, and the Stage stepper draws every Stage's
   // dot from its quiz. Only where the learner stands is read here, for all the
@@ -83,7 +92,7 @@ export default async function ModulePage(
     levelSlug,
     isLastInLevel: nextSibling === null,
     certificateTitle: level.certificateTitle,
-    alreadyComplete: progress?.status === "COMPLETE",
+    alreadyRead: isRead,
     quizPassed: quizState?.passedAt != null,
   };
 
@@ -102,9 +111,8 @@ export default async function ModulePage(
   }));
 
   // Resume where they left off.
-  const lastIndex = progress?.lastLessonId
-    ? mod.lessons.findIndex((l) => l.id === progress.lastLessonId)
-    : 0;
+  const lastLesson = stagePosition?.lastLessonSlug ?? null;
+  const lastIndex = lastLesson ? mod.lessons.findIndex((l) => l.id === lastLesson) : 0;
 
   return (
     <ModuleRunner
@@ -117,7 +125,8 @@ export default async function ModulePage(
       coreQuestion={mod.coreQuestion}
       levelTitle={level.title}
       estMinutes={mod.estMinutes}
-      isComplete={progress?.status === "COMPLETE"}
+      isRead={isRead}
+      isPassed={isPassed}
       initialLessonIndex={lastIndex >= 0 ? lastIndex : 0}
       onViewLesson={viewLessonAction}
       onComplete={completeModuleAction}

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/authz";
 import { getBaselineState } from "@/lib/baseline";
-import { getPathwayForUser, getLearnerCertificates } from "@/lib/course";
+import { getPathwayForUser } from "@/lib/course";
 import { ProgressRegister } from "@/components/course/ProgressRegister";
 
 // Rendered per request, never prerendered: this route reads runtime configuration
@@ -14,10 +14,9 @@ export const metadata: Metadata = { title: "My progress" };
 export default async function DashboardPage() {
   const user = await requireUser("/dashboard");
 
-  const [{ levels }, baseline, certificates] = await Promise.all([
+  const [{ levels, position }, baseline] = await Promise.all([
     getPathwayForUser(user.id),
     getBaselineState(user.id),
-    getLearnerCertificates(user.id),
   ]);
 
   return (
@@ -25,7 +24,7 @@ export default async function DashboardPage() {
       userName={user.name}
       baseline={baseline}
       levels={levels}
-      certificates={certificates}
+      position={position}
     />
   );
 }

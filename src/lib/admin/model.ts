@@ -7,6 +7,7 @@ import {
   type Sitting,
   type SittingContext,
 } from "@/lib/baseline";
+import { currentLevelSlug, isContentOpen, type Catalogue } from "@/lib/course-position";
 import { flagLabel, levelFlag, readsEligible } from "./flags";
 
 /**
@@ -20,9 +21,7 @@ import { flagLabel, levelFlag, readsEligible } from "./flags";
  * active" is derived (#81).
  */
 
-export type CatalogueStage = { slug: string; title: string; position: number };
-export type CatalogueLevel = { slug: string; title: string; stages: CatalogueStage[] };
-export type Catalogue = CatalogueLevel[];
+export type { Catalogue, CatalogueLevel, CatalogueStage } from "@/lib/course-position";
 
 export type StageRecord = {
   /** The Stage's first Quiz pass. Set once, never cleared by a later attempt. */
@@ -108,13 +107,20 @@ export type CurrentLevel =
   | { kind: "complete" };
 
 /**
- * The Level they are on: none until Sitting 1 is in (Stage content stays closed
- * until then), then the first Level not yet complete, in Course order.
+ * The Level they are on, for the Students list and the drill-down: awaiting until
+ * Stage content opens, then the Course Position's current Level. Both rules are the
+ * Course Position's (src/lib/course-position.ts), so the Admin and the Student's own
+ * pages always name the same Level.
  */
 export function currentLevel(student: StudentRecord, catalogue: Catalogue): CurrentLevel {
-  if (!student.sittings.some((s) => s.sittingNo === 1)) return { kind: "awaiting" };
-  const open = catalogue.find((l) => !student.levelCompletedAt[l.slug]);
-  return open ? { kind: "level", slug: open.slug, title: open.title } : { kind: "complete" };
+  if (!isContentOpen(student.sittings)) return { kind: "awaiting" };
+  const slug = currentLevelSlug(
+    catalogue,
+    (level) => student.levelCompletedAt[level] != null,
+    (stage) => student.stages[stage] != null,
+  );
+  const level = catalogue.find((l) => l.slug === slug);
+  return level ? { kind: "level", slug: level.slug, title: level.title } : { kind: "complete" };
 }
 
 export type LevelFilter = "any" | "awaiting" | "complete" | (string & {});

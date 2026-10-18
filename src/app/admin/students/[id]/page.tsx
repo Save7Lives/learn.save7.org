@@ -19,8 +19,9 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
   if (!UUID.test(id)) notFound();
 
   const catalogue = await loadCatalogue();
-  const student = await loadStudent(id, catalogue);
-  if (!student) notFound();
+  const loaded = await loadStudent(id, catalogue);
+  if (!loaded) notFound();
+  const { student, position } = loaded;
 
   const [viewer, roster, rules, activity] = await Promise.all([
     requireAdmin(),
@@ -32,6 +33,7 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
   return (
     <StudentView
       student={student}
+      position={position}
       catalogue={catalogue}
       rule={rules[0] ?? null}
       activity={activity}

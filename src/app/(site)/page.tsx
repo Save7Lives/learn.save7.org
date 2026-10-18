@@ -1,5 +1,4 @@
 import { getSession } from "@/lib/auth";
-import { getBaselineState } from "@/lib/baseline";
 import { whatsappCommunityUrl } from "@/lib/community";
 import { getPathwayForUser } from "@/lib/course";
 import { LandingView } from "@/components/course/LandingView";
@@ -12,14 +11,14 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const session = await getSession();
 
-  const { levels } = await getPathwayForUser(session?.id ?? null);
-  const baseline = session ? await getBaselineState(session.id) : null;
+  const { levels, position } = await getPathwayForUser(session?.id ?? null);
 
   return (
     <LandingView
       levels={levels}
+      currentLevelSlug={position.currentLevelSlug}
       signedIn={Boolean(session)}
-      baselinePending={Boolean(session && baseline && !baseline.completed)}
+      baselinePending={Boolean(session) && !position.contentOpen}
       communityUrl={whatsappCommunityUrl()}
     />
   );

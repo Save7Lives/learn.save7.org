@@ -13,7 +13,8 @@ export type ModuleCompleteContext = {
   /** True when this is the last Stage in the Level. */
   isLastInLevel: boolean;
   certificateTitle: string;
-  alreadyComplete: boolean;
+  /** The Read Mark: the Stage has been read before. Not completion. */
+  alreadyRead: boolean;
   /** Whether this Stage's quiz has been passed — what the Certificate counts. */
   quizPassed: boolean;
 };
@@ -45,7 +46,7 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
     levelTitle,
     isLastInLevel,
     certificateTitle,
-    alreadyComplete,
+    alreadyRead,
     quizPassed,
   } = context;
 
@@ -64,10 +65,10 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
 
       <section className="mt-7">
         <h3 className="t-h3 text-navy">
-          {alreadyComplete ? "You've finished this Stage" : "You've reached the end of this Stage"}
+          {quizPassed ? "You've finished this Stage" : "You've reached the end of this Stage"}
         </h3>
         <p className="mt-2 text-base leading-7 text-grey">
-          {alreadyComplete
+          {alreadyRead
             ? "This Stage is recorded as read. You can revisit any step at any time. Nothing is locked once you have been through it."
             : "Finishing records that you have read it, so you can stop here and pick up later without losing your place."}
         </p>

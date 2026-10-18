@@ -10,6 +10,8 @@
  *   TWO_LEVELS_BETWEEN_SITTINGS  two Levels done since Sitting 1: Sitting 2 owed once ...
  *   TWO_LEVELS_AFTER_SITTING_2   ... and nothing owed once Sitting 2 is in
  *   REVOKED_CERTIFICATE          a live Certificate on its Level, a revoked one on none
+ *   OUT_OF_ORDER                 Intermediate done and Advanced started, Beginner never opened
+ *   ALL_PASSED                   every Stage Quiz passed: each Level resumes at its last Stage
  *   ANOTHER_STUDENTS_RECORD      null: a Student asking for somebody else's
  *
  * The catalogue is small on purpose: three Levels, four Stages.
@@ -206,6 +208,40 @@ export const REVOKED_CERTIFICATE: Raw = rawRecord({
     beginner: { ...TWO_LEVELS_DONE.levels.beginner, certificate: { code: CERT_LIVE.code, issued_at: CERT_LIVE.issued_at } },
   },
   certificates: [CERT_REVOKED, CERT_LIVE],
+});
+
+/**
+ * Started out of Course order: Intermediate complete, Advanced's only Stage read and not
+ * passed, Beginner never opened. The Student is on Advanced, not on Beginner.
+ */
+export const OUT_OF_ORDER: Raw = rawRecord({
+  sittings: [SITTING_1],
+  sitting_due: 2,
+  stages: {
+    "stage-3": { read: true, read_at: iso(7), started: true, complete: true, completed_at: iso(8) },
+    "stage-4": { read: true, read_at: iso(10), started: true, last_lesson_slug: "lesson-2" },
+  },
+  levels: {
+    intermediate: TWO_LEVELS_DONE.levels.intermediate,
+    advanced: { status: "IN_PROGRESS", stages_read: 1 },
+  },
+});
+
+/** Every Stage Quiz passed: every Level complete, each resuming at its last Stage. */
+export const ALL_PASSED: Raw = rawRecord({
+  sittings: [SITTING_1],
+  sitting_due: 2,
+  stages: {
+    ...TWO_LEVELS_DONE.stages,
+    "stage-4": { read: true, read_at: iso(9), started: true, complete: true, completed_at: iso(10) },
+  },
+  levels: {
+    ...TWO_LEVELS_DONE.levels,
+    advanced: {
+      complete: true, completed_at: iso(10), status: "COMPLETE",
+      stages_passed: 1, stages_read: 1, percent_complete: 100, resume_stage_slug: "stage-4",
+    },
+  },
 });
 
 export const ANOTHER_STUDENTS_RECORD = null;

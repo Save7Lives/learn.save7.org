@@ -8,7 +8,7 @@ import {
   RecommendedPill,
   cx,
 } from "@/components/ui/primitives";
-import type { LevelProgressSummary } from "@/lib/course";
+import type { LevelPosition } from "@/lib/course-position";
 
 /**
  * A level card.
@@ -25,7 +25,7 @@ import type { LevelProgressSummary } from "@/lib/course";
  */
 export function LevelCard({
   level,
-  progress,
+  position,
   signedIn,
   recommended,
 }: {
@@ -39,16 +39,17 @@ export function LevelCard({
     certificateTitle: string;
     modules: Array<{ slug: string; order: number; title: string }>;
   };
-  progress: LevelProgressSummary | null;
+  /** The Student's Course Position in this Level; an empty one when signed out. */
+  position: LevelPosition;
   signedIn: boolean;
   recommended?: boolean;
 }) {
-  const started = progress != null && progress.status !== "NOT_STARTED";
-  const complete = progress?.status === "COMPLETE";
+  const started = signedIn && position.status !== "NOT_STARTED";
+  const complete = position.complete;
 
   const href = signedIn
-    ? started && progress?.nextModuleSlug
-      ? `/levels/${level.slug}/modules/${progress.nextModuleSlug}`
+    ? started && position.resumeStageSlug
+      ? `/levels/${level.slug}/modules/${position.resumeStageSlug}`
       : `/levels/${level.slug}`
     : `/register?next=${encodeURIComponent(`/levels/${level.slug}`)}`;
 
@@ -111,15 +112,15 @@ export function LevelCard({
 
       <div className="flex-1" />
 
-      {progress && started ? (
+      {started ? (
         <div className="mb-4">
           <div className="mb-2 flex items-baseline justify-between text-[0.8125rem] font-medium">
             <span>
-              {progress.stagesPassed} of {progress.modulesTotal} Stages passed
+              {position.stagesPassed} of {position.stagesTotal} Stages passed
             </span>
-            {progress.certificatePublicId ? (
+            {position.certificateCode ? (
               <Link
-                href={`/certificate/${progress.certificatePublicId}`}
+                href={`/certificate/${position.certificateCode}`}
                 className="text-teal-ink underline underline-offset-2"
               >
                 View certificate
@@ -127,7 +128,7 @@ export function LevelCard({
             ) : null}
           </div>
           <ProgressBar
-            value={progress.percentComplete}
+            value={position.percentComplete}
             label={`${level.title} progress`}
             tone="teal"
           />

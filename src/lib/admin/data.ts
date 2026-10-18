@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getProgressRecord, getProgressRecords, type ProgressRecord } from "@/lib/progress-record";
+import { coursePosition, type CoursePosition } from "@/lib/course-position";
 import { supabaseServer } from "@/lib/supabase/server";
 import { loadActorNames } from "@/lib/admin/actors";
 import {
@@ -141,7 +142,15 @@ export async function loadStudents(catalogue: Catalogue): Promise<StudentRecord[
   }
 }
 
-export async function loadStudent(id: string, catalogue: Catalogue): Promise<StudentRecord | null> {
+/**
+ * One Student for the drill-down: their record in the Admin's shape, and their Course
+ * Position, the same one their own pages read, so "the Stage they are up to" and
+ * "content open" are never worked out twice.
+ */
+export async function loadStudent(
+  id: string,
+  catalogue: Catalogue,
+): Promise<{ student: StudentRecord; position: CoursePosition } | null> {
   const supabase = await supabaseServer();
   const [record, signalResult] = await Promise.all([
     getProgressRecord(id),
@@ -153,7 +162,10 @@ export async function loadStudent(id: string, catalogue: Catalogue): Promise<Stu
   ]);
   if (!record) return null;
   const signalRow = signalResult.data as unknown as SignalRow | null;
-  return mapLearner(record, signalRow ? toSignal(signalRow) : null, catalogue);
+  return {
+    student: mapLearner(record, signalRow ? toSignal(signalRow) : null, catalogue),
+    position: coursePosition(catalogue, record, { signedIn: true }),
+  };
 }
 
 export type ActivityEvent = { type: string; stage: string | null; at: Date };

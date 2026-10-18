@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { type IconName } from "@/components/ui/icons";
 import { ButtonLink, Display, NumberPill } from "@/components/ui/primitives";
-import type { LevelWithProgress } from "@/lib/course";
+import type { LevelWithPosition } from "@/lib/course";
 import { ClosingBand } from "./ClosingBand";
 import { IconCircle } from "./IconCircle";
 import { CourseMap } from "./CourseMap";
 import { LevelCard } from "./LevelCard";
-import { recommendedLevelSlug } from "./levelState";
 import { Lede, PublicHero } from "./PublicHero";
 
 const H2 =
@@ -71,14 +70,17 @@ const STAGE_STEPS: Array<[title: string, body: string]> = [
 /** The course introduction (#73). Takes plain data so every state can be rendered without a session. */
 export function IntroductionView({
   levels,
+  currentLevelSlug,
   signedIn,
   baselineCompleted,
 }: {
-  levels: LevelWithProgress[];
+  levels: LevelWithPosition[];
+  /** The Level the Student is on, from their Course Position; null once all are complete. */
+  currentLevelSlug: string | null;
   signedIn: boolean;
   baselineCompleted: boolean;
 }) {
-  const recommendedSlug = recommendedLevelSlug(levels);
+  const recommendedSlug = currentLevelSlug ?? levels[0]?.slug;
 
   return (
     <article>
@@ -135,13 +137,13 @@ export function IntroductionView({
             but you can start wherever suits what you already know, and stopping after any
             level is a complete outcome, not an abandoned one.
           </p>
-          <CourseMap levels={levels} />
+          <CourseMap levels={levels} recommendedSlug={recommendedSlug} />
           <div className="mt-[1.375rem] grid gap-5 min-[1000px]:grid-cols-3">
             {levels.map((level) => (
               <LevelCard
                 key={level.slug}
                 level={level}
-                progress={level.progress}
+                position={level.position}
                 signedIn={signedIn}
                 recommended={level.slug === recommendedSlug}
               />
