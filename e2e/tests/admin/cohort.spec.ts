@@ -303,10 +303,10 @@ test("a Student's drill-down shows their Levels, Baseline table and recent activ
 
   // The Baseline table, with Improvement on Beginner.
   const baseline = page.getByRole("table", { name: /Baseline Sittings, with Improvement by Level/ });
-  await expect(baseline.getByRole("row", { name: /1\. At signup.*0 of 20/ })).toBeVisible();
-  await expect(baseline.getByRole("row", { name: /2\. After Beginner.*20 of 20/ })).toBeVisible();
+  await expect(baseline.getByRole("row", { name: /Sitting 1\s*At signup.*0 of 20/ })).toBeVisible();
+  await expect(baseline.getByRole("row", { name: /Sitting 2\s*After Beginner.*20 of 20/ })).toBeVisible();
   await expect(baseline.getByRole("row", { name: /Improvement.*\+100 pp/ })).toBeVisible();
-  await expect(baseline.getByRole("row", { name: /3\. After Intermediate/ })).toContainText("Not yet owed");
+  await expect(baseline.getByRole("row", { name: /Sitting 3/ })).toContainText("Not owed");
 
   // Dashboard activity, newest first.
   const activity = page.getByRole("table", { name: /recent dashboard activity/ });

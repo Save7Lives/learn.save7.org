@@ -52,8 +52,8 @@ export async function loadCatalogue(): Promise<Catalogue> {
   );
 }
 
-/** The Student's record reshaped for `model.ts`. No rule is applied here. */
-function mapLearner(
+/** The Student's record reshaped for `model.ts`. No rule is applied here. Exported for the tests. */
+export function mapLearner(
   record: ProgressRecord,
   signal: EligibilitySignal | null,
   catalogue: Catalogue,
@@ -88,6 +88,7 @@ function mapLearner(
     sittings: record.baseline.sittings,
     stages,
     levelCompletedAt,
+    sittingDue: record.baseline.sittingDue,
     certificates: record.certificates.map((c) => ({
       code: c.code,
       levelSlug: c.levelSlug,

@@ -5,7 +5,6 @@ import { LevelCard, type LevelCardStage } from "@/components/portal/LevelCard";
 import { DataTable, CellSub } from "@/components/portal/DataTable";
 import { Notice, Panel } from "@/components/portal/Panel";
 import {
-  SITTING_SLOTS,
   currentLevel,
   flagLabel,
   latestSitting,
@@ -13,6 +12,8 @@ import {
   liveCertificates,
   percent,
   heldFlags,
+  sittingContext,
+  sittingName,
   stagesPassed,
   type Catalogue,
   type EligibilityRule,
@@ -72,6 +73,8 @@ export function StudentView({
   /* The Stage they are up to: the first not passed, once Sitting 1 has opened them. */
   const allStages = catalogue.flatMap((l) => l.stages);
   const nextStage = first ? (allStages.find((s) => !student.stages[s.slug]?.passedAt)?.slug ?? null) : null;
+
+  const labels = sittingContext(student, catalogue);
 
   const held = heldFlags(student);
   const eligible = student.signal?.eligible ?? null;
@@ -233,7 +236,7 @@ export function StudentView({
 
       <Panel
         title="Baseline Sittings"
-        lede="Up to four, on a fixed schedule. Each stores its scores by Level, never the answers."
+        lede="Up to four: one at signup, then one after each Level completed since the last. Each stores its scores by Level, never the answers."
         className="mt-6"
       >
         <DataTable
@@ -248,7 +251,13 @@ export function StudentView({
           rows={[
             ...[1, 2, 3, 4].map((slot) => {
               const t = student.sittings.find((x) => x.sittingNo === slot);
-              const name = `${slot}. ${SITTING_SLOTS[slot - 1]}`;
+              const label = sittingName(labels, slot);
+              const name = (
+                <span key="s">
+                  Sitting {slot}
+                  {label === `Sitting ${slot}` ? null : <CellSub>{label}</CellSub>}
+                </span>
+              );
               if (t) {
                 return {
                   key: `s${slot}`,
@@ -274,7 +283,6 @@ export function StudentView({
                   ],
                 };
               }
-              const owed = slot === 1 ? true : !!student.levelCompletedAt[catalogue[slot - 2]?.slug ?? ""];
               return {
                 key: `s${slot}`,
                 cells: [
@@ -285,9 +293,9 @@ export function StudentView({
                       <span className="text-grey">
                         {slot === 1
                           ? "Not taken yet. Stage content stays closed until it is."
-                          : owed
+                          : student.sittingDue === slot
                             ? "Offered, not taken. Later Sittings are never required."
-                            : `Not yet owed. It follows completing ${catalogue[slot - 2]?.title ?? "a Level"}.`}
+                            : "Not owed. One is owed once a Level is completed after the last Sitting, and never twice."}
                       </span>
                     ),
                   },

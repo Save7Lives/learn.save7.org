@@ -16,9 +16,9 @@ import { useLayoutEffect, useRef, useState } from "react";
  */
 
 export type TrendSlot = {
-  /** The axis label when wide: the fixed slot name, or what prompted a taken Sitting. */
+  /** The axis label when wide: what prompted a taken Sitting, else its number (or a fixed slot name on the Admin Overview). */
   name: string;
-  /** Under the name: "11 of 20", "Do this first", "Offered now", "Not yet". */
+  /** Under the name: "11 of 20", "Do this first", "Offered now", "After another Level", "Not owed". */
   status: string;
   taken: boolean;
   offered: boolean;

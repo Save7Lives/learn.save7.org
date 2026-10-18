@@ -2,7 +2,14 @@ import "server-only";
 
 import { supabaseServer } from "./supabase/server";
 import type { LevelTier } from "./constants";
-import { getProgressRecord, mapSitting, percent, type Sitting, type SittingRow } from "./progress-record";
+import {
+  getProgressRecord,
+  mapSitting,
+  percent,
+  type ProgressRecord,
+  type Sitting,
+  type SittingRow,
+} from "./progress-record";
 import type { SubmittedAnswer } from "./quiz";
 
 // Sittings are part of the Progress Record, so their shape and mapping live with it.
@@ -67,19 +74,87 @@ export type BaselineState = {
 };
 
 /**
- * What prompted a Sitting, for the trend's row labels: "At signup", or the Levels
- * completed between the previous Sitting and this one.
+ * The four slots of CONTEXT.md's fixed schedule, named for a learner who completes one
+ * Level between Sittings. Only a view that adds Sittings up across Students (the
+ * Admin's Overview) labels them this way, because a group has no one set of Levels
+ * behind its Sitting 2. One Student's Sitting is labelled by `sittingLabel()`.
  */
-export function sittingLabel(state: Pick<BaselineState, "sittings" | "levels" | "levelsCompleted">, sitting: Sitting): string {
+export const SITTING_SLOTS = ["At signup", "After Beginner", "After Intermediate", "After Advanced"] as const;
+
+/**
+ * What one Student's Sittings are labelled from: their Sittings, the Levels in Course
+ * order, and when they completed each. `BaselineState` is one; the Admin builds the
+ * same from the Student's Progress Record (`sittingContext()` in admin/model.ts).
+ */
+export type SittingContext = {
+  sittings: Sitting[];
+  levels: Array<{ slug: string; title: string }>;
+  levelsCompleted: Array<{ slug: string; completedAt: Date }>;
+};
+
+const listJoin = (items: string[]): string =>
+  items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+
+/**
+ * What prompted a Sitting: "At signup", or the Levels completed between the previous
+ * Sitting and this one. The one label for a Student's Sitting, on their dashboard and
+ * in the Admin alike.
+ */
+export function sittingLabel(context: SittingContext, sitting: Sitting): string {
   if (sitting.sittingNo === 1) return "At signup";
-  const previous = state.sittings.find((s) => s.sittingNo === sitting.sittingNo - 1);
-  const titles = state.levels
+  const previous = context.sittings.find((s) => s.sittingNo === sitting.sittingNo - 1);
+  const titles = context.levels
     .filter((level) => {
-      const done = state.levelsCompleted.find((c) => c.slug === level.slug)?.completedAt;
+      const done = context.levelsCompleted.find((c) => c.slug === level.slug)?.completedAt;
       return done && done <= sitting.submittedAt && (!previous || done > previous.submittedAt);
     })
     .map((level) => level.title);
-  return titles.length > 0 ? `After ${titles.join(" and ")}` : `Sitting ${sitting.sittingNo}`;
+  return titles.length > 0 ? `After ${listJoin(titles)}` : `Sitting ${sitting.sittingNo}`;
+}
+
+/**
+ * A slot's name for one Student: its label once taken, "At signup" for the first,
+ * and otherwise just its number. Which Levels an untaken later Sitting will follow is
+ * not known until they are completed, so it is not named after one.
+ */
+export function sittingName(context: SittingContext, sittingNo: number): string {
+  const sitting = context.sittings.find((s) => s.sittingNo === sittingNo);
+  if (sitting) return sittingLabel(context, sitting);
+  return sittingNo === 1 ? "At signup" : `Sitting ${sittingNo}`;
+}
+
+export type SittingSlot = {
+  sittingNo: number;
+  name: string;
+  /** "11 of 20", "Do this first", "Offered now", "After another Level" or "Not owed". */
+  status: string;
+  taken: boolean;
+  /** The Sitting owed now, per the Progress Record. */
+  offered: boolean;
+};
+
+/**
+ * The four slots on the learner's My progress, read off their record. Only the
+ * Sitting the record says is owed (`due`) reads as offered. Any other untaken slot
+ * says what it waits for: another Level completed, or nothing, once every Level is.
+ */
+export function sittingSlots(state: BaselineState): SittingSlot[] {
+  const levelsLeft = state.levels.some((l) => !state.levelsCompleted.some((c) => c.slug === l.slug));
+  return Array.from({ length: MAX_SITTINGS }, (_, i) => {
+    const sittingNo = i + 1;
+    const sitting = state.sittings.find((s) => s.sittingNo === sittingNo);
+    const offered = !sitting && state.due === sittingNo;
+    const status = sitting
+      ? `${sitting.totalScore} of ${sitting.totalMax}`
+      : offered
+        ? sittingNo === 1
+          ? "Do this first"
+          : "Offered now"
+        : levelsLeft
+          ? "After another Level"
+          : "Not owed";
+    return { sittingNo, name: sittingName(state, sittingNo), status, taken: !!sitting, offered };
+  });
 }
 
 /**
@@ -119,11 +194,15 @@ export async function getBaselineState(learnerId: string): Promise<BaselineState
     supabase.from("learn_levels").select("slug, title, tier").order("position"),
   ]);
 
+  return baselineStateFrom(record, (levelResult.data ?? []) as unknown as BaselineLevel[]);
+}
+
+/** `getBaselineState()` without the reads: the record and the Level catalogue, given. */
+export function baselineStateFrom(record: ProgressRecord | null, levels: BaselineLevel[]): BaselineState {
   const sittings = record?.baseline.sittings ?? [];
   const levelsCompleted = (record?.levels ?? []).flatMap((l) =>
     l.complete && l.completedAt ? [{ slug: l.slug, completedAt: l.completedAt }] : [],
   );
-  const levels = (levelResult.data ?? []) as unknown as BaselineLevel[];
 
   const first = sittings.find((s) => s.sittingNo === 1) ?? null;
   const later = sittings.filter((s) => s.sittingNo > 1);
