@@ -51,8 +51,8 @@ prisma/dev.db
 prisma/dev.db-journal
 
 # Archived generated Prisma client. Kept on disk for reference but deliberately
-# not in git history: it is dead generated code, and the schema it came from is
-# preserved at docs/schema.prisma.superseded.
+# not in git history: it is dead generated code. The schema it came from is in
+# git history as docs/schema.prisma.superseded.
 docs/generated-prisma-client.superseded/
 
 # end-to-end suite: private Postgres cluster, build of the template, traces
