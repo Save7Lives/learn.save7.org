@@ -23,6 +23,7 @@ import type { ActivityEvent } from "@/lib/admin/data";
 import type { AdminRole } from "@/lib/constants";
 import { AdminRoleButton } from "./AdminRoleButton";
 import { AdminRoleMark } from "./AdminRoleMark";
+import { DeleteStudentButton } from "./DeleteStudentButton";
 
 /**
  * A Student's Progress Record, "where they are" first (#72, #84): the four stat cards,
@@ -107,6 +108,11 @@ export function StudentView({
               {canGrant && adminRole !== "owner" ? (
                 <AdminRoleButton studentId={student.id} studentName={student.name} isAdmin={adminRole === "admin"} />
               ) : null}
+            </div>
+          ) : null}
+          {canGrant && adminRole === null ? (
+            <div className="mt-2">
+              <DeleteStudentButton studentId={student.id} studentName={student.name} stagesPassed={passed} certificates={certs.length} />
             </div>
           ) : null}
         </div>
