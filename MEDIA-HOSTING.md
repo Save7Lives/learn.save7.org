@@ -71,7 +71,7 @@ between the two.
 **1. Upload.** This needs a Supabase secret key, so it is a command you run:
 
 ```bash
-cd "/Users/zubayrparak/Desktop/Save7 Course/transplant-alchemy" && npm run media:upload
+cd /Users/zubayrparak/Learn.save7.org && npm run media:upload
 ```
 
 The key goes in `.env.secrets` (git-ignored) as `SUPABASE_SECRET_KEY=sb_secret_...`
