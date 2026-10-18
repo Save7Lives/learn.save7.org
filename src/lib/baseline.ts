@@ -2,7 +2,13 @@ import "server-only";
 
 import { supabaseServer } from "./supabase/server";
 import type { LevelTier } from "./constants";
+import { getProgressRecord, mapSitting, percent, type Sitting, type SittingRow } from "./progress-record";
 import type { SubmittedAnswer } from "./quiz";
+
+// Sittings are part of the Progress Record, so their shape and mapping live with it.
+// Re-exported so the pages and the Admin keep importing them from here.
+export { mapSitting, percent };
+export type { LevelScore, Sitting } from "./progress-record";
 
 /**
  * The Baseline Assessment, read off its Sittings.
@@ -16,7 +22,8 @@ import type { SubmittedAnswer } from "./quiz";
  * ── WHEN A SITTING IS OFFERED ───────────────────────────────────────────────
  * The Blueprint's four slots are at signup and after each Level. The Course lets a
  * learner start at any Level, so "after Beginner" really means "after the next
- * Level they complete". The rule, in `dueSitting()`:
+ * Level they complete". The rule lives in the Progress Record (save7-os 0138,
+ * `baseline.sitting_due`), which this file reads and does not repeat:
  *
  *   - Sitting 1 is owed until it is sat, and **Stage content waits for it** (#54,
  *     the user's call): a "before" taken after reading a Stage is not a before.
@@ -28,10 +35,10 @@ import type { SubmittedAnswer } from "./quiz";
  *     finishes two Levels between Sittings gets one, and can end with fewer than
  *     four.
  *
- * The database enforces only the cap of four. The schedule lives here because it
- * has no stakes for anyone but the learner: nothing downstream (vetting, the
- * Eligibility Rule, a Certificate) reads a Baseline score. A learner who calls the
- * RPC directly to sit early spends their own Sittings, nobody else's.
+ * The submit call enforces only the cap of four. The schedule is the Progress
+ * Record's and has no stakes for anyone but the learner: nothing downstream
+ * (vetting, the Eligibility Rule, a Certificate) reads a Baseline score. A learner
+ * who calls the RPC directly to sit early spends their own Sittings, nobody else's.
  *
  * ── NO ANSWER REVIEW, DELIBERATELY ──────────────────────────────────────────
  * A Stage Quiz shows its marked paper. A Sitting does not, and must not: the same
@@ -40,18 +47,6 @@ import type { SubmittedAnswer } from "./quiz";
  */
 
 export const MAX_SITTINGS = 4;
-
-export type LevelScore = { score: number; max: number };
-
-export type Sitting = {
-  sittingNo: number;
-  submittedAt: Date;
-  /** Keyed by Level slug. */
-  levelScores: Record<string, LevelScore>;
-  totalScore: number;
-  totalMax: number;
-  totalPct: number;
-};
 
 export type BaselineLevel = { slug: string; title: string; tier: LevelTier };
 
@@ -70,22 +65,6 @@ export type BaselineState = {
   /** When each Level was completed, for labelling Sittings and for what is owed. */
   levelsCompleted: Array<{ slug: string; completedAt: Date }>;
 };
-
-export function percent(score: number, max: number): number {
-  return max > 0 ? Math.round((100 * score) / max) : 0;
-}
-
-/**
- * Which Sitting is owed now, if any. See the header for the rule and why a
- * skipped Sitting rolls forward rather than stacking up.
- */
-export function dueSitting(sittings: Sitting[], levelsCompletedAt: Date[]): number | null {
-  const n = sittings.length;
-  if (n >= MAX_SITTINGS) return null;
-  if (n === 0) return 1;
-  const last = sittings[n - 1].submittedAt;
-  return levelsCompletedAt.some((d) => d > last) ? n + 1 : null;
-}
 
 /**
  * What prompted a Sitting, for the trend's row labels: "At signup", or the Levels
@@ -124,54 +103,26 @@ export function levelImprovement(
   return { beforePct, afterPct, change: afterPct - beforePct };
 }
 
-type SittingRow = {
-  sitting_no: number;
-  submitted_at: string;
-  level_scores: Record<string, LevelScore> | null;
-  total_score: number;
-  total_max: number;
-};
-
-export function mapSitting(row: SittingRow): Sitting {
-  return {
-    sittingNo: row.sitting_no,
-    submittedAt: new Date(row.submitted_at),
-    levelScores: row.level_scores ?? {},
-    totalScore: row.total_score,
-    totalMax: row.total_max,
-    totalPct: percent(row.total_score, row.total_max),
-  };
-}
-
-export const SITTING_COLUMNS = "sitting_no, submitted_at, level_scores, total_score, total_max";
-
 /**
- * Where the learner stands on the Baseline.
+ * Where the learner stands on the Baseline, read off their Progress Record.
  *
- * Row level security scopes both reads to the caller; `learnerId` narrows them for
- * a staff member who also has a learners row, whose policy admits every learner.
+ * The Sittings, the Levels they completed and the Sitting owed all come from the
+ * record; only the Level titles (the catalogue, which is not a Student's) are read
+ * beside it. With no record (no Student row) the state is the empty one: Sitting 1
+ * owed, so a page that sends a learner to the baseline never loops.
  */
 export async function getBaselineState(learnerId: string): Promise<BaselineState> {
   const supabase = await supabaseServer();
 
-  const [sittingResult, progressResult, levelResult] = await Promise.all([
-    supabase
-      .from("learn_baseline_sittings")
-      .select(SITTING_COLUMNS)
-      .eq("learner_id", learnerId)
-      .order("sitting_no"),
-    supabase
-      .from("learn_level_progress")
-      .select("level_slug, completed_at")
-      .eq("learner_id", learnerId)
-      .not("completed_at", "is", null),
+  const [record, levelResult] = await Promise.all([
+    getProgressRecord(learnerId),
     supabase.from("learn_levels").select("slug, title, tier").order("position"),
   ]);
 
-  const sittings = ((sittingResult.data ?? []) as unknown as SittingRow[]).map(mapSitting);
-  const levelsCompleted = (
-    (progressResult.data ?? []) as unknown as Array<{ level_slug: string; completed_at: string }>
-  ).map((p) => ({ slug: p.level_slug, completedAt: new Date(p.completed_at) }));
+  const sittings = record?.baseline.sittings ?? [];
+  const levelsCompleted = (record?.levels ?? []).flatMap((l) =>
+    l.complete && l.completedAt ? [{ slug: l.slug, completedAt: l.completedAt }] : [],
+  );
   const levels = (levelResult.data ?? []) as unknown as BaselineLevel[];
 
   const first = sittings.find((s) => s.sittingNo === 1) ?? null;
@@ -180,10 +131,7 @@ export async function getBaselineState(learnerId: string): Promise<BaselineState
   return {
     sittings,
     completed: first !== null,
-    due: dueSitting(
-      sittings,
-      levelsCompleted.map((c) => c.completedAt),
-    ),
+    due: record ? record.baseline.sittingDue : 1,
     first,
     latestLater: later[later.length - 1] ?? null,
     levels,

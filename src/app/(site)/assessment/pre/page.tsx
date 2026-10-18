@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "Baseline assessment" };
  * One Baseline Sitting: a before-you-start screen, then the twenty fixed-form
  * questions, in their one order, with options in authored order. `quiz_start` is
  * recorded when the learner presses Start, not when this page loads. Offered only
- * when a Sitting is owed (see `dueSitting()` in lib/baseline.ts); anyone else
+ * when a Sitting is owed (the Progress Record's `baseline.sitting_due`); anyone else
  * returning to this URL sees their results instead.
  */
 export default async function BaselinePage() {

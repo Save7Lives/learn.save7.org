@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/authz";
 import { getBaselineState } from "@/lib/baseline";
-import { getPathwayForUser, getLevelBySlug, getModuleStatuses } from "@/lib/course";
+import { getPathwayForUser, getLevelBySlug } from "@/lib/course";
 import { issueCertificateIfEarned } from "@/lib/certificates";
-import { getStageQuizStates } from "@/lib/quiz";
 import { LevelOverview } from "@/components/course/LevelOverview";
 
 // Rendered per request, never prerendered: this route reads runtime configuration
@@ -36,16 +35,8 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
   if (!level) notFound();
 
   const progress = level.progress!;
-  const allPassed = progress.modulesTotal > 0 && progress.stagesPassed === progress.modulesTotal;
-
-  // Which Stages this learner has read, and where they stand on each Stage Quiz.
-  const [statusByModule, quizByModule] = await Promise.all([
-    getModuleStatuses(
-      user.id,
-      level.modules.map((m) => m.id),
-    ),
-    getStageQuizStates(level.modules.map((m) => m.id)),
-  ]);
+  // The Progress Record says whether the Level is complete: every Stage Quiz in it passed.
+  const allPassed = progress.status === "COMPLETE";
 
   // Normally issued the moment the last Stage Quiz is passed. Issued here as well,
   // idempotently, so a learner whose pass landed but whose certificate call did
@@ -60,8 +51,6 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
       levelSlug={levelSlug}
       certificatePublicId={certificatePublicId}
       baselineDue={baseline.due}
-      stageStatus={statusByModule}
-      quizByModule={quizByModule}
     />
   );
 }

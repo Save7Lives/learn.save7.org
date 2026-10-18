@@ -2,11 +2,10 @@ import "server-only";
 
 import { supabaseServer } from "./supabase/server";
 import { COURSE_SLUG, type LevelTier, type ProgressStatus } from "./constants";
+import { getProgressRecord, type StageEntry } from "./progress-record";
 import type {
-  CertificateRow,
   CourseRow,
   LessonRow,
-  LevelProgressRow,
   LevelRow,
   ModuleProgressRow,
   ModuleRow,
@@ -18,6 +17,11 @@ import type {
  * Everything here is read-only. Progress *writes* live in src/lib/progress.ts so
  * that the read path can be freely reused by pages, and the write path stays in
  * one auditable place.
+ *
+ * Progress is read from the Progress Record (src/lib/progress-record.ts), which
+ * SQL owns: this file lays a learner's record over the Course structure and does
+ * not decide what is complete, passed or latest. Where a Stage or Level is
+ * complete, the record said so.
  *
  * ── ON `id` BEING THE SLUG ──────────────────────────────────────────────────
  * The database keys levels, modules and lessons by slug; the app was written
@@ -150,21 +154,27 @@ export type StageState = "PASSED" | "STARTED" | "NOT_STARTED";
 export type LevelProgressSummary = {
   status: ProgressStatus;
   percentComplete: number;
-  /** Stages marked read. Drives "resume where you left off", and nothing else. */
-  modulesComplete: number;
+  /** Stages with a Read Mark. Drives "resume where you left off", and nothing else. */
+  stagesRead: number;
   modulesTotal: number;
   /** Stages whose Stage Quiz is passed. This is what completes the Level (#16). */
   stagesPassed: number;
   /** Where each Stage stands, by Stage slug: quiz passed, opened but not passed, or untouched. */
   stageStates: Record<string, StageState>;
   certificatePublicId: string | null;
-  /** The module to resume at, or the first module if not started. */
+  /** The module to resume at: the first Stage Quiz not yet passed, else the last Stage. */
   nextModuleSlug: string | null;
 };
 
-export type LevelWithProgress = Awaited<
-  ReturnType<typeof getPathway>
->["levels"][number] & {
+type PathwayLevel = Awaited<ReturnType<typeof getPathway>>["levels"][number];
+
+export type ModuleWithProgress = PathwayLevel["modules"][number] & {
+  /** This learner's entry for the Stage; null for a signed-out visitor. */
+  progress: StageEntry | null;
+};
+
+export type LevelWithProgress = Omit<PathwayLevel, "modules"> & {
+  modules: ModuleWithProgress[];
   /** Null for a signed-out visitor: structure without a learner attached. */
   progress: LevelProgressSummary | null;
 };
@@ -172,11 +182,9 @@ export type LevelWithProgress = Awaited<
 /**
  * The pathway annotated with one learner's progress.
  *
- * Four batched reads rather than per-level lookups — this drives the landing page
- * and the dashboard, so it runs on almost every request a signed-in learner
- * makes. Row level security scopes each of them to the caller, so there is no
- * `where learner = me` to forget: `learn_module_progress` returns this learner's
- * rows and nobody else's whatever this code asks for.
+ * One read, the learner's Progress Record, laid over the structure. Row level
+ * security and the record's own check scope it to the caller, so there is no
+ * `where learner = me` to forget.
  */
 export async function getPathwayForUser(userId: string | null) {
   const { course, levels: pathwayLevels } = await getPathway();
@@ -186,99 +194,53 @@ export async function getPathwayForUser(userId: string | null) {
   if (!userId) {
     return {
       course,
-      levels: pathwayLevels.map((level) => ({ ...level, progress: null })) as LevelWithProgress[],
+      levels: pathwayLevels.map((level) => ({
+        ...level,
+        modules: level.modules.map((m) => ({ ...m, progress: null })),
+        progress: null,
+      })) as LevelWithProgress[],
     };
   }
 
-  const supabase = await supabaseServer();
-  const [moduleRows, levelRows, certificateRows] = await Promise.all([
-    supabase
-      .from("learn_module_progress")
-      .select("module_slug, status, quiz_passed_at, updated_at")
-      .eq("learner_id", userId),
-
-    supabase
-      .from("learn_level_progress")
-      .select("level_slug, status, percent_complete")
-      .eq("learner_id", userId),
-
-    supabase
-      .from("learn_certificates")
-      .select("level_slug, code")
-      .eq("learner_id", userId)
-      .is("revoked_at", null),
-  ]);
-
-  const progressRows = (moduleRows.data ?? []) as Pick<
-    ModuleProgressRow,
-    "module_slug" | "status" | "quiz_passed_at" | "updated_at"
-  >[];
-  const levelProgressRows = (levelRows.data ?? []) as Pick<
-    LevelProgressRow,
-    "level_slug" | "status" | "percent_complete"
-  >[];
-  const certs = (certificateRows.data ?? []) as Pick<CertificateRow, "level_slug" | "code">[];
-
-  const completeModuleIds = new Set(
-    progressRows.filter((m) => m.status === "COMPLETE").map((m) => m.module_slug),
-  );
-  const passedModuleIds = new Set(
-    progressRows.filter((m) => m.quiz_passed_at !== null).map((m) => m.module_slug),
-  );
-  const startedModuleIds = new Set(progressRows.map((m) => m.module_slug));
-  const levelProgressByLevel = new Map(levelProgressRows.map((l) => [l.level_slug, l]));
-  const certByLevel = new Map(certs.map((c) => [c.level_slug, c.code]));
+  const record = await getProgressRecord(userId);
+  const stageBySlug = new Map((record?.stages ?? []).map((s) => [s.slug, s]));
+  const levelBySlug = new Map((record?.levels ?? []).map((l) => [l.slug, l]));
 
   const annotated: LevelWithProgress[] = pathwayLevels.map((level) => {
+    const modules = level.modules.map((m) => ({ ...m, progress: stageBySlug.get(m.id) ?? null }));
+    const stageStates = Object.fromEntries(
+      modules.map((m): [string, StageState] => [
+        m.slug,
+        m.progress?.complete ? "PASSED" : m.progress?.started ? "STARTED" : "NOT_STARTED",
+      ]),
+    );
+    const entry = levelBySlug.get(level.id);
     const mandatory = level.modules.filter((m) => m.isMandatory);
-    const modulesTotal = mandatory.length;
-    const modulesComplete = mandatory.filter((m) => completeModuleIds.has(m.id)).length;
-    const stagesPassed = mandatory.filter((m) => passedModuleIds.has(m.id)).length;
 
-    // Stage Quizzes passed, not Stages read: that is what completes a Level, and
-    // learn_refresh_progress() (0113) stores the same figure. Computed here too
-    // for a learner with no level row yet.
-    const lp = levelProgressByLevel.get(level.id);
-    const percentComplete =
-      modulesTotal === 0 ? 0 : Math.round((stagesPassed / modulesTotal) * 100);
+    const progress: LevelProgressSummary = entry
+      ? {
+          status: entry.status,
+          percentComplete: entry.percentComplete,
+          stagesRead: entry.stagesRead,
+          modulesTotal: entry.stagesTotal,
+          stagesPassed: entry.stagesPassed,
+          stageStates,
+          certificatePublicId: entry.certificate?.code ?? null,
+          nextModuleSlug: entry.resumeStageSlug,
+        }
+      : // No record at all (no Student row): the empty one, so a page never branches on it.
+        {
+          status: "NOT_STARTED",
+          percentComplete: 0,
+          stagesRead: 0,
+          modulesTotal: mandatory.length,
+          stagesPassed: 0,
+          stageStates,
+          certificatePublicId: null,
+          nextModuleSlug: mandatory[0]?.slug ?? null,
+        };
 
-    // Resume at the first Stage whose quiz is not passed (what completes a Level,
-    // and what the Level page offers); if all are passed, stay on the last.
-    const firstUnpassed = mandatory.find((m) => !passedModuleIds.has(m.id));
-    const nextModuleSlug =
-      firstUnpassed?.slug ?? mandatory[mandatory.length - 1]?.slug ?? null;
-
-    // A failed Stage Quiz writes no Stage row, only the Level's, so either counts.
-    const started = level.modules.some((m) => startedModuleIds.has(m.id)) || lp !== undefined;
-    const status: ProgressStatus =
-      modulesTotal > 0 && stagesPassed === modulesTotal
-        ? "COMPLETE"
-        : started
-          ? "IN_PROGRESS"
-          : "NOT_STARTED";
-
-    return {
-      ...level,
-      progress: {
-        status,
-        percentComplete: lp?.percent_complete ?? percentComplete,
-        modulesComplete,
-        modulesTotal,
-        stagesPassed,
-        stageStates: Object.fromEntries(
-          level.modules.map((m): [string, StageState] => [
-            m.slug,
-            passedModuleIds.has(m.id)
-              ? "PASSED"
-              : startedModuleIds.has(m.id)
-                ? "STARTED"
-                : "NOT_STARTED",
-          ]),
-        ),
-        certificatePublicId: certByLevel.get(level.id) ?? null,
-        nextModuleSlug,
-      },
-    };
+    return { ...level, modules, progress };
   });
 
   return { course, levels: annotated };
@@ -418,13 +380,8 @@ export async function getNextModuleSlug(
 export async function getLearnerCertificates(userId: string) {
   const supabase = await supabaseServer();
 
-  const [certResult, levelResult] = await Promise.all([
-    supabase
-      .from("learn_certificates")
-      .select("code, level_slug, issued_name, award_title, score_pct, issued_at, revoked_at")
-      .eq("learner_id", userId)
-      .is("revoked_at", null)
-      .order("issued_at", { ascending: false }),
+  const [record, levelResult] = await Promise.all([
+    getProgressRecord(userId),
     supabase.from("learn_levels").select("slug, title"),
   ]);
 
@@ -435,52 +392,20 @@ export async function getLearnerCertificates(userId: string) {
     ]),
   );
 
-  return ((certResult.data ?? []) as unknown as Array<{
-    code: string;
-    level_slug: string | null;
-    issued_name: string;
-    award_title: string | null;
-    score_pct: number | null;
-    issued_at: string;
-    revoked_at: string | null;
-  }>).map((c) => ({
-    publicId: c.code,
-    levelId: c.level_slug,
-    levelSlug: c.level_slug,
-    levelTitle: c.level_slug ? (titles.get(c.level_slug) ?? "") : "",
-    learnerNameSnapshot: c.issued_name,
-    awardTitleSnapshot: c.award_title ?? "",
-    scorePct: c.score_pct ?? 0,
-    issuedAt: new Date(c.issued_at),
-    revokedAt: c.revoked_at ? new Date(c.revoked_at) : null,
-  }));
-}
-
-/**
- * Completion status per module, for a set of modules.
- *
- * Returned as a map because every caller is asking "is this one done" per row
- * while rendering a list. Row level security scopes it to the caller.
- */
-export async function getModuleStatuses(
-  userId: string,
-  moduleSlugs: string[],
-): Promise<Map<string, ProgressStatus>> {
-  if (moduleSlugs.length === 0) return new Map();
-
-  const supabase = await supabaseServer();
-  const { data } = await supabase
-    .from("learn_module_progress")
-    .select("module_slug, status")
-    .eq("learner_id", userId)
-    .in("module_slug", moduleSlugs);
-
-  return new Map(
-    ((data ?? []) as unknown as Array<{ module_slug: string; status: ProgressStatus }>).map((r) => [
-      r.module_slug,
-      r.status,
-    ]),
-  );
+  // The record lists every Certificate, revoked ones included, newest first.
+  return (record?.certificates ?? [])
+    .filter((c) => c.revokedAt === null)
+    .map((c) => ({
+      publicId: c.code,
+      levelId: c.levelSlug,
+      levelSlug: c.levelSlug,
+      levelTitle: c.levelSlug ? (titles.get(c.levelSlug) ?? "") : "",
+      learnerNameSnapshot: c.issuedName,
+      awardTitleSnapshot: c.awardTitle ?? "",
+      scorePct: c.scorePct ?? 0,
+      issuedAt: c.issuedAt,
+      revokedAt: c.revokedAt,
+    }));
 }
 
 export function tierOf(level: { tier: string }): LevelTier {

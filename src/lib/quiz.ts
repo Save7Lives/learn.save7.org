@@ -1,6 +1,7 @@
 import "server-only";
 
 import { supabaseServer } from "./supabase/server";
+import { getProgressRecord } from "./progress-record";
 import type { QuestionKind, QuizScope } from "./constants";
 import type { OptionRow, QuestionRow } from "@/db/rows";
 
@@ -103,26 +104,6 @@ async function readQuestions(
     topicTag: row.topic_tag,
     choices: optionsByQuestion.get(row.id) ?? [],
   }));
-}
-
-/**
- * A multi-select answer is correct only on an exact set match: every correct
- * choice selected and no incorrect one. Partial credit would let a learner select
- * everything and score well, which teaches the wrong habit.
- *
- * Kept as a pure function because it is the one piece of grading worth being able
- * to test without a database. The authoritative copy is in SQL — this must not be
- * used to grade anything the app then records.
- */
-export function gradeSelection(
-  selected: string[],
-  choiceRows: Array<{ id: string; isCorrect: boolean }>,
-): boolean {
-  const correct = new Set(choiceRows.filter((c) => c.isCorrect).map((c) => c.id));
-  const picked = new Set(selected);
-  if (correct.size !== picked.size) return false;
-  for (const id of correct) if (!picked.has(id)) return false;
-  return true;
 }
 
 // --- Reading questions ------------------------------------------------------
@@ -368,7 +349,7 @@ async function readQuestionsById(ids: string[]): Promise<ClientQuestion[]> {
 /**
  * Where a learner stands on one Stage Quiz: the Progress Record's latest-only
  * view (#16). Every attempt is kept in the database; this is the latest marked
- * one, any open one, and when the Stage was first passed — which, once set, a
+ * one, any open one, and when the Stage was first passed, which, once set, a
  * later practice attempt cannot undo.
  */
 export type StageQuizState = {
@@ -383,47 +364,37 @@ export type StageQuizState = {
   openAttemptId: string | null;
 };
 
+/**
+ * The caller's Stage Quiz state for each Stage asked for, read from their Progress
+ * Record. Serialisable (ISO string, plain numbers) because a Stage page hands it to
+ * a client component.
+ */
 export async function getStageQuizStates(
   stageSlugs: string[],
 ): Promise<Map<string, StageQuizState>> {
   if (stageSlugs.length === 0) return new Map();
-  const supabase = await supabaseServer();
-
-  const { data } = await supabase
-    .from("learn_my_stage_quizzes")
-    .select(
-      "module_slug, quiz_passed_at, latest_attempt_id, latest_attempt_no, score_raw, score_max, passed, open_attempt_id",
-    )
-    .in("module_slug", stageSlugs);
-
-  const rows = (data ?? []) as unknown as Array<{
-    module_slug: string;
-    quiz_passed_at: string | null;
-    latest_attempt_id: string | null;
-    latest_attempt_no: number | null;
-    score_raw: number | null;
-    score_max: number | null;
-    passed: boolean | null;
-    open_attempt_id: string | null;
-  }>;
+  const record = await getProgressRecord();
+  const wanted = new Set(stageSlugs);
 
   return new Map(
-    rows.map((r) => [
-      r.module_slug,
-      {
-        passedAt: r.quiz_passed_at,
-        latest: r.latest_attempt_id
-          ? {
-              attemptId: r.latest_attempt_id,
-              attemptNo: r.latest_attempt_no ?? 1,
-              scoreRaw: r.score_raw ?? 0,
-              scoreMax: r.score_max ?? 0,
-              passed: r.passed === true,
-            }
-          : null,
-        openAttemptId: r.open_attempt_id,
-      },
-    ]),
+    (record?.stages ?? [])
+      .filter((s) => wanted.has(s.slug))
+      .map((s) => [
+        s.slug,
+        {
+          passedAt: s.completedAt ? s.completedAt.toISOString() : null,
+          latest: s.quiz.latest
+            ? {
+                attemptId: s.quiz.latest.attemptId,
+                attemptNo: s.quiz.latest.attemptNo,
+                scoreRaw: s.quiz.latest.scoreRaw,
+                scoreMax: s.quiz.latest.scoreMax,
+                passed: s.quiz.latest.passed,
+              }
+            : null,
+          openAttemptId: s.quiz.openAttemptId,
+        },
+      ]),
   );
 }
 
