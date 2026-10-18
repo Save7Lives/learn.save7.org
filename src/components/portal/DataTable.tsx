@@ -76,7 +76,7 @@ export function DataTable({
             rows.map((row) => (
               <tr
                 key={row.key}
-                className={cx("relative border-b border-line last:border-b-0", row.href && "hover:bg-teal-50")}
+                className={cx("relative border-b border-line last:border-b-0", row.href && "[transform:translateZ(0)]", row.href && "hover:bg-teal-50")}
               >
                 {(() => {
                   let at = 0;
