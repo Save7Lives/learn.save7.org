@@ -17,6 +17,7 @@
     "audit:a11y": "node scripts/a11y/audit.mjs",
     "audit:a11y:selftest": "node scripts/a11y/audit.mjs --selftest",
     "check:vocabulary": "tsx scripts/check-stage-vocabulary.ts",
+    "test": "vitest run",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed"
   },
@@ -45,6 +46,7 @@
     "server-only": "^0.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "4.1.11"
   }
 }
