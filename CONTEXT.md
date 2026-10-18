@@ -63,6 +63,10 @@ One of the aggregate, cohort-wide metrics Admin's pool view shows, derived at re
 **Progress Record**
 The stored state tracking one Student's advancement through the Course: their Baseline Sittings (up to 4, one per fixed slot, each holding score-by-Level sub-scores + a total, never raw answers), the pass/fail state and score of their latest attempt on each Stage Quiz (every attempt is kept in storage; the Record shows only the latest), and timestamped completion flags for Stage, Level, and Certificate issuance. A Stage is complete when its Stage Quiz is first passed, and a later attempt never clears that. A Level is complete when every Stage Quiz in it is passed. Having read a Stage is tracked so a Student can resume, but it is not a completion flag. Feeds both the student-facing progress dashboard and admin oversight views.
 
+**Read Mark**
+The record that a Student has opened a Stage's lesson, kept only so they can resume where they left off. Never a completion flag: "complete" belongs to a Stage Quiz first passed, and nothing reads a Read Mark to decide a Stage, a Level or a Certificate.
+_Avoid_: Module complete, Stage complete (for having read it)
+
 **Improvement**
 The before/after comparison a Student's Progress Record supports: the delta between their initial Baseline Sitting's per-Level sub-score and the Sitting taken after completing that Level, plus the full 4-point trend across all Sittings. Always computed from the Progress Record at read time — never a value stored in its own right.
 

@@ -1,0 +1,1330 @@
+Progress Record read module: app side (DRAFT, nothing applied, nothing committed).
+
+Pairs with T-progress-record-0138_learn_progress_record.sql. Read this preamble, then
+the diff; `git apply` ignores everything above the first "diff --git" line.
+
+BASES
+  * Every file except src/lib/admin/data.ts is a diff against the current
+    transplant-alchemy tree (HEAD 1e7ad5e, T77 already in), so it applies there with
+    `git apply`.
+  * src/lib/admin/data.ts is a diff against the file T84 creates (the new-file hunk in
+    T84-admin-portal.diff, index a9941a1). It applies only once T84 is applied, and T84
+    does not apply to the current tree on its own (it expects Save7Lockup.tsx and
+    icons.tsx from earlier drafts), so the last hunk is checked here against the
+    extracted T84 file, not against a built tree.
+  * T96 and T98 also edit src/lib/admin/data.ts (a comment, then the import block and
+    loadRules). The comment hunk is untouched here; the import block conflicts with this
+    one by hand (the SITTING_COLUMNS line is gone, the loadActorNames line stays).
+  * T99 changes the same region of getPathwayForUser in src/lib/course.ts (resume at
+    the first unpassed Stage). That rule is now the record's `resume_stage_slug`, so
+    this diff supersedes T99's course.ts hunk; its module page hunk is unaffected.
+  * T89 changes getStageQuizStates' caller (module page). Its signature is kept so that
+    hunk still applies.
+
+WHAT CHANGES
+  + src/lib/progress-record.ts: types, mapper and reads (getProgressRecord,
+    getProgressRecords). Sitting, mapSitting and percent move here from baseline.ts,
+    which re-exports them, so nothing that imports them from "@/lib/baseline" moves.
+  ~ course.ts: getPathwayForUser lays the record over the structure; each module now
+    carries `progress` (its Stage entry). getLearnerCertificates reads the record.
+    getModuleStatuses is deleted. `modulesComplete` is renamed `stagesRead`.
+  ~ quiz.ts: getStageQuizStates reads the record (same signature and shape).
+    gradeSelection is deleted.
+  ~ baseline.ts: getBaselineState reads the record; dueSitting, SITTING_COLUMNS and
+    the table reads are gone (the Sitting owed is `baseline.sitting_due`).
+  ~ progress.ts: isLevelContentComplete is deleted.
+  ~ levels/[level]/page.tsx: no per-Stage reads; the Level is complete when the record
+    says so.
+  ~ dashboard/page.tsx: the "Modules complete" figures counted Read Marks, which the
+    glossary forbids calling complete. They now say Stage Quizzes passed, and the
+    per-Level line says "modules read". VISIBLE COPY CHANGE: check it.
+  ~ admin/data.ts (on top of T84): mapLearner reshapes a record into model.ts's
+    StudentRecord. No embed of eight tables, no POST filter, no attempt_no sort. The
+    Eligibility Signal is read beside it. model.ts is untouched and stays pure.
+
+NOT IN THIS DIFF
+  * src/lib/analytics.ts: T84 deletes the whole file (getLearnerSummary with it).
+    It is the last user of SITTING_COLUMNS, so apply T84 before this.
+  * getModuleForUser still reads learn_module_progress for lesson-level state
+    (completed lessons, seconds, last lesson): that is not the Progress Record.
+  * The volunteer portal Learn tab is retired, not ported. Indicative removal list in
+    save7-os (from a grep, not exhaustive): src-vol/03-learn.js (whole file); in
+    src-vol/03-app.js the Learn data load (the learn_levels, learn_modules,
+    learn_lessons, learn_level_progress, learn_module_progress and
+    vol_my_course_learning reads and VDB.learnLevel/learnModule/learner), levelDone,
+    moduleDone, nextModule, the "next Learn step" nudges and the unapproved-volunteer
+    status screen that links to the tab, the 'learn' entries in the tab lists and the
+    default-tab rule, and the renderLearn() calls; then build-vol.mjs's 03-learn.js
+    entry and any test that names them. The view vol_my_course_learning, and
+    learn_my_stage_quizzes (nothing reads it after this), can be dropped later.
+
+diff --git a/src/app/(site)/dashboard/page.tsx b/src/app/(site)/dashboard/page.tsx
+index 1c2e168..a0aa9cc 100644
+--- a/src/app/(site)/dashboard/page.tsx
++++ b/src/app/(site)/dashboard/page.tsx
+@@ -37,10 +37,9 @@ export default async function DashboardPage() {
+   const before = baseline.first;
+   const after = baseline.latestLater;
+ 
+-  const modulesComplete = levels.reduce(
+-    (sum, l) => sum + (l.progress?.modulesComplete ?? 0),
+-    0,
+-  );
++  // Stage Quizzes passed, which is what completes a Stage. A Read Mark is not a
++  // completion, so reading is counted apart and never called complete.
++  const stagesPassed = levels.reduce((sum, l) => sum + (l.progress?.stagesPassed ?? 0), 0);
+   const modulesTotal = levels.reduce((sum, l) => sum + (l.progress?.modulesTotal ?? 0), 0);
+ 
+   // Where to send them next: the first level that isn't finished.
+@@ -117,8 +116,8 @@ export default async function DashboardPage() {
+               emphasis
+             />
+             <Stat
+-              label="Modules complete"
+-              value={`${modulesComplete}/${modulesTotal}`}
++              label="Stage Quizzes passed"
++              value={`${stagesPassed}/${modulesTotal}`}
+               sub={`${levels.length} levels available`}
+             />
+           </div>
+@@ -138,8 +137,8 @@ export default async function DashboardPage() {
+                 {nextLevel.title}
+               </Display>
+               <p className="mt-1 text-sm text-grey">
+-                {nextLevel.progress?.modulesComplete ?? 0} of{" "}
+-                {nextLevel.progress?.modulesTotal ?? 0} modules complete
++                {nextLevel.progress?.stagesPassed ?? 0} of{" "}
++                {nextLevel.progress?.modulesTotal ?? 0} Stage Quizzes passed
+               </p>
+             </div>
+             <ButtonLink
+@@ -190,7 +189,7 @@ export default async function DashboardPage() {
+                     </div>
+ 
+                     <p className="mt-1 text-sm text-grey">
+-                      {p?.modulesComplete ?? 0} of {p?.modulesTotal ?? 0} modules
++                      {p?.stagesRead ?? 0} of {p?.modulesTotal ?? 0} modules read
+                       {` · ${p?.stagesPassed ?? 0} of ${p?.modulesTotal ?? 0} Stage Quizzes passed`}
+                     </p>
+ 
+diff --git a/src/app/(site)/levels/[level]/page.tsx b/src/app/(site)/levels/[level]/page.tsx
+index eeb5a55..124d957 100644
+--- a/src/app/(site)/levels/[level]/page.tsx
++++ b/src/app/(site)/levels/[level]/page.tsx
+@@ -3,9 +3,8 @@ import Link from "next/link";
+ import { notFound, redirect } from "next/navigation";
+ import { requireUser } from "@/lib/authz";
+ import { getBaselineState } from "@/lib/baseline";
+-import { getPathwayForUser, getLevelBySlug, getModuleStatuses } from "@/lib/course";
++import { getPathwayForUser, getLevelBySlug } from "@/lib/course";
+ import { issueCertificateIfEarned } from "@/lib/certificates";
+-import { getStageQuizStates } from "@/lib/quiz";
+ import {
+   Badge,
+   ButtonLink,
+@@ -49,16 +48,8 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
+   const tier = level.tier as LevelTier;
+   const meta = TIER_META[tier];
+   const progress = level.progress!;
+-  const allPassed = progress.modulesTotal > 0 && progress.stagesPassed === progress.modulesTotal;
+-
+-  // Which Stages this learner has read, and where they stand on each Stage Quiz.
+-  const [statusByModule, quizByModule] = await Promise.all([
+-    getModuleStatuses(
+-      user.id,
+-      level.modules.map((m) => m.id),
+-    ),
+-    getStageQuizStates(level.modules.map((m) => m.id)),
+-  ]);
++  // The Progress Record says whether the Level is complete: every Stage Quiz in it passed.
++  const allPassed = progress.status === "COMPLETE";
+ 
+   // Normally issued the moment the last Stage Quiz is passed. Issued here as well,
+   // idempotently, so a learner whose pass landed but whose certificate call did
+@@ -118,12 +109,10 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
+       {/* --- Modules ------------------------------------------------------- */}
+       <ol className="mt-8 space-y-3">
+         {level.modules.map((mod) => {
+-          const status = statusByModule.get(mod.id);
+-          const quiz = quizByModule.get(mod.id);
+           // The tick is for the Stage Quiz, which is what the Certificate counts.
+-          const isDone = quiz?.passedAt != null;
+-          const isStarted = !isDone && (status !== undefined || quiz?.latest != null);
+-          const quizFailed = !isDone && quiz?.latest != null;
++          const isDone = mod.progress?.complete === true;
++          const isStarted = !isDone && mod.progress?.started === true;
++          const quizFailed = !isDone && mod.progress?.quiz.latest != null;
+ 
+           return (
+             <Card as="li" key={mod.slug} className="p-0">
+diff --git a/src/lib/baseline.ts b/src/lib/baseline.ts
+index 881c2b2..a06d550 100644
+--- a/src/lib/baseline.ts
++++ b/src/lib/baseline.ts
+@@ -2,8 +2,14 @@ import "server-only";
+ 
+ import { supabaseServer } from "./supabase/server";
+ import type { LevelTier } from "./constants";
++import { getProgressRecord, mapSitting, percent, type Sitting, type SittingRow } from "./progress-record";
+ import type { SubmittedAnswer } from "./quiz";
+ 
++// Sittings are part of the Progress Record, so their shape and mapping live with it.
++// Re-exported so the pages and the Admin keep importing them from here.
++export { mapSitting, percent };
++export type { LevelScore, Sitting } from "./progress-record";
++
+ /**
+  * The Baseline Assessment, read off its Sittings.
+  *
+@@ -16,7 +22,8 @@ import type { SubmittedAnswer } from "./quiz";
+  * ── WHEN A SITTING IS OFFERED ───────────────────────────────────────────────
+  * The Blueprint's four slots are at signup and after each Level. The Course lets a
+  * learner start at any Level, so "after Beginner" really means "after the next
+- * Level they complete". The rule, in `dueSitting()`:
++ * Level they complete". The rule lives in the Progress Record (save7-os 0138,
++ * `baseline.sitting_due`), which this file reads and does not repeat:
+  *
+  *   - Sitting 1 is owed until it is sat, and **Stage content waits for it** (#54,
+  *     the user's call): a "before" taken after reading a Stage is not a before.
+@@ -28,10 +35,10 @@ import type { SubmittedAnswer } from "./quiz";
+  *     finishes two Levels between Sittings gets one, and can end with fewer than
+  *     four.
+  *
+- * The database enforces only the cap of four. The schedule lives here because it
+- * has no stakes for anyone but the learner: nothing downstream (vetting, the
+- * Eligibility Rule, a Certificate) reads a Baseline score. A learner who calls the
+- * RPC directly to sit early spends their own Sittings, nobody else's.
++ * The submit call enforces only the cap of four. The schedule is the Progress
++ * Record's and has no stakes for anyone but the learner: nothing downstream
++ * (vetting, the Eligibility Rule, a Certificate) reads a Baseline score. A learner
++ * who calls the RPC directly to sit early spends their own Sittings, nobody else's.
+  *
+  * ── NO ANSWER REVIEW, DELIBERATELY ──────────────────────────────────────────
+  * A Stage Quiz shows its marked paper. A Sitting does not, and must not: the same
+@@ -41,18 +48,6 @@ import type { SubmittedAnswer } from "./quiz";
+ 
+ export const MAX_SITTINGS = 4;
+ 
+-export type LevelScore = { score: number; max: number };
+-
+-export type Sitting = {
+-  sittingNo: number;
+-  submittedAt: Date;
+-  /** Keyed by Level slug. */
+-  levelScores: Record<string, LevelScore>;
+-  totalScore: number;
+-  totalMax: number;
+-  totalPct: number;
+-};
+-
+ export type BaselineLevel = { slug: string; title: string; tier: LevelTier };
+ 
+ export type BaselineState = {
+@@ -71,22 +66,6 @@ export type BaselineState = {
+   levelsCompleted: Array<{ slug: string; completedAt: Date }>;
+ };
+ 
+-export function percent(score: number, max: number): number {
+-  return max > 0 ? Math.round((100 * score) / max) : 0;
+-}
+-
+-/**
+- * Which Sitting is owed now, if any. See the header for the rule and why a
+- * skipped Sitting rolls forward rather than stacking up.
+- */
+-export function dueSitting(sittings: Sitting[], levelsCompletedAt: Date[]): number | null {
+-  const n = sittings.length;
+-  if (n >= MAX_SITTINGS) return null;
+-  if (n === 0) return 1;
+-  const last = sittings[n - 1].submittedAt;
+-  return levelsCompletedAt.some((d) => d > last) ? n + 1 : null;
+-}
+-
+ /**
+  * What prompted a Sitting, for the trend's row labels: "At signup", or the Levels
+  * completed between the previous Sitting and this one.
+@@ -124,54 +103,26 @@ export function levelImprovement(
+   return { beforePct, afterPct, change: afterPct - beforePct };
+ }
+ 
+-type SittingRow = {
+-  sitting_no: number;
+-  submitted_at: string;
+-  level_scores: Record<string, LevelScore> | null;
+-  total_score: number;
+-  total_max: number;
+-};
+-
+-export function mapSitting(row: SittingRow): Sitting {
+-  return {
+-    sittingNo: row.sitting_no,
+-    submittedAt: new Date(row.submitted_at),
+-    levelScores: row.level_scores ?? {},
+-    totalScore: row.total_score,
+-    totalMax: row.total_max,
+-    totalPct: percent(row.total_score, row.total_max),
+-  };
+-}
+-
+-export const SITTING_COLUMNS = "sitting_no, submitted_at, level_scores, total_score, total_max";
+-
+ /**
+- * Where the learner stands on the Baseline.
++ * Where the learner stands on the Baseline, read off their Progress Record.
+  *
+- * Row level security scopes both reads to the caller; `learnerId` narrows them for
+- * a staff member who also has a learners row, whose policy admits every learner.
++ * The Sittings, the Levels they completed and the Sitting owed all come from the
++ * record; only the Level titles (the catalogue, which is not a Student's) are read
++ * beside it. With no record (no Student row) the state is the empty one: Sitting 1
++ * owed, so a page that sends a learner to the baseline never loops.
+  */
+ export async function getBaselineState(learnerId: string): Promise<BaselineState> {
+   const supabase = await supabaseServer();
+ 
+-  const [sittingResult, progressResult, levelResult] = await Promise.all([
+-    supabase
+-      .from("learn_baseline_sittings")
+-      .select(SITTING_COLUMNS)
+-      .eq("learner_id", learnerId)
+-      .order("sitting_no"),
+-    supabase
+-      .from("learn_level_progress")
+-      .select("level_slug, completed_at")
+-      .eq("learner_id", learnerId)
+-      .not("completed_at", "is", null),
++  const [record, levelResult] = await Promise.all([
++    getProgressRecord(learnerId),
+     supabase.from("learn_levels").select("slug, title, tier").order("position"),
+   ]);
+ 
+-  const sittings = ((sittingResult.data ?? []) as unknown as SittingRow[]).map(mapSitting);
+-  const levelsCompleted = (
+-    (progressResult.data ?? []) as unknown as Array<{ level_slug: string; completed_at: string }>
+-  ).map((p) => ({ slug: p.level_slug, completedAt: new Date(p.completed_at) }));
++  const sittings = record?.baseline.sittings ?? [];
++  const levelsCompleted = (record?.levels ?? []).flatMap((l) =>
++    l.complete && l.completedAt ? [{ slug: l.slug, completedAt: l.completedAt }] : [],
++  );
+   const levels = (levelResult.data ?? []) as unknown as BaselineLevel[];
+ 
+   const first = sittings.find((s) => s.sittingNo === 1) ?? null;
+@@ -180,10 +131,7 @@ export async function getBaselineState(learnerId: string): Promise<BaselineState
+   return {
+     sittings,
+     completed: first !== null,
+-    due: dueSitting(
+-      sittings,
+-      levelsCompleted.map((c) => c.completedAt),
+-    ),
++    due: record ? record.baseline.sittingDue : 1,
+     first,
+     latestLater: later[later.length - 1] ?? null,
+     levels,
+diff --git a/src/lib/course.ts b/src/lib/course.ts
+index 892e74e..ebeff0e 100644
+--- a/src/lib/course.ts
++++ b/src/lib/course.ts
+@@ -2,11 +2,10 @@ import "server-only";
+ 
+ import { supabaseServer } from "./supabase/server";
+ import { COURSE_SLUG, type LevelTier, type ProgressStatus } from "./constants";
++import { getProgressRecord, type StageEntry } from "./progress-record";
+ import type {
+-  CertificateRow,
+   CourseRow,
+   LessonRow,
+-  LevelProgressRow,
+   LevelRow,
+   ModuleProgressRow,
+   ModuleRow,
+@@ -19,6 +18,11 @@ import type {
+  * that the read path can be freely reused by pages, and the write path stays in
+  * one auditable place.
+  *
++ * Progress is read from the Progress Record (src/lib/progress-record.ts), which
++ * SQL owns: this file lays a learner's record over the Course structure and does
++ * not decide what is complete, passed or latest. Where a Stage or Level is
++ * complete, the record said so.
++ *
+  * ── ON `id` BEING THE SLUG ──────────────────────────────────────────────────
+  * The database keys levels, modules and lessons by slug; the app was written
+  * against a database that keyed them by an opaque id and carried the slug beside
+@@ -148,19 +152,25 @@ export async function getPathway() {
+ export type LevelProgressSummary = {
+   status: ProgressStatus;
+   percentComplete: number;
+-  /** Stages marked read. Drives "resume where you left off", and nothing else. */
+-  modulesComplete: number;
++  /** Stages with a Read Mark. Drives "resume where you left off", and nothing else. */
++  stagesRead: number;
+   modulesTotal: number;
+   /** Stages whose Stage Quiz is passed. This is what completes the Level (#16). */
+   stagesPassed: number;
+   certificatePublicId: string | null;
+-  /** The module to resume at, or the first module if not started. */
++  /** The module to resume at: the first Stage Quiz not yet passed, else the last Stage. */
+   nextModuleSlug: string | null;
+ };
+ 
+-export type LevelWithProgress = Awaited<
+-  ReturnType<typeof getPathway>
+->["levels"][number] & {
++type PathwayLevel = Awaited<ReturnType<typeof getPathway>>["levels"][number];
++
++export type ModuleWithProgress = PathwayLevel["modules"][number] & {
++  /** This learner's entry for the Stage; null for a signed-out visitor. */
++  progress: StageEntry | null;
++};
++
++export type LevelWithProgress = Omit<PathwayLevel, "modules"> & {
++  modules: ModuleWithProgress[];
+   /** Null for a signed-out visitor: structure without a learner attached. */
+   progress: LevelProgressSummary | null;
+ };
+@@ -168,11 +178,9 @@ export type LevelWithProgress = Awaited<
+ /**
+  * The pathway annotated with one learner's progress.
+  *
+- * Four batched reads rather than per-level lookups — this drives the landing page
+- * and the dashboard, so it runs on almost every request a signed-in learner
+- * makes. Row level security scopes each of them to the caller, so there is no
+- * `where learner = me` to forget: `learn_module_progress` returns this learner's
+- * rows and nobody else's whatever this code asks for.
++ * One read, the learner's Progress Record, laid over the structure. Row level
++ * security and the record's own check scope it to the caller, so there is no
++ * `where learner = me` to forget.
+  */
+ export async function getPathwayForUser(userId: string | null) {
+   const { course, levels: pathwayLevels } = await getPathway();
+@@ -182,88 +190,45 @@ export async function getPathwayForUser(userId: string | null) {
+   if (!userId) {
+     return {
+       course,
+-      levels: pathwayLevels.map((level) => ({ ...level, progress: null })) as LevelWithProgress[],
++      levels: pathwayLevels.map((level) => ({
++        ...level,
++        modules: level.modules.map((m) => ({ ...m, progress: null })),
++        progress: null,
++      })) as LevelWithProgress[],
+     };
+   }
+ 
+-  const supabase = await supabaseServer();
+-  const [moduleRows, levelRows, certificateRows] = await Promise.all([
+-    supabase
+-      .from("learn_module_progress")
+-      .select("module_slug, status, quiz_passed_at, updated_at")
+-      .eq("learner_id", userId),
+-
+-    supabase
+-      .from("learn_level_progress")
+-      .select("level_slug, status, percent_complete")
+-      .eq("learner_id", userId),
+-
+-    supabase
+-      .from("learn_certificates")
+-      .select("level_slug, code")
+-      .eq("learner_id", userId)
+-      .is("revoked_at", null),
+-  ]);
+-
+-  const progressRows = (moduleRows.data ?? []) as Pick<
+-    ModuleProgressRow,
+-    "module_slug" | "status" | "quiz_passed_at" | "updated_at"
+-  >[];
+-  const levelProgressRows = (levelRows.data ?? []) as Pick<
+-    LevelProgressRow,
+-    "level_slug" | "status" | "percent_complete"
+-  >[];
+-  const certs = (certificateRows.data ?? []) as Pick<CertificateRow, "level_slug" | "code">[];
+-
+-  const completeModuleIds = new Set(
+-    progressRows.filter((m) => m.status === "COMPLETE").map((m) => m.module_slug),
+-  );
+-  const passedModuleIds = new Set(
+-    progressRows.filter((m) => m.quiz_passed_at !== null).map((m) => m.module_slug),
+-  );
+-  const startedModuleIds = new Set(progressRows.map((m) => m.module_slug));
+-  const levelProgressByLevel = new Map(levelProgressRows.map((l) => [l.level_slug, l]));
+-  const certByLevel = new Map(certs.map((c) => [c.level_slug, c.code]));
++  const record = await getProgressRecord(userId);
++  const stageBySlug = new Map((record?.stages ?? []).map((s) => [s.slug, s]));
++  const levelBySlug = new Map((record?.levels ?? []).map((l) => [l.slug, l]));
+ 
+   const annotated: LevelWithProgress[] = pathwayLevels.map((level) => {
++    const modules = level.modules.map((m) => ({ ...m, progress: stageBySlug.get(m.id) ?? null }));
++    const entry = levelBySlug.get(level.id);
+     const mandatory = level.modules.filter((m) => m.isMandatory);
+-    const modulesTotal = mandatory.length;
+-    const modulesComplete = mandatory.filter((m) => completeModuleIds.has(m.id)).length;
+-    const stagesPassed = mandatory.filter((m) => passedModuleIds.has(m.id)).length;
+-
+-    // Stage Quizzes passed, not Stages read: that is what completes a Level, and
+-    // learn_refresh_progress() (0113) stores the same figure. Computed here too
+-    // for a learner with no level row yet.
+-    const lp = levelProgressByLevel.get(level.id);
+-    const percentComplete =
+-      modulesTotal === 0 ? 0 : Math.round((stagesPassed / modulesTotal) * 100);
+-
+-    // Resume at the first incomplete module; if all are done, stay on the last.
+-    const firstIncomplete = level.modules.find((m) => !completeModuleIds.has(m.id));
+-    const nextModuleSlug =
+-      firstIncomplete?.slug ?? level.modules[level.modules.length - 1]?.slug ?? null;
+-
+-    // A failed Stage Quiz writes no Stage row, only the Level's, so either counts.
+-    const started = level.modules.some((m) => startedModuleIds.has(m.id)) || lp !== undefined;
+-    const status: ProgressStatus =
+-      modulesTotal > 0 && stagesPassed === modulesTotal
+-        ? "COMPLETE"
+-        : started
+-          ? "IN_PROGRESS"
+-          : "NOT_STARTED";
+ 
+-    return {
+-      ...level,
+-      progress: {
+-        status,
+-        percentComplete: lp?.percent_complete ?? percentComplete,
+-        modulesComplete,
+-        modulesTotal,
+-        stagesPassed,
+-        certificatePublicId: certByLevel.get(level.id) ?? null,
+-        nextModuleSlug,
+-      },
+-    };
++    const progress: LevelProgressSummary = entry
++      ? {
++          status: entry.status,
++          percentComplete: entry.percentComplete,
++          stagesRead: entry.stagesRead,
++          modulesTotal: entry.stagesTotal,
++          stagesPassed: entry.stagesPassed,
++          certificatePublicId: entry.certificate?.code ?? null,
++          nextModuleSlug: entry.resumeStageSlug,
++        }
++      : // No record at all (no Student row): the empty one, so a page never branches on it.
++        {
++          status: "NOT_STARTED",
++          percentComplete: 0,
++          stagesRead: 0,
++          modulesTotal: mandatory.length,
++          stagesPassed: 0,
++          certificatePublicId: null,
++          nextModuleSlug: mandatory[0]?.slug ?? null,
++        };
++
++    return { ...level, modules, progress };
+   });
+ 
+   return { course, levels: annotated };
+@@ -403,13 +368,8 @@ export async function getNextModuleSlug(
+ export async function getLearnerCertificates(userId: string) {
+   const supabase = await supabaseServer();
+ 
+-  const [certResult, levelResult] = await Promise.all([
+-    supabase
+-      .from("learn_certificates")
+-      .select("code, level_slug, issued_name, award_title, score_pct, issued_at, revoked_at")
+-      .eq("learner_id", userId)
+-      .is("revoked_at", null)
+-      .order("issued_at", { ascending: false }),
++  const [record, levelResult] = await Promise.all([
++    getProgressRecord(userId),
+     supabase.from("learn_levels").select("slug, title"),
+   ]);
+ 
+@@ -420,52 +380,20 @@ export async function getLearnerCertificates(userId: string) {
+     ]),
+   );
+ 
+-  return ((certResult.data ?? []) as unknown as Array<{
+-    code: string;
+-    level_slug: string | null;
+-    issued_name: string;
+-    award_title: string | null;
+-    score_pct: number | null;
+-    issued_at: string;
+-    revoked_at: string | null;
+-  }>).map((c) => ({
+-    publicId: c.code,
+-    levelId: c.level_slug,
+-    levelSlug: c.level_slug,
+-    levelTitle: c.level_slug ? (titles.get(c.level_slug) ?? "") : "",
+-    learnerNameSnapshot: c.issued_name,
+-    awardTitleSnapshot: c.award_title ?? "",
+-    scorePct: c.score_pct ?? 0,
+-    issuedAt: new Date(c.issued_at),
+-    revokedAt: c.revoked_at ? new Date(c.revoked_at) : null,
+-  }));
+-}
+-
+-/**
+- * Completion status per module, for a set of modules.
+- *
+- * Returned as a map because every caller is asking "is this one done" per row
+- * while rendering a list. Row level security scopes it to the caller.
+- */
+-export async function getModuleStatuses(
+-  userId: string,
+-  moduleSlugs: string[],
+-): Promise<Map<string, ProgressStatus>> {
+-  if (moduleSlugs.length === 0) return new Map();
+-
+-  const supabase = await supabaseServer();
+-  const { data } = await supabase
+-    .from("learn_module_progress")
+-    .select("module_slug, status")
+-    .eq("learner_id", userId)
+-    .in("module_slug", moduleSlugs);
+-
+-  return new Map(
+-    ((data ?? []) as unknown as Array<{ module_slug: string; status: ProgressStatus }>).map((r) => [
+-      r.module_slug,
+-      r.status,
+-    ]),
+-  );
++  // The record lists every Certificate, revoked ones included, newest first.
++  return (record?.certificates ?? [])
++    .filter((c) => c.revokedAt === null)
++    .map((c) => ({
++      publicId: c.code,
++      levelId: c.levelSlug,
++      levelSlug: c.levelSlug,
++      levelTitle: c.levelSlug ? (titles.get(c.levelSlug) ?? "") : "",
++      learnerNameSnapshot: c.issuedName,
++      awardTitleSnapshot: c.awardTitle ?? "",
++      scorePct: c.scorePct ?? 0,
++      issuedAt: c.issuedAt,
++      revokedAt: c.revokedAt,
++    }));
+ }
+ 
+ export function tierOf(level: { tier: string }): LevelTier {
+diff --git a/src/lib/progress-record.ts b/src/lib/progress-record.ts
+new file mode 100644
+index 0000000..3548132
+--- /dev/null
++++ b/src/lib/progress-record.ts
+@@ -0,0 +1,303 @@
++import "server-only";
++
++import { cache } from "react";
++import { supabaseServer } from "./supabase/server";
++import type { ProgressStatus } from "./constants";
++
++/**
++ * The Progress Record, as the app reads it.
++ *
++ * One SQL module owns it (save7-os 0138, ADR 0001): `learn_progress_record()` for one
++ * Student and `learn_progress_records()` for the Admin's pool. Nothing in the app
++ * works out whether a Stage or a Level is complete, which Quiz attempt is the latest,
++ * or which Baseline Sitting is owed: those arrive decided, and this file only gives
++ * them TypeScript names. Improvement and the Growth Indicators are still computed
++ * from the record at read time (`levelImprovement()` in baseline.ts, and the Admin's
++ * `model.ts`); they are never stored and never asked of SQL.
++ *
++ * Terms are CONTEXT.md's. A Stage is `complete` when its Stage Quiz was first passed,
++ * and a later attempt never clears that. `read` is the Read Mark and is only that:
++ * nothing here, and nothing that reads this, may treat it as a completion flag.
++ *
++ * Who can read what is the database's call, not this file's. A Student asking for
++ * anyone else's record gets null, and so does anyone with no Student row.
++ */
++
++// --- Sittings (moved here from baseline.ts, which re-exports them) -------------
++
++export type LevelScore = { score: number; max: number };
++
++export type Sitting = {
++  sittingNo: number;
++  submittedAt: Date;
++  /** Keyed by Level slug. */
++  levelScores: Record<string, LevelScore>;
++  totalScore: number;
++  totalMax: number;
++  totalPct: number;
++};
++
++/** A Sitting as the database returns it, from the record or from the submit call. */
++export type SittingRow = {
++  sitting_no: number;
++  submitted_at: string;
++  level_scores: Record<string, LevelScore> | null;
++  total_score: number;
++  total_max: number;
++};
++
++export function percent(score: number, max: number): number {
++  return max > 0 ? Math.round((100 * score) / max) : 0;
++}
++
++export function mapSitting(row: SittingRow): Sitting {
++  return {
++    sittingNo: row.sitting_no,
++    submittedAt: new Date(row.submitted_at),
++    levelScores: row.level_scores ?? {},
++    totalScore: row.total_score,
++    totalMax: row.total_max,
++    totalPct: percent(row.total_score, row.total_max),
++  };
++}
++
++// --- The record --------------------------------------------------------------
++
++export type StageQuizAttempt = {
++  attemptId: string;
++  attemptNo: number;
++  scoreRaw: number;
++  scoreMax: number;
++  scorePct: number;
++  passed: boolean;
++  submittedAt: Date;
++};
++
++export type StageEntry = {
++  slug: string;
++  levelSlug: string;
++  order: number;
++  isMandatory: boolean;
++  /** The Read Mark: opened and marked read, so the Student can resume. Not completion. */
++  read: boolean;
++  readAt: Date | null;
++  /** Opened a lesson in this Stage, or sat its Stage Quiz. */
++  started: boolean;
++  lastLessonSlug: string | null;
++  /** The Stage Quiz was first passed. Set once; a later attempt never clears it. */
++  complete: boolean;
++  completedAt: Date | null;
++  quiz: {
++    /** Submitted Stage Quiz attempts. Every one is kept; the record shows the latest. */
++    attempts: number;
++    latest: StageQuizAttempt | null;
++    openAttemptId: string | null;
++  };
++};
++
++export type LevelEntry = {
++  slug: string;
++  order: number;
++  /** Every mandatory Stage Quiz in the Level passed: `learn_level_earned()` itself. */
++  complete: boolean;
++  completedAt: Date | null;
++  stagesTotal: number;
++  stagesPassed: number;
++  stagesRead: number;
++  percentComplete: number;
++  status: ProgressStatus;
++  /** The first mandatory Stage not yet passed, else the last. */
++  resumeStageSlug: string | null;
++  /** The live Certificate, or null (none issued, or revoked). */
++  certificate: { code: string; issuedAt: Date } | null;
++};
++
++export type CertificateEntry = {
++  code: string;
++  levelSlug: string | null;
++  issuedName: string;
++  awardTitle: string | null;
++  scorePct: number | null;
++  issuedAt: Date;
++  revokedAt: Date | null;
++};
++
++export type ProgressRecord = {
++  learner: { id: string; name: string; signedUpAt: Date; lastActiveAt: Date };
++  baseline: {
++    /** Oldest first. Scores only, never answers. */
++    sittings: Sitting[];
++    /** The Sitting owed now: 1 until it is sat, then once per run of Levels, null at four. */
++    sittingDue: number | null;
++  };
++  /** Every Stage, in Course order. */
++  stages: StageEntry[];
++  /** Every Level, in Course order. */
++  levels: LevelEntry[];
++  /** Every Certificate, revoked ones included. */
++  certificates: CertificateEntry[];
++};
++
++/** What `learn_progress_record()` returns (see the header of save7-os 0138). */
++export type RawProgressRecord = {
++  learner: { id: string; name: string; signed_up_at: string; last_active_at: string };
++  baseline: { sittings: SittingRow[]; sitting_due: number | null };
++  stages: Array<{
++    stage_slug: string;
++    level_slug: string;
++    position: number;
++    is_mandatory: boolean;
++    read: boolean;
++    read_at: string | null;
++    started: boolean;
++    last_lesson_slug: string | null;
++    complete: boolean;
++    completed_at: string | null;
++    quiz: {
++      attempts: number;
++      latest: {
++        attempt_id: string;
++        attempt_no: number;
++        score_raw: number;
++        score_max: number;
++        score_pct: number;
++        passed: boolean;
++        submitted_at: string;
++      } | null;
++      open_attempt_id: string | null;
++    };
++  }>;
++  levels: Array<{
++    level_slug: string;
++    position: number;
++    complete: boolean;
++    completed_at: string | null;
++    stages_total: number;
++    stages_passed: number;
++    stages_read: number;
++    percent_complete: number;
++    status: ProgressStatus;
++    resume_stage_slug: string | null;
++    certificate: { code: string; issued_at: string } | null;
++  }>;
++  certificates: Array<{
++    code: string;
++    level_slug: string | null;
++    issued_name: string;
++    award_title: string | null;
++    score_pct: number | null;
++    issued_at: string;
++    revoked_at: string | null;
++  }>;
++};
++
++const date = (value: string | null): Date | null => (value ? new Date(value) : null);
++
++export function mapProgressRecord(raw: RawProgressRecord): ProgressRecord {
++  return {
++    learner: {
++      id: raw.learner.id,
++      name: raw.learner.name,
++      signedUpAt: new Date(raw.learner.signed_up_at),
++      lastActiveAt: new Date(raw.learner.last_active_at),
++    },
++    baseline: {
++      sittings: raw.baseline.sittings.map(mapSitting),
++      sittingDue: raw.baseline.sitting_due,
++    },
++    stages: raw.stages.map((s) => ({
++      slug: s.stage_slug,
++      levelSlug: s.level_slug,
++      order: s.position,
++      isMandatory: s.is_mandatory,
++      read: s.read,
++      readAt: date(s.read_at),
++      started: s.started,
++      lastLessonSlug: s.last_lesson_slug,
++      complete: s.complete,
++      completedAt: date(s.completed_at),
++      quiz: {
++        attempts: s.quiz.attempts,
++        latest: s.quiz.latest && {
++          attemptId: s.quiz.latest.attempt_id,
++          attemptNo: s.quiz.latest.attempt_no,
++          scoreRaw: s.quiz.latest.score_raw,
++          scoreMax: s.quiz.latest.score_max,
++          scorePct: s.quiz.latest.score_pct,
++          passed: s.quiz.latest.passed === true,
++          submittedAt: new Date(s.quiz.latest.submitted_at),
++        },
++        openAttemptId: s.quiz.open_attempt_id,
++      },
++    })),
++    levels: raw.levels.map((l) => ({
++      slug: l.level_slug,
++      order: l.position,
++      complete: l.complete,
++      completedAt: date(l.completed_at),
++      stagesTotal: l.stages_total,
++      stagesPassed: l.stages_passed,
++      stagesRead: l.stages_read,
++      percentComplete: l.percent_complete,
++      status: l.status,
++      resumeStageSlug: l.resume_stage_slug,
++      certificate: l.certificate && {
++        code: l.certificate.code,
++        issuedAt: new Date(l.certificate.issued_at),
++      },
++    })),
++    certificates: raw.certificates.map((c) => ({
++      code: c.code,
++      levelSlug: c.level_slug,
++      issuedName: c.issued_name,
++      awardTitle: c.award_title,
++      scorePct: c.score_pct,
++      issuedAt: new Date(c.issued_at),
++      revokedAt: date(c.revoked_at),
++    })),
++  };
++}
++
++// --- Reads -------------------------------------------------------------------
++
++/**
++ * One Student's Progress Record, or null when there is none to show: no Student row,
++ * or somebody else's record asked for by a caller who is not an Admin.
++ *
++ * With no id it is the signed-in caller's own. Passing the caller's own id is the same
++ * thing; a Student naming anyone else is refused by the database, not here.
++ *
++ * Memoised per request, so a page that asks for the pathway, the Baseline and the
++ * Certificates builds the record once. It must therefore not be called to read back a
++ * write made earlier in the same request.
++ */
++export const getProgressRecord = cache(
++  async (learnerId?: string): Promise<ProgressRecord | null> => {
++    const supabase = await supabaseServer();
++    const { data, error } = await supabase.rpc(
++      "learn_progress_record",
++      learnerId ? { p_learner: learnerId } : {},
++    );
++    if (error) throw new Error(`Could not read the Progress Record: ${error.message}`);
++    return data ? mapProgressRecord(data as unknown as RawProgressRecord) : null;
++  },
++);
++
++/**
++ * Every Student's record, for an Admin: newest sign-up first, one page at a time
++ * because the API caps a response. A Student calling this gets their own single record.
++ */
++export async function getProgressRecords(
++  limit: number,
++  offset: number,
++): Promise<ProgressRecord[]> {
++  const supabase = await supabaseServer();
++  const { data, error } = await supabase.rpc("learn_progress_records", {
++    p_limit: limit,
++    p_offset: offset,
++  });
++  if (error) throw new Error(`Could not read the Students: ${error.message}`);
++  return ((data ?? []) as unknown as Array<{ record: RawProgressRecord }>).map((r) =>
++    mapProgressRecord(r.record),
++  );
++}
+diff --git a/src/lib/progress.ts b/src/lib/progress.ts
+index fba1664..7e9bb79 100644
+--- a/src/lib/progress.ts
++++ b/src/lib/progress.ts
+@@ -151,29 +151,3 @@ export async function completeModule(
+   await recordEvent(userId, "module_complete", { moduleId });
+   return { ok: true };
+ }
+-
+-/** Whether every mandatory module in a level is complete. Gates the certificate. */
+-export async function isLevelContentComplete(
+-  userId: string,
+-  levelId: string,
+-): Promise<boolean> {
+-  const supabase = await supabaseServer();
+-
+-  const { data: mandatory } = await supabase
+-    .from("learn_modules")
+-    .select("slug")
+-    .eq("level_slug", levelId)
+-    .eq("is_mandatory", true);
+-
+-  const required = (mandatory ?? []).map((m) => (m as { slug: string }).slug);
+-  if (required.length === 0) return false;
+-
+-  const { count } = await supabase
+-    .from("learn_module_progress")
+-    .select("module_slug", { count: "exact", head: true })
+-    .eq("learner_id", userId)
+-    .eq("status", "COMPLETE")
+-    .in("module_slug", required);
+-
+-  return (count ?? 0) === required.length;
+-}
+diff --git a/src/lib/quiz.ts b/src/lib/quiz.ts
+index 749c6c5..2557aba 100644
+--- a/src/lib/quiz.ts
++++ b/src/lib/quiz.ts
+@@ -1,6 +1,7 @@
+ import "server-only";
+ 
+ import { supabaseServer } from "./supabase/server";
++import { getProgressRecord } from "./progress-record";
+ import type { QuestionKind, QuizScope } from "./constants";
+ import type { OptionRow, QuestionRow } from "@/db/rows";
+ 
+@@ -105,26 +106,6 @@ async function readQuestions(
+   }));
+ }
+ 
+-/**
+- * A multi-select answer is correct only on an exact set match: every correct
+- * choice selected and no incorrect one. Partial credit would let a learner select
+- * everything and score well, which teaches the wrong habit.
+- *
+- * Kept as a pure function because it is the one piece of grading worth being able
+- * to test without a database. The authoritative copy is in SQL — this must not be
+- * used to grade anything the app then records.
+- */
+-export function gradeSelection(
+-  selected: string[],
+-  choiceRows: Array<{ id: string; isCorrect: boolean }>,
+-): boolean {
+-  const correct = new Set(choiceRows.filter((c) => c.isCorrect).map((c) => c.id));
+-  const picked = new Set(selected);
+-  if (correct.size !== picked.size) return false;
+-  for (const id of correct) if (!picked.has(id)) return false;
+-  return true;
+-}
+-
+ // --- Reading questions ------------------------------------------------------
+ 
+ /**
+@@ -368,7 +349,7 @@ async function readQuestionsById(ids: string[]): Promise<ClientQuestion[]> {
+ /**
+  * Where a learner stands on one Stage Quiz: the Progress Record's latest-only
+  * view (#16). Every attempt is kept in the database; this is the latest marked
+- * one, any open one, and when the Stage was first passed — which, once set, a
++ * one, any open one, and when the Stage was first passed, which, once set, a
+  * later practice attempt cannot undo.
+  */
+ export type StageQuizState = {
+@@ -383,47 +364,37 @@ export type StageQuizState = {
+   openAttemptId: string | null;
+ };
+ 
++/**
++ * The caller's Stage Quiz state for each Stage asked for, read from their Progress
++ * Record. Serialisable (ISO string, plain numbers) because a Stage page hands it to
++ * a client component.
++ */
+ export async function getStageQuizStates(
+   stageSlugs: string[],
+ ): Promise<Map<string, StageQuizState>> {
+   if (stageSlugs.length === 0) return new Map();
+-  const supabase = await supabaseServer();
+-
+-  const { data } = await supabase
+-    .from("learn_my_stage_quizzes")
+-    .select(
+-      "module_slug, quiz_passed_at, latest_attempt_id, latest_attempt_no, score_raw, score_max, passed, open_attempt_id",
+-    )
+-    .in("module_slug", stageSlugs);
+-
+-  const rows = (data ?? []) as unknown as Array<{
+-    module_slug: string;
+-    quiz_passed_at: string | null;
+-    latest_attempt_id: string | null;
+-    latest_attempt_no: number | null;
+-    score_raw: number | null;
+-    score_max: number | null;
+-    passed: boolean | null;
+-    open_attempt_id: string | null;
+-  }>;
++  const record = await getProgressRecord();
++  const wanted = new Set(stageSlugs);
+ 
+   return new Map(
+-    rows.map((r) => [
+-      r.module_slug,
+-      {
+-        passedAt: r.quiz_passed_at,
+-        latest: r.latest_attempt_id
+-          ? {
+-              attemptId: r.latest_attempt_id,
+-              attemptNo: r.latest_attempt_no ?? 1,
+-              scoreRaw: r.score_raw ?? 0,
+-              scoreMax: r.score_max ?? 0,
+-              passed: r.passed === true,
+-            }
+-          : null,
+-        openAttemptId: r.open_attempt_id,
+-      },
+-    ]),
++    (record?.stages ?? [])
++      .filter((s) => wanted.has(s.slug))
++      .map((s) => [
++        s.slug,
++        {
++          passedAt: s.completedAt ? s.completedAt.toISOString() : null,
++          latest: s.quiz.latest
++            ? {
++                attemptId: s.quiz.latest.attemptId,
++                attemptNo: s.quiz.latest.attemptNo,
++                scoreRaw: s.quiz.latest.scoreRaw,
++                scoreMax: s.quiz.latest.scoreMax,
++                passed: s.quiz.latest.passed,
++              }
++            : null,
++          openAttemptId: s.quiz.openAttemptId,
++        },
++      ]),
+   );
+ }
+ 
+diff --git a/src/lib/admin/data.ts b/src/lib/admin/data.ts
+--- a/src/lib/admin/data.ts
++++ b/src/lib/admin/data.ts
+@@ -1,6 +1,6 @@
+ import "server-only";
+ 
+-import { SITTING_COLUMNS, mapSitting, type Sitting } from "@/lib/baseline";
++import { getProgressRecord, getProgressRecords, type ProgressRecord } from "@/lib/progress-record";
+ import { supabaseServer } from "@/lib/supabase/server";
+ import type {
+   Catalogue,
+@@ -16,55 +16,16 @@
+  * second layer: the `app_is_staff()` arm of each `learn_*` select policy is what
+  * lets one query return every Student.
+  *
++ * A Student's progress is read as their Progress Record (`learn_progress_record()` and
++ * `learn_progress_records()`, save7-os 0138): the same record a Student reads for
++ * themselves, so nothing here works out a completion, a latest attempt or a Sitting.
++ * `mapLearner` only reshapes it into the `StudentRecord` that `model.ts` reads. The
++ * Eligibility Signal is not part of the record (it is produced by evaluating one), so
++ * it is read beside it.
++ *
+  * Nothing here selects an email address, a date of birth or a raw answer (#72, #18).
+  */
+ 
+-type SittingRow = Parameters<typeof mapSitting>[0];
+-
+-type LearnerRow = {
+-  id: string;
+-  name: string;
+-  created_at: string;
+-  last_seen_at: string | null;
+-  learn_baseline_sittings: SittingRow[] | null;
+-  learn_module_progress: Array<{ module_slug: string; quiz_passed_at: string | null }> | null;
+-  learn_level_progress: Array<{ level_slug: string; completed_at: string | null }> | null;
+-  learn_attempts: Array<{
+-    scope: string;
+-    module_slug: string | null;
+-    attempt_no: number;
+-    score_raw: number | null;
+-    score_max: number | null;
+-    passed: boolean | null;
+-    submitted_at: string | null;
+-  }> | null;
+-  learn_certificates: Array<{
+-    code: string;
+-    level_slug: string | null;
+-    award_title: string | null;
+-    issued_at: string;
+-    revoked_at: string | null;
+-  }> | null;
+-  /** One row per Student: the signal's primary key is the learner. */
+-  learn_eligibility_signals: {
+-    eligible: boolean;
+-    evaluated_at: string;
+-    rule_version: number;
+-  } | null;
+-  /** The newest event only, by the embedded order and limit below. */
+-  learn_events: Array<{ created_at: string }> | null;
+-};
+-
+-const LEARNER_SELECT =
+-  "id, name, created_at, last_seen_at, " +
+-  `learn_baseline_sittings(${SITTING_COLUMNS}), ` +
+-  "learn_module_progress(module_slug, quiz_passed_at), " +
+-  "learn_level_progress(level_slug, completed_at), " +
+-  "learn_attempts(scope, module_slug, attempt_no, score_raw, score_max, passed, submitted_at), " +
+-  "learn_certificates(code, level_slug, award_title, issued_at, revoked_at), " +
+-  "learn_eligibility_signals(eligible, evaluated_at, rule_version), " +
+-  "learn_events(created_at)";
+-
+ export async function loadCatalogue(): Promise<Catalogue> {
+   const supabase = await supabaseServer();
+   const [levelResult, moduleResult] = await Promise.all([
+@@ -88,110 +49,107 @@
+   );
+ }
+ 
+-function mapLearner(row: LearnerRow, catalogue: Catalogue): StudentRecord {
+-  const signedUpAt = new Date(row.created_at);
+-
++/** The Student's record reshaped for `model.ts`. No rule is applied here. */
++function mapLearner(
++  record: ProgressRecord,
++  signal: EligibilitySignal | null,
++  catalogue: Catalogue,
++): StudentRecord {
++  /* A Stage appears only once it has been opened or its quiz attempted, as before: a
++     Stage with no entry has never been opened. */
+   const stages: Record<string, StageRecord> = {};
+-  const stage = (slug: string): StageRecord =>
+-    (stages[slug] ??= { passedAt: null, started: false, attempts: 0, latest: null });
+-
+-  for (const p of row.learn_module_progress ?? []) {
+-    const s = stage(p.module_slug);
+-    s.started = true;
+-    s.passedAt = p.quiz_passed_at ? new Date(p.quiz_passed_at) : null;
+-  }
+-  /* Stage Quiz attempts only: a Baseline Sitting is its own table, and the old
+-     PRE and CHECK scopes are not Stage Quizzes. Newest submitted attempt last. */
+-  const attempts = (row.learn_attempts ?? [])
+-    .filter((a) => a.scope === "POST" && a.module_slug && a.submitted_at)
+-    .sort((a, b) => a.attempt_no - b.attempt_no);
+-  for (const a of attempts) {
+-    const s = stage(a.module_slug as string);
+-    s.attempts += 1;
+-    s.latest = {
+-      score: a.score_raw ?? 0,
+-      max: a.score_max ?? 0,
+-      at: new Date(a.submitted_at as string),
+-      passed: a.passed === true,
++  for (const s of record.stages) {
++    if (!s.started && !s.complete) continue;
++    stages[s.slug] = {
++      passedAt: s.completedAt,
++      started: s.started,
++      attempts: s.quiz.attempts,
++      latest: s.quiz.latest && {
++        score: s.quiz.latest.scoreRaw,
++        max: s.quiz.latest.scoreMax,
++        at: s.quiz.latest.submittedAt,
++        passed: s.quiz.latest.passed,
++      },
+     };
+   }
+ 
+   const levelCompletedAt: Record<string, Date | null> = {};
+   for (const l of catalogue) levelCompletedAt[l.slug] = null;
+-  for (const p of row.learn_level_progress ?? []) {
+-    levelCompletedAt[p.level_slug] = p.completed_at ? new Date(p.completed_at) : null;
+-  }
+-
+-  /* "Last active" has no column of its own: `last_seen_at` is stamped only when an
+-     account is claimed. The source is the newest dashboard event (lesson views, quiz
+-     starts and submissions, module completions), falling back to the signup. */
+-  const eventAt = row.learn_events?.[0]?.created_at;
+-  const lastActiveAt = new Date(
+-    Math.max(
+-      signedUpAt.getTime(),
+-      eventAt ? new Date(eventAt).getTime() : 0,
+-      row.last_seen_at ? new Date(row.last_seen_at).getTime() : 0,
+-    ),
+-  );
++  for (const l of record.levels) levelCompletedAt[l.slug] = l.complete ? l.completedAt : null;
+ 
+-  const signal: EligibilitySignal | null = row.learn_eligibility_signals
+-    ? {
+-        eligible: row.learn_eligibility_signals.eligible,
+-        evaluatedAt: new Date(row.learn_eligibility_signals.evaluated_at),
+-        ruleVersion: row.learn_eligibility_signals.rule_version,
+-      }
+-    : null;
+-
+   return {
+-    id: row.id,
+-    name: row.name,
+-    signedUpAt,
+-    lastActiveAt,
+-    sittings: (row.learn_baseline_sittings ?? []).map(mapSitting).sort((a, b) => a.sittingNo - b.sittingNo),
++    id: record.learner.id,
++    name: record.learner.name,
++    signedUpAt: record.learner.signedUpAt,
++    lastActiveAt: record.learner.lastActiveAt,
++    sittings: record.baseline.sittings,
+     stages,
+     levelCompletedAt,
+-    certificates: (row.learn_certificates ?? []).map((c) => ({
++    certificates: record.certificates.map((c) => ({
+       code: c.code,
+-      levelSlug: c.level_slug,
+-      awardTitle: c.award_title ?? "",
+-      issuedAt: new Date(c.issued_at),
+-      revokedAt: c.revoked_at ? new Date(c.revoked_at) : null,
++      levelSlug: c.levelSlug,
++      awardTitle: c.awardTitle ?? "",
++      issuedAt: c.issuedAt,
++      revokedAt: c.revokedAt,
+     })),
+     signal,
+   };
+ }
+ 
++type SignalRow = {
++  learner_id: string;
++  eligible: boolean;
++  evaluated_at: string;
++  rule_version: number;
++};
++
++const toSignal = (r: SignalRow): EligibilitySignal => ({
++  eligible: r.eligible,
++  evaluatedAt: new Date(r.evaluated_at),
++  ruleVersion: r.rule_version,
++});
++
+ const BATCH = 500;
+ 
+ /** Everyone who has signed up, newest first. Paged, because the API caps a response. */
+ export async function loadStudents(catalogue: Catalogue): Promise<StudentRecord[]> {
+   const supabase = await supabaseServer();
+-  const students: StudentRecord[] = [];
++
++  /* One Signal per Student (its primary key is the learner), so a map by learner. */
++  const signals = new Map<string, EligibilitySignal>();
+   for (let from = 0; ; from += BATCH) {
+     const { data, error } = await supabase
+-      .from("learners")
+-      .select(LEARNER_SELECT)
+-      .order("created_at", { ascending: false })
+-      .order("created_at", { referencedTable: "learn_events", ascending: false })
+-      .limit(1, { referencedTable: "learn_events" })
++      .from("learn_eligibility_signals")
++      .select("learner_id, eligible, evaluated_at, rule_version")
++      .order("learner_id")
+       .range(from, from + BATCH - 1);
+-    if (error) throw new Error(`Could not read the Students: ${error.message}`);
+-    const rows = (data ?? []) as unknown as LearnerRow[];
+-    students.push(...rows.map((r) => mapLearner(r, catalogue)));
+-    if (rows.length < BATCH) return students;
++    if (error) throw new Error(`Could not read the Eligibility Signals: ${error.message}`);
++    const rows = (data ?? []) as unknown as SignalRow[];
++    for (const r of rows) signals.set(r.learner_id, toSignal(r));
++    if (rows.length < BATCH) break;
+   }
++
++  const students: StudentRecord[] = [];
++  for (let from = 0; ; from += BATCH) {
++    const records = await getProgressRecords(BATCH, from);
++    students.push(...records.map((r) => mapLearner(r, signals.get(r.learner.id) ?? null, catalogue)));
++    if (records.length < BATCH) return students;
++  }
+ }
+ 
+ export async function loadStudent(id: string, catalogue: Catalogue): Promise<StudentRecord | null> {
+   const supabase = await supabaseServer();
+-  const { data } = await supabase
+-    .from("learners")
+-    .select(LEARNER_SELECT)
+-    .eq("id", id)
+-    .order("created_at", { referencedTable: "learn_events", ascending: false })
+-    .limit(1, { referencedTable: "learn_events" })
+-    .maybeSingle();
+-  return data ? mapLearner(data as unknown as LearnerRow, catalogue) : null;
++  const [record, signalResult] = await Promise.all([
++    getProgressRecord(id),
++    supabase
++      .from("learn_eligibility_signals")
++      .select("learner_id, eligible, evaluated_at, rule_version")
++      .eq("learner_id", id)
++      .maybeSingle(),
++  ]);
++  if (!record) return null;
++  const signalRow = signalResult.data as unknown as SignalRow | null;
++  return mapLearner(record, signalRow ? toSignal(signalRow) : null, catalogue);
+ }
+ 
+ export type ActivityEvent = { type: string; stage: string | null; at: Date };
+@@ -294,4 +252,4 @@
+     .slice(0, limit);
+ }
+ 
+-export type { Sitting };
++export type { Sitting } from "@/lib/progress-record";
