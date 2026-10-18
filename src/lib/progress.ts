@@ -151,29 +151,3 @@ export async function completeModule(
   await recordEvent(userId, "module_complete", { moduleId });
   return { ok: true };
 }
-
-/** Whether every mandatory module in a level is complete. Gates the certificate. */
-export async function isLevelContentComplete(
-  userId: string,
-  levelId: string,
-): Promise<boolean> {
-  const supabase = await supabaseServer();
-
-  const { data: mandatory } = await supabase
-    .from("learn_modules")
-    .select("slug")
-    .eq("level_slug", levelId)
-    .eq("is_mandatory", true);
-
-  const required = (mandatory ?? []).map((m) => (m as { slug: string }).slug);
-  if (required.length === 0) return false;
-
-  const { count } = await supabase
-    .from("learn_module_progress")
-    .select("module_slug", { count: "exact", head: true })
-    .eq("learner_id", userId)
-    .eq("status", "COMPLETE")
-    .in("module_slug", required);
-
-  return (count ?? 0) === required.length;
-}

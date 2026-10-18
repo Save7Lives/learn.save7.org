@@ -3,7 +3,6 @@ import { Icon } from "@/components/ui/icons";
 import { PortalCard, StatusPill, StepDot } from "@/components/portal/Portal";
 import { ButtonLink, Display, Eyebrow, ProgressBar, cx } from "@/components/ui/primitives";
 import type { LevelWithProgress } from "@/lib/course";
-import type { StageQuizState } from "@/lib/quiz";
 import { AwardNode } from "./AwardNode";
 
 /**
@@ -16,30 +15,21 @@ export function LevelOverview({
   levelSlug,
   certificatePublicId,
   baselineDue,
-  stageStatus,
-  quizByModule,
 }: {
   level: LevelWithProgress;
   levelSlug: string;
   certificatePublicId: string | null;
   /** The next Baseline Sitting offered after this Level, or null. */
   baselineDue: number | null;
-  /** Stage ids this learner has read. */
-  stageStatus: Map<string, unknown>;
-  quizByModule: Map<string, StageQuizState>;
 }) {
   const progress = level.progress!;
   const allPassed = progress.modulesTotal > 0 && progress.stagesPassed === progress.modulesTotal;
-  const statusByModule = stageStatus;
 
   // The first Stage whose Quiz is not passed: the pink row, and the Stage the summary's
   // button opens. -1 once every Stage Quiz is passed.
-  const nextIndex = level.modules.findIndex((m) => quizByModule.get(m.id)?.passedAt == null);
+  const nextIndex = level.modules.findIndex((m) => m.progress?.complete !== true);
   const nextStage = nextIndex >= 0 ? level.modules[nextIndex] : null;
-  const anyStarted = level.modules.some((m) => {
-    const q = quizByModule.get(m.id);
-    return statusByModule.get(m.id) !== undefined || q?.latest != null || q?.passedAt != null;
-  });
+  const anyStarted = level.modules.some((m) => m.progress?.started === true);
   const toGo = progress.modulesTotal - progress.stagesPassed;
 
   return (
@@ -134,12 +124,10 @@ export function LevelOverview({
         {/* --- Timeline: a dotted line, a Stage row on each node, the Certificate last --- */}
         <ol className="relative m-0 list-none p-0 pl-12 before:absolute before:bottom-[3.75rem] before:left-[15px] before:top-[34px] before:border-l-[3px] before:border-dotted before:border-line-strong before:content-[''] min-[760px]:pl-[3.75rem]">
           {level.modules.map((mod, i) => {
-            const status = statusByModule.get(mod.id);
-            const quiz = quizByModule.get(mod.id);
             // The tick is for the Stage Quiz, which is what the Certificate counts.
-            const isDone = quiz?.passedAt != null;
-            const quizFailed = !isDone && quiz?.latest != null;
-            const isStarted = !isDone && (status !== undefined || quizFailed);
+            const isDone = mod.progress?.complete === true;
+            const quizFailed = !isDone && mod.progress?.quiz.latest != null;
+            const isStarted = !isDone && mod.progress?.started === true;
             const isNext = i === nextIndex;
 
             return (
