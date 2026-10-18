@@ -1,0 +1,4601 @@
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 60a2572..74a4fa5 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -119,12 +119,18 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
+   Level is completed and never required (`dueSitting()` in `src/lib/baseline.ts`).
+ - **Improvement is Sitting 1 against a later Sitting of the same paper.** It is
+   derived at read time (`levelImprovement()` in `src/lib/baseline.ts`, read by
+-  `src/lib/analytics.ts`) and never stored. Stage Quiz retakes are unlimited, because
++  `src/lib/admin/model.ts`) and never stored. Stage Quiz retakes are unlimited, because
+   passing every Stage Quiz in a Level is what earns its Certificate, so they must
+   never feed the impact numbers.
+-  `analytics.ts` and the admin learners page still read POST `attempt_no = 1` for a
+-  few Stage Quiz figures; the map's admin-indicator audit owns them, and they are
+-  not Improvement.
++  The Admin's Stage Quiz pass rate counts Students who attempted and who passed
++  (`quiz_passed_at`), never an attempt number.
++- **Admin is the Portal Register** (`src/app/admin`, `src/lib/admin`): Overview (#18's five
++  Growth Indicators, Stage drop-off, most missed questions), Students, a Student's
++  Progress Record, the Eligibility rule and Content review. The numbers are pure
++  functions in `src/lib/admin/model.ts`; the reads are in `data.ts`. A Student's
++  "last active" is the newest `learn_events` row, since `learners.last_seen_at` is
++  stamped only at enrolment. The Eligibility Rule is only ever inserted
++  (`learn_eligibility_rules` has no update policy).
+ - **Do not edit a Baseline question's prompt or options once anyone has sat it.**
+   The same twenty questions come back at every Sitting, so a changed one makes
+   later Sittings a different paper without saying so (save7-os `0116` refuses to
+diff --git a/DEPLOY.md b/DEPLOY.md
+index 3d935e9..b6bc9a6 100644
+--- a/DEPLOY.md
++++ b/DEPLOY.md
+@@ -156,7 +156,7 @@ The journey row is the real gap. The rules it used to check are now enforced in
+ or in `src/lib/`, but nothing exercises them end to end. The Baseline's cap of four
+ Sittings is a CHECK and a UNIQUE in 0110, and unanswered counting as incorrect is in
+ the marking functions (first 0097). That Improvement comes only from Baseline
+-Sittings is app code in `src/lib/analytics.ts`, not a database rule.
++Sittings is app code in `src/lib/admin/model.ts`, not a database rule.
+ 
+ ---
+ 
+diff --git a/HANDOVER.md b/HANDOVER.md
+index 275cbb1..a9c1a15 100644
+--- a/HANDOVER.md
++++ b/HANDOVER.md
+@@ -138,8 +138,8 @@ into a data leak. **Never introduce one here.**
+ - **Improvement is the Baseline's, and nothing else feeds it** (#54). It is Sitting
+   1 against a later Sitting of the same twenty questions. Stage Quiz retakes are
+   unlimited for certificates and must never feed the impact numbers, or the
+-  platform's central claim becomes unfalsifiable. Some admin Stage Quiz columns
+-  still read POST `attempt_no = 1` as a Level score; see `analytics.ts`.
++  platform's central claim becomes unfalsifiable. The Admin reads Improvement from
++  Baseline Sittings only (`src/lib/admin/model.ts`).
+ - **A Sitting is written once, and the bank is frozen once anyone has sat it.**
+   `learn_baseline_sittings` has no insert or update policy, and a CHECK plus a
+   UNIQUE cap it at four. Editing a Baseline question's prompt or options after a
+diff --git a/README.md b/README.md
+index db3a4c6..e888d9c 100644
+--- a/README.md
++++ b/README.md
+@@ -170,7 +170,7 @@ src/
+   app/
+     (site)/          learner-facing pages
+     (auth)/          sign in / register
+-    admin/           Save7 analytics, guarded in the layout
++    admin/           Overview, Students, Eligibility rule, Content review; guarded in the layout
+     api/quiz/check   server-side grading for inline checks
+     certificate/     public verification, its own bare layout for printing
+   components/
+@@ -185,7 +185,7 @@ src/
+     quiz.ts          the quiz engine
+     baseline.ts      Baseline Sittings, when one is due, and Improvement read off them
+     certificates.ts  issuance and verification
+-    analytics.ts     admin reporting
++    admin/           the Admin's reads (data.ts) and the Growth Indicators (model.ts)
+     supabase/        server + browser clients, one project config
+   db/
+     rows.ts          the shape of every row this app reads
+@@ -228,8 +228,7 @@ Markdown, and git keeps them.
+ - **Only the Baseline feeds reported improvement.** Stage Quiz retakes are
+   unlimited, because passing every Stage Quiz in a Level earns its Certificate. If
+   they counted, Save7's headline learning gain would drift upward forever and the
+-  platform's central claim would be unfalsifiable. (A few admin Stage Quiz columns
+-  still read `attempt_no = 1`. They are not the improvement figure.)
++  platform's central claim would be unfalsifiable.
+ - **Multi-select requires an exact set match.** Partial credit would teach
+   learners to select everything.
+ - **Improvement compares a learner's first Sitting with a later one.** Every
+diff --git a/next.config.ts b/next.config.ts
+index e9ffa30..012b02a 100644
+--- a/next.config.ts
++++ b/next.config.ts
+@@ -1,7 +1,14 @@
+ import type { NextConfig } from "next";
+ 
+ const nextConfig: NextConfig = {
+-  /* config options here */
++  /* The prior Admin tabs became Students and Overview (#82, #84). */
++  async redirects() {
++    return ["learners", "knowledge", "engagement", "certificates"].map((old) => ({
++      source: `/admin/${old}`,
++      destination: old === "learners" ? "/admin/students" : "/admin",
++      permanent: false,
++    }));
++  },
+ };
+ 
+ export default nextConfig;
+diff --git a/src/app/admin/certificates/page.tsx b/src/app/admin/certificates/page.tsx
+deleted file mode 100644
+index 9bb4781..0000000
+--- a/src/app/admin/certificates/page.tsx
++++ /dev/null
+@@ -1,85 +0,0 @@
+-import type { Metadata } from "next";
+-import Link from "next/link";
+-import { getCertificates } from "@/lib/analytics";
+-import { DataTable, PageTitle, Section, StatCard } from "@/components/admin/AdminUi";
+-import { Badge } from "@/components/ui/primitives";
+-
+-// Rendered per request, never prerendered: this route reads runtime configuration
+-// (Supabase URL and key, SITE_URL) which Vercel supplies per environment. A
+-// prerender would bake whatever the build machine had. See src/lib/supabase/config.ts.
+-export const dynamic = "force-dynamic";
+-
+-export const metadata: Metadata = { title: "Certificates" };
+-
+-export default async function CertificatesPage() {
+-  const certificates = await getCertificates(200);
+-
+-  const valid = certificates.filter((c) => !c.revokedAt);
+-  const byAward = new Map<string, number>();
+-  for (const cert of valid) {
+-    byAward.set(cert.awardTitle, (byAward.get(cert.awardTitle) ?? 0) + 1);
+-  }
+-
+-  return (
+-    <>
+-      <PageTitle
+-        title="Certificates"
+-        description="Every certificate is publicly verifiable from its ID. Names and award titles are snapshotted at the moment of issue, so renaming an account never rewrites a certificate somebody has already shared."
+-      />
+-
+-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+-        <StatCard label="Issued" value={certificates.length} sub="All time" />
+-        <StatCard label="Valid" value={valid.length} tone="teal" />
+-        <StatCard
+-          label="Revoked"
+-          value={certificates.length - valid.length}
+-          tone={certificates.length - valid.length > 0 ? "warn" : "neutral"}
+-        />
+-        <StatCard
+-          label="Distinct awards"
+-          value={byAward.size}
+-          sub={[...byAward.entries()].map(([a, n]) => `${a}: ${n}`).join(" · ") || undefined}
+-        />
+-      </div>
+-
+-      <Section title="Issued certificates" className="mt-6">
+-        <DataTable
+-          caption="Issued certificates"
+-          columns={["Certificate ID", "Learner", "Award", "Score", "Issued", "Status"]}
+-          rows={certificates.map((cert) => [
+-            <Link
+-              key="id"
+-              href={`/certificate/${cert.publicId}`}
+-              className="font-mono text-xs font-semibold text-pink underline"
+-            >
+-              {cert.publicId}
+-            </Link>,
+-            <span key="n" className="font-semibold text-navy">
+-              {cert.learnerName}
+-            </span>,
+-            cert.awardTitle,
+-            // Null since 0113: a Level has no single score under the Blueprint.
+-            cert.scorePct === null ? "n/a" : `${cert.scorePct}%`,
+-            <span key="d" className="whitespace-nowrap text-xs text-grey">
+-              {cert.issuedAt.toLocaleDateString("en-ZA", {
+-                day: "numeric",
+-                month: "short",
+-                year: "numeric",
+-              })}
+-            </span>,
+-            cert.revokedAt ? (
+-              <Badge key="s" tone="incorrect">
+-                Revoked
+-              </Badge>
+-            ) : (
+-              <Badge key="s" tone="correct">
+-                Valid
+-              </Badge>
+-            ),
+-          ])}
+-          emptyMessage="No certificates issued yet."
+-        />
+-      </Section>
+-    </>
+-  );
+-}
+diff --git a/src/app/admin/content-review/actions.ts b/src/app/admin/content-review/actions.ts
+index 8c88608..f6e4036 100644
+--- a/src/app/admin/content-review/actions.ts
++++ b/src/app/admin/content-review/actions.ts
+@@ -15,18 +15,26 @@ export async function setReviewStatusAction(
+   status: ReviewStatus,
+   notes?: string,
+ ): Promise<void> {
+-  const admin = await requireAdmin();
++  await requireAdmin();
+ 
+   const supabase = await supabaseServer();
+-  await supabase
++  /* `cleared_by` references `people(id)`, so it is the staff member's people id, not
++     the session's `learners` id (which is empty for staff who never enrolled). Writing
++     the learner id broke the foreign key, and the failure was never read, so no
++     decision here was ever recorded. */
++  const { data: personId } = await supabase.rpc("app_person_id");
++  if (!personId) throw new Error("Your account is not linked to a Save7 staff record.");
++
++  const { error } = await supabase
+     .from("learn_review_items")
+     .update({
+       status,
+-      cleared_by: admin.id,
++      cleared_by: personId as string,
+       cleared_at: new Date().toISOString(),
+       ...(notes !== undefined ? { notes: notes.slice(0, 4000) } : {}),
+     })
+     .eq("id", itemId);
++  if (error) throw new Error("The decision could not be recorded.");
+ 
+   // No revalidatePath: every route here reads cookies for the session, so all of
+   // them are dynamic and none has a server-side cached entry to invalidate — its
+diff --git a/src/app/admin/content-review/page.tsx b/src/app/admin/content-review/page.tsx
+index f482234..3ab3bb8 100644
+--- a/src/app/admin/content-review/page.tsx
++++ b/src/app/admin/content-review/page.tsx
+@@ -1,7 +1,9 @@
+ import type { Metadata } from "next";
+-import { getReviewSummary } from "@/lib/analytics";
++import { getReviewSummary } from "@/lib/admin/review";
+ import { supabaseServer } from "@/lib/supabase/server";
+-import { PageTitle, Section, StatCard } from "@/components/admin/AdminUi";
++import { StatCard } from "@/components/portal/Portal";
++import { PageHeader, Panel } from "@/components/portal/Panel";
++import { FilterGroup } from "@/components/portal/FilterChips";
+ import { Badge } from "@/components/ui/primitives";
+ import { ReviewItemRow } from "@/components/admin/ReviewItemRow";
+ import { setReviewStatusAction } from "./actions";
+@@ -100,53 +102,52 @@ export default async function ContentReviewPage(
+ 
+   return (
+     <>
+-      <PageTitle
++      <PageHeader
+         title="Content review"
+-        description="Every Stage Quiz, Baseline and clinical gate question, generated from the content itself. A question is approved on generation only when it names the document it was checked against. Lesson prose is not listed here, and learners see no badge on an unapproved question."
++        lede="Every Stage Quiz, Baseline and clinical gate question, generated from the content itself. A question is approved on generation only when it names the document it was checked against. Lesson prose is not listed here, and learners see no badge on an unapproved question."
+       />
+ 
+-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
++      <div className="grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-4">
+         <StatCard
+           label="Needs verification"
+-          value={summary.needsVerification}
++          value={String(summary.needsVerification)}
+           sub={`of ${summary.total} registered claims`}
+-          tone={summary.needsVerification > 0 ? "warn" : "neutral"}
++          icon="alert"
++          tint="pink"
+         />
+         <StatCard
+           label="Blocking launch"
+-          value={summary.blockingLaunch}
++          value={String(summary.blockingLaunch)}
+           sub="Severity 1: must clear first"
+-          tone={summary.blockingLaunch > 0 ? "warn" : "teal"}
++          icon="flag"
++          tint="teal"
+         />
+-        <StatCard label="Approved" value={summary.approved} tone="teal" />
++        <StatCard label="Approved" value={String(summary.approved)} sub="Named source or a person" icon="check-circle" tint="pink" />
+         <StatCard
+           label="By category"
+-          value={summary.byCategory.reduce((s, c) => s + c.count, 0)}
++          value={String(summary.byCategory.reduce((s, c) => s + c.count, 0))}
+           sub={summary.byCategory.map((c) => `${c.category}: ${c.count}`).join(" · ")}
++          icon="list"
++          tint="teal"
+         />
+       </div>
+ 
+-      <Section
++      <Panel
+         title="Register"
+-        description="Your decision is recorded with your name and the date. Re-running the content generator never overrides an approval or a rejection made here."
+-        className="mt-6"
++        lede="Your decision is recorded with your name and the date. Re-running the content generator never overrides an approval or a rejection made here."
++        className="mt-4"
+       >
+-        <nav aria-label="Filter by status" className="mb-5 flex flex-wrap gap-2">
+-          {filters.map((filter) => (
+-            <a
+-              key={filter.status}
+-              href={`/admin/content-review?status=${filter.status}`}
+-              className={
+-                filter.status === statusFilter
+-                  ? "rounded-pill bg-navy px-3.5 py-1.5 text-sm font-semibold text-white"
+-                  : "rounded-pill border border-line-strong bg-white px-3.5 py-1.5 text-sm font-semibold text-grey hover:border-navy"
+-              }
+-            >
+-              {filter.label}
+-              <span className="ml-1.5 opacity-60">{filter.count}</span>
+-            </a>
+-          ))}
+-        </nav>
++        <div className="mb-5">
++          <FilterGroup
++            label="Status"
++            current={statusFilter}
++            options={filters.map((f) => ({
++              value: f.status,
++              label: `${f.label} ${f.count}`,
++              href: `/admin/content-review?status=${f.status}`,
++            }))}
++          />
++        </div>
+ 
+         {items.length === 0 ? (
+           <p className="text-sm text-grey">
+@@ -180,15 +181,15 @@ export default async function ContentReviewPage(
+         )}
+ 
+         {items.length === 400 ? (
+-          <p className="mt-4 text-xs text-grey">
++          <p className="mt-4 text-[0.8125rem] text-grey">
+             Showing the first 400 items. Narrow the filter to see more.
+           </p>
+         ) : null}
+-      </Section>
++      </Panel>
+ 
+-      <Section
++      <Panel
+         title="What must clear before launch"
+-        description="Most of this is lesson prose, which the register above does not list, so it is read and signed off outside this page."
++        lede="Most of this is lesson prose, which the register above does not list, so it is read and signed off outside this page."
+         className="mt-4"
+       >
+         <ul className="space-y-2 text-sm text-grey">
+@@ -213,7 +214,7 @@ export default async function ContentReviewPage(
+             in this course.
+           </li>
+         </ul>
+-      </Section>
++      </Panel>
+     </>
+   );
+ }
+diff --git a/src/app/admin/eligibility/actions.ts b/src/app/admin/eligibility/actions.ts
+new file mode 100644
+index 0000000..44d3df8
+--- /dev/null
++++ b/src/app/admin/eligibility/actions.ts
+@@ -0,0 +1,71 @@
++"use server";
++
++import { redirect } from "next/navigation";
++import { requireAdmin } from "@/lib/authz";
++import { supabaseServer } from "@/lib/supabase/server";
++import { levelFlag } from "@/lib/admin/flags";
++
++export type RuleFormState = { error?: string } | undefined;
++
++/**
++ * Save the Eligibility Rule as a new version (#72, #84).
++ *
++ * Never an edit: the only write is an insert into `learn_eligibility_rules`, which
++ * has no update or delete policy, so an old version cannot change even from here. The
++ * version number is the database's (`nextval`), and `created_by` must be the
++ * caller's own `people` id or the insert policy refuses it. Saving re-evaluates every
++ * Student under the new rule (#83's trigger), so this action does not touch signals.
++ *
++ * Checked again here, not only in the editor: a rule with no flags would make every
++ * Student eligible, a flag that is not a Level's reads as nobody, and an unchanged
++ * list or a stale page must not mint a pointless version.
++ */
++export async function saveEligibilityRuleAction(
++  _previous: RuleFormState,
++  formData: FormData,
++): Promise<RuleFormState> {
++  await requireAdmin();
++  const supabase = await supabaseServer();
++
++  const [levels, current, person] = await Promise.all([
++    supabase.from("learn_levels").select("slug").order("position"),
++    supabase
++      .from("learn_eligibility_rules")
++      .select("version, required_flags")
++      .order("version", { ascending: false })
++      .limit(1)
++      .maybeSingle(),
++    supabase.rpc("app_person_id"),
++  ]);
++
++  const allowed = ((levels.data ?? []) as Array<{ slug: string }>).map((l) => levelFlag(l.slug));
++  const picked = new Set(formData.getAll("flag").map(String));
++  const flags = allowed.filter((f) => picked.has(f));
++
++  if (flags.length === 0) {
++    return { error: "A rule with no flags would make every Student eligible. Pick at least one." };
++  }
++  if (flags.length !== picked.size) {
++    return { error: "One of those flags is not a Level. Reload the page and try again." };
++  }
++
++  const head = current.data as { version: number; required_flags: string[] } | null;
++  if (String(head?.version ?? "") !== String(formData.get("baseVersion") ?? "")) {
++    return { error: "Someone saved a newer version while you were editing. Reload the page to see it." };
++  }
++  if (head && head.required_flags.length === flags.length && head.required_flags.every((f) => flags.includes(f))) {
++    return { error: "That is already the current rule. Change a flag to save a new version." };
++  }
++
++  const createdBy = person.data as string | null;
++  if (!createdBy) return { error: "Your account is not linked to a Save7 staff record, so it cannot save a rule." };
++
++  const { data, error } = await supabase
++    .from("learn_eligibility_rules")
++    .insert({ required_flags: flags, created_by: createdBy })
++    .select("version")
++    .single();
++  if (error || !data) return { error: "The rule could not be saved. Nothing was changed." };
++
++  redirect(`/admin/eligibility?saved=${(data as { version: number }).version}`);
++}
+diff --git a/src/app/admin/eligibility/page.tsx b/src/app/admin/eligibility/page.tsx
+new file mode 100644
+index 0000000..09a9306
+--- /dev/null
++++ b/src/app/admin/eligibility/page.tsx
+@@ -0,0 +1,20 @@
++import type { Metadata } from "next";
++import { loadCatalogue, loadRules, loadStudents } from "@/lib/admin/data";
++import { RuleView } from "@/components/admin/RuleView";
++
++// Rendered per request, never prerendered: this route reads runtime configuration
++// (Supabase URL and key, SITE_URL) which Vercel supplies per environment. A
++// prerender would bake whatever the build machine had. See src/lib/supabase/config.ts.
++export const dynamic = "force-dynamic";
++
++export const metadata: Metadata = { title: "Eligibility rule" };
++
++export default async function EligibilityPage(props: PageProps<"/admin/eligibility">) {
++  const params = await props.searchParams;
++  const saved = typeof params.saved === "string" && /^\d+$/.test(params.saved) ? Number(params.saved) : null;
++
++  const catalogue = await loadCatalogue();
++  const [students, rules] = await Promise.all([loadStudents(catalogue), loadRules()]);
++
++  return <RuleView catalogue={catalogue} students={students} rules={rules} saved={saved} />;
++}
+diff --git a/src/app/admin/engagement/page.tsx b/src/app/admin/engagement/page.tsx
+deleted file mode 100644
+index 0b6cd2b..0000000
+--- a/src/app/admin/engagement/page.tsx
++++ /dev/null
+@@ -1,136 +0,0 @@
+-import type { Metadata } from "next";
+-import { getModuleEngagement } from "@/lib/analytics";
+-import { DataTable, PageTitle, Section, StatCard } from "@/components/admin/AdminUi";
+-import { Badge } from "@/components/ui/primitives";
+-
+-// Rendered per request, never prerendered: this route reads runtime configuration
+-// (Supabase URL and key, SITE_URL) which Vercel supplies per environment. A
+-// prerender would bake whatever the build machine had. See src/lib/supabase/config.ts.
+-export const dynamic = "force-dynamic";
+-
+-export const metadata: Metadata = { title: "Engagement" };
+-
+-function formatMinutes(seconds: number | null): string {
+-  if (seconds === null) return "n/a";
+-  if (seconds < 60) return `${seconds}s`;
+-  return `${Math.round(seconds / 60)} min`;
+-}
+-
+-export default async function EngagementPage() {
+-  const modules = await getModuleEngagement();
+-
+-  const totalStarted = modules.reduce((s, m) => s + m.started, 0);
+-  const totalCompleted = modules.reduce((s, m) => s + m.completed, 0);
+-  const worst = [...modules]
+-    .filter((m) => m.started > 0)
+-    .sort((a, b) => (a.completionRatePct ?? 100) - (b.completionRatePct ?? 100))[0];
+-
+-  return (
+-    <>
+-      <PageTitle
+-        title="Engagement"
+-        description="Time is reported as a median rather than a mean, because one learner leaving a tab open all afternoon would otherwise dominate the average."
+-      />
+-
+-      <div className="grid gap-4 sm:grid-cols-3">
+-        <StatCard
+-          label="Module starts"
+-          value={totalStarted}
+-          sub="Across all learners"
+-        />
+-        <StatCard
+-          label="Module completions"
+-          value={totalCompleted}
+-          sub={
+-            totalStarted > 0
+-              ? `${Math.round((totalCompleted / totalStarted) * 100)}% of starts`
+-              : undefined
+-          }
+-        />
+-        <StatCard
+-          label="Weakest module"
+-          value={worst?.completionRatePct !== undefined && worst?.completionRatePct !== null ? `${worst.completionRatePct}%` : "n/a"}
+-          sub={worst ? worst.title : "No data yet"}
+-          tone="warn"
+-        />
+-      </div>
+-
+-      <Section
+-        title="Module by module"
+-        description="Where learners start, where they stop, and how long each module actually takes compared with its estimate."
+-        className="mt-6"
+-      >
+-        <DataTable
+-          caption="Engagement by module"
+-          columns={[
+-            "Module",
+-            "Level",
+-            "Started",
+-            "Completed",
+-            "Drop-off",
+-            "Median time",
+-            "Estimated",
+-          ]}
+-          rows={modules.map((m) => {
+-            const overrun =
+-              m.medianSeconds !== null && m.medianSeconds > m.estMinutes * 60 * 1.5;
+-            return [
+-              <span key="t" className="font-semibold text-navy">
+-                {m.order}. {m.title}
+-              </span>,
+-              <span key="l" className="whitespace-nowrap text-xs text-grey">
+-                {m.levelTitle}
+-              </span>,
+-              m.started,
+-              <span key="c">
+-                {m.completed}
+-                {m.completionRatePct !== null ? (
+-                  <span className="text-grey"> ({m.completionRatePct}%)</span>
+-                ) : null}
+-              </span>,
+-              m.dropped > 0 ? (
+-                <Badge key="d" tone={m.dropped >= 3 ? "incorrect" : "review"}>
+-                  {m.dropped}
+-                </Badge>
+-              ) : (
+-                <span key="d" className="text-grey">
+-                  0
+-                </span>
+-              ),
+-              <span key="m" className={overrun ? "font-semibold text-navy" : undefined}>
+-                {formatMinutes(m.medianSeconds)}
+-              </span>,
+-              <span key="e" className="text-grey">
+-                {m.estMinutes} min
+-              </span>,
+-            ];
+-          })}
+-          emptyMessage="No module activity recorded yet."
+-        />
+-      </Section>
+-
+-      <Section
+-        title="A note on what is not measured"
+-        description="Deliberate omissions, documented so nobody assumes the data exists."
+-        className="mt-4"
+-      >
+-        <ul className="space-y-2 text-sm text-grey">
+-          <li>
+-            · <strong className="text-navy">No IP addresses or device details.</strong>{" "}
+-            The event log stores neither, by design. See the privacy notice.
+-          </li>
+-          <li>
+-            · <strong className="text-navy">No video engagement yet.</strong> Watch-time
+-            reporting needs the video asset first; the hooks are in place in the
+-            ChapterVideo component.
+-          </li>
+-          <li>
+-            · <strong className="text-navy">No individual behavioural profiles.</strong>{" "}
+-            Save7 sees aggregates and per-module figures, not a timeline of one
+-            learner&apos;s actions.
+-          </li>
+-        </ul>
+-      </Section>
+-    </>
+-  );
+-}
+diff --git a/src/app/admin/knowledge/page.tsx b/src/app/admin/knowledge/page.tsx
+deleted file mode 100644
+index 4b36729..0000000
+--- a/src/app/admin/knowledge/page.tsx
++++ /dev/null
+@@ -1,171 +0,0 @@
+-import type { Metadata } from "next";
+-import { getKnowledgeSummary, getMostMissedQuestions } from "@/lib/analytics";
+-import {
+-  BarChart,
+-  DataTable,
+-  PageTitle,
+-  Section,
+-  StatCard,
+-} from "@/components/admin/AdminUi";
+-import { Badge } from "@/components/ui/primitives";
+-
+-// Rendered per request, never prerendered: this route reads runtime configuration
+-// (Supabase URL and key, SITE_URL) which Vercel supplies per environment. A
+-// prerender would bake whatever the build machine had. See src/lib/supabase/config.ts.
+-export const dynamic = "force-dynamic";
+-
+-export const metadata: Metadata = { title: "Knowledge impact" };
+-
+-export default async function KnowledgePage() {
+-  const [knowledge, missed] = await Promise.all([
+-    getKnowledgeSummary(),
+-    getMostMissedQuestions(1, 40),
+-  ]);
+-
+-  const assessed = knowledge.perLevel.filter((l) => l.postCount > 0);
+-
+-  return (
+-    <>
+-      <PageTitle
+-        title="Knowledge impact"
+-        description="Learning gain is measured on the baseline: the same twenty questions at signup and after each level, at most four sittings, so a retake cannot inflate it. The Stage Quiz columns are first attempts only."
+-      />
+-
+-      <div className="grid gap-4 sm:grid-cols-3">
+-        <StatCard
+-          label="Average baseline"
+-          value={
+-            knowledge.averageBaselinePct !== null
+-              ? `${knowledge.averageBaselinePct}%`
+-              : "n/a"
+-          }
+-          sub={`${knowledge.baselineCount} first sittings recorded`}
+-        />
+-        <StatCard
+-          label="Levels assessed"
+-          value={`${assessed.length}/${knowledge.perLevel.length}`}
+-          sub="With at least one submission"
+-        />
+-        <StatCard
+-          label="Average improvement"
+-          value={
+-            knowledge.averageImprovement !== null
+-              ? `${knowledge.averageImprovement >= 0 ? "+" : ""}${knowledge.averageImprovement} pp`
+-              : "n/a"
+-          }
+-          sub={`First sitting to latest, ${knowledge.resatCount} learners`}
+-          tone="pink"
+-        />
+-      </div>
+-
+-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+-        <Section
+-          title="Baseline score distribution"
+-          description="Where learners are before the course, from each learner's first sitting. A left-heavy shape is the expected and desirable pattern."
+-        >
+-          <BarChart
+-            data={knowledge.baselineDistribution.map((b) => ({
+-              label: b.bucket,
+-              value: b.count,
+-            }))}
+-            tone="navy"
+-            valueSuffix=" learners"
+-          />
+-        </Section>
+-
+-        <Section
+-          title="Post-assessment distribution"
+-          description="First attempts only, across all levels."
+-        >
+-          <BarChart
+-            data={knowledge.postDistribution.map((b) => ({
+-              label: b.bucket,
+-              value: b.count,
+-            }))}
+-            tone="pink"
+-            valueSuffix=" learners"
+-          />
+-        </Section>
+-      </div>
+-
+-      <Section
+-        title="By level"
+-        description="Stage Quiz first attempts and pass rate, beside the change in each level's baseline sub-score from the first sitting to the sitting after that level."
+-        className="mt-4"
+-      >
+-        <DataTable
+-          caption="Knowledge impact by level"
+-          columns={[
+-            "Level",
+-            "Assessed",
+-            "Average score",
+-            "Baseline change",
+-            "Pass rate",
+-          ]}
+-          rows={knowledge.perLevel.map((l) => [
+-            <span key="t" className="font-semibold text-navy">
+-              {l.title}
+-            </span>,
+-            l.postCount,
+-            l.averagePostPct !== null ? `${l.averagePostPct}%` : "n/a",
+-            l.averagePointChange !== null ? (
+-              <span
+-                key="c"
+-                className={
+-                  l.averagePointChange >= 0
+-                    ? "font-semibold text-correct"
+-                    : "font-semibold text-incorrect"
+-                }
+-              >
+-                {l.averagePointChange >= 0 ? "+" : ""}
+-                {l.averagePointChange} pp
+-              </span>
+-            ) : (
+-              "n/a"
+-            ),
+-            l.passRatePct !== null ? `${l.passRatePct}%` : "n/a",
+-          ])}
+-          emptyMessage="No assessments submitted yet."
+-        />
+-      </Section>
+-
+-      <Section
+-        title="Most commonly missed questions"
+-        description="Ranked by the share of answers that were wrong. Treat a high rate as a signal about the teaching, not the learners."
+-        className="mt-4"
+-      >
+-        <DataTable
+-          caption="Most commonly missed questions"
+-          columns={["Question", "Where", "Topic", "Wrong", "Rate"]}
+-          rows={missed.map((q) => [
+-            <span key="p" className="text-navy">
+-              {q.prompt}
+-            </span>,
+-            <span key="w" className="whitespace-nowrap text-xs text-grey">
+-              {q.scope === "PRE"
+-                ? "Baseline"
+-                : q.moduleTitle
+-                  ? q.moduleTitle
+-                  : (q.levelTitle ?? "n/a")}
+-            </span>,
+-            <Badge key="t" tone="neutral">
+-              {q.topicTag}
+-            </Badge>,
+-            `${q.incorrect}/${q.answered}`,
+-            <span
+-              key="r"
+-              className={
+-                q.incorrectRatePct >= 60
+-                  ? "font-bold text-incorrect"
+-                  : "font-semibold text-navy"
+-              }
+-            >
+-              {q.incorrectRatePct}%
+-            </span>,
+-          ])}
+-          emptyMessage="Not enough answers recorded yet."
+-        />
+-      </Section>
+-    </>
+-  );
+-}
+diff --git a/src/app/admin/layout.tsx b/src/app/admin/layout.tsx
+index 5421885..158072b 100644
+--- a/src/app/admin/layout.tsx
++++ b/src/app/admin/layout.tsx
+@@ -1,76 +1,19 @@
+-import Link from "next/link";
+ import { requireAdmin } from "@/lib/authz";
+-import { Save7Lockup } from "@/components/ui/Save7Lockup";
+ import { signOutAction } from "@/app/(auth)/actions";
+-
+-const TABS = [
+-  { href: "/admin", label: "Overview" },
+-  { href: "/admin/knowledge", label: "Knowledge impact" },
+-  { href: "/admin/engagement", label: "Engagement" },
+-  { href: "/admin/learners", label: "Learners" },
+-  { href: "/admin/certificates", label: "Certificates" },
+-  { href: "/admin/content-review", label: "Content review" },
+-];
++import { AdminShell } from "@/components/admin/AdminShell";
+ 
+ /**
+  * Admin shell.
+  *
+  * `requireAdmin` runs in the layout, so every page beneath it is guarded even if a
+  * new one is added without remembering to check. A non-admin gets a 404 rather than
+- * a 403 — there is no reason to confirm that Save7's analytics live at this path.
++ * a 403: there is no reason to confirm that Save7's analytics live at this path.
+  */
+-export default async function AdminLayout({
+-  children,
+-}: {
+-  children: React.ReactNode;
+-}) {
++export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+   const admin = await requireAdmin();
+-
+   return (
+-    <div className="flex min-h-dvh flex-col bg-line/40">
+-      <header className="border-b border-line bg-white">
+-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-5 py-3 sm:px-8">
+-          <Link href="/" aria-label="Save7 home" className="inline-flex min-h-11 items-center">
+-            <Save7Lockup surface="white" className="text-base" />
+-          </Link>
+-          <span aria-hidden="true" className="h-5 w-px bg-line-strong" />
+-          <p className="text-sm font-bold text-navy">Save7 admin</p>
+-
+-          <div className="ml-auto flex items-center gap-3 text-sm">
+-            <span className="hidden text-grey sm:inline">{admin.email}</span>
+-            <Link href="/" className="font-semibold text-grey hover:text-navy">
+-              View course
+-            </Link>
+-            <form action={signOutAction}>
+-              <button
+-                type="submit"
+-                className="font-semibold text-grey hover:text-navy"
+-              >
+-                Sign out
+-              </button>
+-            </form>
+-          </div>
+-        </div>
+-
+-        <nav aria-label="Admin sections" className="mx-auto max-w-7xl px-5 sm:px-8">
+-          <ul className="-mb-px flex gap-1 overflow-x-auto">
+-            {TABS.map((tab) => (
+-              <li key={tab.href} className="shrink-0">
+-                <Link
+-                  href={tab.href}
+-                  className="inline-flex min-h-11 items-center border-b-2 border-transparent px-3 text-sm font-semibold text-grey hover:border-line-strong hover:text-navy"
+-                >
+-                  {tab.label}
+-                </Link>
+-              </li>
+-            ))}
+-          </ul>
+-        </nav>
+-      </header>
+-
+-      <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-5 py-8 sm:px-8">
+-        {children}
+-      </main>
+-    </div>
++    <AdminShell email={admin.email} signOut={signOutAction}>
++      {children}
++    </AdminShell>
+   );
+ }
+diff --git a/src/app/admin/learners/page.tsx b/src/app/admin/learners/page.tsx
+deleted file mode 100644
+index c53b339..0000000
+--- a/src/app/admin/learners/page.tsx
++++ /dev/null
+@@ -1,188 +0,0 @@
+-import type { Metadata } from "next";
+-import { getLearnerSummary } from "@/lib/analytics";
+-import { percent } from "@/lib/baseline";
+-import { supabaseServer } from "@/lib/supabase/server";
+-import { DataTable, PageTitle, Section, StatCard } from "@/components/admin/AdminUi";
+-import { Badge } from "@/components/ui/primitives";
+-
+-// Rendered per request, never prerendered: this route reads runtime configuration
+-// (Supabase URL and key, SITE_URL) which Vercel supplies per environment. A
+-// prerender would bake whatever the build machine had. See src/lib/supabase/config.ts.
+-export const dynamic = "force-dynamic";
+-
+-export const metadata: Metadata = { title: "Learners" };
+-
+-export default async function LearnersPage() {
+-  const summary = await getLearnerSummary();
+-
+-  const supabase = await supabaseServer();
+-
+-  /* Each learner with their Baseline Sittings, submitted attempts, live
+-     certificates and completed modules, embedded through the foreign keys on those
+-     four tables. Staff-only: the select policies on all five admit
+-     `app_is_staff()`, and a learner reading the same query sees one row — their
+-     own. */
+-  const { data: learnerRows } = await supabase
+-    .from("learners")
+-    .select(
+-      "id, name, created_at, last_seen_at, " +
+-        "learn_baseline_sittings(sitting_no, total_score, total_max), " +
+-        "learn_attempts(scope, score_pct, attempt_no, level_slug, submitted_at), " +
+-        "learn_certificates(code, award_title, revoked_at), " +
+-        "learn_module_progress(module_slug, status)",
+-    )
+-    .order("created_at", { ascending: false })
+-    .limit(200);
+-
+-  const learners = ((learnerRows ?? []) as unknown as Array<{
+-    id: string;
+-    name: string;
+-    created_at: string;
+-    last_seen_at: string | null;
+-    learn_baseline_sittings: Array<{
+-      sitting_no: number;
+-      total_score: number;
+-      total_max: number;
+-    }> | null;
+-    learn_attempts: Array<{
+-      scope: string;
+-      score_pct: number | null;
+-      attempt_no: number;
+-      level_slug: string | null;
+-      submitted_at: string | null;
+-    }> | null;
+-    learn_certificates: Array<{
+-      code: string;
+-      award_title: string | null;
+-      revoked_at: string | null;
+-    }> | null;
+-    learn_module_progress: Array<{ module_slug: string; status: string }> | null;
+-  }>).map((l) => ({
+-    id: l.id,
+-    name: l.name,
+-    createdAt: new Date(l.created_at),
+-    lastSeenAt: l.last_seen_at ? new Date(l.last_seen_at) : null,
+-    sittings: (l.learn_baseline_sittings ?? [])
+-      .map((s) => ({ sittingNo: s.sitting_no, pct: percent(s.total_score, s.total_max) }))
+-      .sort((a, b) => a.sittingNo - b.sittingNo),
+-    // Filtered here rather than in the query: PostgREST cannot filter an embedded
+-    // resource without also dropping parents that have none, which would hide
+-    // every learner who has not attempted anything yet.
+-    attempts: (l.learn_attempts ?? [])
+-      .filter((a) => a.submitted_at !== null)
+-      .map((a) => ({
+-        kind: a.scope,
+-        scorePct: a.score_pct,
+-        attemptNo: a.attempt_no,
+-        levelId: a.level_slug,
+-      })),
+-    certificates: (l.learn_certificates ?? [])
+-      .filter((c) => c.revoked_at === null)
+-      .map((c) => ({ publicId: c.code, awardTitleSnapshot: c.award_title ?? "" })),
+-    moduleProgress: (l.learn_module_progress ?? [])
+-      .filter((m) => m.status === "COMPLETE")
+-      .map((m) => ({ moduleId: m.module_slug })),
+-  }));
+-
+-  const { count: modulesTotal } = await supabase
+-    .from("learn_modules")
+-    .select("slug", { count: "exact", head: true })
+-    .eq("is_mandatory", true);
+-
+-  return (
+-    <>
+-      <PageTitle
+-        title="Learners"
+-        description="Email addresses are deliberately not listed here. Save7 needs to know whether the course is working, which does not require a browsable directory of personal contact details."
+-      />
+-
+-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+-        <StatCard
+-          label="Registered"
+-          value={summary.registered}
+-          sub={`${summary.registeredLast30Days} in the last 30 days`}
+-        />
+-        <StatCard label="Active" value={summary.active} sub="Sat the first baseline" />
+-        <StatCard
+-          label="Finished a level"
+-          value={summary.completedAnyLevel}
+-          sub={`${summary.completedCourse} finished all three`}
+-        />
+-        <StatCard
+-          label="Completion rate"
+-          value={
+-            summary.completionRatePct !== null ? `${summary.completionRatePct}%` : "n/a"
+-          }
+-          sub="Of learners who started"
+-          tone="pink"
+-        />
+-      </div>
+-
+-      <Section
+-        title="Individual progress"
+-        description="Most recent registrations first."
+-        className="mt-6"
+-      >
+-        <DataTable
+-          caption="Learner progress"
+-          columns={[
+-            "Learner",
+-            "Registered",
+-            "Baseline",
+-            "Assessments",
+-            "Modules",
+-            "Certificates",
+-          ]}
+-          rows={learners.map((learner) => {
+-            // Every Sitting in order, first to latest: the before-and-after in one cell.
+-            const baseline = learner.sittings.map((s) => `${s.pct}%`).join(" → ");
+-            const posts = learner.attempts.filter(
+-              (a) => a.kind === "POST" && a.attemptNo === 1,
+-            );
+-            return [
+-              <span key="n" className="font-semibold text-navy">
+-                {learner.name}
+-              </span>,
+-              <span key="d" className="whitespace-nowrap text-xs text-grey">
+-                {learner.createdAt.toLocaleDateString("en-ZA")}
+-              </span>,
+-              baseline ? (
+-                <span key="b" className="whitespace-nowrap">
+-                  {baseline}
+-                </span>
+-              ) : (
+-                <span key="b" className="text-grey">Not taken</span>
+-              ),
+-              posts.length > 0 ? (
+-                <span key="p">
+-                  {posts.map((p) => `${p.scorePct}%`).join(" · ")}
+-                </span>
+-              ) : (
+-                <span key="p" className="text-grey">
+-                  n/a
+-                </span>
+-              ),
+-              <span key="m">
+-                {learner.moduleProgress.length}/{modulesTotal}
+-              </span>,
+-              learner.certificates.length > 0 ? (
+-                <span key="c" className="flex flex-wrap gap-1">
+-                  {learner.certificates.map((cert) => (
+-                    <Badge key={cert.publicId} tone="teal">
+-                      {cert.awardTitleSnapshot}
+-                    </Badge>
+-                  ))}
+-                </span>
+-              ) : (
+-                <span key="c" className="text-grey">
+-                  n/a
+-                </span>
+-              ),
+-            ];
+-          })}
+-          emptyMessage="No learners registered yet."
+-        />
+-      </Section>
+-    </>
+-  );
+-}
+diff --git a/src/app/admin/page.tsx b/src/app/admin/page.tsx
+index 4b7414b..7ac9df5 100644
+--- a/src/app/admin/page.tsx
++++ b/src/app/admin/page.tsx
+@@ -1,14 +1,14 @@
+ import type { Metadata } from "next";
+-import Link from "next/link";
++import { loadCatalogue, loadMissedQuestions, loadRules, loadStudents } from "@/lib/admin/data";
+ import {
+-  getKnowledgeSummary,
+-  getLearnerSummary,
+-  getModuleEngagement,
+-  getMostMissedQuestions,
+-  getReviewSummary,
+-} from "@/lib/analytics";
+-import { BarChart, PageTitle, Section, StatCard } from "@/components/admin/AdminUi";
+-import { Badge, ButtonLink } from "@/components/ui/primitives";
++  SIGNED_UP_OPTIONS,
++  eligibleCount,
++  flagLabel,
++  indicators,
++  inWindow,
++  type SignedUpWindow,
++} from "@/lib/admin/model";
++import { OverviewView } from "@/components/admin/OverviewView";
+ 
+ // Rendered per request, never prerendered: this route reads runtime configuration
+ // (Supabase URL and key, SITE_URL) which Vercel supplies per environment. A
+@@ -17,184 +17,31 @@ export const dynamic = "force-dynamic";
+ 
+ export const metadata: Metadata = { title: "Admin overview" };
+ 
+-export default async function AdminOverviewPage() {
+-  const [learners, knowledge, missed, engagement, review] = await Promise.all([
+-    getLearnerSummary(),
+-    getKnowledgeSummary(),
+-    getMostMissedQuestions(1, 5),
+-    getModuleEngagement(),
+-    getReviewSummary(),
+-  ]);
++export default async function AdminOverviewPage(props: PageProps<"/admin">) {
++  const params = await props.searchParams;
++  const signed = SIGNED_UP_OPTIONS.some(([v]) => v === params.signed) ? (params.signed as SignedUpWindow) : "all";
+ 
+-  const averageGain = knowledge.averageImprovement;
++  const catalogue = await loadCatalogue();
++  const [students, rules, missed] = await Promise.all([loadStudents(catalogue), loadRules(), loadMissedQuestions(5)]);
+ 
+-  // Biggest drop-off: where the most learners started and did not finish.
+-  const dropOff = [...engagement].sort((a, b) => b.dropped - a.dropped)[0] ?? null;
++  const now = new Date();
++  /* Only the signup window slices the Indicators. Filtering them by current Level is
++     circular: Students now on Advanced have nearly all completed the Levels before it. */
++  const view = students.filter((s) => inWindow(s, signed, now));
++  const rule = rules[0] ?? null;
+ 
+   return (
+-    <>
+-      <PageTitle
+-        title="Overview"
+-        description="Save7's headline question is whether people are learning, so knowledge movement leads, and engagement is context for it."
+-      />
+-
+-      {/* The metric the platform exists to produce. */}
+-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+-        <StatCard
+-          label="Average baseline"
+-          value={
+-            knowledge.averageBaselinePct !== null
+-              ? `${knowledge.averageBaselinePct}%`
+-              : "n/a"
+-          }
+-          sub={`${knowledge.baselineCount} learners, first sitting`}
+-        />
+-        <StatCard
+-          label="Average latest baseline"
+-          value={knowledge.averageLatestPct !== null ? `${knowledge.averageLatestPct}%` : "n/a"}
+-          sub={`${knowledge.resatCount} learners have re-sat it`}
+-        />
+-        <StatCard
+-          label="Average improvement"
+-          value={averageGain !== null ? `${averageGain >= 0 ? "+" : ""}${averageGain}` : "n/a"}
+-          sub="percentage points, first sitting to latest"
+-          tone="pink"
+-        />
+-        <StatCard
+-          label="Completion rate"
+-          value={
+-            learners.completionRatePct !== null ? `${learners.completionRatePct}%` : "n/a"
+-          }
+-          sub="Of learners who started"
+-        />
+-      </div>
+-
+-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+-        <StatCard
+-          label="Registered"
+-          value={learners.registered}
+-          sub={`${learners.registeredLast30Days} in the last 30 days`}
+-        />
+-        <StatCard
+-          label="Active"
+-          value={learners.active}
+-          sub="Sat the first baseline"
+-        />
+-        <StatCard
+-          label="Finished a level"
+-          value={learners.completedAnyLevel}
+-          sub={`${learners.completedCourse} finished all three`}
+-        />
+-        <StatCard
+-          label="Awaiting review"
+-          value={review.needsVerification}
+-          sub={`${review.blockingLaunch} block launch`}
+-          tone={review.blockingLaunch > 0 ? "warn" : "neutral"}
+-        />
+-      </div>
+-
+-      {/* Content review is surfaced on the overview because unverified medical and
+-          legal claims are the single biggest risk in this course. */}
+-      {review.blockingLaunch > 0 ? (
+-        <div className="mt-6 rounded-card border-2 border-pink bg-pink-50 p-5">
+-          <div className="flex flex-wrap items-center gap-3">
+-            <Badge tone="review">Before public launch</Badge>
+-            <p className="flex-1 text-sm text-navy">
+-              <strong>{review.blockingLaunch} claims</strong> still need verification
+-              against authoritative sources. Learners currently see a &ldquo;pending
+-              review&rdquo; badge wherever this applies.
+-            </p>
+-            <ButtonLink href="/admin/content-review" size="sm" variant="navy">
+-              Review them
+-            </ButtonLink>
+-          </div>
+-        </div>
+-      ) : null}
+-
+-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+-        <Section
+-          title="Improvement by level"
+-          description="Average change in each level's baseline sub-score, from the first sitting to the sitting after that level."
+-        >
+-          <BarChart
+-            data={knowledge.perLevel.map((l) => ({
+-              label: l.title,
+-              value: l.averagePointChange,
+-              sub:
+-                l.improvementCount > 0
+-                  ? `${l.improvementCount} learner${l.improvementCount === 1 ? "" : "s"} re-sat after this level`
+-                  : "Nobody has re-sat after this level yet",
+-            }))}
+-            valueSuffix=" pp"
+-            emptyMessage="No baseline sittings after a level yet."
+-          />
+-        </Section>
+-
+-        <Section
+-          title="Most commonly missed"
+-          description="A question most learners fail is usually a teaching problem in the module before it."
+-        >
+-          {missed.length === 0 ? (
+-            <p className="text-sm text-grey">
+-              Not enough answers recorded yet.
+-            </p>
+-          ) : (
+-            <ul className="space-y-3">
+-              {missed.map((q) => (
+-                <li key={q.questionId} className="border-b border-line pb-3">
+-                  <div className="flex items-baseline justify-between gap-4">
+-                    <p className="text-sm text-navy">{q.prompt}</p>
+-                    <span className="shrink-0 font-display text-xl text-pink">
+-                      {q.incorrectRatePct}%
+-                    </span>
+-                  </div>
+-                  <p className="mt-0.5 text-xs text-grey">
+-                    {q.incorrect} of {q.answered} wrong · {q.topicTag}
+-                    {q.moduleTitle ? ` · ${q.moduleTitle}` : ""}
+-                  </p>
+-                </li>
+-              ))}
+-            </ul>
+-          )}
+-          <p className="mt-4">
+-            <Link
+-              href="/admin/knowledge"
+-              className="text-sm font-semibold text-pink underline"
+-            >
+-              See the full list
+-            </Link>
+-          </p>
+-        </Section>
+-      </div>
+-
+-      {dropOff && dropOff.dropped > 0 ? (
+-        <Section
+-          title="Biggest drop-off"
+-          description="Where learners most often start a module and do not finish it."
+-          className="mt-4"
+-        >
+-          <p className="text-navy">
+-            <strong>{dropOff.title}</strong>{" "}
+-            <span className="text-grey">({dropOff.levelTitle})</span>
+-          </p>
+-          <p className="mt-1 text-sm text-grey">
+-            {dropOff.dropped} of {dropOff.started} learners who started this module have
+-            not completed it
+-            {dropOff.completionRatePct !== null
+-              ? ` (a ${dropOff.completionRatePct}% completion rate)`
+-              : ""}
+-            .
+-          </p>
+-          <p className="mt-3">
+-            <Link
+-              href="/admin/engagement"
+-              className="text-sm font-semibold text-pink underline"
+-            >
+-              See every module
+-            </Link>
+-          </p>
+-        </Section>
+-      ) : null}
+-    </>
++    <OverviewView
++      indicators={indicators(view, catalogue, now)}
++      totalStudents={students.length}
++      signedUp={signed}
++      missed={missed}
++      eligibility={{
++        version: rule?.version ?? null,
++        flagLabels: rule ? rule.requiredFlags.map((f) => flagLabel(f, catalogue)) : [],
++        eligible: eligibleCount(view),
++        of: view.length,
++      }}
++    />
+   );
+ }
+diff --git a/src/app/admin/students/[id]/page.tsx b/src/app/admin/students/[id]/page.tsx
+new file mode 100644
+index 0000000..50037c1
+--- /dev/null
++++ b/src/app/admin/students/[id]/page.tsx
+@@ -0,0 +1,26 @@
++import type { Metadata } from "next";
++import { notFound } from "next/navigation";
++import { loadActivity, loadCatalogue, loadRules, loadStudent } from "@/lib/admin/data";
++import { StudentView } from "@/components/admin/StudentView";
++
++// Rendered per request, never prerendered: this route reads runtime configuration
++// (Supabase URL and key, SITE_URL) which Vercel supplies per environment. A
++// prerender would bake whatever the build machine had. See src/lib/supabase/config.ts.
++export const dynamic = "force-dynamic";
++
++export const metadata: Metadata = { title: "Student" };
++
++const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
++
++export default async function StudentPage(props: PageProps<"/admin/students/[id]">) {
++  const { id } = await props.params;
++  if (!UUID.test(id)) notFound();
++
++  const catalogue = await loadCatalogue();
++  const student = await loadStudent(id, catalogue);
++  if (!student) notFound();
++
++  const [rules, activity] = await Promise.all([loadRules(), loadActivity(id)]);
++
++  return <StudentView student={student} catalogue={catalogue} rule={rules[0] ?? null} activity={activity} />;
++}
+diff --git a/src/app/admin/students/page.tsx b/src/app/admin/students/page.tsx
+new file mode 100644
+index 0000000..265647b
+--- /dev/null
++++ b/src/app/admin/students/page.tsx
+@@ -0,0 +1,52 @@
++import type { Metadata } from "next";
++import { loadCatalogue, loadStudents } from "@/lib/admin/data";
++import {
++  PAGE_SIZE,
++  SIGNED_UP_OPTIONS,
++  byNewestSignup,
++  inWindow,
++  matchesLevel,
++  searchStudents,
++  type SignedUpWindow,
++} from "@/lib/admin/model";
++import { StudentsView } from "@/components/admin/StudentsView";
++
++// Rendered per request, never prerendered: this route reads runtime configuration
++// (Supabase URL and key, SITE_URL) which Vercel supplies per environment. A
++// prerender would bake whatever the build machine had. See src/lib/supabase/config.ts.
++export const dynamic = "force-dynamic";
++
++export const metadata: Metadata = { title: "Students" };
++
++const first = (v: string | string[] | undefined) => (typeof v === "string" ? v : "");
++
++export default async function StudentsPage(props: PageProps<"/admin/students">) {
++  const params = await props.searchParams;
++  const signed = SIGNED_UP_OPTIONS.some(([v]) => v === params.signed) ? (params.signed as SignedUpWindow) : "all";
++  const catalogue = await loadCatalogue();
++  const levelOptions = ["any", "awaiting", "complete", ...catalogue.map((l) => l.slug)];
++  const requested = first(params.level);
++  const level = levelOptions.includes(requested) ? requested : "any";
++  const q = first(params.q).slice(0, 80);
++  const requestedPage = Math.max(1, Number.parseInt(first(params.page), 10) || 1);
++
++  const students = await loadStudents(catalogue);
++  const now = new Date();
++  const matching = searchStudents(
++    students.filter((s) => inWindow(s, signed, now) && matchesLevel(s, level, catalogue)),
++    q,
++  ).sort(byNewestSignup);
++
++  const pages = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
++  const page = Math.min(requestedPage, pages);
++
++  return (
++    <StudentsView
++      catalogue={catalogue}
++      rows={matching.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)}
++      matching={matching.length}
++      total={students.length}
++      query={{ q, signed, level, page }}
++    />
++  );
++}
+diff --git a/src/components/admin/AdminNav.tsx b/src/components/admin/AdminNav.tsx
+new file mode 100644
+index 0000000..e734fee
+--- /dev/null
++++ b/src/components/admin/AdminNav.tsx
+@@ -0,0 +1,51 @@
++"use client";
++
++import Link from "next/link";
++import { usePathname } from "next/navigation";
++import { Icon, type IconName } from "@/components/ui/icons";
++import { cx } from "@/components/ui/primitives";
++
++export const ADMIN_NAV: Array<{ href: string; label: string; icon: IconName }> = [
++  { href: "/admin", label: "Overview", icon: "grid" },
++  { href: "/admin/students", label: "Students", icon: "users" },
++  { href: "/admin/eligibility", label: "Eligibility rule", icon: "file" },
++  { href: "/admin/content-review", label: "Content review", icon: "shield" },
++];
++
++/**
++ * The Admin sections (#72): a `pink-50` pill with a hairline marks the current one,
++ * and `aria-current` says so to a screen reader, so it is never colour alone. A
++ * Student's drill-down keeps Students current. On a narrow screen the items wrap
++ * across the top bar instead of stacking down a rail.
++ */
++export function AdminNav({ pathname: forced }: { pathname?: string }) {
++  const live = usePathname();
++  const pathname = forced ?? live;
++
++  return (
++    <nav aria-label="Admin sections" className="w-full min-[900px]:w-auto min-[900px]:flex-1">
++      <ul className="m-0 flex list-none flex-wrap gap-x-1 gap-y-0.5 p-0 min-[900px]:flex-col min-[900px]:gap-1">
++        {ADMIN_NAV.map((item) => {
++          const current = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
++          return (
++            <li key={item.href}>
++              <Link
++                href={item.href}
++                aria-current={current ? "page" : undefined}
++                className={cx(
++                  "flex min-h-11 items-center gap-2.5 whitespace-nowrap rounded-[10px] px-3 text-[0.9375rem] no-underline",
++                  current
++                    ? "bg-pink-50 font-medium text-pink shadow-[inset_0_0_0_1px_var(--color-pink-line)]"
++                    : "font-medium text-grey hover:bg-teal-50 hover:text-navy",
++                )}
++              >
++                <Icon name={item.icon} />
++                {item.label}
++              </Link>
++            </li>
++          );
++        })}
++      </ul>
++    </nav>
++  );
++}
+diff --git a/src/components/admin/AdminShell.tsx b/src/components/admin/AdminShell.tsx
+new file mode 100644
+index 0000000..1cffea7
+--- /dev/null
++++ b/src/components/admin/AdminShell.tsx
+@@ -0,0 +1,62 @@
++import Link from "next/link";
++import { Icon } from "@/components/ui/icons";
++import { Save7Lockup } from "@/components/ui/Save7Lockup";
++import { AdminNav } from "./AdminNav";
++
++/**
++ * The Admin shell in the Portal Register (#72): a left rail on a wide screen, a top
++ * bar under 900px. The wordmark is the vector V7 lockup (#40). The foot holds View
++ * course and Sign out, and the staff member's address so the rail says who is in.
++ *
++ * `signOut` is the server action, passed in so this stays a plain component the
++ * layout renders and a test page can render without a session.
++ */
++export function AdminShell({
++  email,
++  signOut,
++  pathname,
++  children,
++}: {
++  email: string;
++  signOut: () => void | Promise<void>;
++  /** Only for rendering a page without a router (the audit harness). */
++  pathname?: string;
++  children: React.ReactNode;
++}) {
++  const footLink =
++    "flex min-h-11 items-center gap-2.5 whitespace-nowrap rounded-[10px] px-3 text-[0.9375rem] font-medium text-grey no-underline hover:bg-teal-50 hover:text-navy";
++
++  return (
++    <div className="min-h-dvh bg-white min-[900px]:grid min-[900px]:grid-cols-[232px_minmax(0,1fr)]">
++      <aside className="flex flex-wrap items-center gap-x-1 gap-y-0.5 border-b border-line bg-white px-3 py-2.5 min-[900px]:sticky min-[900px]:top-0 min-[900px]:h-dvh min-[900px]:flex-col min-[900px]:items-stretch min-[900px]:flex-nowrap min-[900px]:gap-1 min-[900px]:border-b-0 min-[900px]:border-r min-[900px]:px-3.5 min-[900px]:pb-5 min-[900px]:pt-[18px]">
++        <div className="w-full px-2 py-1 min-[900px]:px-2.5 min-[900px]:pb-[18px]">
++          <Link href="/" aria-label="Save7 home" className="inline-flex min-h-11 items-center">
++            <Save7Lockup surface="white" className="text-lg" />
++          </Link>
++        </div>
++
++        <AdminNav pathname={pathname} />
++
++        <div className="flex w-full flex-wrap gap-x-1 border-t border-line pt-1 min-[900px]:flex-col min-[900px]:border-t min-[900px]:pt-3">
++          <p className="hidden truncate px-3 pb-1 text-[0.8125rem] text-grey min-[900px]:block" title={email}>
++            {email}
++          </p>
++          <Link href="/" className={footLink}>
++            <Icon name="book" />
++            View course
++          </Link>
++          <form action={signOut} className="min-[900px]:w-full">
++            <button type="submit" className={`${footLink} w-full text-left`}>
++              <Icon name="log-out" />
++              Sign out
++            </button>
++          </form>
++        </div>
++      </aside>
++
++      <main id="main" className="min-w-0 px-4 pb-10 pt-[18px] min-[900px]:px-[30px] min-[900px]:pt-6">
++        {children}
++      </main>
++    </div>
++  );
++}
+diff --git a/src/components/admin/AdminUi.tsx b/src/components/admin/AdminUi.tsx
+deleted file mode 100644
+index 06a0d86..0000000
+--- a/src/components/admin/AdminUi.tsx
++++ /dev/null
+@@ -1,180 +0,0 @@
+-import { Card, cx } from "@/components/ui/primitives";
+-
+-/** Small building blocks shared by the admin screens. */
+-
+-export function PageTitle({
+-  title,
+-  description,
+-}: {
+-  title: string;
+-  description?: string;
+-}) {
+-  return (
+-    <div className="mb-6">
+-      <h1 className="font-display text-3xl tracking-tight text-navy">
+-        {title}
+-      </h1>
+-      {description ? (
+-        <p className="mt-1.5 max-w-2xl text-sm text-grey">{description}</p>
+-      ) : null}
+-    </div>
+-  );
+-}
+-
+-export function StatCard({
+-  label,
+-  value,
+-  sub,
+-  tone = "neutral",
+-}: {
+-  label: string;
+-  value: string | number;
+-  sub?: string;
+-  tone?: "neutral" | "pink" | "teal" | "warn";
+-}) {
+-  const tones = {
+-    neutral: "bg-white",
+-    pink: "bg-pink-50 border-pink-line",
+-    teal: "bg-teal-50 border-teal-line",
+-    warn: "bg-pink-50 border-pink-line",
+-  } as const;
+-
+-  return (
+-    <Card className={cx("p-5", tones[tone])}>
+-      <p className="text-xs font-bold uppercase tracking-wider text-grey">
+-        {label}
+-      </p>
+-      <p className="mt-1.5 font-display text-4xl text-navy">{value}</p>
+-      {sub ? <p className="mt-0.5 text-xs text-grey">{sub}</p> : null}
+-    </Card>
+-  );
+-}
+-
+-/**
+- * A horizontal bar chart.
+- *
+- * Hand-rolled rather than pulled from a charting library. Every chart Save7 needs is
+- * a labelled bar; a chart dependency would add weight, a client boundary, and a
+- * theming problem for something CSS already does. Each bar is also a table row in
+- * effect, so the numbers stay readable to a screen reader.
+- */
+-export function BarChart({
+-  data,
+-  max,
+-  valueSuffix = "",
+-  tone = "pink",
+-  emptyMessage = "No data yet.",
+-}: {
+-  data: Array<{ label: string; value: number | null; sub?: string }>;
+-  max?: number;
+-  valueSuffix?: string;
+-  tone?: "pink" | "teal" | "navy";
+-  emptyMessage?: string;
+-}) {
+-  const values = data.map((d) => d.value ?? 0);
+-  const ceiling = max ?? Math.max(1, ...values);
+-  const fill = { pink: "bg-pink", teal: "bg-teal-ink", navy: "bg-navy" }[tone];
+-
+-  if (data.length === 0 || values.every((v) => v === 0)) {
+-    return <p className="text-sm text-grey">{emptyMessage}</p>;
+-  }
+-
+-  return (
+-    <ul className="space-y-3">
+-      {data.map((row) => (
+-        <li key={row.label}>
+-          <div className="mb-1 flex items-baseline justify-between gap-4">
+-            <span className="text-sm text-navy">{row.label}</span>
+-            <span className="shrink-0 text-sm font-bold text-navy">
+-              {row.value === null ? "n/a" : `${row.value}${valueSuffix}`}
+-            </span>
+-          </div>
+-          <div
+-            aria-hidden="true"
+-            className="h-2.5 w-full overflow-hidden rounded-pill bg-line"
+-          >
+-            <div
+-              className={cx("h-full rounded-pill", fill)}
+-              style={{
+-                width: `${row.value === null ? 0 : Math.max(1, (row.value / ceiling) * 100)}%`,
+-              }}
+-            />
+-          </div>
+-          {row.sub ? (
+-            <p className="mt-0.5 text-xs text-grey">{row.sub}</p>
+-          ) : null}
+-        </li>
+-      ))}
+-    </ul>
+-  );
+-}
+-
+-export function Section({
+-  title,
+-  description,
+-  children,
+-  className,
+-}: {
+-  title: string;
+-  description?: string;
+-  children: React.ReactNode;
+-  className?: string;
+-}) {
+-  return (
+-    <Card className={cx("p-6", className)}>
+-      <h2 className="font-bold text-navy">{title}</h2>
+-      {description ? (
+-        <p className="mt-1 text-sm text-grey">{description}</p>
+-      ) : null}
+-      <div className="mt-5">{children}</div>
+-    </Card>
+-  );
+-}
+-
+-export function DataTable({
+-  columns,
+-  rows,
+-  caption,
+-  emptyMessage = "Nothing to show yet.",
+-}: {
+-  columns: string[];
+-  rows: React.ReactNode[][];
+-  caption: string;
+-  emptyMessage?: string;
+-}) {
+-  if (rows.length === 0) {
+-    return <p className="text-sm text-grey">{emptyMessage}</p>;
+-  }
+-
+-  return (
+-    <div className="overflow-x-auto">
+-      <table className="w-full min-w-[38rem] border-collapse text-left text-sm">
+-        <caption className="sr-only">{caption}</caption>
+-        <thead>
+-          <tr className="border-b-2 border-line-strong">
+-            {columns.map((column) => (
+-              <th
+-                key={column}
+-                scope="col"
+-                className="whitespace-nowrap py-2 pr-4 text-xs font-bold uppercase tracking-wider text-grey"
+-              >
+-                {column}
+-              </th>
+-            ))}
+-          </tr>
+-        </thead>
+-        <tbody>
+-          {rows.map((row, i) => (
+-            <tr key={i} className="border-b border-line align-top">
+-              {row.map((cell, j) => (
+-                <td key={j} className="py-2.5 pr-4 text-grey">
+-                  {cell}
+-                </td>
+-              ))}
+-            </tr>
+-          ))}
+-        </tbody>
+-      </table>
+-    </div>
+-  );
+-}
+diff --git a/src/components/admin/OverviewView.tsx b/src/components/admin/OverviewView.tsx
+new file mode 100644
+index 0000000..8513b60
+--- /dev/null
++++ b/src/components/admin/OverviewView.tsx
+@@ -0,0 +1,301 @@
++import Link from "next/link";
++import { BaselineTrend, type TrendData } from "@/components/course/BaselineTrend";
++import { Icon } from "@/components/ui/icons";
++import { StatCard, PortalCard } from "@/components/portal/Portal";
++import { FilterBar, FilterGroup } from "@/components/portal/FilterChips";
++import { FigureRow, GroupHeading, Meter, Notice, PageHeader, Panel, SmallViewNotice } from "@/components/portal/Panel";
++import { CellSub, DataTable } from "@/components/portal/DataTable";
++import { SIGNED_UP_OPTIONS, SITTING_SLOTS, SMALL_VIEW, type Indicators, type SignedUpWindow } from "@/lib/admin/model";
++import { adminHref, formatPct, formatPoints } from "@/lib/admin/format";
++import type { MissedQuestion } from "@/lib/admin/data";
++
++/**
++ * Overview (#72, #84): #18's five Growth Indicators, two supporting readouts (Stage
++ * drop-off and the most missed questions, from #82) and a read-only eligibility card.
++ * Presentational: the page fetches and slices, this draws.
++ */
++
++export type EligibilityCard = {
++  version: number | null;
++  flagLabels: string[];
++  eligible: number;
++  of: number;
++};
++
++export function OverviewView({
++  indicators,
++  totalStudents,
++  signedUp,
++  eligibility,
++  missed,
++}: {
++  indicators: Indicators;
++  totalStudents: number;
++  signedUp: SignedUpWindow;
++  eligibility: EligibilityCard;
++  missed: MissedQuestion[];
++}) {
++  const n = indicators.students;
++  const link = (v: string) => adminHref("/admin", { signed: v }, { signed: "all" });
++
++  const trend: TrendData = {
++    slots: SITTING_SLOTS.map((name, i) => {
++      const t = indicators.trend[i];
++      return {
++        name,
++        status: t.students === 0 ? "Not taken yet" : `${t.students} Student${t.students === 1 ? "" : "s"}`,
++        taken: t.students > 0,
++        offered: false,
++      };
++    }),
++    series: [
++      {
++        slug: "average",
++        title: "Average total score",
++        values: indicators.trend.map((t) => (t.meanPct === null ? null : Math.round(t.meanPct))),
++      },
++    ],
++    summary: `Average Baseline total at each Sitting: ${indicators.trend
++      .map((t, i) => `${SITTING_SLOTS[i]}, ${t.meanPct === null ? "no Students" : `${Math.round(t.meanPct)}% across ${t.students} Students`}`)
++      .join("; ")}.`,
++  };
++
++  return (
++    <>
++      <PageHeader title="Overview" lede="How the Course is going, read from every Student’s Progress Record." />
++
++      <FilterBar count={n} total={totalStudents}>
++        <FilterGroup
++          label="Signed up"
++          current={signedUp}
++          options={SIGNED_UP_OPTIONS.map(([value, label]) => ({ value, label, href: link(value) }))}
++        />
++      </FilterBar>
++      {n > 0 && n < SMALL_VIEW ? <SmallViewNotice n={n} /> : null}
++
++      {n === 0 ? (
++        <PortalCard className="py-7 text-center text-grey">
++          No Students match this view. Widen the filter above.
++        </PortalCard>
++      ) : (
++        <>
++          <div className="grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-4">
++            <StatCard
++              label="Students"
++              value={String(n)}
++              sub={`${indicators.signedUpLast30} signed up in the last 30 days`}
++              icon="users"
++              tint="pink"
++            />
++            {indicators.completion.map((c) => (
++              <StatCard
++                key={c.slug}
++                label={`Completed ${c.title}`}
++                value={formatPct(c.pct)}
++                sub={`${c.done} of ${c.of} Students`}
++                icon="award"
++                tint="teal"
++              />
++            ))}
++          </div>
++
++          <div className="mt-4 grid items-start gap-4 min-[1100px]:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
++            <Panel
++              title="Baseline trend"
++              lede="Average total score at each Sitting, as a percentage of the 20 questions."
++              note="Sittings after the first are optional and each is taken by fewer Students, so the points are not the same group of Students."
++            >
++              <BaselineTrend data={trend} />
++              <div className="mt-2">
++                <DataTable
++                  caption="Baseline trend as a table"
++                  minWidth="22rem"
++                  columns={[
++                    { key: "s", header: "Sitting" },
++                    { key: "n", header: "Students", align: "right" },
++                    { key: "a", header: "Average total", align: "right" },
++                  ]}
++                  rows={indicators.trend.map((t) => ({
++                    key: String(t.slot),
++                    cells: [`${t.slot}. ${SITTING_SLOTS[t.slot - 1]}`, t.students, formatPct(t.meanPct)],
++                  }))}
++                />
++              </div>
++            </Panel>
++
++            <Panel
++              title="Improvement by Level"
++              lede="Average change in that Level’s Baseline sub-score, from the first Sitting to the first Sitting taken after completing the Level."
++            >
++              {indicators.improvement.map((i) => (
++                <FigureRow
++                  key={i.slug}
++                  name={i.title}
++                  figure={formatPoints(i.meanChange)}
++                  sub={
++                    i.students
++                      ? `Average of ${i.students} Student${i.students === 1 ? "" : "s"} who re-sat after completing it`
++                      : "No one has re-sat after completing this Level yet"
++                  }
++                />
++              ))}
++            </Panel>
++          </div>
++
++          <div className="mt-4 grid items-start gap-4 min-[1100px]:grid-cols-2">
++            <Panel
++              title="Stage Quiz pass rate"
++              lede="Of the Students who attempted each Stage Quiz, how many have passed it."
++            >
++              {indicators.stageQuiz.map((l) => (
++                <div key={l.slug}>
++                  <GroupHeading>{l.title}</GroupHeading>
++                  {l.stages.map((s, i) => (
++                    <StageRow
++                      key={s.slug}
++                      n={i + 1}
++                      title={s.title}
++                      sub={s.attempted ? `${s.passed} passed of ${s.attempted} who attempted` : "No one has attempted it yet"}
++                      value={s.passPct}
++                      label={`${s.title}: ${s.passed} of ${s.attempted} passed`}
++                    />
++                  ))}
++                </div>
++              ))}
++            </Panel>
++
++            <Panel
++              title="Stage drop-off"
++              lede="Of the Students who opened a Stage, how many have not passed its quiz yet. Some are still working on it."
++            >
++              {indicators.stageQuiz.map((l) => (
++                <div key={l.slug}>
++                  <GroupHeading>{l.title}</GroupHeading>
++                  {l.stages.map((s, i) => (
++                    <StageRow
++                      key={s.slug}
++                      n={i + 1}
++                      title={s.title}
++                      sub={s.started ? `${s.notPassed} of ${s.started} who opened it have not passed` : "No one has opened it yet"}
++                      value={s.started ? (100 * s.notPassed) / s.started : null}
++                      label={`${s.title}: ${s.notPassed} of ${s.started} not passed yet`}
++                    />
++                  ))}
++                </div>
++              ))}
++            </Panel>
++          </div>
++
++          <div className="mt-4 grid items-start gap-4 min-[1100px]:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
++            <Panel
++              title="Most commonly missed questions"
++              lede="The five Stage Quiz questions missed most often, across every Student. A question needs at least three answers to be listed."
++            >
++              {missed.length === 0 ? (
++                <p className="text-sm text-grey">No question has enough answers to list yet.</p>
++              ) : (
++                <DataTable
++                  caption="Most commonly missed Stage Quiz questions"
++                  minWidth="30rem"
++                  columns={[
++                    { key: "q", header: "Question" },
++                    { key: "m", header: "Missed", align: "right", nowrap: true },
++                  ]}
++                  rows={missed.map((q) => ({
++                    key: q.id,
++                    cells: [
++                      <span key="q" className="block font-normal text-navy">
++                        {q.prompt}
++                        {q.stage ? <CellSub>{q.stage}</CellSub> : null}
++                      </span>,
++                      <span key="m" className="font-display text-base font-bold text-navy">
++                        {q.missedPct}%<CellSub>{q.missed} of {q.answered}</CellSub>
++                      </span>,
++                    ],
++                  }))}
++                />
++              )}
++            </Panel>
++
++            <Panel
++              title="Nerve Center eligibility"
++              aside={
++                eligibility.version !== null ? (
++                  <span className="inline-flex items-center rounded-pill bg-navy px-2.5 py-[3px] font-display text-xs font-bold uppercase leading-tight tracking-[0.06em] text-white">
++                    Version {eligibility.version}
++                  </span>
++                ) : null
++              }
++              lede="Who currently reads as eligible under the Eligibility Rule."
++            >
++              {eligibility.version === null ? (
++                <Notice icon="info">No Eligibility Rule has been saved yet, so no one reads as eligible.</Notice>
++              ) : (
++                <div className="flex flex-col gap-3">
++                  <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
++                    {eligibility.flagLabels.map((f) => (
++                      <li
++                        key={f}
++                        className="inline-flex items-center gap-1.5 rounded-lg border border-teal-line bg-teal-50 py-1 pl-2 pr-2.5 text-[0.8125rem] font-medium text-navy"
++                      >
++                        <Icon name="check" className="size-3.5 shrink-0 stroke-[2.25] text-teal-ink" />
++                        {f}
++                      </li>
++                    ))}
++                  </ul>
++                  <p className="font-display text-[2rem] font-extrabold leading-tight text-navy">
++                    {eligibility.eligible}{" "}
++                    <span className="font-sans text-[0.9375rem] font-medium text-grey">
++                      of {eligibility.of} Students read as eligible
++                    </span>
++                  </p>
++                  <Link
++                    href="/admin/eligibility"
++                    className="inline-flex items-center gap-1.5 text-[0.9375rem] font-medium text-teal-ink underline-offset-[3px] hover:underline"
++                  >
++                    Edit the rule
++                    <Icon name="arrow" className="size-4" />
++                  </Link>
++                </div>
++              )}
++            </Panel>
++          </div>
++        </>
++      )}
++    </>
++  );
++}
++
++function StageRow({
++  n,
++  title,
++  sub,
++  value,
++  label,
++}: {
++  n: number;
++  title: string;
++  sub: string;
++  value: number | null;
++  label: string;
++}) {
++  return (
++    <div className="grid grid-cols-[28px_minmax(0,1fr)_3rem] items-center gap-x-3 gap-y-1 border-b border-line py-2 last:border-b-0 min-[640px]:grid-cols-[28px_minmax(0,1.5fr)_minmax(70px,1fr)_3rem]">
++      <span className="inline-grid size-6 place-items-center rounded-full bg-teal font-display text-xs font-bold leading-none text-navy">
++        {n}
++      </span>
++      <span className="text-sm font-medium leading-snug text-navy">
++        {title}
++        <span className="block text-xs font-normal text-grey">{sub}</span>
++      </span>
++      <Meter
++        value={value ?? 0}
++        label={label}
++        className="col-span-2 col-start-2 row-start-2 min-[640px]:col-span-1 min-[640px]:col-start-3 min-[640px]:row-start-1"
++      />
++      <span className="text-right font-display text-[0.9375rem] font-bold text-navy min-[640px]:col-start-4">
++        {formatPct(value)}
++      </span>
++    </div>
++  );
++}
+diff --git a/src/components/admin/ReviewItemRow.tsx b/src/components/admin/ReviewItemRow.tsx
+index 6d4b819..4da7d9c 100644
+--- a/src/components/admin/ReviewItemRow.tsx
++++ b/src/components/admin/ReviewItemRow.tsx
+@@ -81,7 +81,7 @@ export function ReviewItemRow({
+ 
+           {item.sourceHint ? (
+             <p className="mt-1.5 text-xs text-grey">
+-              <span className="font-semibold">Source needed:</span> {item.sourceHint}
++              <span className="font-medium">Source needed:</span> {item.sourceHint}
+             </p>
+           ) : null}
+ 
+@@ -106,7 +106,7 @@ export function ReviewItemRow({
+             type="button"
+             aria-expanded={expanded}
+             onClick={() => setExpanded((v) => !v)}
+-            className="text-sm font-semibold text-pink underline"
++            className="text-sm font-medium text-pink underline"
+           >
+             {expanded ? "Close" : "Review"}
+           </button>
+diff --git a/src/components/admin/RuleEditor.tsx b/src/components/admin/RuleEditor.tsx
+new file mode 100644
+index 0000000..d19495f
+--- /dev/null
++++ b/src/components/admin/RuleEditor.tsx
+@@ -0,0 +1,115 @@
++"use client";
++
++import { useActionState, useState } from "react";
++import { Notice } from "@/components/portal/Panel";
++import { cx } from "@/components/ui/primitives";
++import { readsEligible } from "@/lib/admin/flags";
++import { saveEligibilityRuleAction, type RuleFormState } from "@/app/admin/eligibility/actions";
++
++/**
++ * The Eligibility Rule editor (#72, #84): a checkbox per Level-complete flag, the
++ * count that would read as eligible before anything is saved, and a save that always
++ * makes version N+1. The count is worked out here from each Student's held flags
++ * (names and ids never reach the browser), the same AND the database evaluator uses.
++ */
++export function RuleEditor({
++  options,
++  current,
++  held,
++  action = saveEligibilityRuleAction,
++}: {
++  options: Array<{ flag: string; label: string }>;
++  current: { version: number; flags: string[] } | null;
++  /** One list of held flags per Student, no identity. */
++  held: string[][];
++  /** The server action; a test page passes a stub. */
++  action?: (previous: RuleFormState, formData: FormData) => Promise<RuleFormState>;
++}) {
++  const [state, submit, pending] = useActionState(action, undefined);
++  const [selected, setSelected] = useState<string[]>(current?.flags ?? []);
++
++  const same =
++    current !== null && selected.length === current.flags.length && selected.every((f) => current.flags.includes(f));
++  const empty = selected.length === 0;
++  const total = held.length;
++  const would = held.filter((h) => readsEligible(h, selected)).length;
++  const now = current ? held.filter((h) => readsEligible(h, current.flags)).length : 0;
++  const next = (current?.version ?? 0) + 1;
++
++  const toggle = (flag: string) =>
++    setSelected((s) => (s.includes(flag) ? s.filter((f) => f !== flag) : [...s, flag]));
++
++  return (
++    <form action={submit} className="flex flex-col gap-4">
++      <input type="hidden" name="baseVersion" value={current?.version ?? ""} />
++
++      <fieldset className="m-0 flex flex-col gap-2.5 border-0 p-0">
++        <legend className="sr-only">Required flags</legend>
++        {options.map((o) => {
++          const on = selected.includes(o.flag);
++          return (
++            <label
++              key={o.flag}
++              className={cx(
++                "flex cursor-pointer items-start gap-3 rounded-xl border-[1.5px] px-3.5 py-3",
++                on ? "border-navy bg-teal-50" : "border-line-strong bg-white",
++              )}
++            >
++              <input
++                type="checkbox"
++                name="flag"
++                value={o.flag}
++                checked={on}
++                onChange={() => toggle(o.flag)}
++                className="mt-0.5 size-5 shrink-0 accent-pink"
++              />
++              <span>
++                <span className="block font-medium text-navy">{o.label}</span>
++                <span className="block text-[0.8125rem] text-grey">A Student must have this flag to read as eligible.</span>
++              </span>
++            </label>
++          );
++        })}
++      </fieldset>
++
++      {empty ? (
++        <Notice tone="warn" icon="alert" role="status">
++          A rule with no flags would make every Student eligible. Pick at least one.
++        </Notice>
++      ) : (
++        <Notice icon="chart" role="status">
++          <span className="font-medium">
++            {would} of {total}
++          </span>{" "}
++          Students would read as eligible under this selection
++          {same || !current ? "" : `, against ${now} under version ${current.version}`}. All flags must be true.
++        </Notice>
++      )}
++
++      {state?.error ? (
++        <Notice tone="warn" icon="alert" role="status">
++          {state.error}
++        </Notice>
++      ) : null}
++
++      <div className="flex flex-wrap items-center gap-3">
++        <button
++          type="submit"
++          disabled={same || empty || pending}
++          className="inline-flex min-h-11 items-center rounded-[10px] bg-pink px-4 text-sm font-semibold text-white hover:bg-navy disabled:cursor-not-allowed disabled:border-2 disabled:border-line disabled:bg-white disabled:text-grey disabled:hover:bg-white"
++        >
++          {pending ? "Saving…" : `Save as version ${next}`}
++        </button>
++        <span className="text-sm text-grey">
++          {same
++            ? "Change a flag to save a new version."
++            : empty
++              ? "Pick at least one flag to save."
++              : current
++              ? `Saving adds version ${next}. Version ${current.version} is kept as it is.`
++              : "Saving adds version 1."}
++        </span>
++      </div>
++    </form>
++  );
++}
+diff --git a/src/components/admin/RuleView.tsx b/src/components/admin/RuleView.tsx
+new file mode 100644
+index 0000000..2495102
+--- /dev/null
++++ b/src/components/admin/RuleView.tsx
+@@ -0,0 +1,141 @@
++import { Icon } from "@/components/ui/icons";
++import { Notice, PageHeader, Panel } from "@/components/portal/Panel";
++import { DataTable } from "@/components/portal/DataTable";
++import { flagLabel, heldFlags, eligibleCount, type Catalogue, type EligibilityRule, type StudentRecord } from "@/lib/admin/model";
++import { levelFlag } from "@/lib/admin/flags";
++import { formatShortDate } from "@/lib/admin/format";
++import { RuleEditor } from "./RuleEditor";
++import type { RuleFormState } from "@/app/admin/eligibility/actions";
++
++/**
++ * The Eligibility Rule screen (#72, #84): the current rule, an editor that saves a
++ * new version, and the version history. A rule is data, never edited in place, so
++ * the history is every version ever saved.
++ */
++
++export const VersionPill = ({ children }: { children: React.ReactNode }) => (
++  <span className="inline-flex items-center rounded-pill bg-navy px-2.5 py-[3px] font-display text-xs font-bold uppercase leading-tight tracking-[0.06em] text-white">
++    {children}
++  </span>
++);
++
++export function FlagChips({ flags, catalogue }: { flags: string[]; catalogue: Catalogue }) {
++  return (
++    <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
++      {flags.map((f) => (
++        <li
++          key={f}
++          className="inline-flex items-center gap-1.5 rounded-lg border border-teal-line bg-teal-50 py-1 pl-2 pr-2.5 text-[0.8125rem] font-medium text-navy"
++        >
++          <Icon name="check" className="size-3.5 shrink-0 stroke-[2.25] text-teal-ink" />
++          {flagLabel(f, catalogue)}
++        </li>
++      ))}
++    </ul>
++  );
++}
++
++export function RuleView({
++  catalogue,
++  students,
++  rules,
++  saved,
++  action,
++}: {
++  catalogue: Catalogue;
++  students: StudentRecord[];
++  /** Every version, newest first. */
++  rules: EligibilityRule[];
++  /** The version just saved, from the redirect. */
++  saved: number | null;
++  action?: (previous: RuleFormState, formData: FormData) => Promise<RuleFormState>;
++}) {
++  const current = rules[0] ?? null;
++
++  return (
++    <>
++      <PageHeader
++        title="Eligibility rule"
++        lede="Decides which Students read as eligible for Nerve Center. Editing creates a new version and never changes an old one."
++      />
++
++      {saved !== null ? (
++        <div className="mb-4">
++          <Notice icon="check-circle" role="status">
++            Saved as version {saved}. Earlier versions are kept in the history below.
++          </Notice>
++        </div>
++      ) : null}
++
++      <div className="grid items-start gap-4 min-[1100px]:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
++        <div className="flex min-w-0 flex-col gap-4">
++          <Panel
++            title="Current rule"
++            aside={current ? <VersionPill>Version {current.version}</VersionPill> : null}
++            lede={
++              current
++                ? `Created ${formatShortDate(current.createdAt)}${current.createdByName ? ` by ${current.createdByName}` : ""}.`
++                : "No rule has been saved yet."
++            }
++          >
++            {current ? (
++              <div className="flex flex-col gap-3">
++                <FlagChips flags={current.requiredFlags} catalogue={catalogue} />
++                <p className="font-display text-[2rem] font-extrabold leading-tight text-navy">
++                  {eligibleCount(students)}{" "}
++                  <span className="font-sans text-[0.9375rem] font-medium text-grey">
++                    of {students.length} Students read as eligible
++                  </span>
++                </p>
++              </div>
++            ) : (
++              <Notice icon="info">Until a rule is saved, no one reads as eligible.</Notice>
++            )}
++          </Panel>
++
++          <Panel title="Version history">
++            <DataTable
++              caption="Every version of the Eligibility Rule, newest first"
++              minWidth="34rem"
++              empty="No versions yet."
++              columns={[
++                { key: "v", header: "Version", nowrap: true },
++                { key: "f", header: "Required flags" },
++                { key: "b", header: "Created by", nowrap: true },
++                { key: "c", header: "Created", nowrap: true },
++              ]}
++              rows={rules.map((r, i) => ({
++                key: String(r.version),
++                cells: [
++                  <span key="v" className="inline-flex items-center gap-2">
++                    {r.version}
++                    {i === 0 ? <VersionPill>Current</VersionPill> : null}
++                  </span>,
++                  <FlagChips key="f" flags={r.requiredFlags} catalogue={catalogue} />,
++                  <span key="b" className="font-normal text-navy">
++                    {r.createdByName ?? "Unknown"}
++                  </span>,
++                  <span key="c" className="font-normal text-navy">
++                    {formatShortDate(r.createdAt)}
++                  </span>,
++                ],
++              }))}
++            />
++          </Panel>
++        </div>
++
++        <Panel
++          title="Edit the rule"
++          lede="A Student reads as eligible when every flag below is true. The rule never reads Baseline scores or engagement."
++        >
++          <RuleEditor
++            options={catalogue.map((l) => ({ flag: levelFlag(l.slug), label: `${l.title} Level complete` }))}
++            current={current ? { version: current.version, flags: current.requiredFlags } : null}
++            held={students.map(heldFlags)}
++            action={action}
++          />
++        </Panel>
++      </div>
++    </>
++  );
++}
+diff --git a/src/components/admin/StudentView.tsx b/src/components/admin/StudentView.tsx
+new file mode 100644
+index 0000000..d2648ee
+--- /dev/null
++++ b/src/components/admin/StudentView.tsx
+@@ -0,0 +1,336 @@
++import Link from "next/link";
++import { Icon } from "@/components/ui/icons";
++import { StatCard, type RailState } from "@/components/portal/Portal";
++import { LevelCard, type LevelCardStage } from "@/components/portal/LevelCard";
++import { DataTable, CellSub } from "@/components/portal/DataTable";
++import { Notice, Panel } from "@/components/portal/Panel";
++import {
++  SITTING_SLOTS,
++  currentLevel,
++  flagLabel,
++  latestSitting,
++  levelImprovement,
++  liveCertificates,
++  percent,
++  heldFlags,
++  stagesPassed,
++  type Catalogue,
++  type EligibilityRule,
++  type StudentRecord,
++} from "@/lib/admin/model";
++import { formatDate, formatPct, formatPoints, formatShortDate, initials } from "@/lib/admin/format";
++import type { ActivityEvent } from "@/lib/admin/data";
++
++/**
++ * A Student's Progress Record, "where they are" first (#72, #84): the four stat cards,
++ * the eligibility line, each Level as a card with its Stage stepper, the Certificate
++ * line, then the Baseline table with an Improvement row. Dashboard activity closes
++ * the page (#81). Presentational: every state of a record renders from plain data.
++ */
++
++const EVENT_WORDS: Record<string, string> = {
++  lesson_view: "Opened a lesson",
++  quiz_start: "Started a Stage Quiz",
++  quiz_submit: "Submitted a Stage Quiz",
++  module_complete: "Finished a Stage’s lessons",
++  level_start: "Started a Level",
++  certificate_issue: "Certificate issued",
++  video_progress: "Watched part of the film",
++  profile_update: "Updated their profile",
++};
++
++export function StudentView({
++  student,
++  catalogue,
++  rule,
++  activity,
++}: {
++  student: StudentRecord;
++  catalogue: Catalogue;
++  /** The current Eligibility Rule, or null before one is saved. */
++  rule: EligibilityRule | null;
++  activity: ActivityEvent[];
++}) {
++  const stagesTotal = catalogue.reduce((n, l) => n + l.stages.length, 0);
++  const passed = stagesPassed(student);
++  const certs = liveCertificates(student);
++  const sitting = latestSitting(student);
++  const first = student.sittings.some((s) => s.sittingNo === 1);
++  const cur = currentLevel(student, catalogue);
++  const stateText =
++    cur.kind === "awaiting" ? "Awaiting first Sitting" : cur.kind === "complete" ? "All Levels complete" : `In progress on ${cur.title}`;
++
++  /* The Stage they are up to: the first not passed, once Sitting 1 has opened them. */
++  const allStages = catalogue.flatMap((l) => l.stages);
++  const nextStage = first ? (allStages.find((s) => !student.stages[s.slug]?.passedAt)?.slug ?? null) : null;
++
++  const held = heldFlags(student);
++  const eligible = student.signal?.eligible ?? null;
++  const needed = rule ? rule.requiredFlags.filter((f) => !held.includes(f)) : [];
++
++  return (
++    <>
++      <p className="mb-3.5">
++        <Link
++          href="/admin/students"
++          className="inline-flex min-h-11 items-center gap-1.5 text-[0.9375rem] font-medium text-teal-ink underline-offset-[3px] hover:underline"
++        >
++          <Icon name="back" className="size-4" />
++          Students
++        </Link>
++      </p>
++
++      <div className="mb-5 flex items-center gap-4">
++        <span
++          aria-hidden="true"
++          className="grid size-[60px] shrink-0 place-items-center rounded-full bg-teal font-display text-lg font-bold leading-none text-navy"
++        >
++          {initials(student.name)}
++        </span>
++        <div className="min-w-0">
++          <h1 className="font-display text-[1.75rem] font-bold leading-tight tracking-[-0.01em] text-navy">{student.name}</h1>
++          <p className="mt-1 text-sm text-grey">
++            Signed up {formatDate(student.signedUpAt)} · {stateText} · Last active {formatDate(student.lastActiveAt)}
++          </p>
++        </div>
++      </div>
++
++      <div className="grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-4">
++        <StatCard label="Stages passed" value={String(passed)} unit={`of ${stagesTotal}`} sub="Stage Quizzes passed" icon="book" tint="teal" />
++        <StatCard label="Certificates" value={String(certs.length)} unit={`of ${catalogue.length}`} sub="One per Level" icon="award" tint="pink" />
++        <StatCard label="Baseline Sittings" value={String(student.sittings.length)} unit="of 4" sub="Taken so far" icon="clock" tint="teal" />
++        <StatCard
++          label="Latest Baseline"
++          value={sitting ? formatPct(sitting.totalPct) : "Not taken"}
++          unit={sitting ? `${sitting.totalScore} of ${sitting.totalMax}` : undefined}
++          sub={sitting ? `Sitting ${sitting.sittingNo}` : "No Sitting yet"}
++          icon="chart"
++          tint="pink"
++        />
++      </div>
++
++      <div className="mt-4">
++        <Notice icon="shield">
++          <span className="font-medium">Nerve Center eligibility:</span>{" "}
++          {eligible === null || !student.signal ? (
++            "not evaluated yet."
++          ) : (
++            <>
++              {eligible ? "reads as eligible" : "does not yet read as eligible"} under rule version {student.signal.ruleVersion}, evaluated{" "}
++              {formatDate(student.signal.evaluatedAt)}.
++              {!eligible && rule && needed.length > 0 ? (
++                <> Still needed: {needed.map((f) => flagLabel(f, catalogue)).join(", ")}.</>
++              ) : null}
++            </>
++          )}
++        </Notice>
++      </div>
++
++      <h2 className="mb-3 mt-6 font-display text-[1.375rem] font-bold leading-tight text-navy">Levels and Stages</h2>
++      {catalogue.map((level) => {
++        const done = level.stages.filter((s) => student.stages[s.slug]?.passedAt).length;
++        const completedAt = student.levelCompletedAt[level.slug];
++        const certificate =
++          certs.find((c) => c.levelSlug === level.slug) ??
++          student.certificates.find((c) => c.levelSlug === level.slug) ??
++          null;
++        const onThisLevel = nextStage !== null && level.stages.some((s) => s.slug === nextStage);
++
++        const status = completedAt
++          ? { tone: "done" as const, icon: "award" as const, label: certificate && !certificate.revokedAt ? "Certificate issued" : "Level complete" }
++          : done > 0 || onThisLevel
++            ? { tone: "progress" as const, icon: "clock" as const, label: "In progress" }
++            : { tone: "none" as const, icon: "lock" as const, label: "Not started" };
++
++        const stages: LevelCardStage[] = level.stages.map((st) => {
++          const rec = student.stages[st.slug];
++          const latest = rec?.latest;
++          const attempt = latest ? `Latest attempt ${latest.score} of ${latest.max}` : null;
++          let state: RailState;
++          let detail: React.ReactNode;
++          if (rec?.passedAt) {
++            state = "passed";
++            detail = (
++              <>
++                <span className="font-medium text-navy">Passed {formatShortDate(rec.passedAt)}</span>
++                {attempt ? (
++                  <>
++                    <br />
++                    {attempt}
++                    {latest && !latest.passed ? ", not passed. The Stage stays complete." : ""}
++                  </>
++                ) : null}
++              </>
++            );
++          } else if (!first) {
++            state = "locked";
++            detail = "Opens after the first Sitting";
++          } else if (st.slug === nextStage) {
++            state = "current";
++            detail = attempt ? (
++              <>
++                <span className="font-medium text-navy">Not passed yet</span>
++                <br />
++                {attempt}, not passed
++              </>
++            ) : (
++              <>
++                <span className="font-medium text-navy">Next up</span>
++                <br />
++                Not attempted
++              </>
++            );
++          } else {
++            state = "todo";
++            detail = attempt ? `${attempt}, not passed` : "Not attempted";
++          }
++          return { key: st.slug, title: st.title, state, detail };
++        });
++
++        return (
++          <LevelCard
++            key={level.slug}
++            title={level.title}
++            status={status}
++            passed={done}
++            total={level.stages.length}
++            stages={stages}
++            footer={
++              certificate
++                ? {
++                    icon: "award",
++                    text: (
++                      <>
++                        <span className="font-medium text-navy">
++                          Certificate {certificate.revokedAt ? "revoked" : `issued ${formatDate(certificate.issuedAt)}`}
++                        </span>
++                        , public ID <span className="font-mono text-[0.8125rem] text-navy">{certificate.code}</span>
++                      </>
++                    ),
++                  }
++                : { icon: "lock", text: "No Certificate yet. It is issued when every Stage Quiz in this Level is passed." }
++            }
++          />
++        );
++      })}
++
++      <Panel
++        title="Baseline Sittings"
++        lede="Up to four, on a fixed schedule. Each stores its scores by Level, never the answers."
++        className="mt-6"
++      >
++        <DataTable
++          caption={`${student.name}: Baseline Sittings, with Improvement by Level`}
++          minWidth="40rem"
++          columns={[
++            { key: "s", header: "Sitting", nowrap: true },
++            { key: "t", header: "Taken", nowrap: true },
++            ...catalogue.map((l) => ({ key: l.slug, header: l.title, align: "right" as const })),
++            { key: "tot", header: "Total", align: "right" as const },
++          ]}
++          rows={[
++            ...[1, 2, 3, 4].map((slot) => {
++              const t = student.sittings.find((x) => x.sittingNo === slot);
++              const name = `${slot}. ${SITTING_SLOTS[slot - 1]}`;
++              if (t) {
++                return {
++                  key: `s${slot}`,
++                  cells: [
++                    name,
++                    formatShortDate(t.submittedAt),
++                    ...catalogue.map((l) => {
++                      const s = t.levelScores[l.slug];
++                      return s ? (
++                        <span key={l.slug}>
++                          {percent(s.score, s.max)}%<CellSub>{s.score} of {s.max}</CellSub>
++                        </span>
++                      ) : (
++                        <span key={l.slug} className="text-grey">
++                          n/a
++                        </span>
++                      );
++                    }),
++                    <span key="tot">
++                      <span className="font-medium text-navy">{t.totalPct}%</span>
++                      <CellSub>{t.totalScore} of {t.totalMax}</CellSub>
++                    </span>,
++                  ],
++                };
++              }
++              const owed = slot === 1 ? true : !!student.levelCompletedAt[catalogue[slot - 2]?.slug ?? ""];
++              return {
++                key: `s${slot}`,
++                cells: [
++                  name,
++                  {
++                    span: catalogue.length + 2,
++                    content: (
++                      <span className="text-grey">
++                        {slot === 1
++                          ? "Not taken yet. Stage content stays closed until it is."
++                          : owed
++                            ? "Offered, not taken. Later Sittings are never required."
++                            : `Not yet owed. It follows completing ${catalogue[slot - 2]?.title ?? "a Level"}.`}
++                      </span>
++                    ),
++                  },
++                ],
++              };
++            }),
++            {
++              key: "imp",
++              cells: [
++                "Improvement",
++                <span key="d" className="block max-w-[14rem] whitespace-normal text-xs text-grey">
++                  Sitting after the Level, against Sitting 1
++                </span>,
++                ...catalogue.map((l) => {
++                  const imp = levelImprovement(student.sittings, l.slug, student.levelCompletedAt[l.slug] ?? null);
++                  return imp ? (
++                    <span key={l.slug} className="font-medium text-navy">
++                      {formatPoints(imp.change)}
++                    </span>
++                  ) : (
++                    <span key={l.slug} className="text-grey">
++                      n/a
++                    </span>
++                  );
++                }),
++                <span key="e" />,
++              ],
++            },
++          ]}
++        />
++      </Panel>
++
++      <Panel
++        title="Recent activity"
++        lede="The latest things this Student did on the dashboard. No device or location is recorded."
++        className="mt-4"
++      >
++        {activity.length === 0 ? (
++          <p className="text-sm text-grey">No activity recorded yet.</p>
++        ) : (
++          <DataTable
++            caption={`${student.name}: recent dashboard activity`}
++            minWidth="22rem"
++            columns={[
++              { key: "w", header: "What" },
++              { key: "d", header: "When", align: "right", nowrap: true },
++            ]}
++            rows={activity.map((e, i) => ({
++              key: `${i}-${e.at.getTime()}`,
++              cells: [
++                <span key="w" className="font-normal text-navy">
++                  {EVENT_WORDS[e.type] ?? e.type}
++                  {e.stage ? <CellSub>{e.stage}</CellSub> : null}
++                </span>,
++                formatShortDate(e.at),
++              ],
++            }))}
++          />
++        )}
++      </Panel>
++    </>
++  );
++}
+diff --git a/src/components/admin/StudentsView.tsx b/src/components/admin/StudentsView.tsx
+new file mode 100644
+index 0000000..bf928fb
+--- /dev/null
++++ b/src/components/admin/StudentsView.tsx
+@@ -0,0 +1,232 @@
++import Link from "next/link";
++import { Icon } from "@/components/ui/icons";
++import { PortalCard, StatusPill } from "@/components/portal/Portal";
++import { FilterBar, FilterGroup } from "@/components/portal/FilterChips";
++import { Meter, PageHeader, SmallViewNotice } from "@/components/portal/Panel";
++import { CellSub, DataTable, OpenArrow } from "@/components/portal/DataTable";
++import {
++  PAGE_SIZE,
++  SIGNED_UP_OPTIONS,
++  SMALL_VIEW,
++  currentLevel,
++  latestSitting,
++  liveCertificates,
++  stagesPassed,
++  type Catalogue,
++  type SignedUpWindow,
++  type StudentRecord,
++} from "@/lib/admin/model";
++import { adminHref, formatPct, formatShortDate } from "@/lib/admin/format";
++
++/**
++ * Students (#72, #84): everyone who has signed up, most recent first, from the
++ * Progress Record only. No email address, no date of birth and no "inactive" label:
++ * "last active" is the one engagement figure, because an Admin has to see who has
++ * gone quiet (#81).
++ */
++
++export type StudentsQuery = { q: string; signed: SignedUpWindow; level: string; page: number };
++
++const DEFAULTS = { signed: "all", level: "any" };
++const href = (p: Partial<StudentsQuery>, base: StudentsQuery) => {
++  const m = { ...base, ...p };
++  return adminHref(
++    "/admin/students",
++    { q: m.q, signed: m.signed, level: m.level, page: m.page > 1 ? m.page : undefined },
++    DEFAULTS,
++  );
++};
++
++export function CurrentLevelCell({ student, catalogue }: { student: StudentRecord; catalogue: Catalogue }) {
++  const c = currentLevel(student, catalogue);
++  if (c.kind === "awaiting")
++    return (
++      <StatusPill tone="none" icon="lock">
++        Awaiting first Sitting
++      </StatusPill>
++    );
++  if (c.kind === "complete")
++    return (
++      <StatusPill tone="done" icon="award">
++        All complete
++      </StatusPill>
++    );
++  return <>{c.title}</>;
++}
++
++export function EligiblePill({ student }: { student: StudentRecord }) {
++  if (!student.signal)
++    return (
++      <StatusPill tone="none" icon="clock">
++        Not evaluated
++      </StatusPill>
++    );
++  return student.signal.eligible ? (
++    <StatusPill tone="done" icon="check-circle">
++      Eligible
++    </StatusPill>
++  ) : (
++    <StatusPill tone="none" icon="clock">
++      Not yet
++    </StatusPill>
++  );
++}
++
++export function StudentsView({
++  catalogue,
++  rows,
++  matching,
++  total,
++  query,
++}: {
++  catalogue: Catalogue;
++  /** This page's Students. */
++  rows: StudentRecord[];
++  /** How many match the filters and the search, across every page. */
++  matching: number;
++  total: number;
++  query: StudentsQuery;
++}) {
++  const stagesTotal = catalogue.reduce((n, l) => n + l.stages.length, 0);
++  const pages = Math.max(1, Math.ceil(matching / PAGE_SIZE));
++  const page = Math.min(query.page, pages);
++  const from = matching === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
++  const to = Math.min(page * PAGE_SIZE, matching);
++
++  const levelOptions = [
++    { value: "any", label: "Any" },
++    { value: "awaiting", label: "Awaiting first Sitting" },
++    ...catalogue.map((l) => ({ value: l.slug, label: l.title })),
++    { value: "complete", label: "All complete" },
++  ];
++
++  const pagerLink =
++    "inline-flex min-h-10 items-center rounded-[10px] border-2 border-navy bg-white px-4 text-sm font-semibold text-navy no-underline hover:bg-line";
++  const pagerOff =
++    "inline-flex min-h-10 items-center rounded-[10px] border-2 border-line bg-white px-4 text-sm font-semibold text-grey";
++
++  return (
++    <>
++      <PageHeader
++        title="Students"
++        lede="Everyone with an account, most recent signup first. Email addresses are not listed."
++      >
++        <form action="/admin/students" method="get" role="search" className="flex items-center gap-2">
++          {query.signed !== "all" ? <input type="hidden" name="signed" value={query.signed} /> : null}
++          {query.level !== "any" ? <input type="hidden" name="level" value={query.level} /> : null}
++          <label className="flex min-h-11 min-w-0 items-center gap-2 rounded-[10px] border-[1.5px] border-line-strong bg-white px-3 text-grey focus-within:outline focus-within:outline-[3px] focus-within:outline-offset-[3px] focus-within:outline-navy">
++            <Icon name="search" className="size-5 shrink-0" />
++            <span className="sr-only">Search Students by name</span>
++            <input
++              type="search"
++              name="q"
++              defaultValue={query.q}
++              placeholder="Search Students"
++              className="w-full min-w-0 border-0 bg-transparent text-[0.9375rem] text-navy outline-none placeholder:text-grey sm:w-56"
++            />
++          </label>
++          <button
++            type="submit"
++            className="inline-flex min-h-11 items-center rounded-[10px] border-2 border-navy bg-white px-4 text-sm font-semibold text-navy hover:bg-line"
++          >
++            Search
++          </button>
++        </form>
++      </PageHeader>
++
++      <FilterBar count={matching} total={total}>
++        <FilterGroup
++          label="Signed up"
++          current={query.signed}
++          options={SIGNED_UP_OPTIONS.map(([value, label]) => ({ value, label, href: href({ signed: value, page: 1 }, query) }))}
++        />
++        <FilterGroup
++          label="Current Level"
++          current={query.level}
++          options={levelOptions.map((o) => ({ ...o, href: href({ level: o.value, page: 1 }, query) }))}
++        />
++      </FilterBar>
++      {matching > 0 && matching < SMALL_VIEW ? <SmallViewNotice n={matching} /> : null}
++
++      <PortalCard as="section" aria-label="Students" className="min-w-0 sm:px-[22px] sm:py-5">
++        <DataTable
++          caption="Students, most recent signup first"
++          minWidth="62rem"
++          empty="No Students match."
++          columns={[
++            { key: "s", header: "Student" },
++            { key: "su", header: "Signed up", nowrap: true },
++            { key: "la", header: "Last active", nowrap: true },
++            { key: "cl", header: "Current Level", nowrap: true },
++            { key: "sp", header: "Stages passed", nowrap: true },
++            { key: "lb", header: "Latest Baseline", nowrap: true },
++            { key: "ce", header: "Certificates", align: "right", nowrap: true },
++            { key: "el", header: "Nerve Center", nowrap: true },
++            { key: "go", header: "Open", srOnly: true },
++          ]}
++          rows={rows.map((s) => {
++            const sitting = latestSitting(s);
++            const passed = stagesPassed(s);
++            return {
++              key: s.id,
++              href: `/admin/students/${s.id}`,
++              linkLabel: `${s.name}, open their Progress Record`,
++              cells: [
++                <span key="s" className="whitespace-nowrap">
++                  {s.name}
++                </span>,
++                formatShortDate(s.signedUpAt),
++                formatShortDate(s.lastActiveAt),
++                <CurrentLevelCell key="cl" student={s} catalogue={catalogue} />,
++                <span key="sp" className="inline-flex items-center gap-2 whitespace-nowrap">
++                  <Meter className="w-14" value={stagesTotal ? (100 * passed) / stagesTotal : 0} label={`${passed} of ${stagesTotal} Stages passed`} />
++                  {passed} of {stagesTotal}
++                </span>,
++                sitting ? (
++                  <span key="lb">
++                    {formatPct(sitting.totalPct)}
++                    <CellSub>
++                      Sitting {sitting.sittingNo}, {sitting.totalScore} of {sitting.totalMax}
++                    </CellSub>
++                  </span>
++                ) : (
++                  <span key="lb" className="text-grey">
++                    Not taken
++                  </span>
++                ),
++                `${liveCertificates(s).length} of ${catalogue.length}`,
++                <EligiblePill key="el" student={s} />,
++                <OpenArrow key="go" />,
++              ],
++            };
++          })}
++        />
++        <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-sm text-grey">
++          <p>
++            Showing {from} to {to} of {matching}
++          </p>
++          <div className="flex gap-2">
++            {page > 1 ? (
++              <Link href={href({ page: page - 1 }, query)} className={pagerLink} rel="prev">
++                Previous
++              </Link>
++            ) : (
++              <span className={pagerOff} aria-disabled="true">
++                Previous
++              </span>
++            )}
++            {page < pages ? (
++              <Link href={href({ page: page + 1 }, query)} className={pagerLink} rel="next">
++                Next
++              </Link>
++            ) : (
++              <span className={pagerOff} aria-disabled="true">
++                Next
++              </span>
++            )}
++          </div>
++        </div>
++      </PortalCard>
++    </>
++  );
++}
+diff --git a/src/components/portal/DataTable.tsx b/src/components/portal/DataTable.tsx
+new file mode 100644
+index 0000000..710f881
+--- /dev/null
++++ b/src/components/portal/DataTable.tsx
+@@ -0,0 +1,132 @@
++import Link from "next/link";
++import type { ReactNode } from "react";
++import { Icon } from "@/components/ui/icons";
++import { cx } from "@/components/ui/primitives";
++
++/**
++ * The Portal data table (#72, #84). Only the table scrolls sideways, inside its own
++ * panel, so the page itself never does. A row can open a page: its first cell holds
++ * the one real link and a stretched pseudo-element makes the whole row the target,
++ * so keyboard and screen-reader users get a single link per row, not two.
++ */
++
++export type Column = {
++  key: string;
++  header: ReactNode;
++  /** Visually hidden header, for a column with no title (the open arrow). */
++  srOnly?: boolean;
++  align?: "right";
++  nowrap?: boolean;
++};
++
++/** A cell that runs across several columns: an explanation in place of per-column figures. */
++export type SpanCell = { span: number; content: ReactNode };
++const isSpan = (c: ReactNode | SpanCell): c is SpanCell =>
++  typeof c === "object" && c !== null && "span" in c && "content" in c;
++
++export type Row = {
++  key: string;
++  cells: Array<ReactNode | SpanCell>;
++  /** Makes the first cell the row's link. */
++  href?: string;
++  linkLabel?: string;
++};
++
++export function DataTable({
++  caption,
++  columns,
++  rows,
++  empty = "Nothing to show.",
++  minWidth = "44rem",
++}: {
++  caption: string;
++  columns: Column[];
++  rows: Row[];
++  empty?: ReactNode;
++  minWidth?: string;
++}) {
++  return (
++    <div className="overflow-x-auto">
++      <table className="w-full border-collapse text-left text-sm" style={{ minWidth }}>
++        <caption className="sr-only">{caption}</caption>
++        <thead>
++          <tr>
++            {columns.map((c) => (
++              <th
++                key={c.key}
++                scope="col"
++                className={cx(
++                  "relative border-b border-line px-3 py-2.5 font-display text-xs font-bold uppercase leading-snug tracking-[0.05em] text-grey",
++                  c.align === "right" && "text-right",
++                )}
++              >
++                {c.srOnly ? <span className="sr-only">{c.header}</span> : c.header}
++              </th>
++            ))}
++          </tr>
++        </thead>
++        <tbody>
++          {rows.length === 0 ? (
++            <tr>
++              <td colSpan={columns.length} className="px-2 py-7 text-center text-grey">
++                {empty}
++              </td>
++            </tr>
++          ) : (
++            rows.map((row) => (
++              <tr
++                key={row.key}
++                className={cx("relative border-b border-line last:border-b-0", row.href && "hover:bg-teal-50")}
++              >
++                {(() => {
++                  let at = 0;
++                  return row.cells.map((raw) => {
++                    const span = isSpan(raw) ? raw.span : 1;
++                    const cell = isSpan(raw) ? raw.content : raw;
++                    const col = columns[at];
++                    const first = at === 0;
++                    at += span;
++                    return (
++                      <td
++                        key={col.key}
++                        colSpan={span > 1 ? span : undefined}
++                        className={cx(
++                          "px-3 py-3 align-middle",
++                          col.align === "right" && span === 1 && "text-right",
++                          col.nowrap && "whitespace-nowrap",
++                          first && "font-medium text-navy",
++                        )}
++                      >
++                        {first && row.href ? (
++                          <Link
++                            href={row.href}
++                            aria-label={row.linkLabel}
++                            className="text-navy no-underline underline-offset-[3px] after:absolute after:inset-0 after:content-[''] hover:underline"
++                          >
++                            {cell}
++                          </Link>
++                        ) : (
++                          cell
++                        )}
++                      </td>
++                    );
++                  });
++                })()}
++              </tr>
++            ))
++          )}
++        </tbody>
++      </table>
++    </div>
++  );
++}
++
++/** The open arrow at the end of a linked row. Decorative: the row's link names it. */
++export function OpenArrow() {
++  return <Icon name="arrow" className="size-4 text-teal-ink" />;
++}
++
++/** A second line under a cell value: the count beside a rate, the Sitting beside a score. */
++export function CellSub({ children }: { children: ReactNode }) {
++  return <span className="block text-xs text-grey">{children}</span>;
++}
+diff --git a/src/components/portal/FilterChips.tsx b/src/components/portal/FilterChips.tsx
+new file mode 100644
+index 0000000..8176aca
+--- /dev/null
++++ b/src/components/portal/FilterChips.tsx
+@@ -0,0 +1,73 @@
++import Link from "next/link";
++import type { ReactNode } from "react";
++import { cx } from "@/components/ui/primitives";
++import { PortalCard } from "./Portal";
++
++/**
++ * Filter chips (#72, #84): links that carry the choice in the URL, so a filtered view
++ * can be shared and survives a reload, and there is no client state to keep in step.
++ * The chosen chip is navy with white text and a heavier weight, and says so with
++ * `aria-current`, so it is never colour alone.
++ */
++
++export type ChipOption = { value: string; label: string; href: string };
++
++export function FilterGroup({
++  label,
++  options,
++  current,
++}: {
++  label: string;
++  options: ChipOption[];
++  current: string;
++}) {
++  const id = `fg-${label.toLowerCase().replace(/\W+/g, "-")}`;
++  return (
++    <div>
++      <p id={id} className="mb-1.5 font-display text-xs font-bold uppercase leading-snug tracking-[0.05em] text-grey">
++        {label}
++      </p>
++      <div role="group" aria-labelledby={id} className="flex flex-wrap gap-1.5">
++        {options.map((o) => {
++          const on = o.value === current;
++          return (
++            <Link
++              key={o.value}
++              href={o.href}
++              scroll={false}
++              aria-current={on ? "true" : undefined}
++              className={cx(
++                "inline-flex min-h-9 items-center rounded-pill border-[1.5px] px-3.5 text-sm no-underline",
++                on
++                  ? "border-navy bg-navy font-semibold text-white"
++                  : "border-line-strong bg-white font-medium text-navy hover:bg-teal-50",
++              )}
++            >
++              {o.label}
++            </Link>
++          );
++        })}
++      </div>
++    </div>
++  );
++}
++
++/** The bar that holds the groups and the "x of N Students" count at its end. */
++export function FilterBar({
++  count,
++  total,
++  children,
++}: {
++  count: number;
++  total: number;
++  children: ReactNode;
++}) {
++  return (
++    <PortalCard className="mb-4 flex flex-wrap items-end gap-x-7 gap-y-3.5 sm:px-[18px] sm:py-3.5">
++      {children}
++      <p className="ml-auto text-sm text-grey" aria-live="polite">
++        <span className="font-semibold text-navy">{count}</span> of {total} Students
++      </p>
++    </PortalCard>
++  );
++}
+diff --git a/src/components/portal/LevelCard.tsx b/src/components/portal/LevelCard.tsx
+new file mode 100644
+index 0000000..b3e2c34
+--- /dev/null
++++ b/src/components/portal/LevelCard.tsx
+@@ -0,0 +1,83 @@
++import type { ReactNode } from "react";
++import { Icon, type IconName } from "@/components/ui/icons";
++import { cx } from "@/components/ui/primitives";
++import { Meter } from "./Panel";
++import { PortalCard, StatusPill, StepDot, type RailState, type StatusTone } from "./Portal";
++
++/**
++ * A Level as a Portal card with its Stage stepper (#72, #84), shared with My progress
++ * (#71). The stepper runs across on a wide card and down on a narrow one; each Stage
++ * is a numbered dot (filled with a check, ringed, or plain) plus its status in words.
++ */
++
++export type LevelCardStage = {
++  key: string;
++  title: string;
++  state: RailState;
++  /** Under the title: "Passed 3 March 2027" and the latest attempt. */
++  detail: ReactNode;
++};
++
++export function LevelCard({
++  title,
++  status,
++  passed,
++  total,
++  stages,
++  footer,
++}: {
++  title: string;
++  status: { tone: StatusTone; icon: IconName; label: string };
++  passed: number;
++  total: number;
++  stages: LevelCardStage[];
++  footer?: { icon: IconName; text: ReactNode };
++}) {
++  return (
++    <PortalCard as="section" aria-label={title} className="mb-4 min-w-0 sm:px-[22px] sm:py-5">
++      <div className="flex flex-wrap items-center justify-between gap-2.5">
++        <h3 className="font-display text-lg font-bold leading-snug text-navy">{title}</h3>
++        <StatusPill tone={status.tone} icon={status.icon}>
++          {status.label}
++        </StatusPill>
++      </div>
++      <Meter className="mt-3" value={total ? (100 * passed) / total : 0} label={`${title}: ${passed} of ${total} Stages passed`} />
++      <p className="mt-1.5 text-sm text-grey">
++        {passed} of {total} Stages passed
++      </p>
++
++      <ol
++        className="m-0 mt-[18px] grid list-none gap-3.5 p-0 min-[900px]:gap-0 min-[900px]:[grid-template-columns:repeat(var(--n),minmax(0,1fr))]"
++        style={{ "--n": stages.length } as React.CSSProperties}
++      >
++        {stages.map((st, i) => (
++          <li
++            key={st.key}
++            aria-current={st.state === "current" ? "step" : undefined}
++            className={cx(
++              "relative grid grid-cols-[2rem_1fr] gap-x-3 min-[900px]:block min-[900px]:px-2 min-[900px]:text-center",
++              // The dotted connector to the previous Stage, wide layout only.
++              i > 0 &&
++                "min-[900px]:before:absolute min-[900px]:before:right-[calc(50%+24px)] min-[900px]:before:top-[15px] min-[900px]:before:w-[calc(100%-48px)] min-[900px]:before:border-t-[3px] min-[900px]:before:border-dotted min-[900px]:before:border-line-strong min-[900px]:before:content-['']",
++            )}
++          >
++            <StepDot
++              n={i + 1}
++              state={st.state}
++              className="row-span-2 min-[900px]:mx-auto min-[900px]:mb-2.5"
++            />
++            <p className="text-[0.9375rem] font-medium leading-snug text-navy">{st.title}</p>
++            <p className="mt-0.5 text-[0.8125rem] leading-snug text-grey">{st.detail}</p>
++          </li>
++        ))}
++      </ol>
++
++      {footer ? (
++        <p className="mt-4 flex items-start gap-3 border-t border-line pt-3 text-sm text-grey">
++          <Icon name={footer.icon} className="mt-0.5 size-5 shrink-0" />
++          <span>{footer.text}</span>
++        </p>
++      ) : null}
++    </PortalCard>
++  );
++}
+diff --git a/src/components/portal/Panel.tsx b/src/components/portal/Panel.tsx
+new file mode 100644
+index 0000000..383dee8
+--- /dev/null
++++ b/src/components/portal/Panel.tsx
+@@ -0,0 +1,136 @@
++import type { ReactNode } from "react";
++import { Icon, type IconName } from "@/components/ui/icons";
++import { cx } from "@/components/ui/primitives";
++import { PortalCard, StatusPill } from "./Portal";
++
++/**
++ * Portal pieces beyond the stat card and status pill (#72, #84), shared with My
++ * progress (#71): a panel with a heading, lede and note, a notice, a meter row, the
++ * eyebrow-and-title page header and the figure rows of Improvement.
++ */
++
++/** A white card with a heading, an optional lede under it and an optional note at the foot. */
++export function Panel({
++  title,
++  aside,
++  lede,
++  note,
++  className,
++  children,
++}: {
++  title: string;
++  /** Beside the heading: a version pill, a count. */
++  aside?: ReactNode;
++  lede?: ReactNode;
++  note?: ReactNode;
++  className?: string;
++  children?: ReactNode;
++}) {
++  return (
++    <PortalCard as="section" aria-label={title} className={cx("min-w-0 sm:px-[22px] sm:py-5", className)}>
++      <div className="flex flex-wrap items-start justify-between gap-x-3.5 gap-y-2.5">
++        <h2 className="font-display text-lg font-bold leading-snug text-navy">{title}</h2>
++        {aside}
++      </div>
++      {lede ? <p className="mb-3.5 mt-0.5 max-w-[70ch] text-sm leading-snug text-grey">{lede}</p> : null}
++      {children}
++      {note ? (
++        <p className="mt-3.5 border-t border-line pt-3 text-[0.8125rem] leading-snug text-grey">{note}</p>
++      ) : null}
++    </PortalCard>
++  );
++}
++
++/** A teal-tint notice with an icon; `tone="warn"` is the pink tint. Both carry words. */
++export function Notice({
++  tone = "info",
++  icon,
++  children,
++  role,
++}: {
++  tone?: "info" | "warn";
++  icon: IconName;
++  children: ReactNode;
++  role?: "status";
++}) {
++  return (
++    <div
++      role={role}
++      className={cx(
++        "flex items-start gap-2.5 rounded-xl border px-3.5 py-3 text-sm",
++        tone === "warn" ? "border-pink-line bg-pink-50" : "border-teal-line bg-teal-50",
++      )}
++    >
++      <Icon name={icon} className={cx("mt-px size-5 shrink-0", tone === "warn" ? "text-pink" : "text-teal-ink")} />
++      <span className="text-navy">{children}</span>
++    </div>
++  );
++}
++
++/** "Only 4 Students in this view": a pink status pill and what it means. */
++export function SmallViewNotice({ n }: { n: number }) {
++  return (
++    <p className="mb-4 flex flex-wrap items-center gap-2">
++      <StatusPill tone="warn" icon="alert">
++        Only {n} Student{n === 1 ? "" : "s"} in this view
++      </StatusPill>
++      <span className="text-sm text-grey">Rates swing a lot at this size. Read the counts beside them.</span>
++    </p>
++  );
++}
++
++/** The Admin page header: eyebrow, title, lede, and actions on the right. */
++export function PageHeader({
++  title,
++  lede,
++  eyebrow = "Admin",
++  children,
++}: {
++  title: string;
++  lede?: string;
++  eyebrow?: string;
++  children?: ReactNode;
++}) {
++  return (
++    <div className="mb-5 flex flex-wrap items-start justify-between gap-3.5">
++      <div>
++        <p className="font-display text-[0.8125rem] font-bold uppercase leading-snug tracking-[0.07em] text-pink">
++          {eyebrow}
++        </p>
++        <h1 className="font-display text-[1.75rem] font-bold leading-tight tracking-[-0.01em] text-navy">{title}</h1>
++        {lede ? <p className="mt-1.5 max-w-[62ch] text-sm leading-snug text-grey">{lede}</p> : null}
++      </div>
++      {children ? <div className="flex flex-wrap items-center gap-3">{children}</div> : null}
++    </div>
++  );
++}
++
++/** A 0 to 100 bar that is a labelled image, so the figure beside it is the real signal. */
++export function Meter({ value, label, className }: { value: number; label: string; className?: string }) {
++  const v = Math.max(0, Math.min(100, value));
++  return (
++    <div role="img" aria-label={label} className={cx("h-2 overflow-hidden rounded-pill bg-line", className)}>
++      <div className="h-full rounded-pill bg-teal-ink" style={{ width: `${v}%` }} />
++    </div>
++  );
++}
++
++/** A small uppercase group heading inside a panel. */
++export function GroupHeading({ children }: { children: ReactNode }) {
++  return (
++    <h3 className="mb-2 mt-4 font-display text-xs font-bold uppercase leading-snug tracking-[0.05em] text-grey first:mt-1">
++      {children}
++    </h3>
++  );
++}
++
++/** One Level's figure row: name, the big figure, and what it is an average of. */
++export function FigureRow({ name, figure, sub }: { name: string; figure: string; sub: string }) {
++  return (
++    <div className="grid grid-cols-[1fr_auto] items-baseline gap-x-3.5 gap-y-0.5 border-b border-line py-3 last:border-b-0">
++      <span className="font-display text-base font-bold text-navy">{name}</span>
++      <span className="text-right font-display text-2xl font-extrabold leading-tight text-navy">{figure}</span>
++      <span className="col-span-2 text-[0.8125rem] text-grey">{sub}</span>
++    </div>
++  );
++}
+diff --git a/src/components/ui/icons.tsx b/src/components/ui/icons.tsx
+index 975583b..3cce4e7 100644
+--- a/src/components/ui/icons.tsx
++++ b/src/components/ui/icons.tsx
+@@ -111,6 +111,41 @@ const PATHS = {
+     </>
+   ),
+   chev: <path d="m6 9 6 6 6-6" />,
++  grid: (
++    <>
++      <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
++      <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
++      <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
++      <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
++    </>
++  ),
++  users: (
++    <>
++      <circle cx="9" cy="8" r="3.5" />
++      <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
++      <circle cx="17.5" cy="9" r="2.5" />
++      <path d="M17.5 14a5 5 0 0 1 4 5" />
++    </>
++  ),
++  user: (
++    <>
++      <circle cx="12" cy="8" r="4" />
++      <path d="M4 21a8 8 0 0 1 16 0" />
++    </>
++  ),
++  shield: (
++    <>
++      <path d="M12 3 4.5 6v6c0 4.4 3.1 7.7 7.5 9 4.4-1.3 7.5-4.6 7.5-9V6z" />
++      <path d="m8.7 12 2.3 2.3 4.3-4.6" />
++    </>
++  ),
++  back: <path d="M19 12H5M11 6l-6 6 6 6" />,
++  "log-out": (
++    <>
++      <path d="M9 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20H9" />
++      <path d="M16 8l4 4-4 4M20 12H9" />
++    </>
++  ),
+ } as const;
+ 
+ export type IconName = keyof typeof PATHS;
+diff --git a/src/lib/admin/data.ts b/src/lib/admin/data.ts
+new file mode 100644
+index 0000000..a9941a1
+--- /dev/null
++++ b/src/lib/admin/data.ts
+@@ -0,0 +1,297 @@
++import "server-only";
++
++import { SITTING_COLUMNS, mapSitting, type Sitting } from "@/lib/baseline";
++import { supabaseServer } from "@/lib/supabase/server";
++import type {
++  Catalogue,
++  EligibilityRule,
++  EligibilitySignal,
++  StageRecord,
++  StudentRecord,
++} from "./model";
++
++/**
++ * The Admin's reads (#84). Every query runs with the signed-in staff member's own
++ * JWT, so row level security is the boundary and `requireAdmin` in the layout is the
++ * second layer: the `app_is_staff()` arm of each `learn_*` select policy is what
++ * lets one query return every Student.
++ *
++ * Nothing here selects an email address, a date of birth or a raw answer (#72, #18).
++ */
++
++type SittingRow = Parameters<typeof mapSitting>[0];
++
++type LearnerRow = {
++  id: string;
++  name: string;
++  created_at: string;
++  last_seen_at: string | null;
++  learn_baseline_sittings: SittingRow[] | null;
++  learn_module_progress: Array<{ module_slug: string; quiz_passed_at: string | null }> | null;
++  learn_level_progress: Array<{ level_slug: string; completed_at: string | null }> | null;
++  learn_attempts: Array<{
++    scope: string;
++    module_slug: string | null;
++    attempt_no: number;
++    score_raw: number | null;
++    score_max: number | null;
++    passed: boolean | null;
++    submitted_at: string | null;
++  }> | null;
++  learn_certificates: Array<{
++    code: string;
++    level_slug: string | null;
++    award_title: string | null;
++    issued_at: string;
++    revoked_at: string | null;
++  }> | null;
++  /** One row per Student: the signal's primary key is the learner. */
++  learn_eligibility_signals: {
++    eligible: boolean;
++    evaluated_at: string;
++    rule_version: number;
++  } | null;
++  /** The newest event only, by the embedded order and limit below. */
++  learn_events: Array<{ created_at: string }> | null;
++};
++
++const LEARNER_SELECT =
++  "id, name, created_at, last_seen_at, " +
++  `learn_baseline_sittings(${SITTING_COLUMNS}), ` +
++  "learn_module_progress(module_slug, quiz_passed_at), " +
++  "learn_level_progress(level_slug, completed_at), " +
++  "learn_attempts(scope, module_slug, attempt_no, score_raw, score_max, passed, submitted_at), " +
++  "learn_certificates(code, level_slug, award_title, issued_at, revoked_at), " +
++  "learn_eligibility_signals(eligible, evaluated_at, rule_version), " +
++  "learn_events(created_at)";
++
++export async function loadCatalogue(): Promise<Catalogue> {
++  const supabase = await supabaseServer();
++  const [levelResult, moduleResult] = await Promise.all([
++    supabase.from("learn_levels").select("slug, title, position").order("position"),
++    supabase.from("learn_modules").select("slug, title, position, level_slug").order("position"),
++  ]);
++  const stages = (moduleResult.data ?? []) as unknown as Array<{
++    slug: string;
++    title: string;
++    position: number;
++    level_slug: string;
++  }>;
++  return ((levelResult.data ?? []) as unknown as Array<{ slug: string; title: string }>).map(
++    (l) => ({
++      slug: l.slug,
++      title: l.title,
++      stages: stages
++        .filter((m) => m.level_slug === l.slug)
++        .map((m) => ({ slug: m.slug, title: m.title, position: m.position })),
++    }),
++  );
++}
++
++function mapLearner(row: LearnerRow, catalogue: Catalogue): StudentRecord {
++  const signedUpAt = new Date(row.created_at);
++
++  const stages: Record<string, StageRecord> = {};
++  const stage = (slug: string): StageRecord =>
++    (stages[slug] ??= { passedAt: null, started: false, attempts: 0, latest: null });
++
++  for (const p of row.learn_module_progress ?? []) {
++    const s = stage(p.module_slug);
++    s.started = true;
++    s.passedAt = p.quiz_passed_at ? new Date(p.quiz_passed_at) : null;
++  }
++  /* Stage Quiz attempts only: a Baseline Sitting is its own table, and the old
++     PRE and CHECK scopes are not Stage Quizzes. Newest submitted attempt last. */
++  const attempts = (row.learn_attempts ?? [])
++    .filter((a) => a.scope === "POST" && a.module_slug && a.submitted_at)
++    .sort((a, b) => a.attempt_no - b.attempt_no);
++  for (const a of attempts) {
++    const s = stage(a.module_slug as string);
++    s.attempts += 1;
++    s.latest = {
++      score: a.score_raw ?? 0,
++      max: a.score_max ?? 0,
++      at: new Date(a.submitted_at as string),
++      passed: a.passed === true,
++    };
++  }
++
++  const levelCompletedAt: Record<string, Date | null> = {};
++  for (const l of catalogue) levelCompletedAt[l.slug] = null;
++  for (const p of row.learn_level_progress ?? []) {
++    levelCompletedAt[p.level_slug] = p.completed_at ? new Date(p.completed_at) : null;
++  }
++
++  /* "Last active" has no column of its own: `last_seen_at` is stamped only when an
++     account is claimed. The source is the newest dashboard event (lesson views, quiz
++     starts and submissions, module completions), falling back to the signup. */
++  const eventAt = row.learn_events?.[0]?.created_at;
++  const lastActiveAt = new Date(
++    Math.max(
++      signedUpAt.getTime(),
++      eventAt ? new Date(eventAt).getTime() : 0,
++      row.last_seen_at ? new Date(row.last_seen_at).getTime() : 0,
++    ),
++  );
++
++  const signal: EligibilitySignal | null = row.learn_eligibility_signals
++    ? {
++        eligible: row.learn_eligibility_signals.eligible,
++        evaluatedAt: new Date(row.learn_eligibility_signals.evaluated_at),
++        ruleVersion: row.learn_eligibility_signals.rule_version,
++      }
++    : null;
++
++  return {
++    id: row.id,
++    name: row.name,
++    signedUpAt,
++    lastActiveAt,
++    sittings: (row.learn_baseline_sittings ?? []).map(mapSitting).sort((a, b) => a.sittingNo - b.sittingNo),
++    stages,
++    levelCompletedAt,
++    certificates: (row.learn_certificates ?? []).map((c) => ({
++      code: c.code,
++      levelSlug: c.level_slug,
++      awardTitle: c.award_title ?? "",
++      issuedAt: new Date(c.issued_at),
++      revokedAt: c.revoked_at ? new Date(c.revoked_at) : null,
++    })),
++    signal,
++  };
++}
++
++const BATCH = 500;
++
++/** Everyone who has signed up, newest first. Paged, because the API caps a response. */
++export async function loadStudents(catalogue: Catalogue): Promise<StudentRecord[]> {
++  const supabase = await supabaseServer();
++  const students: StudentRecord[] = [];
++  for (let from = 0; ; from += BATCH) {
++    const { data, error } = await supabase
++      .from("learners")
++      .select(LEARNER_SELECT)
++      .order("created_at", { ascending: false })
++      .order("created_at", { referencedTable: "learn_events", ascending: false })
++      .limit(1, { referencedTable: "learn_events" })
++      .range(from, from + BATCH - 1);
++    if (error) throw new Error(`Could not read the Students: ${error.message}`);
++    const rows = (data ?? []) as unknown as LearnerRow[];
++    students.push(...rows.map((r) => mapLearner(r, catalogue)));
++    if (rows.length < BATCH) return students;
++  }
++}
++
++export async function loadStudent(id: string, catalogue: Catalogue): Promise<StudentRecord | null> {
++  const supabase = await supabaseServer();
++  const { data } = await supabase
++    .from("learners")
++    .select(LEARNER_SELECT)
++    .eq("id", id)
++    .order("created_at", { referencedTable: "learn_events", ascending: false })
++    .limit(1, { referencedTable: "learn_events" })
++    .maybeSingle();
++  return data ? mapLearner(data as unknown as LearnerRow, catalogue) : null;
++}
++
++export type ActivityEvent = { type: string; stage: string | null; at: Date };
++
++/** A Student's latest dashboard events, newest first (#81). No IP, no device (privacy notice). */
++export async function loadActivity(id: string, limit = 12): Promise<ActivityEvent[]> {
++  const supabase = await supabaseServer();
++  const [events, modules] = await Promise.all([
++    supabase
++      .from("learn_events")
++      .select("type, module_slug, created_at")
++      .eq("learner_id", id)
++      .order("created_at", { ascending: false })
++      .limit(limit),
++    supabase.from("learn_modules").select("slug, title"),
++  ]);
++  const titles = new Map(
++    ((modules.data ?? []) as unknown as Array<{ slug: string; title: string }>).map((m) => [m.slug, m.title]),
++  );
++  return ((events.data ?? []) as unknown as Array<{ type: string; module_slug: string | null; created_at: string }>).map(
++    (e) => ({ type: e.type, stage: e.module_slug ? (titles.get(e.module_slug) ?? null) : null, at: new Date(e.created_at) }),
++  );
++}
++
++type RuleRow = {
++  version: number;
++  required_flags: string[];
++  created_at: string;
++  people: { name: string } | null;
++};
++
++/** Every version, newest first. The current rule is the highest version (#83). */
++export async function loadRules(): Promise<EligibilityRule[]> {
++  const supabase = await supabaseServer();
++  const { data } = await supabase
++    .from("learn_eligibility_rules")
++    .select("version, required_flags, created_at, people(name)")
++    .order("version", { ascending: false });
++  return ((data ?? []) as unknown as RuleRow[]).map((r) => ({
++    version: r.version,
++    requiredFlags: r.required_flags,
++    createdAt: new Date(r.created_at),
++    createdByName: r.people?.name ?? null,
++  }));
++}
++
++export type MissedQuestion = {
++  id: string;
++  prompt: string;
++  stage: string | null;
++  answered: number;
++  missed: number;
++  missedPct: number;
++};
++
++/** A question needs this many answers before it can top the list: one wrong answer is not a pattern. */
++export const MISSED_MINIMUM = 3;
++
++/**
++ * The most commonly missed Stage Quiz questions.
++ *
++ * Each Stage Quiz attempt is a paper of five from the Stage's fifteen, and its
++ * `learn_answers` rows are one per question on that paper (checked 2026-10-17), so
++ * `was_correct` over a question's rows is "of the times it was set, how often it was
++ * missed". Baseline Sittings store no answers, so this is Stage Quizzes only, and it
++ * covers every Student, not the signed-up window.
++ */
++export async function loadMissedQuestions(limit = 5): Promise<MissedQuestion[]> {
++  const supabase = await supabaseServer();
++  const [questions, modules] = await Promise.all([
++    supabase
++      .from("learn_questions")
++      .select("id, prompt, module_slug, learn_answers(was_correct)")
++      .eq("scope", "POST"),
++    supabase.from("learn_modules").select("slug, title"),
++  ]);
++  const titles = new Map(
++    ((modules.data ?? []) as unknown as Array<{ slug: string; title: string }>).map((m) => [m.slug, m.title]),
++  );
++  return ((questions.data ?? []) as unknown as Array<{
++    id: string;
++    prompt: string;
++    module_slug: string | null;
++    learn_answers: Array<{ was_correct: boolean }> | null;
++  }>)
++    .map((q) => {
++      const answered = q.learn_answers?.length ?? 0;
++      const missed = (q.learn_answers ?? []).filter((a) => !a.was_correct).length;
++      return {
++        id: q.id,
++        prompt: q.prompt,
++        stage: q.module_slug ? (titles.get(q.module_slug) ?? null) : null,
++        answered,
++        missed,
++        missedPct: answered > 0 ? Math.round((100 * missed) / answered) : 0,
++      };
++    })
++    .filter((q) => q.answered >= MISSED_MINIMUM && q.missed > 0)
++    .sort((a, b) => b.missedPct - a.missedPct || b.answered - a.answered)
++    .slice(0, limit);
++}
++
++export type { Sitting };
+diff --git a/src/lib/admin/flags.ts b/src/lib/admin/flags.ts
+new file mode 100644
+index 0000000..163de4b
+--- /dev/null
++++ b/src/lib/admin/flags.ts
+@@ -0,0 +1,19 @@
++/**
++ * Eligibility flags (#83), with no server-only imports so the rule editor, a client
++ * component, can share them with the server pages.
++ *
++ * One flag family exists: `level_complete:<level slug>`, true once that Level's
++ * `completed_at` is set. Any other string is a flag nobody holds, so a rule that
++ * names one reads as nobody eligible rather than raising.
++ */
++export const levelFlag = (levelSlug: string) => `level_complete:${levelSlug}`;
++
++export function flagLabel(flag: string, levels: Array<{ slug: string; title: string }>): string {
++  const level = levels.find((l) => levelFlag(l.slug) === flag);
++  return level ? `${level.title} Level complete` : flag;
++}
++
++/** An empty list is nobody: an AND of nothing would make every Student eligible. */
++export function readsEligible(held: string[], flags: string[]): boolean {
++  return flags.length > 0 && flags.every((f) => held.includes(f));
++}
+diff --git a/src/lib/admin/format.ts b/src/lib/admin/format.ts
+new file mode 100644
+index 0000000..a70db01
+--- /dev/null
++++ b/src/lib/admin/format.ts
+@@ -0,0 +1,37 @@
++const ZA = "Africa/Johannesburg";
++
++/** "3 March 2027". */
++export const formatDate = (d: Date) =>
++  d.toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric", timeZone: ZA });
++
++/** "3 Mar 2027", for a table cell. */
++export const formatShortDate = (d: Date) =>
++  d.toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric", timeZone: ZA });
++
++export const formatPct = (n: number | null) => (n === null ? "n/a" : `${Math.round(n)}%`);
++
++/** Percentage points with a true minus sign: "+8 pp", "−3 pp". */
++export function formatPoints(n: number | null): string {
++  if (n === null) return "n/a";
++  const r = Math.round(n);
++  return `${r >= 0 ? "+" : "−"}${Math.abs(r)} pp`;
++}
++
++export const initials = (name: string) =>
++  name
++    .split(/\s+/)
++    .filter((w) => /^\p{Lu}/u.test(w))
++    .map((w) => w[0])
++    .slice(0, 2)
++    .join("") || "?";
++
++/** The query string for an Admin link, leaving out anything at its default. */
++export function adminHref(path: string, params: Record<string, string | number | undefined>, defaults: Record<string, string> = {}): string {
++  const q = new URLSearchParams();
++  for (const [k, v] of Object.entries(params)) {
++    if (v === undefined || v === "" || String(v) === (defaults[k] ?? "")) continue;
++    q.set(k, String(v));
++  }
++  const s = q.toString();
++  return s ? `${path}?${s}` : path;
++}
+diff --git a/src/lib/admin/model.ts b/src/lib/admin/model.ts
+new file mode 100644
+index 0000000..e92838a
+--- /dev/null
++++ b/src/lib/admin/model.ts
+@@ -0,0 +1,229 @@
++import { levelImprovement, percent, type Sitting } from "@/lib/baseline";
++import { flagLabel, levelFlag, readsEligible } from "./flags";
++
++/**
++ * The Admin's view of the Progress Records (#72, #84), as plain data and pure
++ * functions. Nothing here reads the database, so every figure on Overview, Students
++ * and the drill-down can be rendered, tested and audited from sample records.
++ *
++ * What it computes is #18's five Growth Indicators and nothing else: Students,
++ * completion by Level, the Baseline trend, Improvement by Level and the Stage Quiz
++ * pass rate. A Student is never ranked, and no engagement figure other than "last
++ * active" is derived (#81).
++ */
++
++export type CatalogueStage = { slug: string; title: string; position: number };
++export type CatalogueLevel = { slug: string; title: string; stages: CatalogueStage[] };
++export type Catalogue = CatalogueLevel[];
++
++export type StageRecord = {
++  /** The Stage's first Quiz pass. Set once, never cleared by a later attempt. */
++  passedAt: Date | null;
++  /** Opened at least one lesson in this Stage, or attempted its quiz. */
++  started: boolean;
++  /** Submitted Stage Quiz attempts. */
++  attempts: number;
++  latest: { score: number; max: number; at: Date; passed: boolean } | null;
++};
++
++export type CertificateRecord = {
++  code: string;
++  levelSlug: string | null;
++  awardTitle: string;
++  issuedAt: Date;
++  revokedAt: Date | null;
++};
++
++export type EligibilitySignal = { eligible: boolean; evaluatedAt: Date; ruleVersion: number };
++
++export type StudentRecord = {
++  id: string;
++  name: string;
++  signedUpAt: Date;
++  /** The latest dashboard activity, or the signup when there has been none (#81). */
++  lastActiveAt: Date;
++  sittings: Sitting[];
++  /** Keyed by Stage slug. A Stage with no row has never been opened. */
++  stages: Record<string, StageRecord>;
++  levelCompletedAt: Record<string, Date | null>;
++  certificates: CertificateRecord[];
++  signal: EligibilitySignal | null;
++};
++
++export type EligibilityRule = {
++  version: number;
++  requiredFlags: string[];
++  createdAt: Date;
++  createdByName: string | null;
++};
++
++// --- Eligibility flags (#83) ------------------------------------------------
++
++export { flagLabel, levelFlag, readsEligible };
++
++export function heldFlags(student: StudentRecord): string[] {
++  return Object.entries(student.levelCompletedAt)
++    .filter(([, at]) => at !== null)
++    .map(([slug]) => levelFlag(slug));
++}
++
++export function stillNeeded(student: StudentRecord, flags: string[]): string[] {
++  const held = new Set(heldFlags(student));
++  return flags.filter((f) => !held.has(f));
++}
++
++// --- Slicing ----------------------------------------------------------------
++
++export type SignedUpWindow = "all" | "30" | "90";
++export const SIGNED_UP_OPTIONS: Array<[SignedUpWindow, string]> = [
++  ["all", "All time"],
++  ["30", "Last 30 days"],
++  ["90", "Last 90 days"],
++];
++
++const DAY = 86_400_000;
++
++export function inWindow(student: StudentRecord, window: SignedUpWindow, now: Date): boolean {
++  return window === "all" || now.getTime() - student.signedUpAt.getTime() <= Number(window) * DAY;
++}
++
++/** Fewer than this and a rate swings on one Student. The view says so. */
++export const SMALL_VIEW = 10;
++
++// --- Where a Student is -----------------------------------------------------
++
++export type CurrentLevel =
++  | { kind: "awaiting" }
++  | { kind: "level"; slug: string; title: string }
++  | { kind: "complete" };
++
++/**
++ * The Level they are on: none until Sitting 1 is in (Stage content stays closed
++ * until then), then the first Level not yet complete, in Course order.
++ */
++export function currentLevel(student: StudentRecord, catalogue: Catalogue): CurrentLevel {
++  if (!student.sittings.some((s) => s.sittingNo === 1)) return { kind: "awaiting" };
++  const open = catalogue.find((l) => !student.levelCompletedAt[l.slug]);
++  return open ? { kind: "level", slug: open.slug, title: open.title } : { kind: "complete" };
++}
++
++export type LevelFilter = "any" | "awaiting" | "complete" | (string & {});
++
++export function matchesLevel(student: StudentRecord, filter: LevelFilter, catalogue: Catalogue): boolean {
++  if (filter === "any") return true;
++  const c = currentLevel(student, catalogue);
++  if (filter === "awaiting") return c.kind === "awaiting";
++  if (filter === "complete") return c.kind === "complete";
++  return c.kind === "level" && c.slug === filter;
++}
++
++export const stagesPassed = (student: StudentRecord): number =>
++  Object.values(student.stages).filter((s) => s.passedAt).length;
++
++export const latestSitting = (student: StudentRecord): Sitting | null =>
++  student.sittings.reduce<Sitting | null>((a, s) => (!a || s.sittingNo > a.sittingNo ? s : a), null);
++
++export const liveCertificates = (student: StudentRecord) =>
++  student.certificates.filter((c) => c.revokedAt === null);
++
++// --- The Growth Indicators --------------------------------------------------
++
++export type Indicators = {
++  students: number;
++  signedUpLast30: number;
++  completion: Array<{ slug: string; title: string; done: number; of: number; pct: number | null }>;
++  trend: Array<{ slot: number; students: number; meanPct: number | null }>;
++  improvement: Array<{ slug: string; title: string; students: number; meanChange: number | null }>;
++  stageQuiz: Array<{
++    slug: string;
++    title: string;
++    stages: Array<{
++      slug: string;
++      title: string;
++      position: number;
++      attempted: number;
++      passed: number;
++      passPct: number | null;
++      started: number;
++      notPassed: number;
++    }>;
++  }>;
++};
++
++const mean = (values: number[]): number | null =>
++  values.length === 0 ? null : values.reduce((a, b) => a + b, 0) / values.length;
++
++const rate = (n: number, of: number): number | null => (of > 0 ? (100 * n) / of : null);
++
++export function indicators(students: StudentRecord[], catalogue: Catalogue, now: Date): Indicators {
++  const n = students.length;
++
++  return {
++    students: n,
++    signedUpLast30: students.filter((s) => inWindow(s, "30", now)).length,
++
++    completion: catalogue.map((l) => {
++      const done = students.filter((s) => s.levelCompletedAt[l.slug]).length;
++      return { slug: l.slug, title: l.title, done, of: n, pct: rate(done, n) };
++    }),
++
++    /* Each slot is the Students who took that Sitting, so the later points are
++       smaller and different groups. The view says so under the chart. */
++    trend: [1, 2, 3, 4].map((slot) => {
++      const taken = students.flatMap((s) => s.sittings.filter((x) => x.sittingNo === slot));
++      return { slot, students: taken.length, meanPct: mean(taken.map((x) => x.totalPct)) };
++    }),
++
++    improvement: catalogue.map((l) => {
++      const changes = students.flatMap((s) => {
++        const imp = levelImprovement(s.sittings, l.slug, s.levelCompletedAt[l.slug] ?? null);
++        return imp ? [imp.change] : [];
++      });
++      return { slug: l.slug, title: l.title, students: changes.length, meanChange: mean(changes) };
++    }),
++
++    /* Of the Students who attempted a Stage Quiz, how many have passed it. A pass
++       always counts as an attempt, in case a pass was recorded without its row. */
++    stageQuiz: catalogue.map((l) => ({
++      slug: l.slug,
++      title: l.title,
++      stages: l.stages.map((st) => {
++        const rows = students.map((s) => s.stages[st.slug]);
++        const passed = rows.filter((r) => r?.passedAt).length;
++        const attempted = rows.filter((r) => r && (r.passedAt || r.attempts > 0)).length;
++        const started = rows.filter((r) => r && (r.started || r.passedAt || r.attempts > 0)).length;
++        return {
++          slug: st.slug,
++          title: st.title,
++          position: st.position,
++          attempted,
++          passed,
++          passPct: rate(passed, attempted),
++          started,
++          notPassed: started - passed,
++        };
++      }),
++    })),
++  };
++}
++
++export const eligibleCount = (students: StudentRecord[]): number =>
++  students.filter((s) => s.signal?.eligible).length;
++
++// --- Students table ---------------------------------------------------------
++
++export const PAGE_SIZE = 10;
++
++export function searchStudents(students: StudentRecord[], query: string): StudentRecord[] {
++  const q = query.trim().toLowerCase();
++  return q ? students.filter((s) => s.name.toLowerCase().includes(q)) : students;
++}
++
++export const byNewestSignup = (a: StudentRecord, b: StudentRecord) =>
++  b.signedUpAt.getTime() - a.signedUpAt.getTime();
++
++// --- Baseline ---------------------------------------------------------------
++
++export const SITTING_SLOTS = ["At signup", "After Beginner", "After Intermediate", "After Advanced"];
++
++export { levelImprovement, percent };
+diff --git a/src/lib/admin/review.ts b/src/lib/admin/review.ts
+new file mode 100644
+index 0000000..8b08dbc
+--- /dev/null
++++ b/src/lib/admin/review.ts
+@@ -0,0 +1,44 @@
++import "server-only";
++
++import { supabaseServer } from "@/lib/supabase/server";
++
++/** The content-review register's counts, for its stat cards. */
++export type ReviewSummary = {
++  total: number;
++  needsVerification: number;
++  approved: number;
++  rejected: number;
++  blockingLaunch: number;
++  byCategory: Array<{ category: string; count: number }>;
++};
++
++export async function getReviewSummary(): Promise<ReviewSummary> {
++  const supabase = await supabaseServer();
++  const { data } = await supabase
++    .from("learn_review_items")
++    .select("status, category, severity");
++
++  const items = (data ?? []) as unknown as Array<{
++    status: string;
++    category: string;
++    severity: number;
++  }>;
++
++  const byCategory = ["MEDICAL", "LEGAL", "STATISTIC"].map((category) => ({
++    category,
++    count: items.filter(
++      (i) => i.category === category && i.status === "NEEDS_VERIFICATION",
++    ).length,
++  }));
++
++  return {
++    total: items.length,
++    needsVerification: items.filter((i) => i.status === "NEEDS_VERIFICATION").length,
++    approved: items.filter((i) => i.status === "APPROVED").length,
++    rejected: items.filter((i) => i.status === "REJECTED").length,
++    blockingLaunch: items.filter(
++      (i) => i.status === "NEEDS_VERIFICATION" && i.severity === 1,
++    ).length,
++    byCategory,
++  };
++}
+diff --git a/src/lib/analytics.ts b/src/lib/analytics.ts
+deleted file mode 100644
+index f0c0250..0000000
+--- a/src/lib/analytics.ts
++++ /dev/null
+@@ -1,571 +0,0 @@
+-import "server-only";
+-
+-import { supabaseServer } from "./supabase/server";
+-import { SITTING_COLUMNS, levelImprovement, mapSitting, type Sitting } from "./baseline";
+-
+-
+-/**
+- * Save7's analytics.
+- *
+- * The brief is explicit that the question to answer is "are people learning?",
+- * not "how many people clicked things". So the numbers here are built around
+- * knowledge movement and where learners get stuck, and there is deliberately no
+- * per-learner behavioural profile, no funnel of individual actions, and no
+- * ranking of learners against each other.
+- *
+- * **Knowledge movement is the Baseline's** (#54). Every Sitting is the same twenty
+- * questions, so the change between a learner's first Sitting and a later one is
+- * like against like, which a Stage Quiz score never was: a Stage Quiz is five
+- * questions from one Stage. The Baseline is capped at four Sittings on a fixed
+- * schedule, so there are no retakes to inflate it.
+- *
+- * The Stage Quiz figures that remain here (`averagePostPct`, `passRatePct`,
+- * `postDistribution`) still read POST `attempt_no = 1` as a Level score, which
+- * stopped being true when #57 made each POST attempt one Stage's five-question
+- * paper. They are the map's open admin-indicator audit against #18, and are left
+- * for it rather than guessed at here.
+- */
+-
+-function mean(values: number[]): number | null {
+-  if (values.length === 0) return null;
+-  return Math.round(values.reduce((sum, v) => sum + v, 0) / values.length);
+-}
+-
+-export type LearnerSummary = {
+-  registered: number;
+-  /** Sat the first Baseline, which is what opens the course. */
+-  active: number;
+-  /** Completed at least one level. */
+-  completedAnyLevel: number;
+-  /** Completed every level. */
+-  completedCourse: number;
+-  /** Of those who started, the share who finished at least one level. */
+-  completionRatePct: number | null;
+-  registeredLast30Days: number;
+-};
+-
+-export async function getLearnerSummary(): Promise<LearnerSummary> {
+-  const supabase = await supabaseServer();
+-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString();
+-
+-  /* Every `learners` row is a learner, so there is no role to filter on any more:
+-     staff and volunteers are `people` and `volunteers` rows, and a staff member
+-     who enrols gets a learners row like anybody else and counts as one — which is
+-     what the old `role = 'LEARNER'` filter was approximating. */
+-  const [registeredResult, recentResult, baselineResult, completionResult, levelResult] =
+-    await Promise.all([
+-      supabase.from("learners").select("id", { count: "exact", head: true }),
+-      supabase
+-        .from("learners")
+-        .select("id", { count: "exact", head: true })
+-        .gte("created_at", thirtyDaysAgo),
+-      supabase.from("learn_baseline_sittings").select("learner_id").eq("sitting_no", 1),
+-      supabase
+-        .from("learn_level_progress")
+-        .select("learner_id, level_slug")
+-        .eq("status", "COMPLETE"),
+-      supabase.from("learn_levels").select("slug", { count: "exact", head: true }),
+-    ]);
+-
+-  const registered = registeredResult.count ?? 0;
+-  const registeredLast30Days = recentResult.count ?? 0;
+-  const levelsTotal = levelResult.count ?? 0;
+-
+-  // One Sitting 1 per learner, by the table's unique constraint; the set is kept
+-  // anyway so this does not quietly depend on it.
+-  const withBaseline = new Set(
+-    ((baselineResult.data ?? []) as unknown as Array<{ learner_id: string }>).map(
+-      (a) => a.learner_id,
+-    ),
+-  );
+-
+-  const levelCompletions = (completionResult.data ?? []) as unknown as Array<{
+-    learner_id: string;
+-    level_slug: string;
+-  }>;
+-
+-  const active = withBaseline.size;
+-
+-  const levelsByUser = new Map<string, Set<string>>();
+-  for (const row of levelCompletions) {
+-    const set = levelsByUser.get(row.learner_id) ?? new Set<string>();
+-    set.add(row.level_slug);
+-    levelsByUser.set(row.learner_id, set);
+-  }
+-
+-  const completedAnyLevel = levelsByUser.size;
+-  const completedCourse = [...levelsByUser.values()].filter(
+-    (set) => set.size === levelsTotal,
+-  ).length;
+-
+-  return {
+-    registered,
+-    active,
+-    completedAnyLevel,
+-    completedCourse,
+-    // Denominated on learners who actually started, not on everyone who signed
+-    // up: a sign-up that never began the course says nothing about the teaching.
+-    completionRatePct: active > 0 ? Math.round((completedAnyLevel / active) * 100) : null,
+-    registeredLast30Days,
+-  };
+-}
+-
+-export type KnowledgeSummary = {
+-  /** Sitting 1, the "before". */
+-  averageBaselinePct: number | null;
+-  baselineCount: number;
+-  /** Each learner's latest Sitting after the first, among those who have one. */
+-  averageLatestPct: number | null;
+-  resatCount: number;
+-  /** Latest later Sitting minus Sitting 1, averaged over the same learners. */
+-  averageImprovement: number | null;
+-  perLevel: Array<{
+-    levelId: string;
+-    slug: string;
+-    title: string;
+-    tier: string;
+-    averagePostPct: number | null;
+-    postCount: number;
+-    /** Average change in this Level's Baseline sub-score, from Sitting 1 to the
+-     *  first Sitting after the Level was completed (CONTEXT.md, Improvement). */
+-    averagePointChange: number | null;
+-    /** Learners with both of those Sittings. */
+-    improvementCount: number;
+-    passRatePct: number | null;
+-  }>;
+-  /** Sitting 1 score distribution, for a histogram. */
+-  baselineDistribution: Array<{ bucket: string; count: number }>;
+-  postDistribution: Array<{ bucket: string; count: number }>;
+-};
+-
+-const BUCKETS = [
+-  { label: "0–20%", min: 0, max: 20 },
+-  { label: "21–40%", min: 21, max: 40 },
+-  { label: "41–60%", min: 41, max: 60 },
+-  { label: "61–80%", min: 61, max: 80 },
+-  { label: "81–100%", min: 81, max: 100 },
+-];
+-
+-function distribute(scores: number[]): Array<{ bucket: string; count: number }> {
+-  return BUCKETS.map((b) => ({
+-    bucket: b.label,
+-    count: scores.filter((s) => s >= b.min && s <= b.max).length,
+-  }));
+-}
+-
+-export async function getKnowledgeSummary(): Promise<KnowledgeSummary> {
+-  const supabase = await supabaseServer();
+-
+-  const [sittingResult, completionResult, levelResult, postResult] = await Promise.all([
+-    supabase
+-      .from("learn_baseline_sittings")
+-      .select(`learner_id, ${SITTING_COLUMNS}`)
+-      .order("sitting_no"),
+-
+-    supabase
+-      .from("learn_level_progress")
+-      .select("learner_id, level_slug, completed_at")
+-      .not("completed_at", "is", null),
+-
+-    supabase
+-      .from("learn_levels")
+-      .select("slug, title, tier, pass_mark_pct")
+-      .order("position"),
+-
+-    supabase
+-      .from("learn_attempts")
+-      .select("learner_id, level_slug, score_pct, attempt_no")
+-      .eq("scope", "POST")
+-      .not("submitted_at", "is", null),
+-  ]);
+-
+-  // Each learner's Sittings, oldest first.
+-  const sittingsByUser = new Map<string, Sitting[]>();
+-  for (const row of (sittingResult.data ?? []) as unknown as Array<
+-    { learner_id: string } & Parameters<typeof mapSitting>[0]
+-  >) {
+-    const list = sittingsByUser.get(row.learner_id) ?? [];
+-    list.push(mapSitting(row));
+-    sittingsByUser.set(row.learner_id, list);
+-  }
+-
+-  const completedAt = new Map<string, Date>();
+-  for (const row of (completionResult.data ?? []) as unknown as Array<{
+-    learner_id: string;
+-    level_slug: string;
+-    completed_at: string;
+-  }>) {
+-    completedAt.set(`${row.learner_id}:${row.level_slug}`, new Date(row.completed_at));
+-  }
+-
+-  const levels = ((levelResult.data ?? []) as unknown as Array<{
+-    slug: string;
+-    title: string;
+-    tier: string;
+-    pass_mark_pct: number;
+-  }>).map((l) => ({
+-    id: l.slug,
+-    slug: l.slug,
+-    title: l.title,
+-    tier: l.tier,
+-    passMarkPct: l.pass_mark_pct,
+-  }));
+-
+-  const postAttempts = ((postResult.data ?? []) as unknown as Array<{
+-    learner_id: string;
+-    level_slug: string | null;
+-    score_pct: number | null;
+-    attempt_no: number;
+-  }>).map((a) => ({
+-    userId: a.learner_id,
+-    levelId: a.level_slug,
+-    scorePct: a.score_pct,
+-    attemptNo: a.attempt_no,
+-  }));
+-
+-  const baselineScores: number[] = [];
+-  const latestScores: number[] = [];
+-  const overallChanges: number[] = [];
+-  for (const sittings of sittingsByUser.values()) {
+-    const first = sittings.find((s) => s.sittingNo === 1);
+-    if (!first) continue;
+-    baselineScores.push(first.totalPct);
+-    const latest = sittings.filter((s) => s.sittingNo > 1).at(-1);
+-    if (!latest) continue;
+-    latestScores.push(latest.totalPct);
+-    overallChanges.push(latest.totalPct - first.totalPct);
+-  }
+-
+-  const perLevel = levels.map((level) => {
+-    const recorded = postAttempts.filter(
+-      (a) => a.levelId === level.id && a.attemptNo === 1,
+-    );
+-    const scores = recorded.map((a) => a.scorePct ?? 0);
+-
+-    // Baseline Improvement on this Level's sub-score, for learners who have both
+-    // Sittings it needs.
+-    const changes = [...sittingsByUser].flatMap(([userId, sittings]) => {
+-      const done = completedAt.get(`${userId}:${level.slug}`) ?? null;
+-      const improvement = levelImprovement(sittings, level.slug, done);
+-      return improvement ? [improvement.change] : [];
+-    });
+-
+-    // Pass rate uses the best attempt, because that is what earns a certificate.
+-    const allForLevel = postAttempts.filter((a) => a.levelId === level.id);
+-    const bestByUser = new Map<string, number>();
+-    for (const a of allForLevel) {
+-      const current = bestByUser.get(a.userId) ?? 0;
+-      bestByUser.set(a.userId, Math.max(current, a.scorePct ?? 0));
+-    }
+-    const passed = [...bestByUser.values()].filter((s) => s >= level.passMarkPct).length;
+-
+-    return {
+-      levelId: level.id,
+-      slug: level.slug,
+-      title: level.title,
+-      tier: level.tier,
+-      averagePostPct: mean(scores),
+-      postCount: scores.length,
+-      averagePointChange: mean(changes),
+-      improvementCount: changes.length,
+-      passRatePct:
+-        bestByUser.size > 0 ? Math.round((passed / bestByUser.size) * 100) : null,
+-    };
+-  });
+-
+-  return {
+-    averageBaselinePct: mean(baselineScores),
+-    baselineCount: baselineScores.length,
+-    averageLatestPct: mean(latestScores),
+-    resatCount: latestScores.length,
+-    averageImprovement: mean(overallChanges),
+-    perLevel,
+-    baselineDistribution: distribute(baselineScores),
+-    postDistribution: distribute(
+-      postAttempts.filter((a) => a.attemptNo === 1).map((a) => a.scorePct ?? 0),
+-    ),
+-  };
+-}
+-
+-export type MissedQuestion = {
+-  questionId: string;
+-  authoringKey: string;
+-  prompt: string;
+-  topicTag: string;
+-  scope: string;
+-  levelTitle: string | null;
+-  moduleTitle: string | null;
+-  answered: number;
+-  incorrect: number;
+-  incorrectRatePct: number;
+-};
+-
+-/**
+- * The most commonly missed questions.
+- *
+- * The single most actionable report Save7 gets: a question most learners fail is
+- * usually a teaching problem in the module before it, not a cohort of poor learners.
+- * A minimum sample is enforced so one wrong answer cannot top the list.
+- */
+-export async function getMostMissedQuestions(
+-  minimumAnswers = 3,
+-  limit = 12,
+-): Promise<MissedQuestion[]> {
+-  const supabase = await supabaseServer();
+-
+-  /* Answers are embedded through the foreign key on learn_answers.question_id.
+-     Level and module titles are looked up separately rather than embedded twice:
+-     a question hangs off one or the other, never both, and two small maps are
+-     cheaper to read than a query with two optional embeds. */
+-  const [questionResult, levelResult, moduleResult] = await Promise.all([
+-    supabase
+-      .from("learn_questions")
+-      .select(
+-        "id, authoring_key, prompt, topic_tag, scope, level_slug, module_slug, learn_answers(was_correct)",
+-      ),
+-    supabase.from("learn_levels").select("slug, title"),
+-    supabase.from("learn_modules").select("slug, title"),
+-  ]);
+-
+-  const levelTitles = new Map(
+-    ((levelResult.data ?? []) as unknown as Array<{ slug: string; title: string }>).map((l) => [
+-      l.slug,
+-      l.title,
+-    ]),
+-  );
+-  const moduleTitles = new Map(
+-    ((moduleResult.data ?? []) as unknown as Array<{ slug: string; title: string }>).map((m) => [
+-      m.slug,
+-      m.title,
+-    ]),
+-  );
+-
+-  const questions = ((questionResult.data ?? []) as unknown as Array<{
+-    id: string;
+-    authoring_key: string;
+-    prompt: string;
+-    topic_tag: string;
+-    scope: string;
+-    level_slug: string | null;
+-    module_slug: string | null;
+-    learn_answers: Array<{ was_correct: boolean }> | null;
+-  }>).map((q) => ({
+-    id: q.id,
+-    authoringKey: q.authoring_key,
+-    prompt: q.prompt,
+-    topicTag: q.topic_tag,
+-    scope: q.scope,
+-    level: q.level_slug ? { title: levelTitles.get(q.level_slug) ?? null } : null,
+-    module: q.module_slug ? { title: moduleTitles.get(q.module_slug) ?? null } : null,
+-    answers: (q.learn_answers ?? []).map((a) => ({ isCorrect: a.was_correct })),
+-  }));
+-
+-  return questions
+-    .map((q) => {
+-      const answered = q.answers.length;
+-      const incorrect = q.answers.filter((a) => !a.isCorrect).length;
+-      return {
+-        questionId: q.id,
+-        authoringKey: q.authoringKey,
+-        prompt: q.prompt,
+-        topicTag: q.topicTag,
+-        scope: q.scope,
+-        levelTitle: q.level?.title ?? null,
+-        moduleTitle: q.module?.title ?? null,
+-        answered,
+-        incorrect,
+-        incorrectRatePct: answered > 0 ? Math.round((incorrect / answered) * 100) : 0,
+-      };
+-    })
+-    .filter((q) => q.answered >= minimumAnswers && q.incorrect > 0)
+-    .sort(
+-      (a, b) =>
+-        b.incorrectRatePct - a.incorrectRatePct || b.answered - a.answered,
+-    )
+-    .slice(0, limit);
+-}
+-
+-export type ModuleEngagement = {
+-  moduleId: string;
+-  slug: string;
+-  title: string;
+-  order: number;
+-  levelTitle: string;
+-  levelSlug: string;
+-  started: number;
+-  completed: number;
+-  completionRatePct: number | null;
+-  /** Median rather than mean: one learner leaving a tab open would skew a mean. */
+-  medianSeconds: number | null;
+-  estMinutes: number;
+-  /** Learners who started this module and did not complete it. */
+-  dropped: number;
+-};
+-
+-export async function getModuleEngagement(): Promise<ModuleEngagement[]> {
+-  const supabase = await supabaseServer();
+-
+-  /* Ordered by level then module. PostgREST cannot order by a parent's column
+-     either, so the level order is fetched and applied below — the same shape the
+-     previous implementation needed, for the same reason. */
+-  const [levelResult, moduleResult] = await Promise.all([
+-    supabase.from("learn_levels").select("slug, title, position"),
+-    supabase
+-      .from("learn_modules")
+-      .select(
+-        "slug, title, position, est_minutes, level_slug, learn_module_progress(status, seconds_spent)",
+-      ),
+-  ]);
+-
+-  const levelRows = (levelResult.data ?? []) as unknown as Array<{
+-    slug: string;
+-    title: string;
+-    position: number;
+-  }>;
+-  if (levelRows.length === 0) return [];
+-
+-  const levelOrder = new Map(levelRows.map((l) => [l.slug, l.position]));
+-  const levelTitles = new Map(levelRows.map((l) => [l.slug, l.title]));
+-
+-  const modules = ((moduleResult.data ?? []) as unknown as Array<{
+-    slug: string;
+-    title: string;
+-    position: number;
+-    est_minutes: number;
+-    level_slug: string;
+-    learn_module_progress: Array<{ status: string; seconds_spent: number }> | null;
+-  }>)
+-    .map((m) => ({
+-      id: m.slug,
+-      slug: m.slug,
+-      title: m.title,
+-      order: m.position,
+-      estMinutes: m.est_minutes,
+-      levelId: m.level_slug,
+-      level: { title: levelTitles.get(m.level_slug) ?? "", slug: m.level_slug },
+-      progress: (m.learn_module_progress ?? []).map((p) => ({
+-        status: p.status,
+-        secondsSpent: p.seconds_spent,
+-      })),
+-    }))
+-    .sort(
+-      (a, b) =>
+-        (levelOrder.get(a.levelId) ?? 0) - (levelOrder.get(b.levelId) ?? 0) || a.order - b.order,
+-    );
+-
+-  return modules.map((m) => {
+-    const started = m.progress.length;
+-    const completed = m.progress.filter((p) => p.status === "COMPLETE").length;
+-
+-    const times = m.progress
+-      .map((p) => p.secondsSpent)
+-      .filter((s) => s > 0)
+-      .sort((a, b) => a - b);
+-    const medianSeconds = times.length
+-      ? times[Math.floor(times.length / 2)]
+-      : null;
+-
+-    return {
+-      moduleId: m.id,
+-      slug: m.slug,
+-      title: m.title,
+-      order: m.order,
+-      levelTitle: m.level.title,
+-      levelSlug: m.level.slug,
+-      started,
+-      completed,
+-      completionRatePct: started > 0 ? Math.round((completed / started) * 100) : null,
+-      medianSeconds,
+-      estMinutes: m.estMinutes,
+-      dropped: started - completed,
+-    };
+-  });
+-}
+-
+-export type CertificateRow = {
+-  publicId: string;
+-  learnerName: string;
+-  awardTitle: string;
+-  levelTitle: string;
+-  scorePct: number;
+-  issuedAt: Date;
+-  revokedAt: Date | null;
+-};
+-
+-export async function getCertificates(limit = 100): Promise<CertificateRow[]> {
+-  const supabase = await supabaseServer();
+-
+-  const [certResult, levelResult] = await Promise.all([
+-    supabase
+-      .from("learn_certificates")
+-      .select("code, issued_name, award_title, level_slug, score_pct, issued_at, revoked_at")
+-      .order("issued_at", { ascending: false })
+-      .limit(limit),
+-    supabase.from("learn_levels").select("slug, title"),
+-  ]);
+-
+-  const levelTitles = new Map(
+-    ((levelResult.data ?? []) as unknown as Array<{ slug: string; title: string }>).map((l) => [
+-      l.slug,
+-      l.title,
+-    ]),
+-  );
+-
+-  return ((certResult.data ?? []) as unknown as Array<{
+-    code: string;
+-    issued_name: string;
+-    award_title: string | null;
+-    level_slug: string | null;
+-    score_pct: number | null;
+-    issued_at: string;
+-    revoked_at: string | null;
+-  }>).map((r) => ({
+-    publicId: r.code,
+-    learnerName: r.issued_name,
+-    awardTitle: r.award_title ?? "",
+-    levelTitle: r.level_slug ? (levelTitles.get(r.level_slug) ?? "") : "",
+-    scorePct: r.score_pct ?? 0,
+-    issuedAt: new Date(r.issued_at),
+-    revokedAt: r.revoked_at ? new Date(r.revoked_at) : null,
+-  }));
+-}
+-
+-export type ReviewSummary = {
+-  total: number;
+-  needsVerification: number;
+-  approved: number;
+-  rejected: number;
+-  blockingLaunch: number;
+-  byCategory: Array<{ category: string; count: number }>;
+-};
+-
+-export async function getReviewSummary(): Promise<ReviewSummary> {
+-  const supabase = await supabaseServer();
+-  const { data } = await supabase
+-    .from("learn_review_items")
+-    .select("status, category, severity");
+-
+-  const items = (data ?? []) as unknown as Array<{
+-    status: string;
+-    category: string;
+-    severity: number;
+-  }>;
+-
+-  const byCategory = ["MEDICAL", "LEGAL", "STATISTIC"].map((category) => ({
+-    category,
+-    count: items.filter(
+-      (i) => i.category === category && i.status === "NEEDS_VERIFICATION",
+-    ).length,
+-  }));
+-
+-  return {
+-    total: items.length,
+-    needsVerification: items.filter((i) => i.status === "NEEDS_VERIFICATION").length,
+-    approved: items.filter((i) => i.status === "APPROVED").length,
+-    rejected: items.filter((i) => i.status === "REJECTED").length,
+-    blockingLaunch: items.filter(
+-      (i) => i.status === "NEEDS_VERIFICATION" && i.severity === 1,
+-    ).length,
+-    byCategory,
+-  };
+-}

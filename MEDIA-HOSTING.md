@@ -125,7 +125,7 @@ anyone, any time the film seems not to play. Pass a base URL to check another ho
 ## The captions
 
 The words are the transcript in
-[T04](https://github.com/Save7Lives/learn.save7.org-map/blob/main/wayfinder/research/T04-video-review-findings.md),
+[T04](wayfinder/research/T04-video-review-findings.md),
 which the user supplied after watching the film. **No wording was written for the
 captions.** What was built is the timing, and it was built on 7 October 2026:
 

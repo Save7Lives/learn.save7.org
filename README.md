@@ -391,7 +391,8 @@ It is not run in CI, which has no Postgres, so run it before you merge.
 The Levels and Stages are written and in production: three Levels and eleven Stages.
 What remains for Save7 to supply or decide is below, and
 [DEPLOY.md](DEPLOY.md) (*Outstanding right now* and *Before you launch*) is the longer
-account. Build work is tracked on the wayfinder map, not here.
+account. Build work is tracked in this repo's issues; [CONTEXT.md](CONTEXT.md) is the
+glossary and [CURRICULUM-ASSESSMENT-SPEC.md](CURRICULUM-ASSESSMENT-SPEC.md) the spec.
 
 | | |
 | --- | --- |

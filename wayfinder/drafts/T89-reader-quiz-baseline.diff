@@ -1,0 +1,3442 @@
+diff --git a/src/app/(site)/assessment/actions.ts b/src/app/(site)/assessment/actions.ts
+index 8f87770..11f58ba 100644
+--- a/src/app/(site)/assessment/actions.ts
++++ b/src/app/(site)/assessment/actions.ts
+@@ -6,6 +6,24 @@ import { getBaselineState, submitBaselineSitting } from "@/lib/baseline";
+ import type { SubmittedAnswer } from "@/lib/quiz";
+ import { recordEvent } from "@/lib/progress";
+ 
++/**
++ * Record that the learner pressed Start on the before-you-start screen (#74).
++ *
++ * `quiz_start` used to fire when the page loaded. The page now opens on a screen
++ * that explains the Baseline, so a learner who reads it and leaves has not started
++ * a Sitting, and the event says "started" only once they press the button. It is
++ * written only when `sittingNo` is the Sitting owed now, so a stale tab cannot log
++ * a start for one that has been sat.
++ */
++export async function startBaselineSittingAction(sittingNo: number): Promise<void> {
++  const user = await requireUser();
++  const { due } = await getBaselineState(user.id);
++  if (due !== sittingNo) return;
++  await recordEvent(user.id, "quiz_start", {
++    metaJson: JSON.stringify({ kind: "BASELINE", sitting: sittingNo }),
++  });
++}
++
+ /**
+  * Record one Baseline Sitting.
+  *
+diff --git a/src/app/(site)/assessment/pre/done/page.tsx b/src/app/(site)/assessment/pre/done/page.tsx
+index 1850575..6f6aa47 100644
+--- a/src/app/(site)/assessment/pre/done/page.tsx
++++ b/src/app/(site)/assessment/pre/done/page.tsx
+@@ -3,9 +3,7 @@ import { redirect } from "next/navigation";
+ import { requireUser } from "@/lib/authz";
+ import { getBaselineState } from "@/lib/baseline";
+ import { getPathwayForUser } from "@/lib/course";
+-import { BaselineResults } from "@/components/course/BaselineResults";
+-import { ButtonLink, Card, Display, Eyebrow, TIER_META, cx } from "@/components/ui/primitives";
+-import type { LevelTier } from "@/lib/constants";
++import { BaselineRecorded } from "@/components/course/BaselineRecorded";
+ 
+ // Rendered per request, never prerendered: this route reads runtime configuration
+ // (Supabase URL and key, SITE_URL) which Vercel supplies per environment. A
+@@ -15,8 +13,10 @@ export const dynamic = "force-dynamic";
+ export const metadata: Metadata = { title: "Baseline recorded" };
+ 
+ /**
+- * The Baseline's results: the latest Sitting's score by Level and overall, and
+- * every earlier Sitting beneath it once there is more than one.
++ * The Baseline's results: the latest Sitting's score overall and one row per Level,
++ * and once there is a later Sitting, a mark on each bar at the first Sitting's
++ * value. `BaselineResults` (the table) is not drawn here: five columns scroll
++ * sideways at 375px, and My Progress keeps it as the chart's twin.
+  *
+  * The score is shown, but framed carefully and without a pass mark, a grade or
+  * any comparison to other learners. A low first Sitting is the most useful
+@@ -30,112 +30,17 @@ export default async function BaselineDonePage() {
+ 
+   if (!baseline.completed) redirect("/assessment/pre");
+ 
+-  const latest = baseline.sittings[baseline.sittings.length - 1];
+-  const first = baseline.first!;
+-  const isFirst = latest.sittingNo === 1;
+-  const change = latest.totalPct - first.totalPct;
+-
+   const { levels } = await getPathwayForUser(user.id);
+-  const nextLevel = levels.find((l) => l.progress?.status !== "COMPLETE") ?? null;
+-  const tier = (nextLevel?.tier ?? "BEGINNER") as LevelTier;
++  const next = levels.find((l) => l.progress?.status !== "COMPLETE") ?? null;
+ 
+   return (
+-    <div className="mx-auto max-w-2xl px-5 py-16 sm:px-8">
+-      <Eyebrow>Baseline recorded</Eyebrow>
+-      <Display as="h1" className="mt-5 text-display text-navy">
+-        {isFirst ? <>That&apos;s your starting point</> : <>Here&apos;s what changed</>}
+-      </Display>
+-
+-      <Card className="mt-8 p-6 sm:p-8">
+-        <p className="text-sm font-semibold text-grey">
+-          {isFirst ? "Before the course" : `Sitting ${latest.sittingNo} of 4`}
+-        </p>
+-        <p className="mt-1 font-display text-6xl text-navy">{latest.totalPct}%</p>
+-        <p className="mt-2 text-sm text-grey">
+-          {latest.totalScore} of {latest.totalMax} questions
+-          {isFirst ? null : (
+-            <>
+-              {" · "}
+-              <span className="font-semibold text-navy">
+-                {change >= 0 ? "+" : ""}
+-                {change} points
+-              </span>{" "}
+-              since your first sitting ({first.totalPct}%)
+-            </>
+-          )}
+-        </p>
+-
+-        <div className="mt-6 border-t border-line pt-5">
+-          <BaselineResults state={baseline} highlight={latest.sittingNo} />
+-        </div>
+-
+-        <div className="mt-6 border-t border-line pt-5">
+-          {isFirst ? (
+-            <>
+-              <p className="text-grey">
+-                There is no pass mark here, and this is not a grade. It is a measurement taken
+-                before you learned anything, which is exactly what makes the later sittings
+-                meaningful. You&apos;ll sit the same questions again after each level you
+-                finish.
+-              </p>
+-              <p className="mt-3 text-grey">
+-                {latest.totalPct < 50
+-                  ? "A low baseline is genuinely the best place to start from. You have the most to gain."
+-                  : "You already know some of this. The course will fill in the parts that are harder to pick up casually: brain death, the law, and how to handle a difficult conversation."}
+-              </p>
+-            </>
+-          ) : (
+-            <p className="text-grey">
+-              Each row is the same {latest.totalMax} questions, so the difference between rows is what
+-              you learned. A level you haven&apos;t studied yet usually moves least. That is
+-              expected, not a shortfall.
+-            </p>
+-          )}
+-        </div>
+-      </Card>
+-
+-      {baseline.due !== null ? (
+-        <Card className="mt-6 border-pink-line bg-pink-50 p-6">
+-          <p className="text-grey">
+-            You&apos;ve finished a level since your last sitting, so sitting {baseline.due} is
+-            ready whenever you are.
+-          </p>
+-          <div className="mt-4">
+-            <ButtonLink href="/assessment/pre">Take sitting {baseline.due}</ButtonLink>
+-          </div>
+-        </Card>
+-      ) : null}
+-
+-      <div className="mt-10">
+-        {isFirst ? (
+-          <>
+-            <Display as="h2" className="text-title text-navy">
+-              Now choose where to begin
+-            </Display>
+-            <p className="mt-3 text-grey">
+-              We recommend starting with{" "}
+-              <strong className="text-navy">{nextLevel?.title ?? "Beginner"}</strong>, but you
+-              can start at any level.
+-            </p>
+-          </>
+-        ) : null}
+-
+-        <div className="mt-6 flex flex-wrap gap-3">
+-          {nextLevel ? (
+-            <ButtonLink href={`/levels/${nextLevel.slug}`} size="lg">
+-              <span
+-                aria-hidden="true"
+-                className={cx("size-2 rounded-full", TIER_META[tier].dotClass)}
+-              />
+-              {nextLevel.progress?.status === "NOT_STARTED" ? "Start" : "Continue"}{" "}
+-              {TIER_META[tier].label}
+-            </ButtonLink>
+-          ) : null}
+-          <ButtonLink href={isFirst ? "/#levels" : "/dashboard"} size="lg" variant="outline">
+-            {isFirst ? "See all three levels" : "My progress"}
+-          </ButtonLink>
+-        </div>
+-      </div>
+-    </div>
++    <BaselineRecorded
++      baseline={baseline}
++      nextLevel={
++        next
++          ? { slug: next.slug, title: next.title, notStarted: next.progress?.status === "NOT_STARTED" }
++          : null
++      }
++    />
+   );
+ }
+diff --git a/src/app/(site)/assessment/pre/page.tsx b/src/app/(site)/assessment/pre/page.tsx
+index 503acf7..e6c3c6b 100644
+--- a/src/app/(site)/assessment/pre/page.tsx
++++ b/src/app/(site)/assessment/pre/page.tsx
+@@ -1,11 +1,10 @@
+ import type { Metadata } from "next";
+ import { redirect } from "next/navigation";
+ import { requireUser } from "@/lib/authz";
+-import { getBaselineState } from "@/lib/baseline";
++import { MAX_SITTINGS, getBaselineState } from "@/lib/baseline";
+ import { getBaselineQuestions } from "@/lib/quiz";
+-import { QuizRunner } from "@/components/quiz/QuizRunner";
+-import { submitBaselineSittingAction } from "../actions";
+-import { recordEvent } from "@/lib/progress";
++import { BaselineSitting } from "@/components/course/BaselineSitting";
++import { startBaselineSittingAction, submitBaselineSittingAction } from "../actions";
+ 
+ // Rendered per request, never prerendered: this route reads runtime configuration
+ // (Supabase URL and key, SITE_URL) which Vercel supplies per environment. A
+@@ -15,10 +14,11 @@ export const dynamic = "force-dynamic";
+ export const metadata: Metadata = { title: "Baseline assessment" };
+ 
+ /**
+- * One Baseline Sitting: the twenty fixed-form questions, in their one order, with
+- * options in authored order. Offered only when a Sitting is owed (see
+- * `dueSitting()` in lib/baseline.ts); anyone else returning to this URL sees their
+- * results instead.
++ * One Baseline Sitting: a before-you-start screen, then the twenty fixed-form
++ * questions, in their one order, with options in authored order. `quiz_start` is
++ * recorded when the learner presses Start, not when this page loads. Offered only
++ * when a Sitting is owed (see `dueSitting()` in lib/baseline.ts); anyone else
++ * returning to this URL sees their results instead.
+  */
+ export default async function BaselinePage() {
+   const user = await requireUser("/assessment/pre");
+@@ -37,25 +37,13 @@ export default async function BaselinePage() {
+     );
+   }
+ 
+-  await recordEvent(user.id, "quiz_start", {
+-    metaJson: JSON.stringify({ kind: "BASELINE", sitting: due }),
+-  });
+-
+-  const intro =
+-    due === 1
+-      ? `This is a baseline, not a test. There is no pass mark and nobody is judged on it: it is the "before" that shows what you learn. Answer what you can, and guess if you're unsure. You won't see the answers afterwards, because the same ${questions.length} questions come back after each level. The course opens as soon as you submit.`
+-      : `The same ${questions.length} questions as your first baseline, in the same order, so the two can be compared. There is still no pass mark, and the answers still aren't shown afterwards.`;
+-
+   return (
+-    <div className="px-5 py-14 sm:px-8">
+-      <QuizRunner
+-        questions={questions}
+-        attemptId={String(due)}
+-        title={due === 1 ? "Baseline assessment" : `Baseline assessment, sitting ${due}`}
+-        intro={intro}
+-        submitLabel={due === 1 ? "Submit and start learning" : "Submit"}
+-        onSubmit={submitBaselineSittingAction}
+-      />
+-    </div>
++    <BaselineSitting
++      questions={questions}
++      sitting={due}
++      maxSittings={MAX_SITTINGS}
++      onStart={startBaselineSittingAction}
++      onSubmit={submitBaselineSittingAction}
++    />
+   );
+ }
+diff --git a/src/app/(site)/levels/[level]/modules/[module]/page.tsx b/src/app/(site)/levels/[level]/modules/[module]/page.tsx
+index 447674e..db2e7b0 100644
+--- a/src/app/(site)/levels/[level]/modules/[module]/page.tsx
++++ b/src/app/(site)/levels/[level]/modules/[module]/page.tsx
+@@ -7,8 +7,6 @@ import { getStageQuizStates } from "@/lib/quiz";
+ import { ModuleRunner, type RunnerLesson } from "@/components/lesson/ModuleRunner";
+ import { LessonBody } from "@/components/lesson/LessonBody";
+ import { StageQuiz } from "@/components/quiz/StageQuiz";
+-import { TIER_META } from "@/components/ui/primitives";
+-import type { LevelTier } from "@/lib/constants";
+ import {
+   completeModuleAction,
+   readStageQuizAction,
+@@ -27,7 +25,7 @@ export async function generateMetadata(
+ ): Promise<Metadata> {
+   const { level, module: moduleSlug } = await props.params;
+   const data = await getModuleForUser(null, level, moduleSlug);
+-  if (!data) return { title: "Module not found" };
++  if (!data) return { title: "Stage not found" };
+   return { title: data.module.title, description: data.module.coreQuestion };
+ }
+ 
+@@ -47,12 +45,13 @@ export default async function ModulePage(
+   if (!data) notFound();
+ 
+   const { level, module: mod, siblings, progress } = data;
+-  const tier = level.tier as LevelTier;
+ 
+-  // The CHECK step is this Stage's quiz. Only where the learner stands is read
+-  // here; the paper is drawn when they open it, so visiting a Stage never starts
+-  // an attempt.
+-  const quizState = (await getStageQuizStates([mod.id])).get(mod.id) ?? null;
++  // The CHECK step is this Stage's quiz, and the Stage stepper draws every Stage's
++  // dot from its quiz. Only where the learner stands is read here, for all the
++  // Level's Stages at once; the paper is drawn when they open it, so visiting a
++  // Stage never starts an attempt.
++  const quizStates = await getStageQuizStates(siblings.map((s) => s.slug));
++  const quizState = quizStates.get(mod.id) ?? null;
+   const stageQuiz = (
+     <StageQuiz
+       stageSlug={mod.id}
+@@ -65,15 +64,21 @@ export default async function ModulePage(
+     />
+   );
+ 
++  const stages = siblings.map((s) => ({
++    slug: s.slug,
++    title: s.title,
++    passed: quizStates.get(s.slug)?.passedAt != null,
++  }));
++
+   const currentIndex = siblings.findIndex((s) => s.slug === moduleSlug);
+   const nextSibling = siblings[currentIndex + 1] ?? null;
+ 
+-  // The completion step is generated from the module's own data rather than
+-  // authored per module, so it can never drift from the content above it.
++  // The Finish step is generated from the Stage's own data rather than authored
++  // per Stage, so it can never drift from the content above it.
+   const moduleContext = {
+-    moduleTitle: mod.title,
++    stageTitle: mod.title,
+     coreQuestion: mod.coreQuestion,
+-    nextModuleTitle: nextSibling?.title ?? null,
++    nextStageTitle: nextSibling?.title ?? null,
+     levelTitle: level.title,
+     levelSlug,
+     isLastInLevel: nextSibling === null,
+@@ -106,18 +111,17 @@ export default async function ModulePage(
+       lessons={lessons}
+       levelSlug={levelSlug}
+       moduleSlug={moduleSlug}
+-      moduleTitle={mod.title}
+-      moduleNumber={mod.order}
++      stageTitle={mod.title}
++      stageNumber={mod.order}
++      stages={stages}
+       coreQuestion={mod.coreQuestion}
+       levelTitle={level.title}
+-      tierLabel={TIER_META[tier].label}
+-      tierDotClass={TIER_META[tier].dotClass}
+       estMinutes={mod.estMinutes}
+       isComplete={progress?.status === "COMPLETE"}
+       initialLessonIndex={lastIndex >= 0 ? lastIndex : 0}
+       onViewLesson={viewLessonAction}
+       onComplete={completeModuleAction}
+-      nextModuleTitle={nextSibling?.title ?? null}
++      nextStageTitle={nextSibling?.title ?? null}
+     />
+   );
+ }
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 37bd8ce..851e61c 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -82,6 +82,68 @@ body {
+ 
+ /* --- Typographic primitives ---------------------------------------------- */
+ 
++/* The README's type scale (#68), for headings that are not .font-display's 800.
++   Phone sizes first, the wide sizes from 40rem. Colour is the caller's: navy. */
++.t-display,
++.t-h1,
++.t-h2,
++.t-h3,
++.t-h4 {
++  font-family: var(--font-display);
++  margin: 0;
++}
++.t-display {
++  font-weight: 800;
++  font-size: 2rem;
++  line-height: 2.25rem;
++  letter-spacing: -0.02em;
++}
++.t-h1 {
++  font-weight: 800;
++  font-size: 1.75rem;
++  line-height: 2.0625rem;
++  letter-spacing: -0.015em;
++}
++.t-h2 {
++  font-weight: 700;
++  font-size: 1.375rem;
++  line-height: 1.75rem;
++  letter-spacing: -0.01em;
++}
++.t-h3 {
++  font-weight: 700;
++  font-size: 1.125rem;
++  line-height: 1.5rem;
++}
++.t-h4 {
++  font-weight: 700;
++  font-size: 1rem;
++  line-height: 1.375rem;
++}
++@media (width >= 40rem) {
++  .t-display {
++    font-size: 3rem;
++    line-height: 3.25rem;
++  }
++  .t-h1 {
++    font-size: 2.25rem;
++    line-height: 2.5625rem;
++  }
++  .t-h2 {
++    font-size: 1.75rem;
++    line-height: 2.125rem;
++  }
++  .t-h3 {
++    font-size: 1.375rem;
++    line-height: 1.75rem;
++  }
++  .t-h4 {
++    font-size: 1.125rem;
++    line-height: 1.4375rem;
++  }
++}
++
++
+ .font-display,
+ .display {
+   font-family: var(--font-display);
+@@ -89,8 +151,8 @@ body {
+   font-weight: 800;
+ }
+ 
+-/* Long-form lesson prose. Constrained measure because a 90-character line is
+-   the fastest way to make an awareness course feel like a textbook. */
++/* Plain running text on a public page (the course introduction, the privacy
++   page): paragraphs and flat lists only. Lesson prose is .lesson-prose below. */
+ .prose-save7 {
+   max-width: 68ch;
+ }
+@@ -104,20 +166,6 @@ body {
+   color: var(--color-navy);
+   font-weight: 500;
+ }
+-.prose-save7 h2,
+-.prose-save7 h3 {
+-  color: var(--color-navy);
+-  font-family: var(--font-display);
+-  font-weight: 700;
+-  line-height: 1.25;
+-  margin-top: 1.8em;
+-}
+-.prose-save7 h2 {
+-  font-size: 1.35rem;
+-}
+-.prose-save7 h3 {
+-  font-size: 1.125rem;
+-}
+ .prose-save7 ul,
+ .prose-save7 ol {
+   padding-left: 1.35em;
+@@ -137,87 +185,246 @@ body {
+   text-decoration: underline;
+   text-underline-offset: 2px;
+ }
+-.prose-save7 blockquote {
+-  border-left: 3px solid var(--color-teal-ink);
+-  padding-left: 1rem;
+-  font-size: 1.15rem;
+-  line-height: 1.5;
++
++/* --- Lesson prose (#74) -----------------------------------------------------
++   Lexend 18/31.5 in grey on plain white, about 62 characters wide. Emphasis is
++   navy at 500, never bold. Markdown.tsx emits a lesson's ## as <h3> and ### as
++   <h4>: the Stage title is the page's H1 and the step's title its H2. */
++.lesson-prose {
++  max-width: 62ch;
++  font-size: 1.125rem;
++  line-height: 1.75;
++  color: var(--color-grey);
++}
++.lesson-prose > :first-child {
++  margin-top: 0;
++}
++.lesson-prose p {
++  margin: 0 0 1.1em;
++}
++.lesson-prose strong {
+   color: var(--color-navy);
++  font-weight: 500;
++}
++.lesson-prose h3,
++.lesson-prose h4 {
++  color: var(--color-navy);
++  font-family: var(--font-display);
++  font-weight: 700;
++}
++.lesson-prose h3 {
++  font-size: 1.125rem;
++  line-height: 1.5rem;
++  margin: 1.9em 0 0.6em;
++}
++.lesson-prose h4 {
++  font-size: 1rem;
++  line-height: 1.375rem;
++  margin: 1.6em 0 0.5em;
++}
++.lesson-prose a {
++  color: var(--color-teal-ink);
++  text-decoration: underline;
++  text-underline-offset: 3px;
++}
++.lesson-prose code {
++  font-size: 0.9em;
++  background: var(--color-line);
++  color: var(--color-navy);
++  border-radius: 6px;
++  padding: 1px 6px;
++}
++.lesson-prose ul {
++  margin: 0 0 1.2em;
++  padding-left: 1.3em;
++  list-style: disc;
++}
++.lesson-prose ul li {
++  margin-bottom: 0.5em;
++  padding-left: 0.2em;
++}
++.lesson-prose ul li::marker {
++  color: var(--color-teal-ink);
++}
++/* A numbered list is numbered pills: teal circles with navy numerals. */
++.lesson-prose ol {
++  list-style: none;
++  counter-reset: lesson-n;
++  margin: 0 0 1.2em;
++  padding: 0;
++}
++.lesson-prose ol li {
++  counter-increment: lesson-n;
++  position: relative;
++  padding-left: 46px;
++  margin-bottom: 0.9em;
++  min-height: 32px;
++}
++.lesson-prose ol li::before {
++  content: counter(lesson-n);
++  position: absolute;
++  left: 0;
++  top: 0.12em;
++  display: grid;
++  place-items: center;
++  width: 32px;
++  height: 32px;
++  border-radius: 50%;
++  background: var(--color-teal);
++  color: var(--color-navy);
++  font: 700 0.875rem/1 var(--font-display);
++}
++/* A quotation is a teal-50 card with a 5px teal-ink bar. */
++.lesson-prose blockquote {
++  margin: 1.4em 0;
++  padding: 16px 18px;
++  background: var(--color-teal-50);
++  border: 1px solid var(--color-teal-line);
++  border-left: 5px solid var(--color-teal-ink);
++  border-radius: 0 14px 14px 0;
++  color: var(--color-navy);
++  font-size: 1.0625rem;
++  line-height: 1.6;
+ }
+ 
+-/* Tables (Markdown.tsx). A plain table from `sm` up. Below it, each body row is a
+-   card: the row header on top, then every cell under its column header, which
+-   comes from the cell's data-label. The header row is hidden there because each
+-   cell now carries its own label. */
+-.prose-save7 table {
++/* The Key takeaways step: each bullet is a teal-50 row with an outline check in a
++   teal-100 circle. It is the one kind that gets its own look, and it is applied by
++   kind in LessonBody, so the lesson's Markdown is a plain list and does not change. */
++/* The Markdown renderer gives each blank-line-separated bullet its own <ul>, so the
++   gap between rows is this margin, not a grid gap. */
++.lesson-prose.takeaways ul {
++  list-style: none;
++  padding: 0;
++  margin: 0 0 12px;
++}
++.lesson-prose.takeaways ul li {
++  position: relative;
++  margin: 0;
++  padding: 16px 16px 16px 66px;
++  border-radius: 16px;
++  background: var(--color-teal-50);
++  border: 1px solid var(--color-teal-line);
++  font-size: 1rem;
++  line-height: 1.6;
++}
++.lesson-prose.takeaways ul li::before {
++  content: "";
++  position: absolute;
++  left: 16px;
++  top: 16px;
++  width: 36px;
++  height: 36px;
++  border-radius: 50%;
++  background-color: var(--color-teal-100);
++  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300807b' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
++  background-size: 20px 20px;
++  background-position: center;
++  background-repeat: no-repeat;
++}
++
++/* Tables (Markdown.tsx). A plain table from 40rem up. Below it, each body row is a
++   card: the row header as its title, then every cell under its column header in
++   small capitals, read from the cell's data-label. The header row is hidden there
++   (visually only) because each cell now carries its own label. */
++.lesson-prose table {
+   width: 100%;
+   border-collapse: collapse;
+-  font-size: 0.9375rem;
++  font-size: 1rem;
+   line-height: 1.5;
++  margin: 0 0 1.6em;
++  color: var(--color-grey);
+ }
+-.prose-save7 th,
+-.prose-save7 td {
++.lesson-prose th,
++.lesson-prose td {
+   text-align: left;
+   vertical-align: top;
+ }
+-.prose-save7 th {
++.lesson-prose thead th {
++  font: 600 0.75rem/1.3 var(--font-display);
++  letter-spacing: 0.06em;
++  text-transform: uppercase;
++  color: var(--color-grey);
++  padding: 10px 12px;
++  border-bottom: 2px solid var(--color-navy);
++  vertical-align: bottom;
++}
++.lesson-prose tbody th {
++  font: 600 0.9375rem/1.4 var(--font-display);
+   color: var(--color-navy);
+-  font-weight: 700;
++  padding: 12px;
++  border-bottom: 1px solid var(--color-line);
++  width: 18%;
+ }
+-.prose-save7 td {
+-  color: var(--color-grey);
++.lesson-prose td {
++  padding: 12px;
++  border-bottom: 1px solid var(--color-line);
+ }
+ 
+ @media (width < 40rem) {
+-  .prose-save7 table,
+-  .prose-save7 tbody,
+-  .prose-save7 tr,
+-  .prose-save7 th,
+-  .prose-save7 td {
++  .lesson-prose table,
++  .lesson-prose tbody,
++  .lesson-prose tr,
++  .lesson-prose th,
++  .lesson-prose td {
+     display: block;
++    width: auto;
+   }
+-  .prose-save7 thead {
+-    display: none;
++  .lesson-prose thead {
++    position: absolute;
++    width: 1px;
++    height: 1px;
++    overflow: hidden;
++    clip-path: inset(50%);
+   }
+-  .prose-save7 tbody tr {
++  .lesson-prose tbody tr {
+     border: 1px solid var(--color-line);
+-    border-radius: var(--radius-card);
+-    background: #fff;
+-    padding: 1rem;
+-  }
+-  .prose-save7 tbody tr + tr {
+-    margin-top: 0.75rem;
++    border-radius: 14px;
++    padding: 14px 16px 6px;
++    margin-bottom: 12px;
++    background: var(--color-white);
+   }
+-  .prose-save7 tbody th {
+-    padding-bottom: 0.25rem;
++  .lesson-prose tbody th {
++    padding: 0 0 8px;
++    border: 0;
++    font-size: 1.0625rem;
++    width: auto;
+   }
+-  .prose-save7 td {
+-    padding-top: 0.5rem;
++  .lesson-prose td {
++    padding: 0 0 10px;
++    border: 0;
+   }
+-  .prose-save7 td::before {
++  .lesson-prose td::before {
+     content: attr(data-label);
+     display: block;
+-    font-size: 0.75rem;
+-    font-weight: 700;
+-    letter-spacing: 0.05em;
++    font: 600 0.75rem/1.3 var(--font-display);
++    letter-spacing: 0.06em;
+     text-transform: uppercase;
+     color: var(--color-grey);
++    margin-bottom: 2px;
++  }
++  .lesson-prose td:empty {
++    display: none;
+   }
+ }
+ 
+ @media (width >= 40rem) {
+-  .prose-save7 th,
+-  .prose-save7 td {
+-    padding: 0.75rem;
+-    border-bottom: 1px solid var(--color-line);
++  .lesson-prose h3 {
++    font-size: 1.375rem;
++    line-height: 1.75rem;
+   }
+-  .prose-save7 thead th {
+-    border-bottom: 2px solid var(--color-line-strong);
+-    vertical-align: bottom;
+-    font-size: 0.875rem;
++  .lesson-prose h4 {
++    font-size: 1.125rem;
++    line-height: 1.4375rem;
+   }
+ }
+ 
++/* The site header scrolls away in the reader and only the step rail sticks (#74).
++   The header is shared by every page and is sticky in the layout, so the reader
++   turns that off for itself: the runner's root carries data-reader. */
++body:has([data-reader]) .site-header {
++  position: static;
++}
++
+ /* --- Accessibility ------------------------------------------------------- */
+ 
+ /* A single, unmistakable focus treatment everywhere. Keyboard learners must
+diff --git a/src/components/course/BaselineLevelRows.tsx b/src/components/course/BaselineLevelRows.tsx
+new file mode 100644
+index 0000000..a714539
+--- /dev/null
++++ b/src/components/course/BaselineLevelRows.tsx
+@@ -0,0 +1,136 @@
++import { percent, sittingLabel, type BaselineState, type Sitting } from "@/lib/baseline";
++import { StepDot, type RailState } from "@/components/portal/Portal";
++
++type State = Pick<BaselineState, "sittings" | "levels" | "levelsCompleted">;
++
++/**
++ * One row per Level for a Sitting (#74): its name, its percent, a 12px `teal-ink`
++ * bar on `line`, and "n of m questions". No Level colour.
++ *
++ * After a later Sitting each bar carries a 4px navy mark at the first Sitting's
++ * value, and "First sitting n%" sits beside the count, so the change reads without
++ * a second chart. The bar is `role="img"` with the whole sentence as its name, and
++ * the same figures are in the text beside it.
++ *
++ * It is the readable twin of the table `BaselineResults` draws: at 375px a
++ * five-column table scrolls sideways, so the results page uses these rows, and My
++ * Progress keeps the table.
++ */
++export function BaselineLevelRows({
++  state,
++  sitting,
++  first,
++}: {
++  state: State;
++  /** The Sitting to show. */
++  sitting: Sitting;
++  /** The first Sitting, for the marks; null on the first Sitting itself. */
++  first: Sitting | null;
++}) {
++  return (
++    <ul className="mt-[18px] grid gap-[18px]">
++      {state.levels.map((level) => {
++        const score = sitting.levelScores[level.slug];
++        const firstScore = first?.levelScores[level.slug];
++        const pct = score ? percent(score.score, score.max) : null;
++        const firstPct = firstScore ? percent(firstScore.score, firstScore.max) : null;
++
++        return (
++          <li key={level.slug}>
++            <div className="flex items-baseline justify-between gap-3">
++              <span className="font-(family-name:--font-display) text-base font-semibold leading-[1.3] text-navy">
++                {level.title}
++              </span>
++              <span className="font-(family-name:--font-display) text-xl font-bold leading-none text-navy">
++                {pct === null ? "n/a" : `${pct}%`}
++              </span>
++            </div>
++            <div
++              role="img"
++              aria-label={
++                score && pct !== null
++                  ? `${level.title} ${pct} percent, ${score.score} of ${score.max}${firstPct !== null ? `, first sitting ${firstPct} percent` : ""}`
++                  : `${level.title} not scored`
++              }
++              className="relative mt-2 h-3 rounded-pill bg-line"
++            >
++              <div className="h-full rounded-pill bg-teal-ink" style={{ width: `${pct ?? 0}%` }} />
++              {firstPct !== null && firstPct !== pct ? (
++                <span
++                  aria-hidden="true"
++                  className="absolute -top-1 h-5 w-1 -translate-x-1/2 rounded-sm bg-navy"
++                  style={{ left: `${firstPct}%` }}
++                />
++              ) : null}
++            </div>
++            <p className="mt-1.5 flex flex-wrap justify-between gap-x-3 gap-y-1 text-sm text-grey">
++              <span>
++                {score ? `${score.score} of ${score.max} questions` : "No questions at this Level"}
++              </span>
++              {firstPct !== null ? (
++                <span>
++                  {firstPct === pct ? "Same as your first sitting" : `First sitting ${firstPct}%`}
++                </span>
++              ) : null}
++            </p>
++          </li>
++        );
++      })}
++    </ul>
++  );
++}
++
++/**
++ * The four Sittings as a dotted stepper: a check for each one behind you, a ring
++ * for this one, grey for those still to come. On a phone it is dots only; names and
++ * what prompted each Sitting show from 40rem, and every dot is named for a screen
++ * reader either way.
++ */
++export function SittingStepper({
++  state,
++  current,
++  max,
++}: {
++  state: State;
++  /** The Sitting number this screen is about. */
++  current: number;
++  max: number;
++}) {
++  return (
++    <ol aria-label={`Your ${max} sittings`} className="mt-[18px] flex">
++      {Array.from({ length: max }, (_, i) => {
++        const n = i + 1;
++        const taken = state.sittings.find((s) => s.sittingNo === n) ?? null;
++        const dot: RailState = n < current ? "passed" : n === current ? "current" : "todo";
++        const note = taken ? sittingLabel(state, taken) : "Not yet";
++        const status = n === current ? "this sitting" : n < current ? "taken" : "not yet taken";
++        return (
++          <li key={n} className="relative min-w-0 flex-1 px-1 text-center">
++            {n > 1 ? (
++              <span
++                aria-hidden="true"
++                className="absolute right-[calc(50%+22px)] top-[15px] w-[calc(100%-44px)] border-t-[3px] border-dotted border-line-strong"
++              />
++            ) : null}
++            <span className="block min-h-11">
++              <StepDot state={dot} n={n} className="mx-auto mb-1.5" />
++              <span className="sr-only">{`Sitting ${n}, ${status}${taken ? `, ${note}` : ""}`}</span>
++              <span
++                aria-hidden="true"
++                className={
++                  "hidden text-[0.8125rem] leading-[1.3] text-navy sm:block " +
++                  (n === current ? "font-semibold" : "font-medium")
++                }
++              >
++                Sitting {n}
++              </span>
++              <span aria-hidden="true" className="mt-0.5 hidden text-xs text-grey sm:block">
++                {note}
++              </span>
++            </span>
++          </li>
++        );
++      })}
++    </ol>
++  );
++}
+diff --git a/src/components/course/BaselineRecorded.tsx b/src/components/course/BaselineRecorded.tsx
+new file mode 100644
+index 0000000..e2085d9
+--- /dev/null
++++ b/src/components/course/BaselineRecorded.tsx
+@@ -0,0 +1,134 @@
++import { MAX_SITTINGS, type BaselineState } from "@/lib/baseline";
++import { BaselineLevelRows, SittingStepper } from "@/components/course/BaselineLevelRows";
++import { ButtonLink, Card, Eyebrow } from "@/components/ui/primitives";
++import { HeroArt } from "@/components/ui/HeroArt";
++import { StatusPill } from "@/components/portal/Portal";
++
++/**
++ * The Baseline's results screen, given a learner's Sittings and the Level to
++ * suggest next. The page reads them; this only draws them, so it can be rendered
++ * against any state (see the results page for what the screen is and is not).
++ */
++export function BaselineRecorded({
++  baseline,
++  nextLevel,
++}: {
++  baseline: Pick<BaselineState, "sittings" | "levels" | "levelsCompleted" | "due" | "first">;
++  /** The first Level not yet complete, or null when all are. */
++  nextLevel: { slug: string; title: string; notStarted: boolean } | null;
++}) {
++  const latest = baseline.sittings[baseline.sittings.length - 1];
++  const first = baseline.first!;
++  const isFirst = latest.sittingNo === 1;
++  const change = latest.totalPct - first.totalPct;
++
++  return (
++    <div className="relative overflow-hidden pb-14 pt-[132px] sm:pt-14">
++      <HeroArt />
++      <div className="relative z-10 mx-auto max-w-[640px] px-5 sm:px-8">
++        <Eyebrow className="text-pink">Baseline recorded</Eyebrow>
++        <h1 className="t-display mt-2 text-navy sm:max-w-[14ch]">
++          {isFirst ? <>That&apos;s your starting point</> : <>Here&apos;s what changed</>}
++        </h1>
++
++        <Card className="mt-[22px] px-5 py-[22px] sm:px-6">
++          <Eyebrow>
++            {isFirst ? "Before the course" : `Sitting ${latest.sittingNo} of ${MAX_SITTINGS}`}
++          </Eyebrow>
++          <p className="mt-2 font-(family-name:--font-display) text-[3.5rem] font-extrabold leading-none tracking-[-0.02em] text-navy">
++            {latest.totalPct}%
++          </p>
++          <p className="mt-2 text-sm text-grey">
++            {latest.totalScore} of {latest.totalMax} questions
++          </p>
++          {isFirst ? null : (
++            <p className="mt-3">
++              <StatusPill
++                tone={change >= 0 ? "done" : "progress"}
++                icon={change >= 0 ? "check" : "info"}
++              >
++                {change >= 0 ? "+" : "\u2212"}
++                {Math.abs(change)} points since your first sitting ({first.totalPct}%)
++              </StatusPill>
++            </p>
++          )}
++
++          {isFirst ? null : (
++            <p className="mt-4 flex items-center gap-2 text-sm text-grey">
++              <span aria-hidden="true" className="inline-block h-4 w-1 rounded-sm bg-navy" />
++              The dark mark on a bar is your first sitting.
++            </p>
++          )}
++          <BaselineLevelRows state={baseline} sitting={latest} first={isFirst ? null : first} />
++          <SittingStepper state={baseline} current={latest.sittingNo} max={MAX_SITTINGS} />
++
++          <div className="mt-[22px] border-t border-line pt-[18px] text-base leading-[1.7] text-grey">
++            {isFirst ? (
++              <>
++                <p>
++                  There is no pass mark here, and this is not a grade. It is a measurement taken
++                  before you learned anything, which is exactly what makes the later sittings
++                  meaningful. You&apos;ll sit the same questions again after each Level you finish.
++                </p>
++                <p className="mt-3">
++                  {latest.totalPct < 50
++                    ? "A low baseline is genuinely the best place to start from. You have the most to gain."
++                    : "You already know some of this. The course will fill in the parts that are harder to pick up casually: brain death, the law, and how to handle a difficult conversation."}
++                </p>
++              </>
++            ) : (
++              <p>
++                Each row is the same {latest.totalMax} questions, so the difference between rows is
++                what you learned. A Level you haven&apos;t studied yet usually moves least. That is
++                expected, not a shortfall.
++              </p>
++            )}
++          </div>
++        </Card>
++
++        {baseline.due !== null ? (
++          <Card className="mt-4 border-pink-line bg-pink-50 p-5">
++            <p className="text-base text-navy">
++              You&apos;ve finished a Level since your last sitting, so sitting {baseline.due} is
++              ready whenever you are.
++            </p>
++            <div className="mt-3">
++              <ButtonLink href="/assessment/pre" className="w-full sm:w-auto">
++                Take sitting {baseline.due}
++              </ButtonLink>
++            </div>
++          </Card>
++        ) : null}
++
++        <div className="mt-[34px]">
++          {isFirst ? (
++            <>
++              <h2 className="t-h2 text-navy">Now choose where to begin</h2>
++              <p className="mt-2 text-base leading-6 text-grey sm:text-lg sm:leading-7">
++                We recommend starting with{" "}
++                <span className="font-medium text-navy">{nextLevel?.title ?? "Beginner"}</span>, but
++                you can start at any Level.
++              </p>
++            </>
++          ) : null}
++
++          <div className="mt-[18px] flex flex-wrap gap-3">
++            {nextLevel ? (
++              <ButtonLink href={`/levels/${nextLevel.slug}`} size="lg" className="w-full sm:w-auto">
++                {nextLevel.notStarted ? "Start" : "Continue"} {nextLevel.title} Level
++              </ButtonLink>
++            ) : null}
++            <ButtonLink
++              href={isFirst ? "/#levels" : "/dashboard"}
++              size="lg"
++              variant="outline"
++              className="w-full sm:w-auto"
++            >
++              {isFirst ? "See all three Levels" : "My progress"}
++            </ButtonLink>
++          </div>
++        </div>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/course/BaselineSitting.tsx b/src/components/course/BaselineSitting.tsx
+new file mode 100644
+index 0000000..8db9702
+--- /dev/null
++++ b/src/components/course/BaselineSitting.tsx
+@@ -0,0 +1,135 @@
++"use client";
++
++import { useState, useTransition } from "react";
++import { Button, Eyebrow, NumberPill } from "@/components/ui/primitives";
++import { HeroArt } from "@/components/ui/HeroArt";
++import { QuizRunner } from "@/components/quiz/QuizRunner";
++import type { ClientQuestion } from "@/lib/quiz";
++
++/**
++ * One Baseline Sitting: the before-you-start screen, then the twenty questions.
++ *
++ * The screen replaces the one-line box that used to sit above question 1. It says
++ * what the Baseline is and is not, and `quiz_start` is recorded when the learner
++ * presses Start, not when the page loads (`onStart`). The three points differ for
++ * Sitting 1 and later Sittings only in their words.
++ *
++ * Nothing here knows an answer: the questions arrive as `ClientQuestion`s and the
++ * Baseline never shows a key, before or after.
++ */
++export function BaselineSitting({
++  questions,
++  sitting,
++  maxSittings,
++  onStart,
++  onSubmit,
++}: {
++  questions: ClientQuestion[];
++  /** The Sitting being offered, 1 to `maxSittings`. */
++  sitting: number;
++  maxSittings: number;
++  onStart: (sitting: number) => Promise<void>;
++  onSubmit: (sittingNo: string, payload: string) => Promise<{ error?: string } | void>;
++}) {
++  const [started, setStarted] = useState(false);
++  const [, startTransition] = useTransition();
++  const first = sitting === 1;
++  const count = questions.length;
++  const of = `Sitting ${sitting} of ${maxSittings}`;
++
++  function start() {
++    setStarted(true);
++    window.scrollTo({ top: 0 });
++    // Not awaited: the event is a record, and a slow write must not hold the
++    // first question back.
++    startTransition(() => {
++      void onStart(sitting);
++    });
++  }
++
++  if (started) {
++    return (
++      <div className="mx-auto max-w-[640px] px-5 pb-10 pt-7 sm:px-8">
++        <QuizRunner
++          questions={questions}
++          attemptId={String(sitting)}
++          title={first ? "Baseline assessment" : `Baseline assessment, sitting ${sitting}`}
++          eyebrow={`Baseline assessment · ${of}`}
++          submitLabel={first ? "Submit and start learning" : "Submit"}
++          onSubmit={onSubmit}
++        />
++      </div>
++    );
++  }
++
++  const points = first
++    ? [
++        {
++          title: "This is not a test",
++          text: "There is no pass mark and nobody is judged on it. Answer what you can, and guess if you are unsure.",
++        },
++        {
++          title: "You won't see the answers afterwards",
++          text: `The same ${count} questions come back after each Level, so the answers stay hidden to keep the comparison fair.`,
++        },
++        {
++          title: "The course opens when you submit",
++          text: "Your score gates nothing. Submitting this first sitting is what opens the Stages.",
++        },
++      ]
++    : [
++        {
++          title: "Still no pass mark",
++          text: "Nobody is judged on it. Answer what you can, and guess if you are unsure.",
++        },
++        {
++          title: "You won't see the answers afterwards",
++          text: `The same ${count} questions come back after each Level, so the answers stay hidden to keep the comparison fair.`,
++        },
++        {
++          title: "Your score gates nothing",
++          text: "You can carry on with the course whether or not you sit it.",
++        },
++      ];
++
++  return (
++    <div className="relative overflow-hidden pb-8 pt-[132px] sm:pt-14">
++      <HeroArt />
++      <div className="relative z-10 mx-auto max-w-[680px] px-5 sm:px-8">
++        <Eyebrow className="text-pink">
++          {first ? "Baseline assessment" : `Baseline assessment · ${of}`}
++        </Eyebrow>
++        <h1 className="t-display mt-2 text-navy sm:max-w-[14ch]">
++          {first ? "Let’s find your starting point" : "Same questions, a fresh sitting"}
++        </h1>
++        <p className="mt-2 text-base leading-6 text-grey sm:text-lg sm:leading-7">
++          {first
++            ? `Before you read anything, answer ${count} questions. They show what you already know, so that what you learn can be measured.`
++            : `You finished a Level since your last sitting. These are the same ${count} questions, in the same order, so the two can be compared.`}
++        </p>
++
++        <ul className="mt-[22px] grid gap-3">
++          {points.map((point, i) => (
++            <li
++              key={point.title}
++              className="flex items-start gap-3.5 rounded-2xl border border-line bg-white p-4"
++            >
++              <NumberPill n={i + 1} tone="teal" />
++              <div>
++                <h2 className="t-h4 mb-1 mt-0.5 text-navy">{point.title}</h2>
++                <p className="text-[0.9375rem] leading-[1.55] text-grey">{point.text}</p>
++              </div>
++            </li>
++          ))}
++        </ul>
++
++        <div className="mt-[26px]">
++          <Button size="lg" onClick={start} className="w-full sm:w-auto">
++            {first ? "Start the baseline" : `Start sitting ${sitting}`}
++          </Button>
++        </div>
++        <p className="mt-3.5 text-sm text-grey">Your answers are saved when you submit.</p>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/course/IconCircle.tsx b/src/components/course/IconCircle.tsx
+new file mode 100644
+index 0000000..488ea6f
+--- /dev/null
++++ b/src/components/course/IconCircle.tsx
+@@ -0,0 +1,30 @@
++import { Icon, type IconName } from "@/components/ui/icons";
++import { cx } from "@/components/ui/primitives";
++
++/**
++ * An icon in a tinted circle (#73). Editorial-only: the Portal's `IconChip` is a square
++ * chip. `pink-100` and `teal-100` carry icons only, never text (#68), so a circle never
++ * holds a word.
++ */
++export function IconCircle({
++  name,
++  tone,
++  className,
++}: {
++  name: IconName;
++  tone: "pink" | "teal";
++  className?: string;
++}) {
++  return (
++    <span
++      aria-hidden="true"
++      className={cx(
++        "grid size-11 shrink-0 place-items-center rounded-full",
++        tone === "pink" ? "bg-pink-100 text-pink" : "bg-teal-100 text-teal-ink",
++        className,
++      )}
++    >
++      <Icon name={name} className="size-6 shrink-0" />
++    </span>
++  );
++}
+diff --git a/src/components/layout/SiteHeader.tsx b/src/components/layout/SiteHeader.tsx
+index 1670266..fbc2298 100644
+--- a/src/components/layout/SiteHeader.tsx
++++ b/src/components/layout/SiteHeader.tsx
+@@ -17,7 +17,7 @@ export async function SiteHeader({ className }: { className?: string }) {
+   return (
+     <header
+       className={cx(
+-        "sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur",
++        "site-header sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur",
+         className,
+       )}
+     >
+diff --git a/src/components/lesson/LessonBody.tsx b/src/components/lesson/LessonBody.tsx
+index 3ebd20b..a4d35b7 100644
+--- a/src/components/lesson/LessonBody.tsx
++++ b/src/components/lesson/LessonBody.tsx
+@@ -52,7 +52,14 @@ export function LessonBody(props: LessonBodyProps) {
+ }
+ 
+ function LessonContent({ lesson, stageQuiz, moduleContext }: LessonBodyProps) {
+-  const prose = lesson.bodyMarkdown ? <Markdown source={lesson.bodyMarkdown} /> : null;
++  // Key takeaways is the one kind with its own look, so it is applied here by kind
++  // and the lesson's Markdown stays a plain list (globals.css, .takeaways).
++  const prose = lesson.bodyMarkdown ? (
++    <Markdown
++      source={lesson.bodyMarkdown}
++      className={lesson.kind === "TAKEAWAYS" ? "lesson-prose takeaways" : "lesson-prose"}
++    />
++  ) : null;
+ 
+   if (lesson.kind === "CHECK") {
+     return <Wrapped prose={prose}>{stageQuiz ?? null}</Wrapped>;
+diff --git a/src/components/lesson/LessonFilm.tsx b/src/components/lesson/LessonFilm.tsx
+index 987eb9e..b5ce54e 100644
+--- a/src/components/lesson/LessonFilm.tsx
++++ b/src/components/lesson/LessonFilm.tsx
+@@ -1,3 +1,4 @@
++import { Eyebrow } from "@/components/ui/primitives";
+ import { CaptionedVideo } from "@/components/lesson/CaptionedVideo";
+ import { filmFor } from "@/lib/films";
+ import { mediaUrl } from "@/lib/media";
+@@ -30,7 +31,9 @@ export function LessonFilm({ filmKey }: { filmKey: string | null | undefined })
+   const megabytes = Math.round(film.sizeBytes / 1_000_000);
+ 
+   return (
+-    <figure className="mb-8 overflow-hidden rounded-card border border-line bg-white">
++    // Full width on a phone: no card border or radius, and the page gutter is
++    // taken back so the player runs edge to edge (#74). From 40rem it is a card.
++    <figure className="-mx-5 mb-7 bg-white sm:mx-0 sm:overflow-hidden sm:rounded-[18px] sm:border sm:border-line">
+       <CaptionedVideo
+         src={video}
+         type={film.video.type}
+@@ -41,11 +44,11 @@ export function LessonFilm({ filmKey }: { filmKey: string | null | undefined })
+         title={film.title}
+       />
+ 
+-      <figcaption className="p-5">
+-        <p className="text-xs font-bold uppercase tracking-wider text-grey">
++      <figcaption className="px-5 pt-4 sm:p-[18px]">
++        <Eyebrow className="text-teal-ink">
+           Watch · {minutes} minutes · {megabytes} MB
+-        </p>
+-        <p className="mt-1 font-bold text-navy">{film.title}</p>
++        </Eyebrow>
++        <p className="t-h3 mt-1 text-navy">{film.title}</p>
+         <p className="mt-1 text-sm text-grey">
+           It downloads only when you press play, and captions are on. The film
+           reinforces all three Stages in this Level.
+diff --git a/src/components/lesson/Markdown.tsx b/src/components/lesson/Markdown.tsx
+index 9fb4b47..df7e9cb 100644
+--- a/src/components/lesson/Markdown.tsx
++++ b/src/components/lesson/Markdown.tsx
+@@ -4,7 +4,7 @@ import { parseTable, type Table } from "@/lib/markdown-table";
+  * A deliberately tiny Markdown renderer.
+  *
+  * Lesson prose uses only paragraphs, bold, italic, inline code, links,
+- * blockquotes, flat lists, ##/### headings and pipe tables. A full Markdown
++ * blockquotes, flat lists, ##/### headings (emitted as h3/h4) and pipe tables. A full Markdown
+  * pipeline plus a sanitiser would be a large dependency and a real XSS surface
+  * for a handful of features we control the input to.
+  *
+@@ -31,7 +31,7 @@ function inline(text: string): string {
+       .replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>")
+       .replace(/(^|[^_])_([^_]+)_/g, "$1<em>$2</em>")
+       // `code`
+-      .replace(/`([^`]+)`/g, '<code class="rounded bg-line/50 px-1 py-0.5 text-sm">$1</code>')
++      .replace(/`([^`]+)`/g, "<code>$1</code>")
+       // [text](https://…) — https only, so a link cannot become javascript:
+       .replace(
+         /\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g,
+@@ -76,7 +76,7 @@ function table({ header, rows }: Table): string {
+ 
+ export function Markdown({
+   source,
+-  className = "prose-save7",
++  className = "lesson-prose",
+ }: {
+   source: string;
+   className?: string;
+@@ -117,11 +117,15 @@ export function Markdown({
+           .filter((line) => /^\d+\.\s/.test(line.trim()))
+           .map((line) => `<li>${inline(line.trim().replace(/^\d+\.\s+/, ""))}</li>`)
+           .join("");
+-        return `<ol>${items}</ol>`;
++        // role="list": globals.css draws the numbers itself and removes list-style,
++        // and Safari drops a list's semantics when its list-style is none.
++        return `<ol role="list">${items}</ol>`;
+       }
+ 
+-      if (trimmed.startsWith("### ")) return `<h3>${inline(trimmed.slice(4))}</h3>`;
+-      if (trimmed.startsWith("## ")) return `<h2>${inline(trimmed.slice(3))}</h2>`;
++      // A lesson's ## is the page's third heading level and its ### the fourth:
++      // the Stage title is the H1 and the step's title is the H2 (#74).
++      if (trimmed.startsWith("### ")) return `<h4>${inline(trimmed.slice(4))}</h4>`;
++      if (trimmed.startsWith("## ")) return `<h3>${inline(trimmed.slice(3))}</h3>`;
+ 
+       return `<p>${inline(trimmed).replace(/\n/g, "<br />")}</p>`;
+     })
+diff --git a/src/components/lesson/ModuleComplete.tsx b/src/components/lesson/ModuleComplete.tsx
+index e639311..f5fa79d 100644
+--- a/src/components/lesson/ModuleComplete.tsx
++++ b/src/components/lesson/ModuleComplete.tsx
+@@ -1,13 +1,16 @@
+-import Link from "next/link";
+-import { Badge, Card, Display, Eyebrow } from "@/components/ui/primitives";
++import { Card, Eyebrow } from "@/components/ui/primitives";
++import { StatusPill } from "@/components/portal/Portal";
++import { IconCircle } from "@/components/course/IconCircle";
++import { GoToStepLink } from "@/components/lesson/StepNav";
+ 
+ export type ModuleCompleteContext = {
+-  moduleTitle: string;
++  stageTitle: string;
+   coreQuestion: string;
+-  nextModuleTitle: string | null;
++  nextStageTitle: string | null;
++  /** The Level's name without the word Level: "Beginner". */
+   levelTitle: string;
+   levelSlug: string;
+-  /** True when this is the last module in the level. */
++  /** True when this is the last Stage in the Level. */
+   isLastInLevel: boolean;
+   certificateTitle: string;
+   alreadyComplete: boolean;
+@@ -16,27 +19,30 @@ export type ModuleCompleteContext = {
+ };
+ 
+ /**
+- * The final step of every module.
++ * The final step of every Stage.
+  *
+- * The brief asks for an explicit completion step rather than inferring completion
+- * from scrolling, and this is it: a recap, then a deliberate action (the button
+- * lives in the runner's footer, immediately below).
++ * The brief asks for an explicit finishing step rather than inferring it from
++ * scrolling, and this is it: the question the Stage opened with, then a deliberate
++ * action (the button lives in the runner's footer, immediately below).
+  *
+- * Everything here is derived from the module's own data — its core question and
+- * its position in the level. Nothing is authored per module. That means
+- * it cannot drift out of sync with the content, and it adds nothing to Save7's
+- * review queue, which a thirteenth hand-written summary would.
++ * Everything here is derived from the Stage's own data — its core question and its
++ * position in the Level. Nothing is authored per Stage. That means it cannot drift
++ * out of sync with the content, and it adds nothing to Save7's review queue, which
++ * a thirteenth hand-written summary would.
+  *
+- * Recapping at the point of completion is also the pedagogically useful moment:
+- * the learner is asked whether they could now answer the question the module
+- * opened with, which is the only test that matters for this course.
++ * Closing the loop on the opening question is also the pedagogically useful moment:
++ * the learner is asked whether they could now answer it, which is the only test
++ * that matters for this course.
++ *
++ * Finishing records that the Stage was *read*. A Stage counts as complete when its
++ * Stage Quiz is passed (Progress Record, CONTEXT.md), and the pink card says so
++ * rather than let "finish" imply it.
+  */
+ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) {
+   const {
+     coreQuestion,
+-    nextModuleTitle,
++    nextStageTitle,
+     levelTitle,
+-    levelSlug,
+     isLastInLevel,
+     certificateTitle,
+     alreadyComplete,
+@@ -45,73 +51,65 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext })
+ 
+   return (
+     <div>
+-      {/* The module opened with this question. Closing the loop on it is the
+-          point of the step. */}
+-      <Card className="border-teal-line bg-teal-50 p-6">
+-        <Eyebrow className="text-teal-ink">The question this module asked</Eyebrow>
+-        <p className="mt-2 text-lg font-medium text-navy">{coreQuestion}</p>
+-        <p className="mt-3 text-sm text-grey">
+-          Could you answer that in a conversation now, in your own words? That is the
+-          only test that matters here.
++      {/* The Stage opened with this question. Closing the loop on it is the point
++          of the step. */}
++      <Card className="border-teal-line bg-teal-50 p-5">
++        <Eyebrow className="text-teal-ink">The question this Stage asked</Eyebrow>
++        <p className="mt-2 text-lg font-medium leading-7 text-navy">{coreQuestion}</p>
++        <p className="mt-2.5 text-sm text-grey">
++          Could you answer that in a conversation now, in your own words? That is the only test that
++          matters here.
+         </p>
+       </Card>
+ 
+-      <section className="mt-8 border-t border-line pt-6">
+-        <Display as="h3" className="text-xl text-navy">
+-          {alreadyComplete ? "You've completed this module" : "Ready to mark it complete?"}
+-        </Display>
+-
+-        {alreadyComplete ? (
+-          <p className="mt-2 text-grey">
+-            This module is recorded as complete. You can revisit any step at any time.
+-            Nothing is locked once you have been through it.
+-          </p>
+-        ) : (
+-          <p className="mt-2 text-grey">
+-            Marking the module complete records your progress, so you can stop here and
+-            pick up later without losing your place.
+-          </p>
+-        )}
++      <section className="mt-7">
++        <h3 className="t-h3 text-navy">
++          {alreadyComplete ? "You've finished this Stage" : "You've reached the end of this Stage"}
++        </h3>
++        <p className="mt-2 text-base leading-7 text-grey">
++          {alreadyComplete
++            ? "This Stage is recorded as read. You can revisit any step at any time. Nothing is locked once you have been through it."
++            : "Finishing records that you have read it, so you can stop here and pick up later without losing your place."}
++        </p>
+ 
+-        {/* Reading a Stage and passing its quiz are separate: only the quiz counts
+-            towards the Certificate (#16), so say so here rather than let "complete"
+-            imply it. */}
+-        {!quizPassed ? (
+-          <p className="mt-3 text-sm text-grey">
+-            You haven&apos;t passed this Stage&apos;s quiz yet. It&apos;s in the Check step,
+-            and passing every Stage Quiz in {levelTitle} earns the{" "}
+-            <strong className="text-navy">&ldquo;{certificateTitle}&rdquo;</strong> certificate.
+-          </p>
+-        ) : null}
++        <Card className="mt-[18px] border-pink-line bg-pink-50 p-5">
++          <div className="flex items-start gap-3.5">
++            <IconCircle name="award" tone="pink" />
++            <div>
++              <h4 className="t-h4 mb-1 text-navy">
++                {quizPassed
++                  ? "You've passed this Stage's quiz, so it counts as complete"
++                  : "A Stage counts as complete when you pass its quiz"}
++              </h4>
++              <p className="text-sm text-grey">
++                {quizPassed
++                  ? "Passing every Stage Quiz in "
++                  : "The Stage Quiz is in the Check step. Passing every Stage Quiz in "}
++                {levelTitle} Level earns the{" "}
++                <span className="font-medium text-navy">&ldquo;{certificateTitle}&rdquo;</span>{" "}
++                certificate.
++              </p>
++              {quizPassed ? null : (
++                <div className="mt-1.5">
++                  <GoToStepLink kind="CHECK">Go to the Stage Quiz</GoToStepLink>
++                </div>
++              )}
++            </div>
++          </div>
++        </Card>
+ 
+         <div className="mt-4 flex flex-wrap items-center gap-2">
+           {isLastInLevel ? (
+-            <>
+-              <Badge tone="pink">Last module in {levelTitle}</Badge>
+-              <p className="text-sm text-grey">
+-                Your certificate is on the {levelTitle} page once every Stage Quiz in it is
+-                passed.
+-              </p>
+-            </>
+-          ) : nextModuleTitle ? (
++            <StatusPill tone="progress" icon="flag">
++              Last Stage in {levelTitle} Level
++            </StatusPill>
++          ) : null}
++          {!isLastInLevel && nextStageTitle ? (
+             <p className="text-sm text-grey">
+-              Next up:{" "}
+-              <strong className="text-navy">{nextModuleTitle}</strong>. The button below
+-              takes you straight there.
++              Next up: <span className="font-medium text-navy">{nextStageTitle}</span>.
+             </p>
+           ) : null}
+         </div>
+-
+-        <p className="mt-4 text-sm text-grey">
+-          Or go back to{" "}
+-          <Link
+-            href={`/levels/${levelSlug}`}
+-            className="font-semibold text-pink underline"
+-          >
+-            all modules in {levelTitle}
+-          </Link>
+-          .
+-        </p>
+       </section>
+     </div>
+   );
+diff --git a/src/components/lesson/ModuleRunner.tsx b/src/components/lesson/ModuleRunner.tsx
+index 325fd6c..1ae430a 100644
+--- a/src/components/lesson/ModuleRunner.tsx
++++ b/src/components/lesson/ModuleRunner.tsx
+@@ -2,14 +2,12 @@
+ 
+ import { useEffect, useRef, useState, useTransition } from "react";
+ import Link from "next/link";
+-import {
+-  Button,
+-  Display,
+-  Eyebrow,
+-  ProgressBar,
+-  cx,
+-} from "@/components/ui/primitives";
++import { Button, cx } from "@/components/ui/primitives";
++import { Icon } from "@/components/ui/icons";
+ import { LESSON_KIND_LABELS, type LessonKind } from "@/lib/constants";
++import { StageHeader, type RunnerStage } from "@/components/lesson/StageHeader";
++import { StepRail } from "@/components/lesson/StepRail";
++import { StepNavContext } from "@/components/lesson/StepNav";
+ 
+ export type RunnerLesson = {
+   id: string;
+@@ -23,7 +21,7 @@ export type RunnerLesson = {
+ /**
+  * The lesson runner.
+  *
+- * One step at a time through the module's seven-part spine. A single long
++ * One step at a time through the Stage's seven-part spine. A single long
+  * scrolling page was the alternative and it was worse on both counts that matter
+  * here: on a phone it becomes an intimidating wall, and it makes "where am I?"
+  * unanswerable.
+@@ -31,33 +29,36 @@ export type RunnerLesson = {
+  * All lesson content is rendered on the server and passed in as nodes. This
+  * component only handles navigation and progress, which is why the answer keys for
+  * the inline checks are never in its props.
++ *
++ * The route and the schema still say `module`; only what a learner reads says
++ * Stage (#74).
+  */
+ export function ModuleRunner({
+   lessons,
+   levelSlug,
+   moduleSlug,
+-  moduleTitle,
+-  moduleNumber,
++  stageTitle,
++  stageNumber,
++  stages,
+   coreQuestion,
+   levelTitle,
+-  tierLabel,
+-  tierDotClass,
+   estMinutes,
+   isComplete,
+   initialLessonIndex,
+   onViewLesson,
+   onComplete,
+-  nextModuleTitle,
++  nextStageTitle,
+ }: {
+   lessons: RunnerLesson[];
+   levelSlug: string;
+   moduleSlug: string;
+-  moduleTitle: string;
+-  moduleNumber: number;
++  stageTitle: string;
++  stageNumber: number;
++  /** Every Stage in the Level, in order, with whether its quiz is passed. */
++  stages: RunnerStage[];
+   coreQuestion: string;
++  /** The Level's name without the word Level: "Beginner". */
+   levelTitle: string;
+-  tierLabel: string;
+-  tierDotClass: string;
+   estMinutes: number;
+   isComplete: boolean;
+   initialLessonIndex: number;
+@@ -66,14 +67,15 @@ export function ModuleRunner({
+     lessonSlug: string,
+     secondsOnPreviousStep: number,
+   ) => Promise<void>;
+-  onComplete: (
+-    levelSlug: string,
+-    moduleSlug: string,
+-  ) => Promise<{ error?: string } | void>;
+-  nextModuleTitle: string | null;
++  onComplete: (levelSlug: string, moduleSlug: string) => Promise<{ error?: string } | void>;
++  nextStageTitle: string | null;
+ }) {
+-  const [index, setIndex] = useState(
+-    Math.min(Math.max(initialLessonIndex, 0), lessons.length - 1),
++  const startIndex = Math.min(Math.max(initialLessonIndex, 0), lessons.length - 1);
++  const [index, setIndex] = useState(startIndex);
++  // The steps the learner has been to, for the rail's checks. Resuming at step 5
++  // means steps 1 to 4 were read on the way.
++  const [visited, setVisited] = useState<ReadonlySet<number>>(
++    () => new Set(Array.from({ length: startIndex + 1 }, (_, i) => i)),
+   );
+   const [pending, startTransition] = useTransition();
+   const [saveError, setSaveError] = useState<string | null>(null);
+@@ -85,11 +87,10 @@ export function ModuleRunner({
+ 
+   const lesson = lessons[index];
+   const isLastStep = index === lessons.length - 1;
+-  const progressPct = ((index + 1) / lessons.length) * 100;
+ 
+   // Record the view, and how long the previous step took. Time-on-step is the
+-  // signal Save7 needs to find modules that are too long, so it is measured per
+-  // step rather than per module.
++  // signal Save7 needs to find Stages that are too long, so it is measured per
++  // step rather than per Stage.
+   useEffect(() => {
+     if (!lesson) return;
+     const seconds =
+@@ -103,6 +104,7 @@ export function ModuleRunner({
+ 
+   function go(nextIndex: number) {
+     setIndex(nextIndex);
++    setVisited((prev) => new Set(prev).add(nextIndex));
+     // Move focus to the new step's heading so keyboard and screen reader users
+     // land in the content rather than staying on a button that has moved.
+     requestAnimationFrame(() => {
+@@ -116,7 +118,7 @@ export function ModuleRunner({
+     startTransition(async () => {
+       // An error escaping a transition reaches React's error boundary, which
+       // replaces the entire page with "a client-side exception has occurred" —
+-      // a learner who has just finished a module loses the module instead of
++      // a learner who has just finished a Stage loses the Stage instead of
+       // being told to press the button again. Caught here so the failure stays
+       // the size of the thing that failed.
+       try {
+@@ -133,7 +135,7 @@ export function ModuleRunner({
+         // Logged so the browser console names the cause. Next redacts server
+         // error messages in production, but the digest it does print can be
+         // matched against the deployment's function logs.
+-        console.error("Marking the module complete failed", error);
++        console.error("Finishing the Stage failed", error);
+         setSaveError("We couldn't save your progress. Please try again.");
+       }
+     });
+@@ -141,144 +143,112 @@ export function ModuleRunner({
+ 
+   if (!lesson) return null;
+ 
+-  return (
+-    <div>
+-      {/* --- Module header ------------------------------------------------- */}
+-      <header className="border-b border-line bg-white">
+-        <div className="mx-auto max-w-3xl px-5 py-8 sm:px-8">
+-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+-            <Link
+-              href={`/levels/${levelSlug}`}
+-              className="inline-flex min-h-11 items-center gap-2 font-semibold text-grey hover:text-navy"
+-            >
+-              <span aria-hidden="true">←</span>
+-              <span aria-hidden="true" className={cx("size-2 rounded-full", tierDotClass)} />
+-              {levelTitle}
+-            </Link>
+-            <span aria-hidden="true" className="text-grey">
+-              /
+-            </span>
+-            <span className="text-grey">
+-              {tierLabel} · Module {moduleNumber}
+-            </span>
+-          </div>
++  const stepNav = {
++    goToKind: (kind: string) => {
++      const target = lessons.findIndex((l) => l.kind === kind);
++      if (target >= 0) go(target);
++    },
++  };
++  const isFinishStep = lesson.kind === "COMPLETE";
++  // The Finish step's heading comes from its kind, so it says "Stage" without a
++  // content migration to retitle every Stage's COMPLETE lesson.
++  const heading = isFinishStep ? "Finish this Stage" : lesson.title;
++  const backLabel = `Back to ${levelTitle} Level`;
+ 
+-          <Display as="h1" className="mt-4 text-title text-navy">
+-            {moduleTitle}
+-          </Display>
+-          <p className="mt-2 text-grey">{coreQuestion}</p>
+-          <p className="mt-2 text-sm text-grey">
+-            About {estMinutes} minutes · {lessons.length} steps
+-          </p>
+-        </div>
+-      </header>
++  return (
++    // data-reader switches the site header off its sticky position (globals.css),
++    // so the step rail is the only thing that sticks.
++    <StepNavContext.Provider value={stepNav}>
++      <div data-reader>
++        <StageHeader
++          levelSlug={levelSlug}
++          levelTitle={levelTitle}
++          stageNumber={stageNumber}
++          stageCount={stages.length}
++          stageTitle={stageTitle}
++          coreQuestion={coreQuestion}
++          estMinutes={estMinutes}
++          stepCount={lessons.length}
++          stages={stages}
++          currentSlug={moduleSlug}
++        />
+ 
+-      {/* --- Step rail ----------------------------------------------------- */}
+-      <div className="sticky top-[57px] z-30 border-b border-line bg-white/95 backdrop-blur">
+-        <div className="mx-auto max-w-3xl px-5 py-3 sm:px-8">
+-          <nav aria-label="Module steps">
+-            <ol className="flex gap-1.5 overflow-x-auto pb-1">
+-              {lessons.map((step, i) => {
+-                const isCurrent = i === index;
+-                const isPast = i < index;
+-                return (
+-                  <li key={step.id} className="shrink-0">
+-                    <button
+-                      type="button"
+-                      onClick={() => go(i)}
+-                      aria-current={isCurrent ? "step" : undefined}
+-                      className={cx(
+-                        "min-h-11 rounded-pill px-3 text-xs font-bold transition",
+-                        isCurrent
+-                          ? "bg-navy text-white"
+-                          : isPast
+-                            ? "bg-pink-50 text-pink"
+-                            : "bg-line text-grey hover:bg-line",
+-                      )}
+-                    >
+-                      {LESSON_KIND_LABELS[step.kind as LessonKind] ?? step.title}
+-                    </button>
+-                  </li>
+-                );
+-              })}
+-            </ol>
+-          </nav>
+-          <ProgressBar
+-            value={progressPct}
+-            label={`${moduleTitle} progress`}
+-            className="mt-1"
+-          />
+-        </div>
+-      </div>
++        <StepRail
++          steps={lessons.map((step) => ({
++            id: step.id,
++            label: LESSON_KIND_LABELS[step.kind as LessonKind] ?? step.title,
++          }))}
++          index={index}
++          visited={visited}
++          onSelect={go}
++        />
+ 
+-      {/* --- Step content --------------------------------------------------- */}
+-      <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8">
+-        <Eyebrow>
+-          Step {index + 1} of {lessons.length}
+-        </Eyebrow>
+-        <h2
+-          ref={headingRef}
+-          tabIndex={-1}
+-          className="mt-2 font-display text-3xl tracking-tight text-navy outline-none"
+-        >
+-          {lesson.title}
+-        </h2>
++        {/* --- Step content --------------------------------------------------- */}
++        <div className="mx-auto max-w-[680px] px-5 pb-10 pt-7 sm:px-8">
++          <h2 ref={headingRef} tabIndex={-1} className="t-h2 mb-5 mt-1.5 text-navy outline-none">
++            {heading}
++          </h2>
+ 
+-        <div className="mt-8 animate-rise">{lesson.content}</div>
++          <div className="animate-rise">{lesson.content}</div>
+ 
+-        {/* --- Step navigation --------------------------------------------- */}
+-        <div className="mt-12 flex flex-wrap items-center gap-3 border-t border-line pt-6">
+-          <Button
+-            variant="outline"
+-            onClick={() => go(index - 1)}
+-            disabled={index === 0}
+-          >
+-            Back
+-          </Button>
++          {/* --- Step navigation: inline after the content, not docked -------- */}
++          <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-line pt-[22px]">
++            {index > 0 ? (
++              <Button variant="outline" onClick={() => go(index - 1)}>
++                Back
++              </Button>
++            ) : null}
+ 
+-          {!isLastStep ? (
+-            <Button onClick={() => go(index + 1)}>Continue</Button>
+-          ) : isComplete ? (
+-            <>
+-              <Button variant="navy" onClick={finish} disabled={pending}>
+-                {pending ? "Saving…" : nextModuleTitle ? "Next module" : "Back to level"}
++            {!isLastStep ? (
++              <Button onClick={() => go(index + 1)}>Continue</Button>
++            ) : isComplete ? (
++              <>
++                <Button variant="navy" onClick={finish} disabled={pending}>
++                  {pending ? "Saving…" : nextStageTitle ? "Next Stage" : backLabel}
++                </Button>
++                <p className="inline-flex items-center gap-1.5 text-sm font-medium text-correct">
++                  <Icon name="check-circle" className="size-4 shrink-0 stroke-[2.25]" />
++                  You&apos;ve already finished this Stage
++                </p>
++              </>
++            ) : (
++              <Button onClick={finish} disabled={pending}>
++                {pending ? "Saving…" : "Finish this Stage"}
+               </Button>
+-              <p className="text-sm font-semibold text-correct">
+-                ✓ You&apos;ve already completed this module
+-              </p>
+-            </>
+-          ) : (
+-            <Button onClick={finish} disabled={pending}>
+-              {pending ? "Saving…" : "Mark module complete"}
+-            </Button>
+-          )}
++            )}
+ 
+-          <Link
+-            href={`/levels/${levelSlug}`}
+-            className="ml-auto inline-flex min-h-11 items-center text-sm font-semibold text-grey underline hover:text-navy"
+-          >
+-            All modules
+-          </Link>
+-        </div>
++            {isLastStep && isComplete && !nextStageTitle ? null : (
++              <Link
++                href={`/levels/${levelSlug}`}
++                className={cx(
++                  "inline-flex min-h-11 basis-full items-center px-2 text-base font-medium text-teal-ink underline underline-offset-4 hover:text-navy",
++                  "sm:ml-auto sm:basis-auto",
++                )}
++              >
++                {backLabel}
++              </Link>
++            )}
++          </div>
++
++          {/* aria-live so a failed save is announced, not just drawn. */}
++          <div aria-live="polite">
++            {saveError ? (
++              <p className="mt-4 rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-medium text-incorrect">
++                {saveError}
++              </p>
++            ) : null}
++          </div>
+ 
+-        {/* aria-live so a failed save is announced, not just drawn. */}
+-        <div aria-live="polite">
+-          {saveError ? (
+-            <p className="mt-4 rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-semibold text-pink">
+-              {saveError}
++          {isLastStep && !isComplete ? (
++            <p className="mt-4 text-sm text-grey">
++              {nextStageTitle
++                ? `Finishing takes you on to "${nextStageTitle}".`
++                : `This is the last Stage in the Level.`}
+             </p>
+           ) : null}
+         </div>
+-
+-        {isLastStep && !isComplete ? (
+-          <p className="mt-4 text-sm text-grey">
+-            {nextModuleTitle
+-              ? `Completing this module takes you on to "${nextModuleTitle}".`
+-              : "This is the last module in the level. Completing it unlocks the assessment."}
+-          </p>
+-        ) : null}
+       </div>
+-    </div>
++    </StepNavContext.Provider>
+   );
+ }
+ 
+@@ -294,4 +264,4 @@ function isFrameworkSignal(error: unknown): boolean {
+     typeof digest === "string" &&
+     (digest.startsWith("NEXT_REDIRECT") || digest === "NEXT_NOT_FOUND")
+   );
+-}
+\ No newline at end of file
++}
+diff --git a/src/components/lesson/StageHeader.tsx b/src/components/lesson/StageHeader.tsx
+new file mode 100644
+index 0000000..171f85c
+--- /dev/null
++++ b/src/components/lesson/StageHeader.tsx
+@@ -0,0 +1,118 @@
++import Link from "next/link";
++import { Eyebrow } from "@/components/ui/primitives";
++import { Icon } from "@/components/ui/icons";
++import { StepDot, type RailState } from "@/components/portal/Portal";
++
++/** One Stage of the Level, as the stepper needs it. */
++export type RunnerStage = {
++  slug: string;
++  title: string;
++  /** This Stage's Stage Quiz has been passed. What a Stage counts as complete on. */
++  passed: boolean;
++};
++
++/**
++ * The top of a Stage (#74): back link, eyebrow, the Stage title, its core question,
++ * the time and step count, then the Stage stepper.
++ *
++ * The stepper is one dot per Stage in the Level: `teal` with a navy check when that
++ * Stage's quiz is passed, a navy ring for this Stage, a grey ring for the rest. On a
++ * phone it is dots only, because a Level can hold four Stages with long names; from
++ * 40rem the names and a status word show. Each dot is a link, and carries its
++ * Stage's name and state for a screen reader either way.
++ */
++export function StageHeader({
++  levelSlug,
++  levelTitle,
++  stageNumber,
++  stageCount,
++  stageTitle,
++  coreQuestion,
++  estMinutes,
++  stepCount,
++  stages,
++  currentSlug,
++}: {
++  levelSlug: string;
++  levelTitle: string;
++  stageNumber: number;
++  stageCount: number;
++  stageTitle: string;
++  coreQuestion: string;
++  estMinutes: number;
++  stepCount: number;
++  stages: RunnerStage[];
++  currentSlug: string;
++}) {
++  return (
++    <header className="border-b border-line bg-white">
++      <div className="mx-auto max-w-[680px] px-5 pb-[22px] pt-[18px] sm:px-8">
++        <Link
++          href={`/levels/${levelSlug}`}
++          className="-ml-1 inline-flex min-h-11 items-center gap-1.5 px-1 text-[0.9375rem] font-medium text-teal-ink hover:text-navy"
++        >
++          <Icon name="arrow-left" className="size-4 shrink-0 stroke-[2.25]" />
++          {levelTitle} Level
++        </Link>
++
++        <Eyebrow className="text-teal-ink">
++          {levelTitle} Level · Stage {stageNumber} of {stageCount}
++        </Eyebrow>
++        <h1 className="t-h1 mt-0.5 text-navy">{stageTitle}</h1>
++        <p className="mt-2 text-base leading-6 text-grey sm:text-lg sm:leading-7">{coreQuestion}</p>
++
++        <p className="mt-3 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-sm text-grey">
++          <span className="inline-flex items-center gap-1.5">
++            <Icon name="clock" className="size-4 shrink-0 stroke-[2.25]" />
++            About {estMinutes} minutes
++          </span>
++          <span className="inline-flex items-center gap-1.5">
++            <Icon name="list" className="size-4 shrink-0 stroke-[2.25]" />
++            {stepCount} steps
++          </span>
++        </p>
++
++        <ol aria-label={`Stages in ${levelTitle} Level`} className="mt-4 flex sm:mt-5">
++          {stages.map((stage, i) => {
++            const isCurrent = stage.slug === currentSlug;
++            const state: RailState = isCurrent ? "current" : stage.passed ? "passed" : "todo";
++            const status = isCurrent
++              ? stage.passed
++                ? "You are here, quiz passed"
++                : "You are here"
++              : stage.passed
++                ? "Quiz passed"
++                : "";
++            return (
++              <li key={stage.slug} className="relative min-w-0 flex-1 px-1 text-center">
++                {i > 0 ? (
++                  <span
++                    aria-hidden="true"
++                    className="absolute right-[calc(50%+22px)] top-[15px] w-[calc(100%-44px)] border-t-[3px] border-dotted border-line-strong"
++                  />
++                ) : null}
++                <Link
++                  href={`/levels/${levelSlug}/modules/${stage.slug}`}
++                  aria-current={isCurrent ? "step" : undefined}
++                  aria-label={`Stage ${i + 1}, ${stage.title}${status ? `, ${status.toLowerCase()}` : ""}`}
++                  className="block min-h-11"
++                >
++                  <StepDot state={state} n={i + 1} className="mx-auto mb-1.5" />
++                  <span
++                    className={
++                      "hidden text-[0.8125rem] leading-[1.3] text-navy sm:block " +
++                      (isCurrent ? "font-semibold" : "font-medium")
++                    }
++                  >
++                    {stage.title}
++                  </span>
++                  <span className="mt-0.5 hidden text-xs text-grey sm:block">{status}</span>
++                </Link>
++              </li>
++            );
++          })}
++        </ol>
++      </div>
++    </header>
++  );
++}
+diff --git a/src/components/lesson/StepNav.tsx b/src/components/lesson/StepNav.tsx
+new file mode 100644
+index 0000000..7aa7081
+--- /dev/null
++++ b/src/components/lesson/StepNav.tsx
+@@ -0,0 +1,28 @@
++"use client";
++
++import { createContext, useContext } from "react";
++import { Icon } from "@/components/ui/icons";
++
++/**
++ * Lets a step's server-rendered content move the runner to another step.
++ *
++ * The Finish step's card links to the Check step, but the steps are one client
++ * runner's state, not routes, so a plain link cannot reach it. The runner provides
++ * `goToKind`; this is the only thing in step content that talks back to it.
++ */
++export const StepNavContext = createContext<{ goToKind: (kind: string) => void } | null>(null);
++
++export function GoToStepLink({ kind, children }: { kind: string; children: React.ReactNode }) {
++  const nav = useContext(StepNavContext);
++  if (!nav) return null;
++  return (
++    <button
++      type="button"
++      onClick={() => nav.goToKind(kind)}
++      className="inline-flex min-h-11 items-center gap-1.5 text-base font-medium text-pink underline underline-offset-4 hover:text-navy"
++    >
++      {children}
++      <Icon name="arrow" className="size-4 shrink-0 stroke-[2.25]" />
++    </button>
++  );
++}
+diff --git a/src/components/lesson/StepRail.tsx b/src/components/lesson/StepRail.tsx
+new file mode 100644
+index 0000000..cea47b4
+--- /dev/null
++++ b/src/components/lesson/StepRail.tsx
+@@ -0,0 +1,138 @@
++"use client";
++
++import { useState } from "react";
++import { Icon } from "@/components/ui/icons";
++import { RailStepper, StepDot, type RailState } from "@/components/portal/Portal";
++import { cx } from "@/components/ui/primitives";
++
++export type RailStep = {
++  id: string;
++  /** The short rail label: Why this matters, Learn, Key takeaways, Check ... */
++  label: string;
++};
++
++/**
++ * The way through a Stage's steps (#74): a slim bar that sticks to the top of the
++ * screen while the site header scrolls away.
++ *
++ * On a phone it is "Step 2 of 7" over the step's short name, an "All steps" button
++ * and a 4px progress line, about 52px of the screen. "All steps" opens the same
++ * vertical dotted rail stepper My Progress uses for a Level's Stages: a number per
++ * step, a check once read. From 40rem it is the labelled stepper instead, with no
++ * button to press.
++ *
++ * Both are in the DOM and CSS picks one, so there is no layout flash and no
++ * window-width state to keep in step with the server render. The hidden one is
++ * `display: none`, so a screen reader meets one list, not two.
++ */
++export function StepRail({
++  steps,
++  index,
++  visited,
++  onSelect,
++}: {
++  steps: RailStep[];
++  index: number;
++  /** Indexes of steps the learner has been to. */
++  visited: ReadonlySet<number>;
++  onSelect: (index: number) => void;
++}) {
++  const [open, setOpen] = useState(false);
++  const current = steps[index];
++  const stateOf = (i: number): RailState =>
++    i === index ? "current" : visited.has(i) ? "passed" : "todo";
++
++  return (
++    <nav
++      aria-label="Steps in this Stage"
++      className="sticky top-0 z-30 border-b border-line bg-white"
++    >
++      {/* --- Phone: compact bar and the All steps list ------------------------ */}
++      <div className="sm:hidden">
++        <div className="mx-auto max-w-[680px] px-5">
++          <div className="flex min-h-[52px] items-center justify-between gap-2.5">
++            <p className="flex flex-col leading-tight">
++              <span className="text-[0.8125rem] text-grey">
++                Step {index + 1} of {steps.length}
++              </span>
++              <span className="font-(family-name:--font-display) text-base font-semibold leading-tight text-navy">
++                {current.label}
++              </span>
++            </p>
++            <button
++              type="button"
++              aria-expanded={open}
++              aria-controls="step-list"
++              onClick={() => setOpen((o) => !o)}
++              className="inline-flex min-h-11 items-center gap-1.5 rounded-[10px] px-2.5 text-sm font-medium text-teal-ink underline underline-offset-4"
++            >
++              All steps
++              <Icon
++                name="chev"
++                className={cx(
++                  "size-4 shrink-0 stroke-[2.25] transition-transform",
++                  open && "rotate-180",
++                )}
++              />
++            </button>
++          </div>
++        </div>
++        <div aria-hidden="true" className="h-1 bg-line">
++          <div
++            className="h-full bg-teal-ink"
++            style={{ width: `${((index + 1) / steps.length) * 100}%` }}
++          />
++        </div>
++        {open ? (
++          <div id="step-list" className="mx-auto max-w-[680px] px-5 pb-3">
++            <RailStepper
++              label="All steps in this Stage"
++              steps={steps.map((step, i) => ({
++                key: step.id,
++                title: step.label,
++                state: stateOf(i),
++                status: i === index ? "You are here" : visited.has(i) ? "Read" : "Not read yet",
++                onSelect: () => {
++                  setOpen(false);
++                  onSelect(i);
++                },
++              }))}
++            />
++          </div>
++        ) : null}
++      </div>
++
++      {/* --- From 40rem: the labelled stepper --------------------------------- */}
++      <div className="mx-auto hidden max-w-[680px] px-8 pb-1.5 pt-3 sm:block">
++        <ol className="flex">
++          {steps.map((step, i) => (
++            <li key={step.id} className="relative min-w-0 flex-1 px-1 text-center">
++              {i > 0 ? (
++                <span
++                  aria-hidden="true"
++                  className="absolute right-[calc(50%+22px)] top-[15px] w-[calc(100%-44px)] border-t-[3px] border-dotted border-line-strong"
++                />
++              ) : null}
++              <button
++                type="button"
++                aria-current={i === index ? "step" : undefined}
++                onClick={() => onSelect(i)}
++                className="block min-h-11 w-full"
++              >
++                <StepDot state={stateOf(i)} n={i + 1} className="mx-auto mb-1.5" />
++                <span
++                  className={cx(
++                    "block text-[0.8125rem] leading-[1.3] text-navy",
++                    i === index ? "font-semibold" : "font-medium",
++                  )}
++                >
++                  {step.label}
++                </span>
++              </button>
++            </li>
++          ))}
++        </ol>
++      </div>
++    </nav>
++  );
++}
+diff --git a/src/components/portal/Portal.tsx b/src/components/portal/Portal.tsx
+index 066f7e2..e29e858 100644
+--- a/src/components/portal/Portal.tsx
++++ b/src/components/portal/Portal.tsx
+@@ -149,8 +149,48 @@ export type RailStep = {
+   /** The status word beside the title. */
+   status: string;
+   href?: string;
++  /** Makes the row a button instead of a link: the reader's "All steps" list (#74). */
++  onSelect?: () => void;
+ };
+ 
++/**
++ * A numbered stepper dot: passed (teal fill, check), current (thick navy ring), todo
++ * (grey ring) or locked (dashed, lock). Fill, ring and weight tell them apart, never
++ * colour alone. Shared by the rail stepper here, the reader's Stage and step steppers
++ * and the Baseline's Sitting stepper (#74), so there is one dot.
++ */
++export function StepDot({
++  n,
++  state,
++  className,
++}: {
++  n: number;
++  state: RailState;
++  className?: string;
++}) {
++  return (
++    <span
++      aria-hidden="true"
++      className={cx(
++        "relative grid size-8 shrink-0 place-items-center rounded-full font-display text-sm font-bold",
++        state === "passed" && "bg-teal text-navy",
++        state === "current" && "border-[3px] border-navy bg-white text-navy",
++        state === "todo" && "border-2 border-line-strong bg-white text-grey",
++        state === "locked" && "border-2 border-dashed border-line-strong bg-white text-grey",
++        className,
++      )}
++    >
++      {state === "passed" ? (
++        <Icon name="check" className="size-4 shrink-0 stroke-[2.5]" />
++      ) : state === "locked" ? (
++        <Icon name="lock" className="size-4 shrink-0 stroke-[2.5]" />
++      ) : (
++        n
++      )}
++    </span>
++  );
++}
++
+ /**
+  * A vertical rail of numbered steps on a dotted connector. A passed step is a
+  * filled pill with a check, the current one is ringed in navy, a locked one is
+@@ -163,24 +203,7 @@ export function RailStepper({ steps, label }: { steps: RailStep[]; label: string
+         const last = i === steps.length - 1;
+         const body = (
+           <>
+-            <span
+-              aria-hidden="true"
+-              className={cx(
+-                "relative grid size-8 shrink-0 place-items-center rounded-full font-display text-sm font-bold",
+-                step.state === "passed" && "bg-teal text-navy",
+-                step.state === "current" && "border-[3px] border-navy bg-white text-navy",
+-                step.state === "todo" && "border-2 border-line-strong bg-white text-grey",
+-                step.state === "locked" && "border-2 border-dashed border-line-strong bg-white text-grey",
+-              )}
+-            >
+-              {step.state === "passed" ? (
+-                <Icon name="check" className="size-4 stroke-[2.5]" />
+-              ) : step.state === "locked" ? (
+-                <Icon name="lock" className="size-4 stroke-[2.5]" />
+-              ) : (
+-                i + 1
+-              )}
+-            </span>
++            <StepDot n={i + 1} state={step.state} />
+             <span className="block">
+               <span className="block pt-[5px] text-[0.9375rem] font-medium leading-snug text-navy underline-offset-[3px] group-hover:underline">
+                 {step.title}
+@@ -209,6 +232,10 @@ export function RailStepper({ steps, label }: { steps: RailStep[]; label: string
+               <Link href={step.href} className={cx(cls, "group")}>
+                 {body}
+               </Link>
++            ) : step.onSelect ? (
++              <button type="button" onClick={step.onSelect} className={cx(cls, "group w-full text-left")}>
++                {body}
++              </button>
+             ) : (
+               <div className={cls}>{body}</div>
+             )}
+diff --git a/src/components/quiz/QuizParts.tsx b/src/components/quiz/QuizParts.tsx
+new file mode 100644
+index 0000000..ba3b09f
+--- /dev/null
++++ b/src/components/quiz/QuizParts.tsx
+@@ -0,0 +1,235 @@
++import type { ReactNode } from "react";
++import { cx } from "@/components/ui/primitives";
++import { Icon } from "@/components/ui/icons";
++
++/**
++ * The pieces a Stage Quiz and the Baseline share (#74): the progress strip, the
++ * scenario box, the whole-row lettered choice and the marked choice.
++ *
++ * Nothing here ever receives an answer key. `QuizChoice` gets only a choice's text
++ * and whether the learner picked it; `MarkedChoice` is used only on a paper the
++ * database has already marked, and takes the verdict it was told.
++ */
++
++const LETTERS = ["A", "B", "C", "D", "E", "F"];
++
++/** A choice's letter pill: A to D, a rounded square when several answers apply. */
++const PILL =
++  "grid size-[30px] shrink-0 place-items-center border-[1.5px] font-(family-name:--font-display) text-[0.8125rem] font-bold leading-none";
++
++// --- Progress ----------------------------------------------------------------
++
++/**
++ * "Question 3 of 5" and "2 answered" in text, over one 6px segment per question:
++ * `teal-ink` answered, a taller navy one for the current question, `line` for the
++ * rest. The Baseline draws 20 segments of the same strip. The segments are
++ * decoration: the words beside them say the same thing.
++ */
++export function QuizProgress({
++  total,
++  current,
++  answered,
++}: {
++  total: number;
++  /** Zero-based. */
++  current: number;
++  /** Whether each question has an answer, in order. */
++  answered: boolean[];
++}) {
++  const count = answered.filter(Boolean).length;
++  return (
++    <div className="mb-[22px]">
++      <div className="mb-2.5 flex items-baseline justify-between gap-3">
++        <p
++          aria-live="polite"
++          className="font-(family-name:--font-display) text-[0.9375rem] font-semibold leading-[1.3] text-navy"
++        >
++          Question {current + 1} of {total}
++        </p>
++        <p className="text-sm text-grey">{count} answered</p>
++      </div>
++      <ol aria-hidden="true" className="flex items-center gap-1">
++        {Array.from({ length: total }, (_, i) => (
++          <li
++            key={i}
++            className={cx(
++              "flex-1 rounded-pill",
++              i === current ? "h-2.5 bg-navy" : answered[i] ? "h-1.5 bg-teal-ink" : "h-1.5 bg-line",
++            )}
++          />
++        ))}
++      </ol>
++    </div>
++  );
++}
++
++// --- Scenario ----------------------------------------------------------------
++
++/** A scenario: a teal-50 box with an info mark, in italics. */
++export function ScenarioBox({ children, className }: { children: ReactNode; className?: string }) {
++  return (
++    <p
++      className={cx(
++        "flex gap-3 rounded-[14px] border border-teal-line bg-teal-50 p-3.5 text-[0.9375rem] italic leading-[1.55] text-navy",
++        className,
++      )}
++    >
++      <span
++        aria-hidden="true"
++        className="grid size-8 shrink-0 place-items-center rounded-full bg-teal-100 text-teal-ink"
++      >
++        <Icon name="info" className="size-4 shrink-0 stroke-[2.25]" />
++      </span>
++      <span>{children}</span>
++    </p>
++  );
++}
++
++// --- Choosing ----------------------------------------------------------------
++
++/**
++ * One choice, a whole-row target at least 56px tall. The native radio or checkbox
++ * is still there, visually hidden, so arrow keys, the group and a screen reader's
++ * "selected" all work as they do on any form; the row and the pill are drawn from
++ * its `:checked` state. Selected is a 2px navy border and a filled navy pill with a
++ * check, so it never rests on colour alone.
++ */
++export function QuizChoice({
++  index,
++  text,
++  name,
++  value,
++  multi,
++  checked,
++  onChange,
++}: {
++  index: number;
++  text: string;
++  name: string;
++  value: string;
++  multi: boolean;
++  checked: boolean;
++  onChange: () => void;
++}) {
++  return (
++    <label
++      className={cx(
++        "group relative flex min-h-14 cursor-pointer items-start gap-3.5 rounded-[14px] border-[1.5px] border-line-strong bg-white px-4 py-3.5 text-base leading-6 hover:bg-teal-50",
++        "has-[:checked]:border-2 has-[:checked]:border-navy has-[:checked]:px-[15.5px] has-[:checked]:py-[13.5px]",
++        "has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-[3px] has-[:focus-visible]:outline-navy",
++      )}
++    >
++      <input
++        type={multi ? "checkbox" : "radio"}
++        name={name}
++        value={value}
++        checked={checked}
++        onChange={onChange}
++        className="sr-only"
++      />
++      <span
++        aria-hidden="true"
++        className={cx(
++          PILL,
++          "-mt-px border-line-strong bg-white text-navy",
++          "group-has-[:checked]:border-navy group-has-[:checked]:bg-navy group-has-[:checked]:text-white",
++          multi ? "rounded-[9px]" : "rounded-full",
++        )}
++      >
++        <span className="group-has-[:checked]:hidden">{LETTERS[index]}</span>
++        <Icon
++          name="check"
++          className="hidden size-4 shrink-0 stroke-[2.25] group-has-[:checked]:block"
++        />
++      </span>
++      <span className="min-w-0 flex-1 text-navy">{text}</span>
++    </label>
++  );
++}
++
++// --- Marked ------------------------------------------------------------------
++
++export type MarkedState =
++  /** You chose it and it is correct. */
++  | "yours-correct"
++  /** Correct, and you did not choose it. */
++  | "correct-missed"
++  /** You chose it and it is not correct. */
++  | "yours-not-correct"
++  /** Not chosen and not correct. */
++  | "not-chosen";
++
++const MARKED_WORDS: Record<MarkedState, string | null> = {
++  "yours-correct": "Your answer, correct",
++  "correct-missed": "Correct answer",
++  "yours-not-correct": "Your answer, not correct",
++  "not-chosen": null,
++};
++
++/**
++ * A choice on a marked paper. The six states of the README's table are these four
++ * marked ones plus idle and selected, which `QuizChoice` draws. Every marked state
++ * says itself with an icon and words, and the surface and border follow:
++ * `teal-50` and `correct` for a right answer, `pink-50` and `incorrect` for yours
++ * when it was not, plain white and a hairline for the rest.
++ */
++export function MarkedChoice({
++  index,
++  text,
++  state,
++  multi,
++}: {
++  index: number;
++  text: string;
++  state: MarkedState;
++  multi: boolean;
++}) {
++  const ok = state === "yours-correct" || state === "correct-missed";
++  const bad = state === "yours-not-correct";
++  const words = MARKED_WORDS[state];
++  return (
++    <div
++      className={cx(
++        "flex min-h-14 items-start gap-3.5 rounded-[14px] text-base leading-6",
++        ok && "border-2 border-correct bg-teal-50 px-[15.5px] py-[13.5px]",
++        bad && "border-2 border-incorrect bg-pink-50 px-[15.5px] py-[13.5px]",
++        !ok && !bad && "border border-line bg-white px-4 py-3.5",
++      )}
++    >
++      <span
++        aria-hidden="true"
++        className={cx(
++          PILL,
++          "-mt-px",
++          multi ? "rounded-[9px]" : "rounded-full",
++          ok && "border-correct bg-correct text-white",
++          bad && "border-incorrect bg-incorrect text-white",
++          !ok && !bad && "border-line-strong bg-white text-navy",
++        )}
++      >
++        {ok ? (
++          <Icon name="check" className="size-4 shrink-0 stroke-[2.25]" />
++        ) : bad ? (
++          <Icon name="x" className="size-4 shrink-0 stroke-[2.25]" />
++        ) : (
++          LETTERS[index]
++        )}
++      </span>
++      <span className="min-w-0 flex-1 text-navy">
++        {text}
++        {words ? (
++          <span
++            className={cx(
++              "mt-1.5 flex items-center gap-1.5 text-sm font-medium",
++              ok && "text-correct",
++              bad && "text-incorrect",
++            )}
++          >
++            <Icon name={ok ? "check" : "x"} className="size-4 shrink-0 stroke-[2.25]" />
++            {words}
++          </span>
++        ) : null}
++      </span>
++    </div>
++  );
++}
+diff --git a/src/components/quiz/QuizRunner.tsx b/src/components/quiz/QuizRunner.tsx
+index ece1538..82be57f 100644
+--- a/src/components/quiz/QuizRunner.tsx
++++ b/src/components/quiz/QuizRunner.tsx
+@@ -1,7 +1,9 @@
+ "use client";
+ 
+ import { useMemo, useState, useTransition } from "react";
+-import { Badge, Button, Card, Display, cx } from "@/components/ui/primitives";
++import { Button, Eyebrow, cx } from "@/components/ui/primitives";
++import { StatusPill } from "@/components/portal/Portal";
++import { QuizChoice, QuizProgress, ScenarioBox } from "@/components/quiz/QuizParts";
+ import type { ClientQuestion } from "@/lib/quiz";
+ 
+ /**
+@@ -11,17 +13,21 @@ import type { ClientQuestion } from "@/lib/quiz";
+  * twenty-question form is a wall; one question per screen keeps the reading
+  * measure short and makes progress legible. A review step before submitting means
+  * nobody submits by accident, and unanswered questions are easy to find.
++ *
++ * It sizes itself to its parent: the Stage page's column, or the Baseline page's.
+  */
+ 
+ export type QuizRunnerProps = {
+   questions: ClientQuestion[];
+   attemptId: string;
+   title: string;
+-  /** Framing shown before the first question. */
++  /** A line above the first question, such as "Attempt 2" on a Stage Quiz retake. */
+   intro?: string;
++  /** A teal-ink eyebrow above the paper, such as "Baseline assessment · Sitting 1 of 4". */
++  eyebrow?: string;
+   submitLabel?: string;
+-  /** The review step's heading level: h2 when the runner sits inside a lesson page. */
+-  headingAs?: "h1" | "h2";
++  /** The review step's heading level: h3 when the runner sits inside a lesson step. */
++  headingAs?: "h1" | "h2" | "h3";
+   /**
+    * Grades the attempt. A page-level quiz passes a server action that redirects;
+    * an inline one passes a function that stores the result and returns nothing.
+@@ -31,11 +37,15 @@ export type QuizRunnerProps = {
+ 
+ type Answers = Record<string, string[]>;
+ 
++/** The card a paper's screens sit in: a hairline and 18px corners. */
++const PAPER = "rounded-[18px] border border-line px-5 py-[22px] sm:px-6";
++
+ export function QuizRunner({
+   questions,
+   attemptId,
+   title,
+   intro,
++  eyebrow,
+   submitLabel = "Submit answers",
+   headingAs = "h1",
+   onSubmit,
+@@ -47,11 +57,11 @@ export function QuizRunner({
+   const [pending, startTransition] = useTransition();
+ 
+   const total = questions.length;
+-  const answeredCount = useMemo(
+-    () => questions.filter((q) => (answers[q.id]?.length ?? 0) > 0).length,
++  const answered = useMemo(
++    () => questions.map((q) => (answers[q.id]?.length ?? 0) > 0),
+     [questions, answers],
+   );
+-  const unanswered = questions.filter((q) => (answers[q.id]?.length ?? 0) === 0);
++  const unansweredCount = answered.filter((a) => !a).length;
+ 
+   const question = questions[index];
+   const isMulti = question?.kind === "MULTI";
+@@ -84,72 +94,77 @@ export function QuizRunner({
+     });
+   }
+ 
++  const Heading = headingAs;
++
+   // --- Review step ----------------------------------------------------------
+   if (reviewing) {
+     return (
+-      <div className="mx-auto max-w-2xl">
+-        <Display as={headingAs} className="text-title text-navy">
+-          Check before you submit
+-        </Display>
+-        <p className="mt-3 text-grey">
+-          {unanswered.length === 0
+-            ? "All questions answered. You can change any of them before submitting."
+-            : `${unanswered.length} question${unanswered.length === 1 ? "" : "s"} still unanswered. Unanswered questions are marked incorrect, so it's worth going back.`}
+-        </p>
+-
+-        <ol className="mt-8 space-y-2">
+-          {questions.map((q, i) => {
+-            const done = (answers[q.id]?.length ?? 0) > 0;
+-            return (
+-              <li key={q.id}>
+-                <button
+-                  type="button"
+-                  onClick={() => {
+-                    setIndex(i);
+-                    setReviewing(false);
+-                  }}
+-                  className={cx(
+-                    "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition",
+-                    done
+-                      ? "border-line bg-white hover:border-line-strong"
+-                      : "border-pink bg-pink-50 hover:border-navy",
+-                  )}
+-                >
+-                  <span className="w-6 shrink-0 font-display text-lg text-grey">
+-                    {String(i + 1).padStart(2, "0")}
+-                  </span>
+-                  <span className="flex-1 text-sm text-navy">{q.prompt}</span>
+-                  {done ? (
+-                    <Badge tone="neutral">Answered</Badge>
+-                  ) : (
+-                    <Badge tone="review">Not answered</Badge>
+-                  )}
+-                </button>
+-              </li>
+-            );
+-          })}
+-        </ol>
++      <div>
++        {eyebrow ? <Eyebrow className="mb-3.5 text-teal-ink">{eyebrow}</Eyebrow> : null}
++        <div className={PAPER}>
++          <Heading className="t-h2 text-navy">Check before you submit</Heading>
++          <p className="mt-2 text-base leading-6 text-grey">
++            {unansweredCount === 0
++              ? "All questions answered. You can change any of them before submitting."
++              : `${unansweredCount} question${unansweredCount === 1 ? "" : "s"} still unanswered. Unanswered questions are marked not correct, so it is worth going back.`}
++          </p>
+ 
+-        <div aria-live="polite">
+-          {error ? (
+-            <p className="mt-6 rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-medium text-incorrect">
+-              {error}
+-            </p>
+-          ) : null}
+-        </div>
++          <ol className="mt-5 grid gap-2.5">
++            {questions.map((q, i) => {
++              const done = answered[i];
++              return (
++                <li key={q.id}>
++                  <button
++                    type="button"
++                    onClick={() => {
++                      setIndex(i);
++                      setReviewing(false);
++                    }}
++                    className={cx(
++                      "flex min-h-14 w-full items-center gap-3 rounded-[14px] border px-3.5 py-3 text-left text-[0.9375rem] leading-[1.4] text-navy",
++                      done ? "border-line-strong bg-white" : "border-pink bg-pink-50",
++                    )}
++                  >
++                    <span className="w-7 shrink-0 font-(family-name:--font-display) text-[0.9375rem] font-semibold leading-none text-navy">
++                      {String(i + 1).padStart(2, "0")}
++                    </span>
++                    <span className="flex-1">{q.prompt}</span>
++                    {done ? (
++                      <StatusPill tone="done" icon="check">
++                        Answered
++                      </StatusPill>
++                    ) : (
++                      <StatusPill tone="warn" icon="alert">
++                        Not answered
++                      </StatusPill>
++                    )}
++                  </button>
++                </li>
++              );
++            })}
++          </ol>
++
++          <div aria-live="polite">
++            {error ? (
++              <p className="mt-5 rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-medium text-incorrect">
++                {error}
++              </p>
++            ) : null}
++          </div>
+ 
+-        <div className="mt-8 flex flex-wrap gap-3">
+-          <Button size="lg" onClick={submit} disabled={pending}>
+-            {pending ? "Submitting…" : submitLabel}
+-          </Button>
+-          <Button
+-            size="lg"
+-            variant="outline"
+-            onClick={() => setReviewing(false)}
+-            disabled={pending}
+-          >
+-            Keep editing
+-          </Button>
++          <div className="mt-[22px] flex flex-wrap items-center gap-2.5">
++            <Button size="lg" onClick={submit} disabled={pending}>
++              {pending ? "Submitting…" : submitLabel}
++            </Button>
++            <Button
++              size="lg"
++              variant="outline"
++              onClick={() => setReviewing(false)}
++              disabled={pending}
++            >
++              Keep editing
++            </Button>
++          </div>
+         </div>
+       </div>
+     );
+@@ -159,111 +174,59 @@ export function QuizRunner({
+ 
+   // --- Question step --------------------------------------------------------
+   return (
+-    <div className="mx-auto max-w-2xl">
+-      {/* Progress. aria-live announces movement for screen reader users. */}
+-      <div className="mb-8">
+-        <div className="mb-2 flex items-baseline justify-between">
+-          <p className="text-sm font-semibold text-grey" aria-live="polite">
+-            Question {index + 1} of {total}
+-          </p>
+-          <p className="text-sm text-grey">{answeredCount} answered</p>
+-        </div>
+-        <ol className="flex gap-1" aria-hidden="true">
+-          {questions.map((q, i) => (
+-            <li
+-              key={q.id}
+-              className={cx(
+-                "h-1.5 flex-1 rounded-pill transition-colors",
+-                i === index
+-                  ? "bg-pink"
+-                  : (answers[q.id]?.length ?? 0) > 0
+-                    ? "bg-pink-100"
+-                    : "bg-line",
+-              )}
+-            />
+-          ))}
+-        </ol>
+-      </div>
++    <div>
++      {eyebrow ? <Eyebrow className="mb-3.5 text-teal-ink">{eyebrow}</Eyebrow> : null}
++      {index === 0 && intro ? <p className="mb-3.5 text-sm text-grey">{intro}</p> : null}
+ 
+-      {index === 0 && intro ? (
+-        <p className="mb-6 rounded-xl border border-line bg-white px-4 py-3 text-sm text-grey">
+-          {intro}
+-        </p>
+-      ) : null}
++      <div className={PAPER}>
++        <QuizProgress total={total} current={index} answered={answered} />
+ 
+-      <Card className="p-6 sm:p-8">
+         {question.scenario ? (
+-          <p className="mb-4 border-l-3 border-teal-ink bg-teal-50 py-3 pl-4 pr-3 text-sm italic text-navy">
+-            {question.scenario}
+-          </p>
++          <ScenarioBox className="mb-[18px]">{question.scenario}</ScenarioBox>
+         ) : null}
+ 
+-        <fieldset>
+-          <legend className="text-lg font-bold text-navy">{question.prompt}</legend>
+-          {isMulti ? (
+-            <p className="mt-1.5 text-sm text-grey">Select all that apply.</p>
+-          ) : null}
+-
+-          <div className="mt-5 space-y-2.5">
+-            {question.choices.map((choice) => {
+-              const isSelected = selected.includes(choice.id);
+-              return (
+-                <label
+-                  key={choice.id}
+-                  className={cx(
+-                    "flex cursor-pointer items-start gap-3 rounded-xl border-2 px-4 py-3.5 transition",
+-                    isSelected
+-                      ? "border-pink bg-pink-50"
+-                      : "border-line bg-white hover:border-line-strong",
+-                  )}
+-                >
+-                  <input
+-                    type={isMulti ? "checkbox" : "radio"}
+-                    name={question.id}
+-                    value={choice.id}
+-                    checked={isSelected}
+-                    onChange={() => toggle(choice.id)}
+-                    className="mt-1 size-4 shrink-0 accent-pink"
+-                  />
+-                  <span className={cx("text-navy", isSelected && "font-medium")}>
+-                    {choice.text}
+-                  </span>
+-                </label>
+-              );
+-            })}
++        <fieldset className="m-0 min-w-0 border-0 p-0">
++          <legend className="t-h3 p-0 text-navy">{question.prompt}</legend>
++          {isMulti ? <p className="mt-1.5 text-sm text-grey">Select all that apply.</p> : null}
++
++          <div className="mt-[18px] grid gap-2.5">
++            {question.choices.map((choice, i) => (
++              <QuizChoice
++                key={choice.id}
++                index={i}
++                text={choice.text}
++                name={question.id}
++                value={choice.id}
++                multi={isMulti}
++                checked={selected.includes(choice.id)}
++                onChange={() => toggle(choice.id)}
++              />
++            ))}
+           </div>
+         </fieldset>
+-      </Card>
+ 
+-      <div className="mt-6 flex items-center gap-3">
+-        <Button
+-          variant="outline"
+-          onClick={() => setIndex((i) => Math.max(0, i - 1))}
+-          disabled={index === 0}
+-        >
+-          Back
+-        </Button>
+-
+-        {index < total - 1 ? (
+-          <Button onClick={() => setIndex((i) => Math.min(total - 1, i + 1))}>
+-            Next
++        <div className="mt-[22px] flex flex-wrap items-center gap-2.5">
++          <Button
++            variant="outline"
++            onClick={() => setIndex((i) => Math.max(0, i - 1))}
++            disabled={index === 0}
++          >
++            Back
+           </Button>
+-        ) : (
+-          <Button onClick={() => setReviewing(true)}>Review answers</Button>
+-        )}
+ 
+-        <button
+-          type="button"
+-          onClick={() => setReviewing(true)}
+-          className="ml-auto inline-flex min-h-11 items-center text-sm font-semibold text-grey underline hover:text-navy"
+-        >
+-          Review all
+-        </button>
++          {index < total - 1 ? (
++            <Button onClick={() => setIndex((i) => Math.min(total - 1, i + 1))}>Next</Button>
++          ) : (
++            <Button onClick={() => setReviewing(true)}>Review answers</Button>
++          )}
++
++          <Button variant="tertiary" onClick={() => setReviewing(true)} className="ml-auto">
++            Review all
++          </Button>
++        </div>
+       </div>
+ 
+-      <p className="mt-6 text-xs text-grey">
+-        {title} · Your answers are saved when you submit.
+-      </p>
++      <p className="mt-4 text-sm text-grey">{title} · Your answers are saved when you submit.</p>
+     </div>
+   );
+ }
+diff --git a/src/components/quiz/StageQuiz.tsx b/src/components/quiz/StageQuiz.tsx
+index c1bb1c9..9cd2b9b 100644
+--- a/src/components/quiz/StageQuiz.tsx
++++ b/src/components/quiz/StageQuiz.tsx
+@@ -1,8 +1,12 @@
+ "use client";
+ 
+ import { useEffect, useRef, useState, useTransition } from "react";
+-import { Badge, Button, ButtonLink, Card, cx } from "@/components/ui/primitives";
++import { Button, ButtonLink, Card, Eyebrow } from "@/components/ui/primitives";
++import { Icon } from "@/components/ui/icons";
++import { StatusPill } from "@/components/portal/Portal";
++import { IconCircle } from "@/components/course/IconCircle";
+ import { QuizRunner } from "@/components/quiz/QuizRunner";
++import { MarkedChoice, ScenarioBox, type MarkedState } from "@/components/quiz/QuizParts";
+ import { STAGE_QUIZ_SIZE } from "@/lib/constants";
+ import type { AttemptResult, GradedAnswer, StageQuizState } from "@/lib/quiz";
+ import type { StageQuizOutcome, StageQuizPaper } from "@/app/(site)/levels/actions";
+@@ -113,7 +117,7 @@ export function StageQuiz({
+           questions={view.paper.questions}
+           attemptId={view.paper.attemptId}
+           title="Stage Quiz"
+-          headingAs="h2"
++          headingAs="h3"
+           intro={
+             view.paper.attemptNo > 1
+               ? `Attempt ${view.paper.attemptNo}. ${view.paper.questions.length} questions, and you need ${needed(passMarkPct, view.paper.questions.length)} right to pass.`
+@@ -177,52 +181,71 @@ function Status({
+   const latest = state?.latest ?? null;
+ 
+   return (
+-    <Card className="p-6 sm:p-8">
+-      <div className="flex flex-wrap items-center gap-3">
+-        <p className="text-xs font-bold uppercase tracking-wider text-grey">Stage Quiz</p>
++    <section
++      aria-label="Stage Quiz"
++      className="rounded-[18px] border border-line px-5 py-[22px] sm:px-6"
++    >
++      <div className="flex flex-wrap items-center justify-between gap-3">
++        <Eyebrow>Stage Quiz</Eyebrow>
+         {passedAt ? (
+-          <Badge tone="correct">Passed</Badge>
++          <StatusPill tone="done" icon="check-circle">
++            Passed
++          </StatusPill>
+         ) : latest ? (
+-          <Badge tone="review">Not passed yet</Badge>
+-        ) : null}
++          <StatusPill tone="warn" icon="x-circle">
++            Not passed yet
++          </StatusPill>
++        ) : (
++          <StatusPill tone="progress" icon="flag">
++            Not started
++          </StatusPill>
++        )}
+       </div>
+ 
++      <h3 className="t-h3 mt-3 text-navy">
++        {passedAt ? "You have passed this Stage" : latest ? "Nearly there" : "Ready when you are"}
++      </h3>
++
+       {passedAt ? (
+-        <p className="mt-3 text-navy">
++        <p className="mt-1.5 text-base leading-[1.6] text-grey">
+           You passed this Stage&apos;s quiz on{" "}
+-          {passedAt.toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" })}.
++          {passedAt.toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" })}
++          .
+           {latest && !latest.passed
+             ? ` Your latest practice attempt scored ${latest.scoreRaw} of ${latest.scoreMax}, and that doesn't change your pass.`
+             : ""}
+         </p>
+       ) : latest ? (
+-        <p className="mt-3 text-navy">
++        <p className="mt-1.5 text-base leading-[1.6] text-grey">
+           Your last attempt scored {latest.scoreRaw} of {latest.scoreMax}. You need {need} of{" "}
+           {STAGE_QUIZ_SIZE} to pass. A new attempt gives you questions you didn&apos;t see last
+           time.
+         </p>
+       ) : (
+-        <p className="mt-3 text-navy">
+-          {STAGE_QUIZ_SIZE} questions on this Stage. Get {need} right to pass. You can try as
+-          many times as you like, and each new attempt gives you questions you didn&apos;t see
+-          the time before.
++        <p className="mt-1.5 text-base leading-[1.6] text-grey">
++          {STAGE_QUIZ_SIZE} questions on this Stage. Get {need} right to pass. You can try as many
++          times as you like, and each new attempt gives you questions you didn&apos;t see the time
++          before.
+         </p>
+       )}
+ 
++      <ul className="mb-1.5 mt-4 flex flex-wrap gap-2 sm:grid sm:grid-cols-3 sm:gap-2.5">
++        <Fact icon="list">{STAGE_QUIZ_SIZE} questions</Fact>
++        <Fact icon="target">{need} right to pass</Fact>
++        <Fact icon="refresh">Retry as often as you like</Fact>
++      </ul>
++
+       {!passedAt ? (
+         <p className="mt-3 text-sm text-grey">
+           Passing every Stage Quiz in this Level earns the{" "}
+-          <strong className="text-navy">&ldquo;{certificateTitle}&rdquo;</strong> certificate. It
+-          doesn&apos;t hold you back: you can carry on to the next step whenever you like.
++          <span className="font-medium text-navy">&ldquo;{certificateTitle}&rdquo;</span>{" "}
++          certificate. It doesn&apos;t hold you back: you can carry on to the next step whenever you
++          like.
+         </p>
+       ) : null}
+ 
+-      <div className="mt-6 flex flex-wrap gap-3">
+-        <Button
+-          onClick={onStart}
+-          disabled={pending}
+-          variant={passedAt ? "outline" : "primary"}
+-        >
++      <div className="mt-[18px] flex flex-wrap items-center gap-3">
++        <Button onClick={onStart} disabled={pending} variant={passedAt ? "outline" : "primary"}>
+           {pending
+             ? "Opening…"
+             : state?.openAttemptId
+@@ -234,12 +257,33 @@ function Status({
+                   : "Start the quiz"}
+         </Button>
+         {latest ? (
+-          <Button variant="quiet" onClick={() => onReview(latest.attemptId)} disabled={pending}>
++          <Button variant="tertiary" onClick={() => onReview(latest.attemptId)} disabled={pending}>
+             Review your last attempt
+           </Button>
+         ) : null}
+       </div>
+-    </Card>
++    </section>
++  );
++}
++
++/** One of the three facts on the status card: a chip on a phone, a tile from 40rem. */
++function Fact({
++  icon,
++  children,
++}: {
++  icon: "list" | "target" | "refresh";
++  children: React.ReactNode;
++}) {
++  return (
++    <li className="flex items-center gap-2 rounded-pill border border-teal-line bg-teal-50 py-1.5 pl-1.5 pr-3 text-sm font-medium text-navy sm:gap-3 sm:rounded-[14px] sm:px-3 sm:py-2.5 sm:text-[0.9375rem]">
++      <span
++        aria-hidden="true"
++        className="grid size-7 shrink-0 place-items-center rounded-full bg-teal-100 text-teal-ink sm:size-10"
++      >
++        <Icon name={icon} className="size-4 shrink-0 stroke-[2.25] sm:size-5 sm:stroke-[1.75]" />
++      </span>
++      {children}
++    </li>
+   );
+ }
+ 
+@@ -269,15 +313,28 @@ function Result({
+ 
+   return (
+     <div>
+-      <Card className="p-6 sm:p-8">
++      <section className="rounded-[18px] border border-line px-5 py-[22px] sm:px-6">
+         <div aria-live="polite">
+-          <Badge tone={passed ? "correct" : everPassed ? "neutral" : "incorrect"}>
+-            {passed ? "Passed" : everPassed ? "Practice attempt" : "Not passed yet"}
+-          </Badge>
+-          <p className="mt-3 text-lg font-bold text-navy">
+-            You got {result.scoreRaw} of {result.scoreMax}.
++          {passed ? (
++            <StatusPill tone="done" icon="check-circle">
++              Passed
++            </StatusPill>
++          ) : everPassed ? (
++            <StatusPill tone="progress" icon="refresh">
++              Practice attempt
++            </StatusPill>
++          ) : (
++            <StatusPill tone="warn" icon="x-circle">
++              Not passed yet
++            </StatusPill>
++          )}
++          <p className="t-display mt-2 text-navy">
++            {result.scoreRaw}{" "}
++            <span className="font-sans text-base font-medium tracking-normal text-grey">
++              of {result.scoreMax}
++            </span>
+           </p>
+-          <p className="mt-2 text-grey">
++          <p className="mt-2 text-base leading-[1.6] text-grey">
+             {passed
+               ? "Well done. The explanations below are worth a read, even for the ones you got right."
+               : everPassed
+@@ -287,28 +344,43 @@ function Result({
+         </div>
+ 
+         {certificatePublicId ? (
+-          <div className="mt-5 rounded-xl border border-pink-line bg-pink-50 p-4">
+-            <p className="text-navy">
+-              That was the last Stage Quiz in this Level. You&apos;ve earned the{" "}
+-              <strong>&ldquo;{certificateTitle}&rdquo;</strong> certificate.
+-            </p>
+-            <ButtonLink href={`/certificate/${certificatePublicId}`} className="mt-3">
+-              View my certificate
+-            </ButtonLink>
+-          </div>
++          <Card className="mt-[18px] border-pink-line bg-pink-50 p-5">
++            <div className="flex items-start gap-3.5">
++              <IconCircle name="award" tone="pink" />
++              <div>
++                <h4 className="t-h4 mb-1 text-navy">
++                  You&apos;ve earned the &ldquo;{certificateTitle}&rdquo; certificate
++                </h4>
++                <p className="mb-3 text-sm text-grey">
++                  That was the last Stage Quiz in this Level.
++                </p>
++                <ButtonLink href={`/certificate/${certificatePublicId}`}>
++                  View my certificate
++                </ButtonLink>
++              </div>
++            </div>
++          </Card>
+         ) : null}
+ 
+-        <div className="mt-6 flex flex-wrap gap-3">
+-          <Button onClick={onRetry} disabled={pending} variant={passed || everPassed ? "outline" : "primary"}>
+-            {pending ? "Opening…" : passed || everPassed ? "Take it again for practice" : "Try again"}
++        <div className="mt-[18px] flex flex-wrap items-center gap-3">
++          <Button
++            onClick={onRetry}
++            disabled={pending}
++            variant={passed || everPassed ? "outline" : "primary"}
++          >
++            {pending
++              ? "Opening…"
++              : passed || everPassed
++                ? "Take it again for practice"
++                : "Try again"}
+           </Button>
+-          <Button variant="quiet" onClick={onDone} disabled={pending}>
++          <Button variant="tertiary" onClick={onDone} disabled={pending}>
+             Done
+           </Button>
+         </div>
+-      </Card>
++      </section>
+ 
+-      <ol className="mt-6 space-y-4">
++      <ol className="mt-[22px] grid gap-4">
+         {result.answers.map((answer, i) => (
+           <MarkedQuestion key={answer.questionId} answer={answer} index={i} />
+         ))}
+@@ -317,75 +389,66 @@ function Result({
+   );
+ }
+ 
+-/** One question as marked. The same states QuizBlock uses for an inline check. */
++function stateOf(choice: GradedAnswer["choices"][number]): MarkedState {
++  if (choice.isCorrect) return choice.wasSelected ? "yours-correct" : "correct-missed";
++  return choice.wasSelected ? "yours-not-correct" : "not-chosen";
++}
++
++/** One question as marked: the choices in their six states, then the explanation. */
+ function MarkedQuestion({ answer, index }: { answer: GradedAnswer; index: number }) {
++  const multi = answer.choices.filter((c) => c.isCorrect).length > 1;
++  const unanswered = answer.selectedChoiceIds.length === 0;
++
+   return (
+-    <li>
+-      <Card className="p-5 sm:p-6">
+-        <div className="flex items-baseline gap-3">
+-          <span aria-hidden="true" className="font-display text-lg text-pink">
+-            {String(index + 1).padStart(2, "0")}
+-          </span>
+-          <div className="flex-1">
+-            {answer.scenario ? (
+-              <p className="mb-3 border-l-3 border-teal-ink bg-teal-50 py-2.5 pl-3.5 pr-3 text-sm italic text-navy">
+-                {answer.scenario}
+-              </p>
++    <li className="rounded-[18px] border border-line px-4 py-[18px]">
++      <div className="flex items-baseline gap-3">
++        <span
++          aria-hidden="true"
++          className="font-(family-name:--font-display) text-lg font-extrabold leading-none text-navy"
++        >
++          {String(index + 1).padStart(2, "0")}
++        </span>
++        <div className="min-w-0 flex-1">
++          {answer.scenario ? <ScenarioBox className="mb-3">{answer.scenario}</ScenarioBox> : null}
++          <p className="t-h4 text-navy">{answer.prompt}</p>
++        </div>
++      </div>
++      {multi ? <p className="ml-[34px] mt-1.5 text-sm text-grey">Select all that apply.</p> : null}
++
++      <ul className="mt-[18px] grid gap-2.5">
++        {answer.choices.map((choice, i) => (
++          <li key={choice.id}>
++            <MarkedChoice index={i} text={choice.text} state={stateOf(choice)} multi={multi} />
++            {/* Per-choice feedback on what they chose: why a tempting wrong
++                answer is tempting teaches more than a bare "incorrect". */}
++            {choice.wasSelected && choice.feedback ? (
++              <p className="ml-11 mt-1.5 text-[0.9375rem] text-grey">{choice.feedback}</p>
+             ) : null}
++          </li>
++        ))}
++      </ul>
+ 
+-            <p className="font-bold text-navy">{answer.prompt}</p>
+-
+-            <ul className="mt-4 space-y-2">
+-              {answer.choices.map((choice) => {
+-                const state = choice.isCorrect ? "correct" : choice.wasSelected ? "wrong" : "idle";
+-                return (
+-                  <li key={choice.id}>
+-                    <div
+-                      className={cx(
+-                        "flex items-start gap-3 rounded-xl border-2 px-4 py-3",
+-                        state === "correct" && "border-correct bg-teal-50",
+-                        state === "wrong" && "border-incorrect bg-pink-50",
+-                        state === "idle" && "border-line bg-white",
+-                      )}
+-                    >
+-                      <span className="flex-1 text-navy">{choice.text}</span>
+-                      {choice.wasSelected ? (
+-                        <span className="shrink-0 text-xs font-semibold text-grey">
+-                          Your answer
+-                        </span>
+-                      ) : null}
+-                      {state === "correct" ? (
+-                        <span
+-                          aria-label="Correct answer"
+-                          className="shrink-0 text-sm font-bold text-correct"
+-                        >
+-                          ✓
+-                        </span>
+-                      ) : null}
+-                    </div>
+-                    {/* Per-choice feedback on what they chose: why a tempting wrong
+-                        answer is tempting teaches more than a bare "incorrect". */}
+-                    {choice.wasSelected && choice.feedback ? (
+-                      <p className="mt-1.5 pl-4 text-sm text-grey">{choice.feedback}</p>
+-                    ) : null}
+-                  </li>
+-                );
+-              })}
+-            </ul>
+-
+-            <div className="mt-4 rounded-xl bg-line/40 p-4">
+-              <Badge tone={answer.isCorrect ? "correct" : "incorrect"}>
+-                {answer.isCorrect
+-                  ? "Correct"
+-                  : answer.selectedChoiceIds.length === 0
+-                    ? "Not answered"
+-                    : "Not quite"}
+-              </Badge>
+-              <p className="mt-2.5 text-sm text-navy">{answer.explanation}</p>
+-            </div>
+-          </div>
+-        </div>
+-      </Card>
++      <div
++        className={
++          "mt-3.5 rounded-[14px] border p-3.5 text-[0.9375rem] leading-[1.55] text-navy " +
++          (answer.isCorrect ? "border-teal-line bg-teal-50" : "border-pink-line bg-pink-50")
++        }
++      >
++        {answer.isCorrect ? (
++          <StatusPill tone="done" icon="check-circle">
++            Correct
++          </StatusPill>
++        ) : unanswered ? (
++          <StatusPill tone="warn" icon="alert">
++            Not answered
++          </StatusPill>
++        ) : (
++          <StatusPill tone="warn" icon="x-circle">
++            Not quite
++          </StatusPill>
++        )}
++        <p className="mt-2">{answer.explanation}</p>
++      </div>
+     </li>
+   );
+ }
+diff --git a/src/components/ui/HeroArt.tsx b/src/components/ui/HeroArt.tsx
+new file mode 100644
+index 0000000..a069a9e
+--- /dev/null
++++ b/src/components/ui/HeroArt.tsx
+@@ -0,0 +1,21 @@
++/**
++ * The corner blob and the teal-and-pink circle pair (#67, #74).
++ *
++ * Public pages and the Baseline's before-you-start and results screens carry it;
++ * a lesson, a question and every other learner screen never do. It is decoration
++ * (`aria-hidden`), drawn behind the page's content: the parent is `relative
++ * overflow-hidden`, its content is `relative z-10`, and the parent's top padding
++ * keeps every line of text clear of the blob, because coloured text is only legal
++ * on white, pink-50 and teal-50, never on teal-100.
++ */
++export function HeroArt() {
++  return (
++    <div aria-hidden="true" data-hero-art className="pointer-events-none">
++      <span className="absolute -right-[150px] -top-[170px] z-0 size-[300px] rounded-full bg-teal-100 sm:-right-[170px] sm:-top-[210px] sm:size-[460px]" />
++      <span className="absolute right-[22px] top-[18px] z-0 h-[54px] w-[70px] sm:right-[72px] sm:top-9 sm:h-[84px] sm:w-[110px]">
++        <span className="absolute right-0 top-0 size-[42px] rounded-full bg-teal sm:size-[66px]" />
++        <span className="absolute bottom-0 left-0 size-6 rounded-full bg-pink sm:size-9" />
++      </span>
++    </div>
++  );
++}
+diff --git a/src/components/ui/icons.tsx b/src/components/ui/icons.tsx
+index 87613d3..e75a199 100644
+--- a/src/components/ui/icons.tsx
++++ b/src/components/ui/icons.tsx
+@@ -59,6 +59,39 @@ const PATHS = {
+     </>
+   ),
+   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
++  "arrow-left": <path d="M19 12H5M11 6l-6 6 6 6" />,
++  // Added for the reader, Stage Quiz and Baseline (#74).
++  x: <path d="m6.5 6.5 11 11M17.5 6.5l-11 11" />,
++  alert: (
++    <>
++      <path d="M12 3.5 21.5 20h-19z" />
++      <path d="M12 10v4" />
++      <path d="M12 17.2v.01" />
++    </>
++  ),
++  list: (
++    <>
++      <path d="M9 6h11M9 12h11M9 18h11" />
++      <path d="M4 6h.01M4 12h.01M4 18h.01" />
++    </>
++  ),
++  target: (
++    <>
++      <circle cx="12" cy="12" r="9" />
++      <circle cx="12" cy="12" r="4.5" />
++      <path d="M12 12h.01" />
++    </>
++  ),
++  refresh: (
++    <>
++      <path d="M20 11A8 8 0 0 0 5.6 6.6L4 8.5" />
++      <path d="M4 4v4.5h4.5" />
++      <path d="M4 13a8 8 0 0 0 14.4 4.4l1.6-1.9" />
++      <path d="M20 20v-4.5h-4.5" />
++    </>
++  ),
++  flag: <path d="M5 21V4M5 4h11.5l-2.5 4 2.5 4H5" />,
++  chev: <path d="m6 9 6 6 6-6" />,
+ } as const;
+ 
+ export type IconName = keyof typeof PATHS;
+diff --git a/src/components/ui/primitives.tsx b/src/components/ui/primitives.tsx
+index 0f6fa57..db5e80b 100644
+--- a/src/components/ui/primitives.tsx
++++ b/src/components/ui/primitives.tsx
+@@ -16,7 +16,7 @@ export function cx(...parts: Array<string | false | null | undefined>): string {
+ // --- Buttons ---------------------------------------------------------------
+ 
+ const BUTTON_BASE =
+-  "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition " +
++  "inline-flex items-center justify-center gap-2 rounded-full font-medium transition " +
+   // 44px minimum touch target: a significant share of learners are on a phone.
+   "min-h-11 px-6 py-2.5 disabled:opacity-50 disabled:pointer-events-none";
+ 
+@@ -29,6 +29,8 @@ const BUTTON_VARIANTS = {
+   /** For use on navy surfaces, where teal becomes legible. */
+   onNavy: "bg-teal text-navy hover:bg-teal-100 font-medium",
+   quiet: "text-grey hover:text-navy hover:bg-line/50",
++  /** A link-weight action: teal-ink, underlined. For "Back to the Level" and "Review your last attempt". */
++  tertiary: "text-teal-ink underline underline-offset-4 hover:text-navy px-2",
+ } as const;
+ 
+ type ButtonVariant = keyof typeof BUTTON_VARIANTS;
+@@ -121,7 +123,9 @@ export function Eyebrow({
+   return (
+     <p
+       className={cx(
+-        "font-display text-xs font-bold uppercase tracking-[0.07em] text-grey",
++        "font-display text-[0.8125rem] font-bold uppercase leading-snug tracking-[0.07em]",
++        // Grey unless the page sets a colour: two text-* classes would fight on order.
++        !className?.includes("text-") && "text-grey",
+         className,
+       )}
+     >
+@@ -154,7 +158,7 @@ export function Badge({
+   return (
+     <span
+       className={cx(
+-        "inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-0.5 text-xs font-semibold",
++        "inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-0.5 text-xs font-medium",
+         tones[tone],
+         className,
+       )}
+@@ -164,6 +168,30 @@ export function Badge({
+   );
+ }
+ 
++/** A numbered circle: teal with navy text, or pink with white text. Decorative. */
++export function NumberPill({
++  n,
++  tone,
++  size = "md",
++}: {
++  n: number | string;
++  tone: "pink" | "teal";
++  size?: "sm" | "md";
++}) {
++  return (
++    <span
++      aria-hidden="true"
++      className={cx(
++        "inline-grid shrink-0 place-items-center rounded-full font-display font-bold",
++        size === "md" ? "size-8 text-sm" : "size-6 text-xs",
++        tone === "pink" ? "bg-pink text-white" : "bg-teal text-navy",
++      )}
++    >
++      {n}
++    </span>
++  );
++}
++
+ /**
+  * The "pending Save7 review" marker.
+  *
+diff --git a/src/lib/constants.ts b/src/lib/constants.ts
+index 9572707..4637fe9 100644
+--- a/src/lib/constants.ts
++++ b/src/lib/constants.ts
+@@ -14,7 +14,7 @@ export type UserRole = (typeof USER_ROLES)[number];
+ export const LEVEL_TIERS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const;
+ export type LevelTier = (typeof LEVEL_TIERS)[number];
+ 
+-/** The seven-part spine every module follows. Order is data, not code. */
++/** The seven-part spine every Stage follows. Order is data, not code. */
+ export const LESSON_KINDS = [
+   "INTRO",
+   "PRIMARY",
+@@ -30,10 +30,10 @@ export const LESSON_KIND_LABELS: Record<LessonKind, string> = {
+   INTRO: "Why this matters",
+   PRIMARY: "Learn",
+   TAKEAWAYS: "Key takeaways",
+-  CHECK: "Check your understanding",
++  CHECK: "Check",
+   STUDY_GUIDE: "Study guide",
+   FURTHER_READING: "Further reading",
+-  COMPLETE: "Complete module",
++  COMPLETE: "Finish",
+ };
+ 
+ export const RESOURCE_TYPES = [
