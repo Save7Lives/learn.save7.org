@@ -1,0 +1,555 @@
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 74a4fa5..5f01f21 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -189,11 +189,14 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
+   bundle at build time, while `SITE_URL` is read on the server per request.
+   Certificate links are built from it. Both are Vercel project environment variables
+   (Production and Preview), and an edit reaches the site only after a redeploy.
+-- **There is no admin account to create.** Admin is `app_is_staff()` — a `people`
+-  row with an `app_role` on the Supabase project. A revoked staff member loses the
+-  dashboards immediately rather than when a token expires.
++- **There is no admin account to create.** Admin is a Learn role in `learn_admins`
++  (save7-os 0134): one Owner, seeded by the migration, and Admins the Owner makes from
++  the Students list. `learn_admin_role()` is what the app asks, and a revoked Admin
++  loses the dashboards immediately rather than when a token expires. Ops staff
++  (`app_is_staff()`) count only while no Owner exists. Saving an Eligibility Rule and
++  clearing a review item still need a `people` row, for attribution.
+ - **Analytics store no IP and no user agent.** `learn_events` is deliberately thin;
+-  the privacy notice promises this. Only staff may read it.
++  the privacy notice promises this. Only Admins may read it.
+ 
+ ## Changing the schema
+ 
+diff --git a/README.md b/README.md
+index e888d9c..50fb45b 100644
+--- a/README.md
++++ b/README.md
+@@ -53,8 +53,9 @@ reviewable SQL rather than as whatever a seed script happened to write.
+ **Sign-in is a Google account**, verified by Supabase, on the same project the OS
+ and the volunteer portal use — so a volunteer taking the course is one identity
+ across all three sites. There is no password and no development admin account:
+-admin access is held by Save7 staff, who are `people` rows with an `app_role`, and
+-`app_is_staff()` is what the app asks.
++admin access is a Learn role: an Owner and the Admins the Owner grants from the
++Students list (`learn_admins`, save7-os 0134), and `learn_admin_role()` is what the
++app asks. Ops staff are not Learn Admins unless granted.
+ 
+ Registration comes first and sign-in second, because a database trigger refuses
+ an account for an address that is not already on a list. Register at `/register`,
+diff --git a/src/app/admin/layout.tsx b/src/app/admin/layout.tsx
+index 158072b..246b629 100644
+--- a/src/app/admin/layout.tsx
++++ b/src/app/admin/layout.tsx
+@@ -1,4 +1,5 @@
+ import { requireAdmin } from "@/lib/authz";
++import { loadAdminRoster } from "@/lib/admin/roster";
+ import { signOutAction } from "@/app/(auth)/actions";
+ import { AdminShell } from "@/components/admin/AdminShell";
+ 
+@@ -11,8 +12,9 @@ import { AdminShell } from "@/components/admin/AdminShell";
+  */
+ export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+   const admin = await requireAdmin();
++  const roster = await loadAdminRoster();
+   return (
+-    <AdminShell email={admin.email} signOut={signOutAction}>
++    <AdminShell email={admin.email} ownerName={roster.ownerName} signOut={signOutAction}>
+       {children}
+     </AdminShell>
+   );
+diff --git a/src/app/admin/students/[id]/page.tsx b/src/app/admin/students/[id]/page.tsx
+index 50037c1..85e0c63 100644
+--- a/src/app/admin/students/[id]/page.tsx
++++ b/src/app/admin/students/[id]/page.tsx
+@@ -1,6 +1,8 @@
+ import type { Metadata } from "next";
+ import { notFound } from "next/navigation";
+ import { loadActivity, loadCatalogue, loadRules, loadStudent } from "@/lib/admin/data";
++import { loadAdminRoster } from "@/lib/admin/roster";
++import { requireAdmin } from "@/lib/authz";
+ import { StudentView } from "@/components/admin/StudentView";
+ 
+ // Rendered per request, never prerendered: this route reads runtime configuration
+@@ -20,7 +22,21 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
+   const student = await loadStudent(id, catalogue);
+   if (!student) notFound();
+ 
+-  const [rules, activity] = await Promise.all([loadRules(), loadActivity(id)]);
++  const [viewer, roster, rules, activity] = await Promise.all([
++    requireAdmin(),
++    loadAdminRoster(),
++    loadRules(),
++    loadActivity(id),
++  ]);
+ 
+-  return <StudentView student={student} catalogue={catalogue} rule={rules[0] ?? null} activity={activity} />;
++  return (
++    <StudentView
++      student={student}
++      catalogue={catalogue}
++      rule={rules[0] ?? null}
++      activity={activity}
++      adminRole={roster.byStudent[id] ?? null}
++      canGrant={viewer.adminRole === "owner"}
++    />
++  );
+ }
+diff --git a/src/app/admin/students/actions.ts b/src/app/admin/students/actions.ts
+new file mode 100644
+index 0000000..815574e
+--- /dev/null
++++ b/src/app/admin/students/actions.ts
+@@ -0,0 +1,34 @@
++"use server";
++
++import { revalidatePath } from "next/cache";
++import { requireOwner } from "@/lib/authz";
++import { supabaseServer } from "@/lib/supabase/server";
++
++export type AdminRoleState = { error?: string; done?: "granted" | "revoked" };
++
++const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
++
++/**
++ * Make a Student an Admin, or take it back (T95). Owner only: `requireOwner` is the
++ * quiet early exit and `learn_grant_admin` / `learn_revoke_admin` are the check that
++ * counts, since they read the caller from the JWT. The Owner cannot be revoked and a
++ * Student with no sign-in cannot be granted; the database says so and this passes the
++ * sentence on, because those messages are written for a person to read.
++ */
++export async function setAdminRoleAction(studentId: string, grant: boolean): Promise<AdminRoleState> {
++  await requireOwner();
++  if (!UUID.test(studentId)) return { error: "That Student could not be found." };
++
++  const supabase = await supabaseServer();
++  const { error } = await supabase.rpc(grant ? "learn_grant_admin" : "learn_revoke_admin", {
++    p_learner_id: studentId,
++  });
++  if (error) {
++    const known = ["23514", "P0002", "42501"].includes(error.code);
++    return { error: known ? error.message : "That did not save. Nothing was changed." };
++  }
++
++  revalidatePath("/admin/students");
++  revalidatePath(`/admin/students/${studentId}`);
++  return { done: grant ? "granted" : "revoked" };
++}
+diff --git a/src/app/admin/students/page.tsx b/src/app/admin/students/page.tsx
+index 265647b..faba206 100644
+--- a/src/app/admin/students/page.tsx
++++ b/src/app/admin/students/page.tsx
+@@ -1,5 +1,7 @@
+ import type { Metadata } from "next";
+ import { loadCatalogue, loadStudents } from "@/lib/admin/data";
++import { loadAdminRoster } from "@/lib/admin/roster";
++import { requireAdmin } from "@/lib/authz";
+ import {
+   PAGE_SIZE,
+   SIGNED_UP_OPTIONS,
+@@ -30,7 +32,7 @@ export default async function StudentsPage(props: PageProps<"/admin/students">)
+   const q = first(params.q).slice(0, 80);
+   const requestedPage = Math.max(1, Number.parseInt(first(params.page), 10) || 1);
+ 
+-  const students = await loadStudents(catalogue);
++  const [viewer, roster, students] = await Promise.all([requireAdmin(), loadAdminRoster(), loadStudents(catalogue)]);
+   const now = new Date();
+   const matching = searchStudents(
+     students.filter((s) => inWindow(s, signed, now) && matchesLevel(s, level, catalogue)),
+@@ -47,6 +49,8 @@ export default async function StudentsPage(props: PageProps<"/admin/students">)
+       matching={matching.length}
+       total={students.length}
+       query={{ q, signed, level, page }}
++      roles={roster.byStudent}
++      canGrant={viewer.adminRole === "owner"}
+     />
+   );
+ }
+diff --git a/src/components/admin/AdminRoleButton.tsx b/src/components/admin/AdminRoleButton.tsx
+new file mode 100644
+index 0000000..7b7645b
+--- /dev/null
++++ b/src/components/admin/AdminRoleButton.tsx
+@@ -0,0 +1,44 @@
++"use client";
++
++import { useActionState } from "react";
++import { setAdminRoleAction, type AdminRoleState } from "@/app/admin/students/actions";
++import { cx } from "@/components/ui/primitives";
++
++/**
++ * "Make admin" / "Remove admin", shown to the Owner only (T95). A plain form that posts
++ * a server action, so it works before the page has hydrated. `relative z-10` lifts it
++ * above the table row's stretched link, so pressing it never opens the drill-down.
++ * The outcome is announced in a live region, never by colour alone.
++ */
++export function AdminRoleButton({
++  studentId,
++  studentName,
++  isAdmin,
++  className,
++}: {
++  studentId: string;
++  studentName: string;
++  isAdmin: boolean;
++  className?: string;
++}) {
++  const [state, formAction, pending] = useActionState<AdminRoleState>(
++    () => setAdminRoleAction(studentId, !isAdmin),
++    {},
++  );
++
++  return (
++    <form action={formAction} className={cx("relative z-10 inline-flex flex-col items-start gap-1", className)}>
++      <button
++        type="submit"
++        disabled={pending}
++        aria-label={isAdmin ? `Remove admin from ${studentName}` : `Make ${studentName} an admin`}
++        className="inline-flex min-h-10 items-center whitespace-nowrap rounded-[10px] border-2 border-navy bg-white px-3.5 text-sm font-semibold text-navy hover:bg-line disabled:opacity-60"
++      >
++        {pending ? "Saving" : isAdmin ? "Remove admin" : "Make admin"}
++      </button>
++      <span role="status" aria-live="polite" className="max-w-[16rem] whitespace-normal text-xs text-grey">
++        {state.error ?? ""}
++      </span>
++    </form>
++  );
++}
+diff --git a/src/components/admin/AdminRoleMark.tsx b/src/components/admin/AdminRoleMark.tsx
+new file mode 100644
+index 0000000..79097aa
+--- /dev/null
++++ b/src/components/admin/AdminRoleMark.tsx
+@@ -0,0 +1,11 @@
++import { StatusPill } from "@/components/portal/Portal";
++import type { AdminRole } from "@/lib/constants";
++
++/** The marker an Admin sees on a Student who is an Admin (T95): text and an icon, never colour alone. */
++export function AdminRoleMark({ role }: { role: AdminRole }) {
++  return (
++    <StatusPill tone="done" icon="shield">
++      {role === "owner" ? "Owner" : "Admin"}
++    </StatusPill>
++  );
++}
+diff --git a/src/components/admin/AdminShell.tsx b/src/components/admin/AdminShell.tsx
+index 1cffea7..33039bd 100644
+--- a/src/components/admin/AdminShell.tsx
++++ b/src/components/admin/AdminShell.tsx
+@@ -13,11 +13,14 @@ import { AdminNav } from "./AdminNav";
+  */
+ export function AdminShell({
+   email,
++  ownerName = null,
+   signOut,
+   pathname,
+   children,
+ }: {
+   email: string;
++  /** Who the Owner is, so every Admin can see who grants access (T95). Null while no Owner exists. */
++  ownerName?: string | null;
+   signOut: () => void | Promise<void>;
+   /** Only for rendering a page without a router (the audit harness). */
+   pathname?: string;
+@@ -41,6 +44,11 @@ export function AdminShell({
+           <p className="hidden truncate px-3 pb-1 text-[0.8125rem] text-grey min-[900px]:block" title={email}>
+             {email}
+           </p>
++          {ownerName ? (
++            <p className="hidden truncate px-3 pb-1 text-[0.8125rem] text-grey min-[900px]:block" title={`Owner: ${ownerName}`}>
++              Owner: {ownerName}
++            </p>
++          ) : null}
+           <Link href="/" className={footLink}>
+             <Icon name="book" />
+             View course
+diff --git a/src/components/admin/StudentView.tsx b/src/components/admin/StudentView.tsx
+index d2648ee..bedb15a 100644
+--- a/src/components/admin/StudentView.tsx
++++ b/src/components/admin/StudentView.tsx
+@@ -20,6 +20,9 @@ import {
+ } from "@/lib/admin/model";
+ import { formatDate, formatPct, formatPoints, formatShortDate, initials } from "@/lib/admin/format";
+ import type { ActivityEvent } from "@/lib/admin/data";
++import type { AdminRole } from "@/lib/constants";
++import { AdminRoleButton } from "./AdminRoleButton";
++import { AdminRoleMark } from "./AdminRoleMark";
+ 
+ /**
+  * A Student's Progress Record, "where they are" first (#72, #84): the four stat cards,
+@@ -44,12 +47,18 @@ export function StudentView({
+   catalogue,
+   rule,
+   activity,
++  adminRole = null,
++  canGrant = false,
+ }: {
+   student: StudentRecord;
+   catalogue: Catalogue;
+   /** The current Eligibility Rule, or null before one is saved. */
+   rule: EligibilityRule | null;
+   activity: ActivityEvent[];
++  /** This Student's Admin role, or null for a Student who is not one (T95). */
++  adminRole?: AdminRole | null;
++  /** True for the Owner, who alone sees "Make admin" and "Remove admin". */
++  canGrant?: boolean;
+ }) {
+   const stagesTotal = catalogue.reduce((n, l) => n + l.stages.length, 0);
+   const passed = stagesPassed(student);
+@@ -92,6 +101,14 @@ export function StudentView({
+           <p className="mt-1 text-sm text-grey">
+             Signed up {formatDate(student.signedUpAt)} · {stateText} · Last active {formatDate(student.lastActiveAt)}
+           </p>
++          {adminRole || (canGrant && adminRole !== "owner") ? (
++            <div className="mt-2 flex flex-wrap items-center gap-3">
++              {adminRole ? <AdminRoleMark role={adminRole} /> : null}
++              {canGrant && adminRole !== "owner" ? (
++                <AdminRoleButton studentId={student.id} studentName={student.name} isAdmin={adminRole === "admin"} />
++              ) : null}
++            </div>
++          ) : null}
+         </div>
+       </div>
+ 
+diff --git a/src/components/admin/StudentsView.tsx b/src/components/admin/StudentsView.tsx
+index bf928fb..7a1fc0c 100644
+--- a/src/components/admin/StudentsView.tsx
++++ b/src/components/admin/StudentsView.tsx
+@@ -17,10 +17,14 @@ import {
+   type StudentRecord,
+ } from "@/lib/admin/model";
+ import { adminHref, formatPct, formatShortDate } from "@/lib/admin/format";
++import type { AdminRole } from "@/lib/constants";
++import { AdminRoleButton } from "./AdminRoleButton";
++import { AdminRoleMark } from "./AdminRoleMark";
+ 
+ /**
+  * Students (#72, #84): everyone who has signed up, most recent first, from the
+- * Progress Record only. No email address, no date of birth and no "inactive" label:
++ * Progress Record only. The Role column marks Admins, and gives the Owner the
++ * button that makes or removes one (T95). No email address, no date of birth and no "inactive" label:
+  * "last active" is the one engagement figure, because an Admin has to see who has
+  * gone quiet (#81).
+  */
+@@ -78,6 +82,8 @@ export function StudentsView({
+   matching,
+   total,
+   query,
++  roles,
++  canGrant,
+ }: {
+   catalogue: Catalogue;
+   /** This page's Students. */
+@@ -86,6 +92,10 @@ export function StudentsView({
+   matching: number;
+   total: number;
+   query: StudentsQuery;
++  /** Student id to role, for the Students who are Admins (T95). */
++  roles: Record<string, AdminRole>;
++  /** True for the Owner, who alone sees "Make admin" and "Remove admin". */
++  canGrant: boolean;
+ }) {
+   const stagesTotal = catalogue.reduce((n, l) => n + l.stages.length, 0);
+   const pages = Math.max(1, Math.ceil(matching / PAGE_SIZE));
+@@ -151,10 +161,11 @@ export function StudentsView({
+       <PortalCard as="section" aria-label="Students" className="min-w-0 sm:px-[22px] sm:py-5">
+         <DataTable
+           caption="Students, most recent signup first"
+-          minWidth="62rem"
++          minWidth="70rem"
+           empty="No Students match."
+           columns={[
+             { key: "s", header: "Student" },
++            { key: "ro", header: "Role", nowrap: true },
+             { key: "su", header: "Signed up", nowrap: true },
+             { key: "la", header: "Last active", nowrap: true },
+             { key: "cl", header: "Current Level", nowrap: true },
+@@ -175,6 +186,12 @@ export function StudentsView({
+                 <span key="s" className="whitespace-nowrap">
+                   {s.name}
+                 </span>,
++                <span key="ro" className="inline-flex items-center gap-3">
++                  {roles[s.id] ? <AdminRoleMark role={roles[s.id]} /> : <span className="font-normal text-grey">Student</span>}
++                  {canGrant && roles[s.id] !== "owner" ? (
++                    <AdminRoleButton studentId={s.id} studentName={s.name} isAdmin={roles[s.id] === "admin"} />
++                  ) : null}
++                </span>,
+                 formatShortDate(s.signedUpAt),
+                 formatShortDate(s.lastActiveAt),
+                 <CurrentLevelCell key="cl" student={s} catalogue={catalogue} />,
+diff --git a/src/lib/admin/data.ts b/src/lib/admin/data.ts
+index a9941a1..2967a14 100644
+--- a/src/lib/admin/data.ts
++++ b/src/lib/admin/data.ts
+@@ -11,9 +11,9 @@ import type {
+ } from "./model";
+ 
+ /**
+- * The Admin's reads (#84). Every query runs with the signed-in staff member's own
++ * The Admin's reads (#84). Every query runs with the signed-in Admin's own
+  * JWT, so row level security is the boundary and `requireAdmin` in the layout is the
+- * second layer: the `app_is_staff()` arm of each `learn_*` select policy is what
++ * second layer: the `learn_is_admin()` arm of each `learn_*` select policy is what
+  * lets one query return every Student.
+  *
+  * Nothing here selects an email address, a date of birth or a raw answer (#72, #18).
+diff --git a/src/lib/admin/roster.ts b/src/lib/admin/roster.ts
+new file mode 100644
+index 0000000..6bc6299
+--- /dev/null
++++ b/src/lib/admin/roster.ts
+@@ -0,0 +1,36 @@
++import "server-only";
++
++import { supabaseServer } from "@/lib/supabase/server";
++import type { AdminRole } from "@/lib/constants";
++
++/**
++ * Who the Learn Admins are (T95). `learn_admin_roster()` answers an Admin only, so
++ * this is read with the signed-in Admin's own JWT like every other Admin read.
++ *
++ * Keyed on the Student where there is one: the Students screen marks a row by its
++ * `learners` id. The Owner may be nobody's Student (never enrolled), so the Owner's
++ * name is kept apart for the shell.
++ */
++export type AdminRoster = {
++  /** Student id -> role, for the rows the Students screen shows. */
++  byStudent: Record<string, AdminRole>;
++  /** The Owner's name, or null while no Owner exists. */
++  ownerName: string | null;
++};
++
++type RosterRow = { learner_id: string | null; role: string; name: string };
++
++export async function loadAdminRoster(): Promise<AdminRoster> {
++  const supabase = await supabaseServer();
++  const { data } = await supabase.rpc("learn_admin_roster");
++  const rows = (data ?? []) as RosterRow[];
++
++  const byStudent: Record<string, AdminRole> = {};
++  let ownerName: string | null = null;
++  for (const r of rows) {
++    const role: AdminRole = r.role === "owner" ? "owner" : "admin";
++    if (role === "owner") ownerName = r.name;
++    if (r.learner_id) byStudent[r.learner_id] = role;
++  }
++  return { byStudent, ownerName };
++}
+diff --git a/src/lib/auth.ts b/src/lib/auth.ts
+index 98c301c..0d6b9c4 100644
+--- a/src/lib/auth.ts
++++ b/src/lib/auth.ts
+@@ -1,7 +1,7 @@
+ import "server-only";
+ 
+ import { supabaseServer } from "./supabase/server";
+-import type { UserRole } from "./constants";
++import type { AdminRole, UserRole } from "./constants";
+ 
+ /**
+  * Session handling.
+@@ -43,7 +43,10 @@ export type SessionUser = {
+   id: string;
+   email: string;
+   name: string;
++  /** `"ADMIN"` for the Owner and every Learn Admin, whatever they were granted. */
+   role: UserRole;
++  /** Which kind of Learn Admin, or null for a Student. Only the Owner grants and revokes. */
++  adminRole: AdminRole | null;
+   enrolment: EnrolmentStep;
+ };
+ 
+@@ -57,10 +60,13 @@ export type SessionUser = {
+  *      the token with the auth server, which is the difference between trusting a
+  *      signature and trusting a cookie.
+  *   2. the `learners` row, through RLS, which returns theirs and nobody else's.
+- *   3. `app_is_staff()`, for the admin dashboards. Asked of the database rather
+- *      than inferred from the email domain: staff status is a `people` row with an
+- *      `app_role`, and a revoked staff member must lose the dashboards
+- *      immediately rather than whenever a token expires.
++ *   3. `learn_admin_role()`, for the admin dashboards: `"owner"`, `"admin"` or null.
++ *      Asked of the database rather than inferred from the email domain, so a
++ *      revoked Admin loses the dashboards immediately rather than whenever a token
++ *      expires. Admin is a Learn role (`learn_admins`, save7-os 0134), not Save7 OS
++ *      staff status. The two combine in the database: while no Owner exists the
++ *      function falls back to `app_is_staff()`, and once one does, ops staff are not
++ *      Learn Admins unless the Owner grants it (T96).
+  */
+ export async function getSession(): Promise<SessionUser | null> {
+   const supabase = await supabaseServer();
+@@ -79,26 +85,29 @@ export async function getSession(): Promise<SessionUser | null> {
+ 
+   // Signed in, but not enrolled. The caller decides what that means: the course
+   // pages send them through enrolment, the admin pages do not care.
++  const { data: adminRoleData } = await supabase.rpc("learn_admin_role");
++  const adminRole: AdminRole | null =
++    adminRoleData === "owner" || adminRoleData === "admin" ? adminRoleData : null;
++
+   if (!learner) {
+-    const { data: isStaff } = await supabase.rpc("app_is_staff");
+-    if (!isStaff) return null;
++    if (!adminRole) return null;
+ 
+     return {
+       id: "",
+       email: user.email ?? "",
+-      name: (user.user_metadata?.full_name as string) ?? user.email ?? "Save7 staff",
++      name: (user.user_metadata?.full_name as string) ?? user.email ?? "Save7 Admin",
+       role: "ADMIN",
++      adminRole,
+       enrolment: "complete",
+     };
+   }
+ 
+-  const { data: isStaff } = await supabase.rpc("app_is_staff");
+-
+   return {
+     id: learner.id,
+     email: learner.email,
+     name: learner.name,
+-    role: isStaff ? "ADMIN" : "LEARNER",
++    role: adminRole ? "ADMIN" : "LEARNER",
++    adminRole,
+     enrolment: !learner.date_of_birth
+       ? "date-of-birth"
+       : !learner.popia_consent_at
+diff --git a/src/lib/authz.ts b/src/lib/authz.ts
+index 3d8752a..155ce29 100644
+--- a/src/lib/authz.ts
++++ b/src/lib/authz.ts
+@@ -56,6 +56,20 @@ export async function requireAdmin(): Promise<SessionUser> {
+   return user;
+ }
+ 
++/**
++ * Owner-only actions: granting and revoking Admin (T95). The database refuses anyone
++ * else too (`learn_grant_admin` and `learn_revoke_admin` check `learn_admin_role()`),
++ * so this is the early, quiet exit, and it 404s for the same reason requireAdmin does.
++ */
++export async function requireOwner(): Promise<SessionUser> {
++  const user = await requireAdmin();
++  if (user.adminRole !== "owner") {
++    const { notFound } = await import("next/navigation");
++    notFound();
++  }
++  return user;
++}
++
+ async function apiSession(): Promise<
+   { ok: true; user: SessionUser } | { ok: false; response: Response }
+ > {
+diff --git a/src/lib/constants.ts b/src/lib/constants.ts
+index 4637fe9..9552893 100644
+--- a/src/lib/constants.ts
++++ b/src/lib/constants.ts
+@@ -11,6 +11,10 @@
+ export const USER_ROLES = ["LEARNER", "ADMIN"] as const;
+ export type UserRole = (typeof USER_ROLES)[number];
+ 
++/** A Learn Admin is the Owner or an ordinary Admin (T95). The Owner alone grants and revokes. */
++export const ADMIN_ROLES = ["owner", "admin"] as const;
++export type AdminRole = (typeof ADMIN_ROLES)[number];
++
+ export const LEVEL_TIERS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const;
+ export type LevelTier = (typeof LEVEL_TIERS)[number];
+ 

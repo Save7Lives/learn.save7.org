@@ -14,6 +14,9 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Archived artefacts from the Prisma era, kept for reference only.
     "docs/**",
+    // Planning record merged in from the map repo: drafts, diffs and audit
+    // scripts kept for reference, not app code.
+    "wayfinder/**",
   ]),
 ]);
 

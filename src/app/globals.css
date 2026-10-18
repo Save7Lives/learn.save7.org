@@ -3,7 +3,7 @@
 /* ---------------------------------------------------------------------------
    Save7 Learn design language
    Derived from the KEPSA deck and fixed in #68; the token roles, contrast
-   figures and type scale are in assets/brand/README.md of the map repo. Rules
+   figures and type scale are in assets/brand/README.md. Rules
    that are load-bearing here:
 
    1. Coloured text is only legal on white, pink-50 and teal-50. pink-100,
@@ -15,8 +15,8 @@
 
 @theme {
   /* Drop Tailwind's default palette: only the tokens below exist. Settled in
-     #68; the roles and contrast figures are in assets/brand/README.md of the
-     map repo. Coloured text is only legal on white, pink-50 and teal-50;
+     #68; the roles and contrast figures are in assets/brand/README.md.
+     Coloured text is only legal on white, pink-50 and teal-50;
      pink-100, teal-100 and line carry icons only; teal-ink is the only teal
      for text on a light surface. */
   --color-*: initial;
