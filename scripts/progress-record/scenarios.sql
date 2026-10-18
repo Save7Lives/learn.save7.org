@@ -20,6 +20,8 @@
 --   TWO_LEVELS_AFTER_SITTING_2   nothing owed once Sitting 2 is in
 --   REVOKED_CERTIFICATE          a live Certificate on its Level; a revoked one on none
 --   READ_EVERY_STAGE             every Stage read, none passed: the Level is not complete
+--   OUT_OF_ORDER                 the second Level done and the third started, the first never opened
+--   ALL_PASSED                   every Stage Quiz passed: each Level resumes at its last Stage
 --   ANOTHER_STUDENTS_RECORD      null for a Student, an outsider and anon; open to an Admin
 --
 -- Safe to run repeatedly. Everything it creates (learners, auth.users, attempts,
@@ -40,10 +42,12 @@ declare
   passed   text[] := '{}';
   s_a      uuid := gen_random_uuid();
   s_b      uuid := gen_random_uuid();
+  s_c      uuid := gen_random_uuid();
   s_adm    uuid := gen_random_uuid();
   s_out    uuid := gen_random_uuid();   -- signed in, not a Student, not an Admin
   l_a      uuid;
   l_b      uuid;
+  l_c      uuid;
   l_adm    uuid;
   v_levels text[];
   v_l1     text;
@@ -51,6 +55,7 @@ declare
   v_l3     text;
   v_stages1 text[];
   v_stages2 text[];
+  v_stages3 text[];
   v_s1     text;
   v_att    learn_attempts;
   v_err    jsonb;
@@ -95,6 +100,8 @@ begin
     from learn_modules m where m.level_slug = v_l1 and m.is_mandatory;
   select array_agg(m.slug order by m.position) into v_stages2
     from learn_modules m where m.level_slug = v_l2 and m.is_mandatory;
+  select array_agg(m.slug order by m.position) into v_stages3
+    from learn_modules m where m.level_slug = v_l3 and m.is_mandatory;
   v_s1 := v_stages1[1];
 
   /* Everything below rolls back. */
@@ -104,13 +111,17 @@ begin
     insert into learners (email, first_name, name, active, date_of_birth, popia_consent_at)
          values (s_b::text   || '@save7.org', 'Scenario', 'Scenario Student B', true, date '1990-01-01', now()) returning id into l_b;
     insert into learners (email, first_name, name, active, date_of_birth, popia_consent_at)
+         values (s_c::text   || '@save7.org', 'Scenario', 'Scenario Student C', true, date '1990-01-01', now()) returning id into l_c;
+    insert into learners (email, first_name, name, active, date_of_birth, popia_consent_at)
          values (s_adm::text || '@save7.org', 'Scenario', 'Scenario Admin',     true, date '1990-01-01', now()) returning id into l_adm;
     insert into auth.users (id, email) values (s_a,   s_a::text   || '@save7.org') on conflict (id) do nothing;
     insert into auth.users (id, email) values (s_b,   s_b::text   || '@save7.org') on conflict (id) do nothing;
+    insert into auth.users (id, email) values (s_c,   s_c::text   || '@save7.org') on conflict (id) do nothing;
     insert into auth.users (id, email) values (s_adm, s_adm::text || '@save7.org') on conflict (id) do nothing;
     insert into auth.users (id, email) values (s_out, s_out::text || '@save7.org') on conflict (id) do nothing;
     update learners set user_id = s_a   where id = l_a;
     update learners set user_id = s_b   where id = l_b;
+    update learners set user_id = s_c   where id = l_c;
     update learners set user_id = s_adm where id = l_adm;
     insert into learn_admins (user_id, role) values (s_adm, 'admin') on conflict (user_id) do nothing;
     select count(*) into v_all from learners;
@@ -323,6 +334,80 @@ begin
     if jsonb_array_length(v_rec -> 'certificates') <> 0
        or (v_rec #>> '{baseline,sitting_due}') <> '1' then
       raise exception 'a Student who only read holds a Certificate or owes the wrong Sitting';
+    end if;
+    passed := passed || sc;
+
+    -- ── OUT_OF_ORDER: Student C finished the second Level and started the third, never the first ──
+    sc := 'OUT_OF_ORDER';
+    if v_l3 is null or coalesce(cardinality(v_stages3), 0) = 0 then
+      raise exception 'a third Level with Stages is needed to start one out of order';
+    end if;
+    insert into learn_baseline_sittings (learner_id, sitting_no, submitted_at, level_scores, total_score, total_max)
+    values (l_c, 1, now() - interval '30 days',
+            jsonb_build_object(v_l1, jsonb_build_object('score', 1, 'max', 4),
+                               v_l2, jsonb_build_object('score', 2, 'max', 4)), 3, 20);
+    foreach st in array v_stages2 loop
+      v_att := learn_stage_quiz_attempt(l_c, st);
+      perform learn_mark_attempt(v_att.id, (
+        select jsonb_object_agg(x::text, jsonb_build_object('chosen', (
+                 select jsonb_agg(c.option_key) from learn_choices c
+                  where c.question_id = x and c.is_correct)))
+          from unnest(v_att.question_ids) x));
+    end loop;
+    perform set_config('request.jwt.claims', json_build_object('sub', s_c, 'role', 'authenticated')::text, true);
+    perform set_config('request.jwt.claim.sub', s_c::text, true);
+    set local role authenticated;
+    perform learn_complete_module(v_stages3[1]);   -- the real Read Mark write, as Student C
+    execute format('set local role %I', me);
+
+    v_rec := (select r.record from learn_progress_records_of(l_c) r);
+    select l into v_err from jsonb_array_elements(v_rec -> 'levels') l where l ->> 'level_slug' = v_l1;
+    if (v_err ->> 'complete')::boolean or v_err ->> 'status' <> 'NOT_STARTED'
+       or v_err ->> 'resume_stage_slug' <> v_s1 then
+      raise exception 'a Level never opened reads as started or resumes elsewhere: %', v_err;
+    end if;
+    if exists (select 1 from jsonb_array_elements(v_rec -> 'stages') s
+                where s ->> 'level_slug' = v_l1 and ((s ->> 'started')::boolean or (s ->> 'complete')::boolean)) then
+      raise exception 'a Stage in a Level never opened reads as started';
+    end if;
+    select l into v_err from jsonb_array_elements(v_rec -> 'levels') l where l ->> 'level_slug' = v_l2;
+    if not (v_err ->> 'complete')::boolean or v_err ->> 'completed_at' is null then
+      raise exception 'the Level passed out of order is not complete: %', v_err;
+    end if;
+    select l into v_err from jsonb_array_elements(v_rec -> 'levels') l where l ->> 'level_slug' = v_l3;
+    if (v_err ->> 'complete')::boolean or v_err ->> 'status' <> 'IN_PROGRESS'
+       or v_err ->> 'resume_stage_slug' <> v_stages3[1] then
+      raise exception 'the Level started out of order does not read as in progress at its first Stage: %', v_err;
+    end if;
+    select s into v_err from jsonb_array_elements(v_rec -> 'stages') s where s ->> 'stage_slug' = v_stages3[1];
+    if not (v_err ->> 'read')::boolean or not (v_err ->> 'started')::boolean or (v_err ->> 'complete')::boolean then
+      raise exception 'the Stage read out of order is not read, started and not complete: %', v_err;
+    end if;
+    passed := passed || sc;
+
+    -- ── ALL_PASSED: Student C passes the rest; every Level resumes at its last Stage ──
+    sc := 'ALL_PASSED';
+    foreach st in array v_stages1 || v_stages3 loop
+      v_att := learn_stage_quiz_attempt(l_c, st);
+      perform learn_mark_attempt(v_att.id, (
+        select jsonb_object_agg(x::text, jsonb_build_object('chosen', (
+                 select jsonb_agg(c.option_key) from learn_choices c
+                  where c.question_id = x and c.is_correct)))
+          from unnest(v_att.question_ids) x));
+    end loop;
+    v_rec := (select r.record from learn_progress_records_of(l_c) r);
+    if exists (select 1 from jsonb_array_elements(v_rec -> 'levels') l
+                where l ->> 'level_slug' = any (array[v_l1, v_l2, v_l3])
+                  and (not (l ->> 'complete')::boolean or l ->> 'status' <> 'COMPLETE'
+                       or l ->> 'resume_stage_slug' is distinct from (
+                            select m.slug from learn_modules m
+                             where m.level_slug = l ->> 'level_slug' and m.is_mandatory
+                             order by m.position desc limit 1))) then
+      raise exception 'a Level with every Stage Quiz passed is not complete, or does not resume at its last Stage';
+    end if;
+    if (v_rec #>> '{baseline,sitting_due}') is distinct from '2' then
+      raise exception 'three Levels finished since Sitting 1 should owe Sitting 2 once, got %',
+        v_rec #>> '{baseline,sitting_due}';
     end if;
     passed := passed || sc;
 

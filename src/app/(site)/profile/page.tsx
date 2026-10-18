@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { requireUser } from "@/lib/authz";
 import { getProfile } from "@/lib/profile";
-import { getLearnerCertificates } from "@/lib/course";
+import { getPathwayForUser } from "@/lib/course";
 import { Card, Display, Eyebrow } from "@/components/ui/primitives";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { updateProfileAction } from "./actions";
@@ -32,7 +32,8 @@ export default async function ProfilePage() {
 
   // The first live certificate, only to decide whether to show the "your name is
   // printed on a certificate" note beside the name field.
-  const [liveCertificate] = await getLearnerCertificates(user.id);
+  const { position } = await getPathwayForUser(user.id);
+  const liveCertificate = position.certificates[0];
 
   const joined = profile.createdAt.toLocaleDateString("en-ZA", {
     day: "numeric",

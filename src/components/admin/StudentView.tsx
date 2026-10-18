@@ -21,6 +21,7 @@ import {
 } from "@/lib/admin/model";
 import { formatDate, formatPct, formatPoints, formatShortDate, initials } from "@/lib/admin/format";
 import type { ActivityEvent } from "@/lib/admin/data";
+import type { CoursePosition } from "@/lib/course-position";
 import type { AdminRole } from "@/lib/constants";
 import { AdminRoleButton } from "./AdminRoleButton";
 import { AdminRoleMark } from "./AdminRoleMark";
@@ -46,6 +47,7 @@ const EVENT_WORDS: Record<string, string> = {
 
 export function StudentView({
   student,
+  position,
   catalogue,
   rule,
   activity,
@@ -53,6 +55,8 @@ export function StudentView({
   canGrant = false,
 }: {
   student: StudentRecord;
+  /** The Student's Course Position: the one their own pages read. */
+  position: CoursePosition;
   catalogue: Catalogue;
   /** The current Eligibility Rule, or null before one is saved. */
   rule: EligibilityRule | null;
@@ -66,14 +70,13 @@ export function StudentView({
   const passed = stagesPassed(student);
   const certs = liveCertificates(student);
   const sitting = latestSitting(student);
-  const first = student.sittings.some((s) => s.sittingNo === 1);
+  const first = position.contentOpen;
   const cur = currentLevel(student, catalogue);
   const stateText =
     cur.kind === "awaiting" ? "Awaiting first Sitting" : cur.kind === "complete" ? "All Levels complete" : `In progress on ${cur.title}`;
 
-  /* The Stage they are up to: the first not passed, once Sitting 1 has opened them. */
-  const allStages = catalogue.flatMap((l) => l.stages);
-  const nextStage = first ? (allStages.find((s) => !student.stages[s.slug]?.passedAt)?.slug ?? null) : null;
+  /* The Stage they are up to: their current Level's up-next Stage, once Sitting 1 has opened them. */
+  const nextStage = first ? (position.nextStage?.stageSlug ?? null) : null;
 
   const labels = sittingContext(student, catalogue);
 

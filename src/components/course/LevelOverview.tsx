@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Icon } from "@/components/ui/icons";
 import { PortalCard, StatusPill, StepDot } from "@/components/portal/Portal";
 import { ButtonLink, Display, Eyebrow, ProgressBar, cx } from "@/components/ui/primitives";
-import type { LevelWithProgress } from "@/lib/course";
+import type { LevelWithPosition } from "@/lib/course";
 import { AwardNode } from "./AwardNode";
 
 /**
@@ -16,21 +16,21 @@ export function LevelOverview({
   certificatePublicId,
   baselineDue,
 }: {
-  level: LevelWithProgress;
+  level: LevelWithPosition;
   levelSlug: string;
   certificatePublicId: string | null;
   /** The next Baseline Sitting offered after this Level, or null. */
   baselineDue: number | null;
 }) {
-  const progress = level.progress!;
-  const allPassed = progress.modulesTotal > 0 && progress.stagesPassed === progress.modulesTotal;
+  const progress = level.position;
+  const allPassed = progress.complete;
 
-  // The first Stage whose Quiz is not passed: the pink row, and the Stage the summary's
-  // button opens. -1 once every Stage Quiz is passed.
-  const nextIndex = level.modules.findIndex((m) => m.progress?.complete !== true);
+  // The up-next Stage, from the Course Position: the pink row, and the Stage the
+  // summary's button opens. -1 once every Stage Quiz is passed.
+  const nextIndex = level.modules.findIndex((m) => m.position.upNext);
   const nextStage = nextIndex >= 0 ? level.modules[nextIndex] : null;
-  const anyStarted = level.modules.some((m) => m.progress?.started === true);
-  const toGo = progress.modulesTotal - progress.stagesPassed;
+  const anyStarted = level.modules.some((m) => m.position.state !== "NOT_STARTED");
+  const toGo = progress.stagesTotal - progress.stagesPassed;
 
   return (
     <div className="mx-auto max-w-[73.75rem] px-[1.125rem] pb-4 pt-10 min-[760px]:px-6">
@@ -44,9 +44,9 @@ export function LevelOverview({
 
       <header>
         <Eyebrow className="text-pink">{level.title} Level</Eyebrow>
-        {progress.status === "COMPLETE" || certificatePublicId ? (
+        {progress.complete || certificatePublicId ? (
           <div className="mt-3 flex flex-wrap gap-2">
-            {progress.status === "COMPLETE" ? (
+            {progress.complete ? (
               <StatusPill tone="done" icon="check-circle">
                 Complete
               </StatusPill>
@@ -90,7 +90,7 @@ export function LevelOverview({
           <Eyebrow className="text-teal-ink">Your progress</Eyebrow>
           <div className="mb-2 mt-4 flex items-baseline justify-between text-[0.9375rem] font-medium">
             <span>
-              {progress.stagesPassed} of {progress.modulesTotal} Stage Quizzes passed
+              {progress.stagesPassed} of {progress.stagesTotal} Stage Quizzes passed
             </span>
             <span className="text-grey">{progress.percentComplete}%</span>
           </div>
@@ -125,9 +125,9 @@ export function LevelOverview({
         <ol className="relative m-0 list-none p-0 pl-12 before:absolute before:bottom-[3.75rem] before:left-[15px] before:top-[34px] before:border-l-[3px] before:border-dotted before:border-line-strong before:content-[''] min-[760px]:pl-[3.75rem]">
           {level.modules.map((mod, i) => {
             // The tick is for the Stage Quiz, which is what the Certificate counts.
-            const isDone = mod.progress?.complete === true;
-            const quizFailed = !isDone && mod.progress?.quiz.latest != null;
-            const isStarted = !isDone && mod.progress?.started === true;
+            const isDone = mod.position.state === "PASSED";
+            const quizFailed = mod.position.quizTried;
+            const isStarted = mod.position.state === "STARTED";
             const isNext = i === nextIndex;
 
             return (
@@ -213,7 +213,7 @@ export function LevelOverview({
                 </p>
               ) : (
                 <p className="max-w-[60ch] text-grey">
-                  Pass the Stage Quiz in each of the {progress.modulesTotal} Stages to earn it. Each
+                  Pass the Stage Quiz in each of the {progress.stagesTotal} Stages to earn it. Each
                   one is the &ldquo;Check your understanding&rdquo; step of its Stage: {toGo} to go.
                 </p>
               )}

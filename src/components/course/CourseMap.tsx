@@ -1,7 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { cx } from "@/components/ui/primitives";
-import type { LevelWithProgress } from "@/lib/course";
-import { levelState, recommendedLevelSlug, stageWord } from "./levelState";
+import type { LevelWithPosition } from "@/lib/course";
 import { StepDot } from "@/components/portal/Portal";
 import { AwardNode } from "./AwardNode";
 
@@ -9,14 +8,20 @@ import { AwardNode } from "./AwardNode";
  * The course map (#73): three Level groups on one dotted connector, a dot for each
  * Stage (numbers restart per Level) and an award node closing each group.
  *
- * Only the recommended Level's next Stage gets the up-next ring, so the map points at
- * one place. Below 760px the groups stack, one per row, with no connector between them.
- * Signed out, `progress` is null and every dot is not started.
+ * Only the recommended Level's up-next Stage gets the ring, so the map points at one
+ * place. Below 760px the groups stack, one per row, with no connector between them.
+ * Signed out, every Stage's position is untouched and every dot is not started.
  */
-export function CourseMap({ levels }: { levels: LevelWithProgress[] }) {
-  const recommended = recommendedLevelSlug(levels);
+export function CourseMap({
+  levels,
+  recommendedSlug,
+}: {
+  levels: LevelWithPosition[];
+  /** The Level the page recommends: the Student's current Level, else the first. */
+  recommendedSlug: string | undefined;
+}) {
   const stageCount = levels.reduce((n, l) => n + l.modules.length, 0);
-  const anyStarted = levels.some((l) => levelState(l).started);
+  const anyStarted = levels.some((l) => l.position.status !== "NOT_STARTED");
 
   return (
     <>
@@ -26,7 +31,7 @@ export function CourseMap({ levels }: { levels: LevelWithProgress[] }) {
         className="mb-1.5 mt-8 flex flex-col gap-6 rounded-[1.375rem] border border-line bg-white px-2 pb-4 pt-5 min-[760px]:flex-row min-[760px]:px-3 min-[760px]:pb-5 min-[760px]:pt-6"
       >
         {levels.map((level, li) => {
-          const st = levelState(level);
+          const earned = level.position.certificateCode != null;
           return (
             <div
               key={level.slug}
@@ -42,25 +47,26 @@ export function CourseMap({ levels }: { levels: LevelWithProgress[] }) {
               </div>
               <ol className="m-0 flex list-none p-0">
                 {level.modules.map((m, i) => {
-                  const isNext = level.slug === recommended && i === st.next;
+                  const passed = m.position.state === "PASSED";
+                  const isNext = level.slug === recommendedSlug && m.position.upNext;
                   return (
                     <Node key={m.slug} firstOfMap={li === 0 && i === 0} firstOfGroup={i === 0}>
                       <StepDot
                         n={i + 1}
-                        state={st.passed[i] ? "passed" : isNext ? "current" : "todo"}
+                        state={passed ? "passed" : isNext ? "current" : "todo"}
                       />
                       <span className="sr-only">
-                        Stage {i + 1}, {m.title}: {stageWord(st.passed[i], isNext)}
+                        Stage {i + 1}, {m.title}: {stageWord(passed, isNext)}
                       </span>
                     </Node>
                   );
                 })}
                 <Node firstOfMap={false} firstOfGroup={false}>
-                  <AwardNode earned={st.certificatePublicId != null} />
+                  <AwardNode earned={earned} />
                   <span className="mt-1 text-xs leading-snug text-grey">Certificate</span>
                   <span className="sr-only">
                     {level.title} certificate,{" "}
-                    {st.certificatePublicId != null ? "earned" : "not yet earned"}
+                    {earned ? "earned" : "not yet earned"}
                   </span>
                 </Node>
               </ol>
@@ -83,6 +89,10 @@ export function CourseMap({ levels }: { levels: LevelWithProgress[] }) {
       )}
     </>
   );
+}
+
+function stageWord(passed: boolean, isNext: boolean): string {
+  return passed ? "quiz passed" : isNext ? "up next" : "not started";
 }
 
 function Key({ children }: { children: ReactNode }) {

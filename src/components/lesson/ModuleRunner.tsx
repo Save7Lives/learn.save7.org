@@ -43,7 +43,8 @@ export function ModuleRunner({
   coreQuestion,
   levelTitle,
   estMinutes,
-  isComplete,
+  isRead,
+  isPassed,
   initialLessonIndex,
   onViewLesson,
   onComplete,
@@ -60,7 +61,10 @@ export function ModuleRunner({
   /** The Level's name without the word Level: "Beginner". */
   levelTitle: string;
   estMinutes: number;
-  isComplete: boolean;
+  /** The Read Mark: the Stage was finished before, so the last step moves on instead of recording it again. */
+  isRead: boolean;
+  /** The Stage Quiz is passed: the Stage is complete. Only this says "finished". */
+  isPassed: boolean;
   initialLessonIndex: number;
   onViewLesson: (
     moduleSlug: string,
@@ -201,15 +205,17 @@ export function ModuleRunner({
 
             {!isLastStep ? (
               <Button onClick={() => go(index + 1)}>Continue</Button>
-            ) : isComplete ? (
+            ) : isRead ? (
               <>
                 <Button variant="navy" onClick={finish} disabled={pending}>
                   {pending ? "Saving…" : nextStageTitle ? "Next Stage" : backLabel}
                 </Button>
-                <p className="inline-flex items-center gap-1.5 text-sm font-medium text-correct">
-                  <Icon name="check-circle" className="size-4 shrink-0 stroke-[2.25]" />
-                  You&apos;ve already finished this Stage
-                </p>
+                {isPassed ? (
+                  <p className="inline-flex items-center gap-1.5 text-sm font-medium text-correct">
+                    <Icon name="check-circle" className="size-4 shrink-0 stroke-[2.25]" />
+                    You&apos;ve already finished this Stage
+                  </p>
+                ) : null}
               </>
             ) : (
               <Button onClick={finish} disabled={pending}>
@@ -217,7 +223,7 @@ export function ModuleRunner({
               </Button>
             )}
 
-            {isLastStep && isComplete && !nextStageTitle ? null : (
+            {isLastStep && isRead && !nextStageTitle ? null : (
               <Link
                 href={`/levels/${levelSlug}`}
                 className={cx(
@@ -239,7 +245,7 @@ export function ModuleRunner({
             ) : null}
           </div>
 
-          {isLastStep && !isComplete ? (
+          {isLastStep && !isRead ? (
             <p className="mt-4 text-sm text-grey">
               {nextStageTitle
                 ? `Finishing takes you on to "${nextStageTitle}".`

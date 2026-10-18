@@ -6,7 +6,8 @@ import {
   sittingSlots,
   type BaselineState,
 } from "@/lib/baseline";
-import type { StageState, LevelWithProgress } from "@/lib/course";
+import type { LevelWithPosition } from "@/lib/course";
+import type { CoursePosition, PositionCertificate } from "@/lib/course-position";
 import { Icon } from "@/components/ui/icons";
 import { ButtonLink, ProgressBar } from "@/components/ui/primitives";
 import {
@@ -30,17 +31,9 @@ import { BaselineTrend, type TrendData } from "./BaselineTrend";
  *
  * Every figure counts Stages passed (`stagesPassed`), the same as the Level
  * percentage and the Certificate. Stages merely marked read only decide where
- * "Continue" resumes, and are never shown as a count.
+ * "Continue" resumes, and are never shown as a count. Which Level and Stage are next,
+ * and whether the Levels are open, are the Student's Course Position, not this file's.
  */
-
-type Certificate = {
-  publicId: string;
-  levelSlug: string | null;
-  levelTitle: string;
-  awardTitleSnapshot: string;
-  issuedAt: Date;
-  revokedAt: Date | null;
-};
 
 const formatDate = (d: Date) =>
   d.toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Johannesburg" });
@@ -51,17 +44,18 @@ export function ProgressRegister({
   userName,
   baseline,
   levels,
-  certificates,
+  position,
 }: {
   userName: string;
   baseline: BaselineState;
-  levels: LevelWithProgress[];
-  certificates: Certificate[];
+  levels: LevelWithPosition[];
+  position: CoursePosition;
 }) {
-  const stagesPassed = levels.reduce((sum, l) => sum + (l.progress?.stagesPassed ?? 0), 0);
-  const stagesTotal = levels.reduce((sum, l) => sum + (l.progress?.modulesTotal ?? 0), 0);
-  const nextLevel = levels.find((l) => l.progress?.status !== "COMPLETE") ?? null;
-  const anyStarted = levels.some((l) => (l.progress?.stageStates ? Object.values(l.progress.stageStates).some((s) => s !== "NOT_STARTED") : false));
+  const { certificates, contentOpen } = position;
+  const stagesPassed = levels.reduce((sum, l) => sum + l.position.stagesPassed, 0);
+  const stagesTotal = levels.reduce((sum, l) => sum + l.position.stagesTotal, 0);
+  const nextLevel = levels.find((l) => l.slug === position.currentLevelSlug) ?? null;
+  const anyStarted = levels.some((l) => l.modules.some((m) => m.position.state !== "NOT_STARTED"));
 
   const taken = baseline.sittings.length;
   const latest = baseline.sittings[taken - 1] ?? null;
@@ -85,7 +79,7 @@ export function ProgressRegister({
 
       {/* --- Prompts ------------------------------------------------------- */}
       <div className="mb-[22px] grid gap-3.5 empty:hidden">
-        {!baseline.completed ? (
+        {!contentOpen ? (
           <PromptCard
             tone="pink"
             icon="chart"
@@ -102,7 +96,7 @@ export function ProgressRegister({
           </PromptCard>
         ) : null}
 
-        {baseline.completed && baseline.due !== null ? (
+        {contentOpen && baseline.due !== null ? (
           <PromptCard
             tone="pink"
             icon="chart"
@@ -119,7 +113,7 @@ export function ProgressRegister({
           </PromptCard>
         ) : null}
 
-        {baseline.completed && nextLevel ? <NextUp level={nextLevel} anyStarted={anyStarted} /> : null}
+        {contentOpen && nextLevel ? <NextUp level={nextLevel} anyStarted={anyStarted} /> : null}
       </div>
 
       {/* --- Headline figures ---------------------------------------------- */}
@@ -184,7 +178,8 @@ export function ProgressRegister({
             key={level.slug}
             level={level}
             baseline={baseline}
-            certificate={certificates.find((c) => c.levelSlug === level.slug && !c.revokedAt) ?? null}
+            open={contentOpen}
+            certificate={certificates.find((c) => c.levelSlug === level.slug) ?? null}
             isNext={nextLevel?.slug === level.slug}
           />
         ))}
@@ -199,27 +194,21 @@ export function ProgressRegister({
       ) : (
         <ul className="m-0 grid list-none gap-3 p-0">
           {certificates.map((cert, i) => (
-            <PortalCard as="li" key={cert.publicId} className="flex flex-wrap items-center gap-3.5">
+            <PortalCard as="li" key={cert.code} className="flex flex-wrap items-center gap-3.5">
               <IconChip icon="award" tint={tintAt(i)} />
               <div className="min-w-0 flex-[1_1_16rem]">
                 <p className="flex flex-wrap items-center gap-2 font-display font-bold text-navy">
-                  {cert.awardTitleSnapshot}
-                  {cert.revokedAt ? (
-                    <StatusPill tone="warn" icon="x-circle">
-                      Revoked
-                    </StatusPill>
-                  ) : (
-                    <StatusPill tone="done" icon="check-circle">
-                      Valid
-                    </StatusPill>
-                  )}
+                  {cert.awardTitle}
+                  <StatusPill tone="done" icon="check-circle">
+                    Valid
+                  </StatusPill>
                 </p>
                 <p className="mt-0.5 text-sm text-grey">
                   {cert.levelTitle} Level &middot; issued {formatDate(cert.issuedAt)}
                 </p>
-                <p className="mt-0.5 font-mono text-[0.8125rem] text-grey">{cert.publicId}</p>
+                <p className="mt-0.5 font-mono text-[0.8125rem] text-grey">{cert.code}</p>
               </div>
-              <ButtonLink href={`/certificate/${cert.publicId}`} variant="outline" size="sm" className="border-navy">
+              <ButtonLink href={`/certificate/${cert.code}`} variant="outline" size="sm" className="border-navy">
                 View and download
               </ButtonLink>
             </PortalCard>
@@ -249,13 +238,13 @@ function SectionHead({ title, note }: { title: string; note?: string }) {
 
 // --- Next up -------------------------------------------------------------------
 
-function NextUp({ level, anyStarted }: { level: LevelWithProgress; anyStarted: boolean }) {
-  const p = level.progress;
-  const stages = level.modules.filter((m) => m.isMandatory);
-  const slug = p?.nextModuleSlug ?? null;
+function NextUp({ level, anyStarted }: { level: LevelWithPosition; anyStarted: boolean }) {
+  const p = level.position;
+  const stages = level.modules;
+  const slug = p.resumeStageSlug;
   const index = slug ? stages.findIndex((m) => m.slug === slug) : -1;
   const stage = index >= 0 ? stages[index] : null;
-  const resuming = stage ? p?.stageStates[stage.slug] === "STARTED" : false;
+  const resuming = stage ? stage.position.state === "STARTED" : false;
 
   return (
     <PromptCard
@@ -268,13 +257,13 @@ function NextUp({ level, anyStarted }: { level: LevelWithProgress; anyStarted: b
           href={slug ? `/levels/${level.slug}/modules/${slug}` : `/levels/${level.slug}`}
           size="lg"
         >
-          {resuming || p?.status === "IN_PROGRESS" ? "Continue" : "Start"} <Icon name="arrow" />
+          {resuming || p.status === "IN_PROGRESS" ? "Continue" : "Start"} <Icon name="arrow" />
         </ButtonLink>
       }
     >
       {level.title} Level
-      {stage ? `, Stage ${index + 1} of ${stages.length}` : ""} &middot; {p?.stagesPassed ?? 0} of{" "}
-      {p?.modulesTotal ?? 0} Stages passed
+      {stage ? `, Stage ${index + 1} of ${stages.length}` : ""} &middot; {p.stagesPassed} of{" "}
+      {p.stagesTotal} Stages passed
     </PromptCard>
   );
 }
@@ -404,21 +393,23 @@ export function trendData(baseline: BaselineState): TrendData {
 function LevelProgressCard({
   level,
   baseline,
+  open,
   certificate,
   isNext,
 }: {
-  level: LevelWithProgress;
+  level: LevelWithPosition;
   baseline: BaselineState;
-  certificate: Certificate | null;
+  /** Stage content is open: Sitting 1 is in. */
+  open: boolean;
+  certificate: PositionCertificate | null;
   isNext: boolean;
 }) {
-  const p = level.progress;
-  const stages = level.modules.filter((m) => m.isMandatory);
-  const total = p?.modulesTotal ?? stages.length;
-  const passed = p?.stagesPassed ?? 0;
+  const p = level.position;
+  const stages = level.modules;
+  const total = p.stagesTotal;
+  const passed = p.stagesPassed;
   const pct = total === 0 ? 0 : Math.round((100 * passed) / total);
-  const complete = p?.status === "COMPLETE";
-  const open = baseline.completed;
+  const complete = p.complete;
 
   const pill = !open ? (
     <StatusPill tone="none" icon="lock">
@@ -432,7 +423,7 @@ function LevelProgressCard({
     <StatusPill tone="done" icon="check-circle">
       All Stages passed
     </StatusPill>
-  ) : p?.status === "IN_PROGRESS" ? (
+  ) : p.status === "IN_PROGRESS" ? (
     <StatusPill tone="progress" icon="clock">
       In progress
     </StatusPill>
@@ -446,9 +437,8 @@ function LevelProgressCard({
   const improvement = levelImprovement(baseline.sittings, level.slug, completedAt);
 
   const steps: RailStep[] = stages.map((stage) => {
-    const state: StageState = p?.stageStates[stage.slug] ?? "NOT_STARTED";
-    const current =
-      open && !complete && stage.slug === p?.nextModuleSlug && (p?.status === "IN_PROGRESS" || isNext);
+    const state = stage.position.state;
+    const current = open && stage.position.upNext && (p.status === "IN_PROGRESS" || isNext);
     const href = open ? `/levels/${level.slug}/modules/${stage.slug}` : undefined;
     if (!open) return { key: stage.slug, title: stage.title, state: "locked", status: "Locked" };
     if (state === "PASSED") return { key: stage.slug, title: stage.title, state: "passed", status: "Passed", href };
@@ -523,7 +513,7 @@ function LevelProgressCard({
             <span>Issued {formatDate(certificate.issuedAt)}</span>
             <span className="flex-1" />
             <Link
-              href={`/certificate/${certificate.publicId}`}
+              href={`/certificate/${certificate.code}`}
               className="font-medium text-teal-ink underline underline-offset-[3px]"
             >
               View

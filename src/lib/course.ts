@@ -1,15 +1,17 @@
 import "server-only";
 
+import { cache } from "react";
 import { supabaseServer } from "./supabase/server";
-import { COURSE_SLUG, type LevelTier, type ProgressStatus } from "./constants";
-import { getProgressRecord, type StageEntry } from "./progress-record";
-import type {
-  CourseRow,
-  LessonRow,
-  LevelRow,
-  ModuleProgressRow,
-  ModuleRow,
-} from "@/db/rows";
+import { COURSE_SLUG, type LevelTier } from "./constants";
+import { getProgressRecord } from "./progress-record";
+import {
+  coursePosition,
+  type Catalogue,
+  type CoursePosition,
+  type LevelPosition,
+  type StagePosition,
+} from "./course-position";
+import type { CourseRow, LessonRow, LevelRow, ModuleRow } from "@/db/rows";
 
 /**
  * Course structure and learner progress.
@@ -19,9 +21,9 @@ import type {
  * one auditable place.
  *
  * Progress is read from the Progress Record (src/lib/progress-record.ts), which
- * SQL owns: this file lays a learner's record over the Course structure and does
- * not decide what is complete, passed or latest. Where a Stage or Level is
- * complete, the record said so.
+ * SQL owns, and laid over the Course structure as the Student's Course Position
+ * (src/lib/course-position.ts). This file decides nothing about what is complete,
+ * passed, up next or open: the record and the Course Position said so.
  *
  * ── ON `id` BEING THE SLUG ──────────────────────────────────────────────────
  * The database keys levels, modules and lessons by slug; the app was written
@@ -149,109 +151,62 @@ export async function getPathway() {
   return { course, levels };
 }
 
-export type StageState = "PASSED" | "STARTED" | "NOT_STARTED";
-
-export type LevelProgressSummary = {
-  status: ProgressStatus;
-  percentComplete: number;
-  /** Stages with a Read Mark. Drives "resume where you left off", and nothing else. */
-  stagesRead: number;
-  modulesTotal: number;
-  /** Stages whose Stage Quiz is passed. This is what completes the Level (#16). */
-  stagesPassed: number;
-  /** Where each Stage stands, by Stage slug: quiz passed, opened but not passed, or untouched. */
-  stageStates: Record<string, StageState>;
-  certificatePublicId: string | null;
-  /** The module to resume at: the first Stage Quiz not yet passed, else the last Stage. */
-  nextModuleSlug: string | null;
-};
-
 type PathwayLevel = Awaited<ReturnType<typeof getPathway>>["levels"][number];
 
-export type ModuleWithProgress = PathwayLevel["modules"][number] & {
-  /** This learner's entry for the Stage; null for a signed-out visitor. */
-  progress: StageEntry | null;
+export type ModuleWithPosition = PathwayLevel["modules"][number] & {
+  /** Where this Student stands on the Stage; untouched for a signed-out visitor. */
+  position: StagePosition;
 };
 
-export type LevelWithProgress = Omit<PathwayLevel, "modules"> & {
-  modules: ModuleWithProgress[];
-  /** Null for a signed-out visitor: structure without a learner attached. */
-  progress: LevelProgressSummary | null;
+export type LevelWithPosition = Omit<PathwayLevel, "modules"> & {
+  modules: ModuleWithPosition[];
+  /** Where this Student stands in the Level; an empty Level for a signed-out visitor. */
+  position: LevelPosition;
 };
 
-/**
- * The pathway annotated with one learner's progress.
- *
- * One read, the learner's Progress Record, laid over the structure. Row level
- * security and the record's own check scope it to the caller, so there is no
- * `where learner = me` to forget.
- */
-export async function getPathwayForUser(userId: string | null) {
-  const { course, levels: pathwayLevels } = await getPathway();
-
-  // Signed out: return the structure with no learner attached, so callers have
-  // one shape to render rather than a union.
-  if (!userId) {
-    return {
-      course,
-      levels: pathwayLevels.map((level) => ({
-        ...level,
-        modules: level.modules.map((m) => ({ ...m, progress: null })),
-        progress: null,
-      })) as LevelWithProgress[],
-    };
-  }
-
-  const record = await getProgressRecord(userId);
-  const stageBySlug = new Map((record?.stages ?? []).map((s) => [s.slug, s]));
-  const levelBySlug = new Map((record?.levels ?? []).map((l) => [l.slug, l]));
-
-  const annotated: LevelWithProgress[] = pathwayLevels.map((level) => {
-    const modules = level.modules.map((m) => ({ ...m, progress: stageBySlug.get(m.id) ?? null }));
-    const stageStates = Object.fromEntries(
-      modules.map((m): [string, StageState] => [
-        m.slug,
-        m.progress?.complete ? "PASSED" : m.progress?.started ? "STARTED" : "NOT_STARTED",
-      ]),
-    );
-    const entry = levelBySlug.get(level.id);
-    const mandatory = level.modules.filter((m) => m.isMandatory);
-
-    const progress: LevelProgressSummary = entry
-      ? {
-          status: entry.status,
-          percentComplete: entry.percentComplete,
-          stagesRead: entry.stagesRead,
-          modulesTotal: entry.stagesTotal,
-          stagesPassed: entry.stagesPassed,
-          stageStates,
-          certificatePublicId: entry.certificate?.code ?? null,
-          nextModuleSlug: entry.resumeStageSlug,
-        }
-      : // No record at all (no Student row): the empty one, so a page never branches on it.
-        {
-          status: "NOT_STARTED",
-          percentComplete: 0,
-          stagesRead: 0,
-          modulesTotal: mandatory.length,
-          stagesPassed: 0,
-          stageStates,
-          certificatePublicId: null,
-          nextModuleSlug: mandatory[0]?.slug ?? null,
-        };
-
-    return { ...level, modules, progress };
-  });
-
-  return { course, levels: annotated };
+/** The pathway as the catalogue Course Position reads: slugs, titles and order only. */
+function catalogueOf(levels: PathwayLevel[]): Catalogue {
+  return levels.map((level) => ({
+    slug: level.slug,
+    title: level.title,
+    stages: level.modules.map((m) => ({ slug: m.slug, title: m.title, position: m.order })),
+  }));
 }
 
-/** A single module with its lessons, plus this learner's position in it. */
-export async function getModuleForUser(
-  userId: string | null,
-  levelSlug: string,
-  moduleSlug: string,
-) {
+/**
+ * The pathway with one Student's Course Position laid over it.
+ *
+ * One read, the Student's Progress Record, beside the structure. Row level security
+ * and the record's own check scope it to the caller, so there is no
+ * `where learner = me` to forget. Signed out, the position is an empty record's, so
+ * callers have one shape to render rather than a union.
+ *
+ * Memoised per request, like the record it reads, so a page and its gate share it.
+ */
+export const getPathwayForUser = cache(async (userId: string | null) => {
+  const { course, levels } = await getPathway();
+  const record = userId ? await getProgressRecord(userId) : null;
+  const position: CoursePosition = coursePosition(catalogueOf(levels), record, {
+    signedIn: Boolean(userId),
+  });
+
+  const annotated: LevelWithPosition[] = levels.map((level, i) => {
+    const lp = position.levels[i];
+    return {
+      ...level,
+      modules: level.modules.map((m, j) => ({ ...m, position: lp.stages[j] })),
+      position: lp,
+    };
+  });
+
+  return { course, levels: annotated, position };
+});
+
+/**
+ * A single module with its lessons and its siblings in the Level. Content only: where
+ * the Student stands on it is their Course Position (`getPathwayForUser`).
+ */
+export async function getModule(levelSlug: string, moduleSlug: string) {
   const supabase = await supabaseServer();
   const course = await getCourse();
 
@@ -270,7 +225,7 @@ export async function getModuleForUser(
     .maybeSingle<ModuleRow>();
   if (!moduleRow) return null;
 
-  const [lessonResult, siblingResult, progressResult] = await Promise.all([
+  const [lessonResult, siblingResult] = await Promise.all([
     supabase
       .from("learn_lessons")
       .select("slug, module_slug, position, title, kind, body_markdown, component_key")
@@ -283,34 +238,7 @@ export async function getModuleForUser(
       .select("slug, position, title")
       .eq("level_slug", levelSlug)
       .order("position"),
-
-    userId
-      ? supabase
-          .from("learn_module_progress")
-          .select(
-            "learner_id, module_slug, status, completed_lessons, last_lesson_slug, seconds_spent, started_at, updated_at, completed_at",
-          )
-          .eq("learner_id", userId)
-          .eq("module_slug", moduleSlug)
-          .maybeSingle<ModuleProgressRow>()
-      : Promise.resolve({ data: null }),
   ]);
-
-  const progressRow = (progressResult.data ?? null) as ModuleProgressRow | null;
-
-  const progress = progressRow
-    ? {
-        userId: progressRow.learner_id,
-        moduleId: progressRow.module_slug,
-        status: progressRow.status,
-        completedLessonsJson: JSON.stringify(progressRow.completed_lessons ?? []),
-        secondsSpent: progressRow.seconds_spent,
-        lastLessonId: progressRow.last_lesson_slug,
-        startedAt: progressRow.started_at,
-        updatedAt: progressRow.updated_at,
-        completedAt: progressRow.completed_at,
-      }
-    : null;
 
   return {
     course,
@@ -322,8 +250,6 @@ export async function getModuleForUser(
     siblings: ((siblingResult.data ?? []) as Pick<ModuleRow, "slug" | "position" | "title">[]).map(
       (row) => ({ slug: row.slug, order: row.position, title: row.title }),
     ),
-    progress,
-    completedLessonIds: new Set(progressRow?.completed_lessons ?? []),
   };
 }
 
@@ -374,38 +300,6 @@ export async function getNextModuleSlug(
     .limit(1);
 
   return ((data ?? []) as unknown as Array<{ slug: string }>)[0]?.slug ?? null;
-}
-
-/** A learner's own certificates, newest first, with the level they are for. */
-export async function getLearnerCertificates(userId: string) {
-  const supabase = await supabaseServer();
-
-  const [record, levelResult] = await Promise.all([
-    getProgressRecord(userId),
-    supabase.from("learn_levels").select("slug, title"),
-  ]);
-
-  const titles = new Map(
-    ((levelResult.data ?? []) as unknown as Array<{ slug: string; title: string }>).map((l) => [
-      l.slug,
-      l.title,
-    ]),
-  );
-
-  // The record lists every Certificate, revoked ones included, newest first.
-  return (record?.certificates ?? [])
-    .filter((c) => c.revokedAt === null)
-    .map((c) => ({
-      publicId: c.code,
-      levelId: c.levelSlug,
-      levelSlug: c.levelSlug,
-      levelTitle: c.levelSlug ? (titles.get(c.levelSlug) ?? "") : "",
-      learnerNameSnapshot: c.issuedName,
-      awardTitleSnapshot: c.awardTitle ?? "",
-      scorePct: c.scorePct ?? 0,
-      issuedAt: c.issuedAt,
-      revokedAt: c.revokedAt,
-    }));
 }
 
 export function tierOf(level: { tier: string }): LevelTier {

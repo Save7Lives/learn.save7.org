@@ -26,19 +26,21 @@ export const metadata: Metadata = { title: "Baseline recorded" };
  */
 export default async function BaselineDonePage() {
   const user = await requireUser("/assessment/pre/done");
-  const baseline = await getBaselineState(user.id);
+  const [baseline, { levels, position }] = await Promise.all([
+    getBaselineState(user.id),
+    getPathwayForUser(user.id),
+  ]);
 
-  if (!baseline.completed) redirect("/assessment/pre");
+  if (!position.contentOpen) redirect("/assessment/pre");
 
-  const { levels } = await getPathwayForUser(user.id);
-  const next = levels.find((l) => l.progress?.status !== "COMPLETE") ?? null;
+  const next = levels.find((l) => l.slug === position.currentLevelSlug) ?? null;
 
   return (
     <BaselineRecorded
       baseline={baseline}
       nextLevel={
         next
-          ? { slug: next.slug, title: next.title, notStarted: next.progress?.status === "NOT_STARTED" }
+          ? { slug: next.slug, title: next.title, notStarted: next.position.status === "NOT_STARTED" }
           : null
       }
     />

@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { ButtonLink, Display } from "@/components/ui/primitives";
-import type { LevelWithProgress } from "@/lib/course";
+import type { LevelWithPosition } from "@/lib/course";
 import { ClosingBand } from "./ClosingBand";
 import { CommunityBand } from "./CommunityBand";
 import { CourseMap } from "./CourseMap";
 import { HowItWorks } from "./HowItWorks";
 import { LevelCard } from "./LevelCard";
-import { recommendedLevelSlug } from "./levelState";
 import { HeroQuote, Lede, PublicHero } from "./PublicHero";
 
 /**
@@ -15,20 +14,23 @@ import { HeroQuote, Lede, PublicHero } from "./PublicHero";
  */
 export function LandingView({
   levels,
+  currentLevelSlug,
   signedIn,
   baselinePending,
   communityUrl = null,
 }: {
-  levels: LevelWithProgress[];
+  levels: LevelWithPosition[];
+  /** The Level the Student is on, from their Course Position; null once all are complete. */
+  currentLevelSlug: string | null;
   signedIn: boolean;
   /** Signed in and the first Baseline Sitting not yet done. */
   baselinePending: boolean;
   /** The WhatsApp community invite (T94); null hides the card. */
   communityUrl?: string | null;
 }) {
-  // Recommend the first level they haven't finished, so the card that carries the
-  // pink CTA is always the genuinely useful one.
-  const recommendedSlug = recommendedLevelSlug(levels);
+  // Recommend the Level they are on, so the card that carries the pink CTA is always
+  // the genuinely useful one. Once every Level is complete, the first.
+  const recommendedSlug = currentLevelSlug ?? levels[0]?.slug;
 
   return (
     <>
@@ -85,14 +87,14 @@ export function LandingView({
             You are not expected to finish all three to be an informed advocate.
           </p>
 
-          <CourseMap levels={levels} />
+          <CourseMap levels={levels} recommendedSlug={recommendedSlug} />
 
           <div className="mt-[1.375rem] grid gap-5 min-[1000px]:grid-cols-3">
             {levels.map((level) => (
               <LevelCard
                 key={level.slug}
                 level={level}
-                progress={level.progress}
+                position={level.position}
                 signedIn={signedIn}
                 recommended={level.slug === recommendedSlug}
               />

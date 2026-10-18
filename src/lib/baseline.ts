@@ -60,9 +60,7 @@ export type BaselineLevel = { slug: string; title: string; tier: LevelTier };
 export type BaselineState = {
   /** Oldest first. */
   sittings: Sitting[];
-  /** Sitting 1 is in: the "before" figure exists, and Stage content opens. */
-  completed: boolean;
-  /** The Sitting the learner is owed now, if any. */
+  /** The Sitting the learner is owed now, if any. Whether content is open is the Course Position's. */
   due: number | null;
   first: Sitting | null;
   /** The latest Sitting after the first. What Improvement compares against. */
@@ -209,7 +207,6 @@ export function baselineStateFrom(record: ProgressRecord | null, levels: Baselin
 
   return {
     sittings,
-    completed: first !== null,
     due: record ? record.baseline.sittingDue : 1,
     first,
     latestLater: later[later.length - 1] ?? null,

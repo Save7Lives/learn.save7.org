@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { getSession } from "@/lib/auth";
-import { getBaselineState } from "@/lib/baseline";
 import { getPathwayForUser } from "@/lib/course";
 import { IntroductionView } from "@/components/course/IntroductionView";
 
@@ -17,14 +16,14 @@ export const metadata: Metadata = {
 
 export default async function IntroductionPage() {
   const session = await getSession();
-  const { levels } = await getPathwayForUser(session?.id ?? null);
-  const baseline = session ? await getBaselineState(session.id) : null;
+  const { levels, position } = await getPathwayForUser(session?.id ?? null);
 
   return (
     <IntroductionView
       levels={levels}
+      currentLevelSlug={position.currentLevelSlug}
       signedIn={Boolean(session)}
-      baselineCompleted={Boolean(baseline?.completed)}
+      baselineCompleted={Boolean(session) && position.contentOpen}
     />
   );
 }

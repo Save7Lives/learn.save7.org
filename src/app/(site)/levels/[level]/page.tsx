@@ -27,22 +27,23 @@ export default async function LevelPage(props: PageProps<"/levels/[level]">) {
 
   // Stage content waits for the first Baseline Sitting: a "before" taken after
   // reading is not a before (#54). No score gates anything, and no later Sitting.
-  const baseline = await getBaselineState(user.id);
-  if (!baseline.completed) redirect("/assessment/pre");
+  const [baseline, { levels, position }] = await Promise.all([
+    getBaselineState(user.id),
+    getPathwayForUser(user.id),
+  ]);
+  if (!position.contentOpen) redirect("/assessment/pre");
 
-  const { levels } = await getPathwayForUser(user.id);
   const level = levels.find((l) => l.slug === levelSlug);
   if (!level) notFound();
 
-  const progress = level.progress!;
   // The Progress Record says whether the Level is complete: every Stage Quiz in it passed.
-  const allPassed = progress.status === "COMPLETE";
+  const allPassed = level.position.complete;
 
   // Normally issued the moment the last Stage Quiz is passed. Issued here as well,
   // idempotently, so a learner whose pass landed but whose certificate call did
   // not is never left with a finished Level and nothing to show for it.
   const certificatePublicId =
-    progress.certificatePublicId ??
+    level.position.certificateCode ??
     (allPassed ? ((await issueCertificateIfEarned(user.id, level.id))?.publicId ?? null) : null);
 
   return (
