@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireAdmin } from "@/lib/authz";
 import { loadCatalogue, loadRules, loadStudents } from "@/lib/admin/data";
 import { RuleView } from "@/components/admin/RuleView";
 
@@ -10,6 +11,9 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Eligibility rule" };
 
 export default async function EligibilityPage(props: PageProps<"/admin/eligibility">) {
+  // The layout guards too, but it renders alongside this page, so a signed-out visitor
+  // would otherwise reach the loaders as `anon` before being sent to /login.
+  await requireAdmin();
   const params = await props.searchParams;
   const saved = typeof params.saved === "string" && /^\d+$/.test(params.saved) ? Number(params.saved) : null;
 

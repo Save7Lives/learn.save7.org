@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireAdmin } from "@/lib/authz";
 import { loadCatalogue, loadMissedQuestions, loadRules, loadStudents } from "@/lib/admin/data";
 import {
   SIGNED_UP_OPTIONS,
@@ -18,6 +19,9 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Admin overview" };
 
 export default async function AdminOverviewPage(props: PageProps<"/admin">) {
+  // The layout guards too, but it renders alongside this page, so a signed-out visitor
+  // would otherwise reach the loaders as `anon` before being sent to /login.
+  await requireAdmin();
   const params = await props.searchParams;
   const signed = SIGNED_UP_OPTIONS.some(([v]) => v === params.signed) ? (params.signed as SignedUpWindow) : "all";
 

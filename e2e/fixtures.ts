@@ -79,6 +79,19 @@ function quizDriver(db: Client): QuizDriver {
   };
 }
 
+/**
+ * Open an Admin page and wait until React has revealed it.
+ *
+ * Admin pages stream in behind `src/app/admin/loading.tsx`, and React reveals the page a
+ * moment after the load event that `page.goto` resolves on. A one-off read straight
+ * after `goto` (`.count()`, `.innerText()`) can run while the page is still hidden and
+ * see nothing. Use this for any Admin page a test then reads.
+ */
+export async function gotoAdmin(page: Page, path: string): Promise<void> {
+  await page.goto(path);
+  await expect(page.getByRole("status").filter({ hasText: "Loading" })).toHaveCount(0);
+}
+
 export const test = base.extend<{ db: Client; quiz: QuizDriver }>({
   db: async ({}, provide) => {
     const db = await openRunDatabase();

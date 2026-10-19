@@ -15,6 +15,9 @@ export const metadata: Metadata = { title: "Student" };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default async function StudentPage(props: PageProps<"/admin/students/[id]">) {
+  // The layout guards too, but it renders alongside this page, so a signed-out visitor
+  // would otherwise reach the loaders as `anon` before being sent to /login.
+  const viewer = await requireAdmin();
   const { id } = await props.params;
   if (!UUID.test(id)) notFound();
 
@@ -23,8 +26,7 @@ export default async function StudentPage(props: PageProps<"/admin/students/[id]
   if (!loaded) notFound();
   const { student, position } = loaded;
 
-  const [viewer, roster, rules, activity] = await Promise.all([
-    requireAdmin(),
+  const [roster, rules, activity] = await Promise.all([
     loadAdminRoster(),
     loadRules(),
     loadActivity(id),

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireAdmin } from "@/lib/authz";
 import { getReviewSummary } from "@/lib/admin/review";
 import { loadActorNames } from "@/lib/admin/actors";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -38,6 +39,9 @@ export const metadata: Metadata = { title: "Content review" };
 export default async function ContentReviewPage(
   props: PageProps<"/admin/content-review">,
 ) {
+  // The layout guards too, but it renders alongside this page, so a signed-out visitor
+  // would otherwise reach the loaders as `anon` before being sent to /login.
+  await requireAdmin();
   const params = await props.searchParams;
   const statusFilter =
     typeof params.status === "string" ? params.status : "NEEDS_VERIFICATION";

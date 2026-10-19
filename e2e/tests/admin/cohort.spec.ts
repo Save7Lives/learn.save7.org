@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 
-import { test, expect } from "../../fixtures";
+import { test, expect, gotoAdmin } from "../../fixtures";
 import { openRunDatabase } from "../../support/database";
 import {
   completeLevel,
@@ -104,7 +104,7 @@ const chips = (page: Page, group: string) => page.getByRole("group", { name: gro
 
 test("Overview shows the Growth Indicators for the whole cohort", async ({ page, context }) => {
   await signInAsAdmin(page, context);
-  await page.goto("/admin");
+  await gotoAdmin(page, "/admin");
   const main = page.locator("main");
 
   await expect(page.getByRole("heading", { name: "Overview", level: 1 })).toBeVisible();
@@ -152,7 +152,7 @@ test("Overview shows the Growth Indicators for the whole cohort", async ({ page,
 
 test("Overview's Signed up filter narrows every figure to that cohort", async ({ page, context }) => {
   await signInAsAdmin(page, context);
-  await page.goto("/admin");
+  await gotoAdmin(page, "/admin");
   const main = page.locator("main");
 
   await chips(page, "Signed up").getByRole("link", { name: "Last 30 days" }).click();
@@ -176,13 +176,14 @@ test("Students lists everyone, newest first, with last active and no email addre
   context,
 }) => {
   await signInAsAdmin(page, context);
-  await page.goto("/admin/students");
+  await gotoAdmin(page, "/admin/students");
   const table = page.getByRole("table", { name: "Students, most recent signup first" });
 
   await expect(page.locator("main")).toContainText("5 of 5 Students");
   await expect(table.getByRole("row")).toHaveCount(6);
 
   // Newest signup first: the two who signed up today, then Dumisani, Chipo, Bongani.
+  // eslint-disable-next-line no-restricted-syntax -- the rows are all present: toHaveCount(6) above
   const order = await table.getByRole("link", { name: /, open their Progress Record$/ }).allInnerTexts();
   expect(order.slice(2).map((n) => n.split(",")[0])).toEqual([
     cast.complete.name,
@@ -206,15 +207,15 @@ test("Students lists everyone, newest first, with last active and no email addre
   await expect(table.getByRole("row", { name: new RegExp(cast.awaiting.name) })).toContainText("Awaiting first Sitting");
 
   // Oversight stays proportionate: no email addresses, no date of birth.
-  const text = await page.locator("main").innerText();
-  expect(text).not.toContain("@e2e.test");
-  expect(text).not.toMatch(/date of birth/i);
+  const main = page.locator("main");
+  await expect(main).not.toContainText("@e2e.test");
+  await expect(main).not.toContainText(/date of birth/i);
   await expect(page.getByRole("columnheader", { name: /email/i })).toHaveCount(0);
 });
 
 test("Students can be filtered by when they signed up", async ({ page, context }) => {
   await signInAsAdmin(page, context);
-  await page.goto("/admin/students");
+  await gotoAdmin(page, "/admin/students");
   const table = page.getByRole("table", { name: "Students, most recent signup first" });
 
   await chips(page, "Signed up").getByRole("link", { name: "Last 30 days" }).click();
@@ -236,7 +237,7 @@ test("Students can be filtered by when they signed up", async ({ page, context }
 
 test("Students can be filtered by Current Level", async ({ page, context }) => {
   await signInAsAdmin(page, context);
-  await page.goto("/admin/students");
+  await gotoAdmin(page, "/admin/students");
 
   const only = async (label: string, shown: Array<{ name: string }>, hidden: Array<{ name: string }>) => {
     await chips(page, "Current Level").getByRole("link", { name: label, exact: true }).click();
@@ -266,7 +267,7 @@ test("Students can be filtered by Current Level", async ({ page, context }) => {
 
 test("Students can be searched by name", async ({ page, context }) => {
   await signInAsAdmin(page, context);
-  await page.goto("/admin/students");
+  await gotoAdmin(page, "/admin/students");
   await page.getByRole("searchbox", { name: "Search Students by name" }).fill(cast.beginner.familyName);
   await page.getByRole("button", { name: "Search" }).click();
   await expect(page).toHaveURL(/q=/);
@@ -279,7 +280,7 @@ test("a Student's drill-down shows their Levels, Baseline table and recent activ
   context,
 }) => {
   await signInAsAdmin(page, context);
-  await page.goto("/admin/students");
+  await gotoAdmin(page, "/admin/students");
   await row(page, cast.intermediate).click();
   await expect(page).toHaveURL(/\/admin\/students\/[0-9a-f-]{36}$/);
   const main = page.locator("main");
@@ -322,7 +323,7 @@ test("a Student who has not sat the Baseline drills down to a record that says s
   context,
 }) => {
   await signInAsAdmin(page, context);
-  await page.goto("/admin/students");
+  await gotoAdmin(page, "/admin/students");
   await row(page, cast.awaiting).click();
   const main = page.locator("main");
   await expect(page.getByRole("heading", { name: cast.awaiting.name, level: 1 })).toBeVisible();
@@ -335,11 +336,11 @@ test("a Student who has not sat the Baseline drills down to a record that says s
 test("the Admin has no content tools and no way to export the data", async ({ page, context }) => {
   await signInAsAdmin(page, context);
   const nav = page.getByRole("navigation", { name: "Admin sections" });
-  await page.goto("/admin");
+  await gotoAdmin(page, "/admin");
   await expect(nav.getByRole("link")).toHaveText(["Overview", "Students", "Eligibility rule", "Content review"]);
 
   for (const path of ["/admin", "/admin/students", "/admin/eligibility", "/admin/content-review"]) {
-    await page.goto(path);
+    await gotoAdmin(page, path);
     await expect(page.getByRole("link", { name: /export|download|csv/i }), path).toHaveCount(0);
     await expect(page.getByRole("button", { name: /export|download|csv/i }), path).toHaveCount(0);
   }
