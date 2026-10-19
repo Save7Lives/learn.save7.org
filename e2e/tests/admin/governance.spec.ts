@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import type { Client } from "pg";
 
-import { test, expect } from "../../fixtures";
+import { test, expect, gotoAdmin } from "../../fixtures";
 import { openRunDatabase } from "../../support/database";
 import {
   arrangeAdmin,
@@ -97,7 +97,7 @@ test("an Admin edits the Eligibility Rule, and each save is a new version that k
   context,
 }) => {
   await signInAs(page, context, admin);
-  await page.goto("/admin/eligibility");
+  await gotoAdmin(page, "/admin/eligibility");
 
   // Nothing is saved until a flag is chosen, and nothing can be saved unchanged.
   const save = page.getByRole("button", { name: /^Save as version \d+$/ });
@@ -142,7 +142,7 @@ test("an Admin edits the Eligibility Rule, and each save is a new version that k
   await expect(rows.nth(2)).toContainText(admin.name);
 
   // Overview shows it read-only, with the way to edit it.
-  await page.goto("/admin");
+  await gotoAdmin(page, "/admin");
   const card = page.getByRole("region", { name: "Nerve Center eligibility" });
   await expect(card).toContainText(`Version ${first + 1}`);
   await expect(card).toContainText("Intermediate Level complete");
@@ -153,10 +153,13 @@ test("an Admin edits the Eligibility Rule, and each save is a new version that k
 test("an empty Eligibility Rule is refused, even when the form is forced", async ({ page, context, db }) => {
   await arrangeRule(db);
   await signInAs(page, context, admin);
-  await page.goto("/admin/eligibility");
+  await gotoAdmin(page, "/admin/eligibility");
 
+  // gotoAdmin has waited for the page, so the one-off reads below see the real rule history.
+  // eslint-disable-next-line no-restricted-syntax -- the count is the baseline the test compares to
   const before = await versions(page).getByRole("row").count();
   expect(before).toBeGreaterThan(1);
+  // eslint-disable-next-line no-restricted-syntax -- the baseline the test compares to
   const current = await page.getByRole("region", { name: "Current rule" }).innerText();
 
   // Untick everything: told why, and Save is off.
@@ -173,7 +176,7 @@ test("an empty Eligibility Rule is refused, even when the form is forced", async
 
   await page.reload();
   await expect(versions(page).getByRole("row")).toHaveCount(before);
-  expect(await page.getByRole("region", { name: "Current rule" }).innerText()).toBe(current);
+  await expect(page.getByRole("region", { name: "Current rule" })).toHaveText(current, { useInnerText: true });
 });
 
 test("a saved rule version cannot be changed afterwards, by anyone", async ({ db }) => {
@@ -214,7 +217,7 @@ test("a Student cannot save an Eligibility Rule or read the rules", async ({ db 
 
 test("an Admin signs off a review item, and it is recorded against their name", async ({ page, context }) => {
   await signInAs(page, context, admin);
-  await page.goto("/admin/content-review");
+  await gotoAdmin(page, "/admin/content-review");
 
   const item = page.getByRole("listitem").filter({ hasText: reviewClaim });
   await expect(item).toHaveCount(1);
@@ -259,7 +262,7 @@ test("a Student cannot reach content review or change a review item", async ({ p
 
 test("the Owner makes a Student an Admin and takes it away again", async ({ page, context, browser, baseURL }) => {
   await signInAs(page, context, owner);
-  await page.goto("/admin/students");
+  await gotoAdmin(page, "/admin/students");
   const table = page.getByRole("table", { name: "Students, most recent signup first" });
   const row = table.getByRole("row", { name: new RegExp(student.name) });
   await expect(row).toContainText("Student");
@@ -300,7 +303,7 @@ test("an ordinary Admin sees who the Owner is but cannot grant or revoke Admin",
   await signInAs(page, context, admin);
 
   // They can see who grants access.
-  await page.goto("/admin/students");
+  await gotoAdmin(page, "/admin/students");
   await expect(page.getByText(`Owner: ${owner.name}`)).toBeVisible();
 
   // The Students list shows who is an Admin but offers no way to change it.
@@ -346,7 +349,7 @@ test("a Student cannot grant or revoke Admin either", async ({ db }) => {
 
 test("the Owner cannot be revoked, by anyone, and stays the Owner", async ({ page, context, db }) => {
   await signInAs(page, context, owner);
-  await page.goto("/admin/students");
+  await gotoAdmin(page, "/admin/students");
   const table = page.getByRole("table", { name: "Students, most recent signup first" });
   const own = table.getByRole("row", { name: new RegExp(owner.name) });
 

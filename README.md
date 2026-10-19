@@ -485,6 +485,9 @@ stops the run with its file name: add its number to `SKIPPED` in
 `openSignedIn` for a second person in the same test), each with an address of their own
 so tests can run in parallel. `newIdentity("x", { domain: "save7.org" })` is a staff
 member, whom the sign-in trigger admits without a registration.
+Admin pages stream in behind `loading.tsx`, so open them with `gotoAdmin(page, path)` from
+`e2e/fixtures.ts`, which waits until React has revealed the page. Lint rejects a one-off
+`.count()` or `.innerText()` in `e2e/tests/`: assert with `expect(locator)` instead.
 `e2e/support/learning.ts` arranges progress (`sitBaseline`, `takeStageQuiz`,
 `completeLevel`) through the database's own marking functions, as that Student, so it
 is real progress. `e2e/support/rest.ts` talks to the API as an anonymous visitor or as a

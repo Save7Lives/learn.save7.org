@@ -23,6 +23,9 @@ export const metadata: Metadata = { title: "Students" };
 const first = (v: string | string[] | undefined) => (typeof v === "string" ? v : "");
 
 export default async function StudentsPage(props: PageProps<"/admin/students">) {
+  // The layout guards too, but it renders alongside this page, so a signed-out visitor
+  // would otherwise reach the loaders as `anon` before being sent to /login.
+  const viewer = await requireAdmin();
   const params = await props.searchParams;
   const signed = SIGNED_UP_OPTIONS.some(([v]) => v === params.signed) ? (params.signed as SignedUpWindow) : "all";
   const catalogue = await loadCatalogue();
@@ -32,7 +35,7 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
   const q = first(params.q).slice(0, 80);
   const requestedPage = Math.max(1, Number.parseInt(first(params.page), 10) || 1);
 
-  const [viewer, roster, students] = await Promise.all([requireAdmin(), loadAdminRoster(), loadStudents(catalogue)]);
+  const [roster, students] = await Promise.all([loadAdminRoster(), loadStudents(catalogue)]);
   const now = new Date();
   const matching = searchStudents(
     students.filter((s) => inWindow(s, signed, now) && matchesLevel(s, level, catalogue)),
