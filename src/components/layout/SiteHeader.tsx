@@ -57,9 +57,6 @@ export async function SiteHeader({ className }: { className?: string }) {
               <Link href="/dashboard" className={NAV_ITEM}>
                 My progress
               </Link>
-              <Link href="/profile" className={NAV_ITEM}>
-                Profile
-              </Link>
               <form action={signOutAction}>
                 <button type="submit" className={NAV_ITEM}>
                   Sign out

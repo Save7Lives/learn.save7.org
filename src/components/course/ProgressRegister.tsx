@@ -71,7 +71,7 @@ export function ProgressRegister({
         </h1>
         <p className="mt-1 text-grey">
           {userName} &middot;{" "}
-          <Link href="/profile" className="font-medium text-teal-ink underline underline-offset-[3px]">
+          <Link href="#profile" className="font-medium text-teal-ink underline underline-offset-[3px]">
             Edit your name
           </Link>
         </p>
