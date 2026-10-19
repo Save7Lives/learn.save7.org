@@ -40,6 +40,8 @@ jobs:
 
       - run: npm run typecheck
       - run: npm run lint
+      # Question banks: no stray pictographs, no review date passed (#51).
+      - run: npm run content:check
       # The film's files agree: names carry their content hash, the captions are the
       # transcript's words, the registry's size and duration are the file's (#61).
       - run: npm run media:check

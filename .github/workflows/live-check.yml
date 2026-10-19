@@ -1,0 +1,22 @@
+# Checks the deployed site, not the code: a public Certificate page must print
+# learn.save7.org on its "Verify at" line (scripts/check-live-host.mjs, #51).
+# Runs daily and on demand, because the thing it guards is a Vercel environment
+# variable, which no push changes.
+name: Live check
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check:live

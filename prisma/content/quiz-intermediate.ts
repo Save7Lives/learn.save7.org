@@ -803,6 +803,8 @@ const saLegalFramework: StageQuizQuestion[] = [
     explanation:
       "No. The Red File states that there is no legal requirement to refer. Draft regulations published for comment in September 2026 would require hospitals that perform donation to designate staff to identify and refer potential donors, but they are not yet law.",
     verifiedAgainst: `${NO_REFERRAL_DUTY}. ${DRAFT_REGS}`,
+    // The comment period on the draft regulations closes about three months after 4 September 2026.
+    reviewBy: "2026-12-04",
     choices: [
       { text: "Yes, under section 62 of the National Health Act", feedback: "Section 62 is about consent. No provision in force requires referral." },
       { text: "No, though September 2026 draft regulations would create one", isCorrect: true },
@@ -1005,7 +1007,7 @@ const ethicsAndEndOfLife: StageQuizQuestion[] = [
     difficulty: 2,
     prompt: "To what do the leaders of Spain's national transplant organisation credit Spain's high donation rate?",
     explanation:
-      "📌 To organisation, in particular a trained transplant coordination team in every donor hospital. They argue there are no clear examples of a sustained increase in donation after a country changed its consent law.",
+      "To organisation, in particular a trained transplant coordination team in every donor hospital. They argue there are no clear examples of a sustained increase in donation after a country changed its consent law.",
     verifiedAgainst: OPT_OUT_INTL,
     choices: [
       { text: "Its opt-out consent law on its own", feedback: "Spain's own transplant leaders argue the law alone does not explain it." },
@@ -1038,7 +1040,7 @@ const ethicsAndEndOfLife: StageQuizQuestion[] = [
     difficulty: 3,
     prompt: "What happened after Wales moved to a soft opt-out system in December 2015?",
     explanation:
-      "📌 Family consent rose modestly over about three years, but there was no step change in donation, and the feared mass opting-out did not happen. Changing the law was a first step, not a solution on its own.",
+      "Family consent rose modestly over about three years, but there was no step change in donation, and the feared mass opting-out did not happen. Changing the law was a first step, not a solution on its own.",
     verifiedAgainst: OPT_OUT_INTL,
     choices: [
       { text: "Donation rates doubled within the first year", feedback: "No. Evaluation found no step change in donation." },
