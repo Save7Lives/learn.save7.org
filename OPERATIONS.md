@@ -85,9 +85,14 @@ way this course deploys: there is no deploy command and no command-line sign-in.
 
 `.github/workflows/build.yml` deliberately does not deploy. It runs the gates on every
 push to `main` and every pull request (`npm ci`, `typecheck`, `lint`, `media:check`,
-`scripts/audit-gate.mjs`, `build`, and an accessibility job running `check:vocabulary`
-and the public pages of `audit:a11y`), and nothing else: two systems deploying the same
+`content:check`, `scripts/audit-gate.mjs`, `build`, and an accessibility job running
+`check:vocabulary` and the public pages of `audit:a11y`), and nothing else: two systems deploying the same
 site would race. A red build there is the signal; the deploy is Vercel's job.
+
+`.github/workflows/live-check.yml` is the one workflow that looks at the deployed site. It
+runs `npm run check:live` daily and on demand: a public Certificate page must print
+`learn.save7.org/certificate/...` on its "Verify at" line. It exists because the fault it
+guards (a placeholder in `SITE_URL`, #51) is a Vercel setting that no push changes.
 
 A push to `main` is the deploy, so apply any migration that code reads before pushing
 it (*Database*).
@@ -105,6 +110,31 @@ database is the Supabase project, and a migration applied for the bad deploy sta
 applied. Check that the older code still works against the current schema before
 relying on it.
 
+### A signed-in pass on production
+
+Before filing a bug from a pass, run `gh pr list --state merged --limit 5` and compare it
+with what production shows: a fix that merged mid-pass makes a bug stop reproducing, as the
+Stage eyebrow did (#51). `npm run probe -- /route ...` prints status, title, heading and any
+"Stage N of M" eyebrow for several routes at once; give it `COOKIE` for the signed-in view.
+`npm run check:live` checks the certificate address. A pass that submits Stage Quizzes or sits
+the Baseline writes to the real account, so name those writes in the report.
+
+### Opening a pull request from a terminal
+
+When the steps go to someone else to run, give one block that writes the body file and
+creates the pull request, and make a missing file loud:
+
+```bash
+cat > pr-body.md <<'EOF'
+<body>
+EOF
+[ -s pr-body.md ] || { echo "pr-body.md is empty"; exit 1; }
+gh pr create --title "<title>" --body-file pr-body.md
+```
+
+A `[ -s file ] && gh ...` guard on its own skips silently when the file is missing, which is
+how a pull request once went uncreated without any message.
+
 ---
 
 ## Environment variables
@@ -118,7 +148,7 @@ Production and Preview. `.env.example` documents each one.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | The same page |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | The volunteer portal's Google client id |
 | `SITE_URL` | The public origin certificate verification links are built from. Read on the server per request, so it is the one that takes effect |
-| `NEXT_PUBLIC_SITE_URL` | The same value. Next inlines `NEXT_PUBLIC_` variables into the bundle at build time, so it would freeze whatever the build had; `src/lib/site.ts` reads `SITE_URL` first. Set both to the same value so they cannot disagree |
+| `NEXT_PUBLIC_SITE_URL` | The same value. Next inlines `NEXT_PUBLIC_` variables into the bundle at build time, so it would freeze whatever the build had; `src/lib/site.ts` reads `SITE_URL` first. Set both to the same value so they cannot disagree. Add each as a plain variable: Vercel refuses to save a `NEXT_PUBLIC_` name as Sensitive, and a saved Sensitive variable cannot be switched back, only deleted and re-added |
 | `MEDIA_BASE_URL` | Optional. Where the film is served from (*The Stage 3 film*); unset means `public/media` |
 | `WHATSAPP_COMMUNITY_URL` | Optional. The Save7 WhatsApp community invite, shown as a card on the landing page only; unset hides the card. Read per request. If the invite is abused, reset it in WhatsApp and change this one value |
 

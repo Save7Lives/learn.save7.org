@@ -90,6 +90,9 @@ export type BaselineQuestion = {
   /** The source the keyed answer and explanation were checked against. An item
    *  without one enters the content-review register as outstanding. */
   verifiedAgainst?: string;
+  /** ISO date (YYYY-MM-DD) after which the item needs a fresh look, for an answer that
+   *  rests on something dated, such as draft regulations. `npm run content:check` fails once it passes. */
+  reviewBy?: string;
   /** The prior build's authoring key, where this item was recycled from one.
    *  Provenance only — the old row is swept by save7-os 0116 (#54). */
   recycledFrom?: string;

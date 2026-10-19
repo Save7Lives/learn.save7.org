@@ -59,6 +59,9 @@ claim ships as authoritative unless it is sourced.**
   standard criteria" names no document, but it approves the item just the same.
   That is how two gate items drifted onto figures nobody could produce
   (HANDOVER.md §5).
+- **An answer that rests on something dated carries `reviewBy`** (`YYYY-MM-DD`, on the quiz or
+  Baseline item). `npm run content:check` fails once the date passes, and it also rejects a
+  pictograph in any question text.
 - **Rewording a prompt makes a new register row**, because the claim text is part
   of the upsert key. Re-check the source when you reword. The old row stays behind.
 - **Lesson prose has no review mechanism.** No Markdown lesson enters the register,
@@ -109,36 +112,17 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   `anon`, and that `anon` reads only the Level and Stage catalogue (columns listed in
   `src/lib/course.ts`; save7-os 0131), because the landing page and the course
   introduction are public. Run it after any migration touching `learn_*`.
-- The Baseline (`PRE`) is up to **four Sittings**, not one attempt.
-  `learn_submit_baseline_sitting()` marks the same twenty questions and freezes the
-  result as a row in `learn_baseline_sittings`: a score per Level and a total, never
-  the answers. A CHECK (`sitting_no between 1 and 4`) and a UNIQUE
-  `(learner_id, sitting_no)` are the whole cap, and there is no insert or update
-  policy, so a client can neither write, edit nor half-sit a Sitting. Sitting 1 is
-  owed at signup and Stage content waits for it; later Sittings are offered after a
-  Level is completed and never required (`dueSitting()` in `src/lib/baseline.ts`).
-- **Improvement is Sitting 1 against a later Sitting of the same paper.** It is
-  derived at read time (`levelImprovement()` in `src/lib/baseline.ts`, read by
-  `src/lib/admin/model.ts`) and never stored. Stage Quiz retakes are unlimited, because
-  passing every Stage Quiz in a Level is what earns its Certificate, so they must
-  never feed the impact numbers.
-  The Admin's Stage Quiz pass rate counts Students who attempted and who passed
-  (`quiz_passed_at`), never an attempt number.
-- **Admin is the Portal Register** (`src/app/admin`, `src/lib/admin`): Overview (#18's five
-  Growth Indicators, Stage drop-off, most missed questions), Students, a Student's
-  Progress Record, the Eligibility rule and Content review. The numbers are pure
-  functions in `src/lib/admin/model.ts`; the reads are in `data.ts`. A Student's
-  "last active" is the newest `learn_events` row, since `learners.last_seen_at` is
-  stamped only at enrolment. The Eligibility Rule is only ever inserted
-  (`learn_eligibility_rules` has no update policy).
-- **Do not edit a Baseline question's prompt or options once anyone has sat it.**
-  The same twenty questions come back at every Sitting, so a changed one makes
-  later Sittings a different paper without saying so (save7-os `0116` refuses to
-  replace the bank once a Sitting exists).
-- **There is no `pairKey`.** Wayfinder #26/#41 replaced pairing each post-assessment
-  item with its baseline counterpart by sitting-over-sitting comparison. The emitter
-  writes `learn_questions.pair_key` as `NULL`, and no code uses it. The column
-  (`0091`) and the legacy `pairKey` field on `QuestionSeed` remain but do no work.
+- The Baseline (`PRE`) is up to **four Sittings** (`learn_submit_baseline_sitting()`, cap in
+  SQL, no client write path). Improvement is Sitting 1 against a later Sitting, derived at read
+  time and never stored; Stage Quiz retakes must never feed it. A Baseline question's prompt
+  or options are frozen once anyone has sat it. The reasons and the code are in
+  [HANDOVER.md](HANDOVER.md) §2; `dueSitting()` and `levelImprovement()` in
+  `src/lib/baseline.ts` hold the logic.
+- Admin (`src/app/admin`, `src/lib/admin`): the numbers are pure functions in `model.ts`, the
+  reads are in `data.ts`. A Student's "last active" is the newest `learn_events` row, since
+  `learners.last_seen_at` is stamped only at enrolment. The Eligibility Rule is only ever
+  inserted.
+- `pairKey` and `learn_questions.pair_key` are dead: the emitter writes `NULL` and nothing reads it.
 
 ## Platform gotchas
 
@@ -222,31 +206,13 @@ The single source of truth is `save7-os/supabase/migrations/`, applied with
 npm run typecheck && npm run lint && npm run build
 ```
 
-These gates also run in CI; run them before you push a change that could trip them:
-
-- `npm run check:vocabulary` (`scripts/check-stage-vocabulary.ts`) fails on the word
-  "module(s)" in learner-facing strings under `src/` (the glossary says Stage). The
-  accessibility audit below also checks the rendered text of the pages marked
-  `vocabulary: true`.
-- `node scripts/audit-gate.mjs` runs `npm audit --json` and fails on any high or critical
-  advisory not accepted, with a reason and an expiry date, in `scripts/audit-allowlist.json`
-  (docs/dependency-advisories.md explains the threshold and the allowlist).
-- `npm run audit:a11y` renders the pages at 375 and 1024 px and fails on a colour pair
-  under WCAG AA, text under 12px or horizontal scroll, after a self-test that plants each
-  defect. CI runs the public pages only (`A11Y_PUBLIC_ONLY=1`); the signed-in pages are
-  audited locally against the end-to-end stack (README, "Signed-in accessibility audit").
-  `npm run audit:a11y:selftest` runs just the self-test and needs no server.
-
-**`npm run e2e` runs the browser suite** against a private local Postgres holding the
-real Learn schema (README.md, "End-to-end tests"): the learner journey (register, sign
-in, Baseline Sitting 1, a Stage Quiz fail then pass, Level completion, Certificate
-download and verification), the 18+ refusal, consent gating, the signed-out catalogue,
-and the Admin journeys (Overview, Students filters, drill-down, Eligibility Rule, content
-review sign-off, Owner grant and revoke). It needs no Supabase values and touches no
-production data. Add a journey as a file in `e2e/tests/` that imports from
-`e2e/fixtures.ts`; one that changes what the whole site shares (the cohort, the Owner,
-the rule) goes in `e2e/tests/admin/`, which runs on its own after the rest. Anything that
-only the real host shows (Google sign-in, Vercel) is still a by-hand pass on a preview.
+CI also runs `check:vocabulary`, `content:check`, `media:check`, `scripts/audit-gate.mjs` and the
+public-page `audit:a11y` (`.github/workflows/build.yml`); run the one your change could trip.
+`npm run e2e` runs the browser suite against a private local Postgres and touches no production
+data (README.md, "End-to-end tests"). Add a journey as a file in `e2e/tests/` importing
+`e2e/fixtures.ts`; one that changes what the whole site shares (the cohort, the Owner, the rule)
+goes in `e2e/tests/admin/`. Only the real host (Google sign-in, Vercel) needs a by-hand pass on a
+preview; `npm run check:live` and `npm run probe` read production and preview.
 
 ## Design
 

@@ -17,6 +17,9 @@
     "audit:a11y": "node scripts/a11y/audit.mjs",
     "audit:a11y:selftest": "node scripts/a11y/audit.mjs --selftest",
     "check:vocabulary": "tsx scripts/check-stage-vocabulary.ts",
+    "content:check": "tsx scripts/check-content.ts",
+    "check:live": "node scripts/check-live-host.mjs",
+    "probe": "node scripts/probe-routes.mjs",
     "test": "vitest run",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed"

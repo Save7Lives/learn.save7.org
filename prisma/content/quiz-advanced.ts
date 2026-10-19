@@ -342,7 +342,7 @@ const donationConversation: StageQuizQuestion[] = [
       "FACTS was developed at Wits Transplant as an adaptation of the UK's NHS Blood and Transplant strategy for approaching families, modified for South African hospitals. SATCS reproduces it in the Red File.",
     verifiedAgainst: `${FACTS}. ${OTA_GUIDELINE}`,
     choices: [
-      { text: "Australia's national guideline, adopted unchanged", feedback: "📌 The Australian guideline follows a similar arc, but FACTS is a South African adaptation of the UK guidance." },
+      { text: "Australia's national guideline, adopted unchanged", feedback: "The Australian guideline follows a similar arc, but FACTS is a South African adaptation of the UK guidance." },
       { text: "The regulations under the National Health Act", feedback: "FACTS is professional guidance, not law. The Act and its regulations do not set out how the conversation is conducted." },
       { text: "Wits Transplant, adapting UK NHS Blood and Transplant guidance", isCorrect: true },
       { text: "The Organ Donor Foundation's training course for its public volunteers", feedback: "The ODF trains volunteers in public awareness. FACTS is a strategy for transplant procurement coordinators." },
@@ -567,7 +567,7 @@ const donationConversation: StageQuizQuestion[] = [
     stage: "donation-conversation",
     topicTag: "decision-time",
     difficulty: 3,
-    prompt: "📌 What did Han and colleagues (2017) find about families who took 48 hours or more to decide about donation?",
+    prompt: "What did Han and colleagues (2017) find about families who took 48 hours or more to decide about donation?",
     explanation:
       "The slower families consented 73% of the time (11 of 15), against 55% for faster families. The difference was not significant, so the authors concluded that a delayed decision was not inferior. The study doesn't show that delay improves consent. It is a single Korean centre, not South African data.",
     verifiedAgainst: HAN_2017,
