@@ -11,7 +11,7 @@ Save7's organ-donation course, replacing their Google Classroom.
 > repository, and HANDOVER.md is the map: the invariants, the traps that already
 > cost a cycle, and what is unfinished.
 
-Read README.md for what the course is and DEPLOY.md for how it ships. This file is
+Read README.md for what the course is and OPERATIONS.md for how it ships. This file is
 the short list of things that are easy to break without noticing.
 
 The audience is South African, mostly on phones, mostly learning this for the first
@@ -58,7 +58,7 @@ claim ships as authoritative unless it is sourced.**
 - **`verifiedAgainst` is a citation.** An attestation such as "Reviewed against
   standard criteria" names no document, but it approves the item just the same.
   That is how two gate items drifted onto figures nobody could produce
-  (HANDOVER.md §6).
+  (HANDOVER.md §5).
 - **Rewording a prompt makes a new register row**, because the claim text is part
   of the upsert key. Re-check the source when you reword. The old row stays behind.
 - **Lesson prose has no review mechanism.** No Markdown lesson enters the register,
@@ -184,7 +184,7 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   file name carries the hash of its bytes** because the files are served with a
   one-year cache: change a file, rename it, run `npm run media:check`, never edit in
   place. The files ship with the app and play same-origin until `MEDIA_BASE_URL`
-  points the app at the Supabase bucket `learn-media`. See MEDIA-HOSTING.md.
+  points the app at the Supabase bucket `learn-media`. See OPERATIONS.md, *The Stage 3 film*.
 - **`SITE_URL`, not `NEXT_PUBLIC_SITE_URL`.** Next inlines public variables into the
   bundle at build time, while `SITE_URL` is read on the server per request.
   Certificate links are built from it. Both are Vercel project environment variables
