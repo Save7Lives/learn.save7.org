@@ -10,7 +10,7 @@
  * Any host will do that gets three things right: content-type video/mp4, HTTP range
  * requests for seeking, and CDN caching. Note that raw.githubusercontent.com is NOT a
  * valid host: it serves mp4 as application/octet-stream with nosniff, which browsers
- * refuse to play in a <video>. See MEDIA-HOSTING.md.
+ * refuse to play in a <video>. See OPERATIONS.md, "The Stage 3 film".
  *
  * MEDIA_BASE_URL is read on the server and the absolute URL is passed to the client,
  * rather than exposing a NEXT_PUBLIC_ variable. Public env vars are inlined at build

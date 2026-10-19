@@ -1,34 +1,81 @@
 # Save7 Learn
 
-**Organ Donation and Transplantation Awareness Course**
+Organ Donation and Transplantation Awareness Course, at `https://learn.save7.org`.
+It replaces Save7's Google Classroom.
 
-A three-level learning platform that takes someone from *"I don't know much about
-organ donation"* to *"I understand the issue, I know how the system works, I can
-address common misconceptions, and I feel confident starting the conversation."*
+A three-level course that takes someone from *"I don't know much about organ
+donation"* to *"I understand the issue, I know how the system works, I can address
+common misconceptions, and I feel confident starting the conversation."*
 
-The metric the platform exists to produce is **knowledge improvement** — baseline
-score → post-course score → change — not page views.
+The metric the platform exists to produce is **knowledge improvement**: baseline
+score, then post-course score, then the change. Not page views.
+
+---
+
+## Start here
+
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Supabase
+(Postgres) · hosted on Vercel.
+
+The docs at the root of this repository:
+
+| File | What it holds |
+| --- | --- |
+| `README.md` | This file: what the course is, running it, how it is built, the tests, and what Save7 still has to supply |
+| [HANDOVER.md](HANDOVER.md) | Read before changing anything. Where the rules live (SQL in another repository), the invariants that corrupt data silently if broken, the traps that already cost a cycle, and the probes |
+| [OPERATIONS.md](OPERATIONS.md) | Vercel, environment variables, the sign-in allow-lists, Supabase migrations, the film's hosting and captions, DNS (with the only full capture of the `save7.org` zone), costs, and the dated verification record |
+| [CLAUDE.md](CLAUDE.md) | The working rules, the short list of things easy to break without noticing. Claude Code reads it automatically |
+| [CONTEXT.md](CONTEXT.md) | The glossary |
+| [CURRICULUM-ASSESSMENT-SPEC.md](CURRICULUM-ASSESSMENT-SPEC.md) | The spec |
+| `docs/adr/` | Architecture decisions |
+
+Build work is tracked in this repository's issues, and #11 is the Spec. The old
+planning repository, `Save7Lives/learn.save7.org-map`, is archived and still readable,
+so links to its tickets resolve. The decision records it held are under `wayfinder/`.
+
+The app has been on Cloudflare Pages and on Cloudflare Workers before Vercel. Old
+notes, branches and commit messages mention `@cloudflare/next-on-pages`,
+`@opennextjs/cloudflare`, `wrangler`, `npm run pages:*`, `npm run deploy` and
+`transplant-alchemy.pages.dev`. All of those are gone. OPERATIONS.md, *History*,
+records why the app moved.
+
+### The one rule that matters most
+
+This is health and legal content aimed at the general public in South Africa. No
+medical or legal claim ships as authoritative unless it is sourced.
+
+Source every claim to a document someone else can open, and never invent a citation,
+statistic or legal provision. Where the source is recorded depends on where the claim
+lives:
+
+- A quiz item (Stage Quiz, Baseline, clinical gate) names its source in
+  `verifiedAgainst`. The content emitter turns that into an approved row in the review
+  register at `/admin/content-review`. An item without one is listed there as needing
+  verification.
+- Lesson prose has no review mechanism. Nothing registers it or records a sign-off, so
+  the source goes in the lesson itself. A claim you cannot source stays out.
+
+The register is Admin-only. Learners see an unverified item like any other, with no
+badge. Never clear a review item in code: approving and rejecting are Save7's
+decisions, recorded with a name and a date in `/admin/content-review`. CLAUDE.md has
+the details.
 
 ---
 
 ## Running it
 
-Node 20.9+ is required. This machine had no Node, so it was installed to
-`~/.local/node`; add it to your `PATH` if it isn't already:
-
 ```bash
-export PATH="$HOME/.local/node/bin:$PATH"
-```
-
-Then:
-
-```bash
+git clone git@github.com:Save7Lives/learn.save7.org.git
+cd learn.save7.org
+cp .env.example .env
 npm install
 npm run dev
 ```
 
-**The backend is the Save7 Supabase project**, so unlike the previous SQLite
-build, running this needs three values in `.env`:
+Node 20.9 or later is required (CI uses Node 22).
+
+The backend is the shared Save7 Supabase project, the same one `os.save7.org` and
+`volunteers.save7.org` use, so `.env` needs three values:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
@@ -36,30 +83,38 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=<the volunteer portal's Google client id>
 ```
 
-All three are safe in client code — the anon key grants nothing on its own, and
-row level security is what protects the data. That is why `.env.example` is
-committed with the real values: copy it to `.env`. The third value is optional, and
-without it sign-in falls back to the shared Google redirect flow and still works.
-`.env.example` also carries `NEXT_PUBLIC_SITE_URL`, which certificate links use. In
-production the same variables are set in the Vercel project, along with `SITE_URL`.
+All three are safe in client code: the anon key grants nothing on its own, and row
+level security is what protects the data. That is why `.env.example` is committed with
+the real values. The Google client id is optional locally; without it sign-in falls
+back to the shared Google redirect flow and still works. `.env.example` also carries
+`NEXT_PUBLIC_SITE_URL`, which certificate links use, and documents the optional
+variables. Never add the Supabase service-role key anywhere, `.env` included.
 
-There is **no local database and no seed**. The schema, the course content and
-the question bank live in the `save7-os` repository as migrations, and are applied
-with `supabase db push` — `save7-os/supabase/migrations/`, from `0091` (the schema)
-onward, with each content migration written by `npm run content:emit`. That
-is deliberate: one bank, one set of policies, and content changes that arrive as
-reviewable SQL rather than as whatever a seed script happened to write.
+There is no local database and no seed. The schema, the course content and the
+question bank live in the `save7-os` repository as migrations, from `0091` (the schema)
+onward, with each content migration written by `npm run content:emit`. That is
+deliberate: one bank, one set of policies, and content changes that arrive as
+reviewable SQL rather than as whatever a seed script happened to write. Two
+consequences worth knowing on day one:
 
-**Sign-in is a Google account**, verified by Supabase, on the same project the OS
-and the volunteer portal use — so a volunteer taking the course is one identity
-across all three sites. There is no password and no development admin account:
-admin access is a Learn role: an Owner and the Admins the Owner grants from the
-Students list (`learn_admins`, save7-os 0134), and `learn_admin_role()` is what the
-app asks. Ops staff are not Learn Admins unless granted.
+- Local development writes to real data. There is no seeded admin and no demo
+  learners. A learner row you create locally is a row in the same project as the
+  organisation's books.
+- Sign-in is a Google account, verified by Supabase on the same project the OS and the
+  volunteer portal use, so a volunteer taking the course is one identity across all
+  three sites. There is no password. Registration comes first: a database trigger
+  refuses an account for an address that is not already on a list, so register at
+  `/register` (which posts to the `register-learner` Edge Function) before your first
+  sign-in.
 
-Registration comes first and sign-in second, because a database trigger refuses
-an account for an address that is not already on a list. Register at `/register`,
-which posts to the `register-learner` Edge Function.
+There is no admin account to create. Admin is a Learn role (`learn_admins`, save7-os
+0134): one Owner, and the Admins the Owner grants from the Students list.
+`learn_admin_role()` is what the app asks. Ops staff (`app_is_staff()`) count only
+while no Owner exists.
+
+For local sign-in, `npm run dev` serves on port 3000, so the matching Supabase redirect
+entry is `http://localhost:3000/**` (OPERATIONS.md, *Sign-in and registration
+allow-lists*).
 
 ### Scripts
 
@@ -69,50 +124,75 @@ which posts to the `register-learner` Edge Function.
 | `npm run build` / `start` | Production build and serve |
 | `npm run typecheck` | `next typegen && tsc --noEmit` |
 | `npm run lint` | ESLint |
+| `npm test` | The unit tests (Vitest), no database needed |
+| `npm run e2e` / `e2e:headed` | The browser suite against a private local Postgres (*End-to-end tests* below) |
 | `npm run content:emit` | Regenerate the Supabase migration that loads the course |
-| `npm run content:apply` | Apply that migration to the Supabase project |
+| `npm run content:apply` | Apply a generated content migration straight to the database, for when the `save7-os` checkout is not to hand (needs `SUPABASE_DB_URL`) |
 | `npm run media:check` | Check the film's files: names carry their content hash, the captions are the transcript's words, the registry matches the file. Runs in CI |
-| `npm run media:upload` | Publish the Stage 3 film, its poster and captions to Supabase Storage, and prove how they are served (see [MEDIA-HOSTING.md](MEDIA-HOSTING.md)) |
+| `npm run media:upload` | Publish the Stage 3 film, its poster and captions to Supabase Storage, and prove how they are served (OPERATIONS.md, *The Stage 3 film*) |
 | `npm run media:verify` | Check that a host serves the film as the app needs: content type, range requests, one-year cache, CORS. Reads nothing secret |
-| `npm run brand:generate` | Re-embed the Save7 logo used on certificates |
+| `npm run certificate:fonts` | Re-embed the certificate's three fonts from `src/assets/fonts/` |
+| `npm run check:vocabulary` | Fail on "module(s)" in learner-facing strings under `src/`. Runs in CI |
+| `npm run audit:a11y` / `audit:a11y:selftest` | The accessibility and contrast audit (*Signed-in accessibility audit* below) |
 
-There is no deploy script: Vercel builds every push (see [Deploying](#deploying)).
-Nothing runs the host locally either. A preview deployment from a branch push is the
-closest thing to a check of the real host. The gate before claiming something works
-is:
+There is no deploy script: Vercel builds every push. Nothing runs the host locally
+either; a preview deployment from a branch push is the closest thing to a check of the
+real host.
+
+### Before you say it works
 
 ```bash
 npm run typecheck && npm run lint && npm run build
 ```
 
+CI (`.github/workflows/build.yml`) runs those on every push to `main` and every pull
+request, together with `media:check`, `node scripts/audit-gate.mjs` (dependency
+advisories, see `docs/dependency-advisories.md`), `check:vocabulary` and the public half
+of `audit:a11y`. It does not run `npm test` or `npm run e2e`, so run those yourself
+before you merge.
+
+### How changes ship
+
+Open a pull request against `main`. Vercel's Git integration builds every push: `main`
+publishes to `learn.save7.org`, and every other branch gets a preview URL. GitHub
+Actions only runs the gates. There is no deploy command and you do not need Vercel
+credentials. A schema or content change is a migration in `save7-os`, applied before
+the code that reads it is pushed. OPERATIONS.md has all of it.
+
+The repository is public on purpose until launch, because Vercel's Hobby plan cannot
+deploy a private repository owned by a GitHub organization. It holds the quiz answer
+keys, so it has to go private before launch (OPERATIONS.md, *Open items*). Do not
+change the setting on your own, and until it is private never commit anything you would
+not publish.
+
 ---
 
 ## The course
 
-Three levels, each a **complete achievement with its own certificate**. A learner
-who stops after Beginner has finished something real — that is a deliberate
-design goal, not a consolation.
+Three Levels, each a complete achievement with its own Certificate. A learner who stops
+after Beginner has finished something real; that is a deliberate design goal, not a
+consolation.
 
-Eleven **Stages** in all, from `prisma/content/structure.ts`:
+Eleven Stages in all, from `prisma/content/structure.ts`:
 
 | Level | Stages | Certificate |
 | --- | --- | --- |
-| 🟢 Beginner | 3: Why Donation Matters · Busting the Myths · How Donation Actually Works | Beginner |
-| 🟡 Intermediate | 4: How Donation Happens: The Process · Consent: Whose Decision and How · The South African Legal Framework · Ethics of Donation and End-of-Life Care | Intermediate |
-| 🔴 Advanced | 4: The Transplant/Donation Coordinator's Role · Having the Donation Conversation · Consent and End-of-Life Ethics, In Depth · Public Advocacy: Equity, Media, and Community Trust | Advanced |
+| 🟢 Beginner | 3: Why donation matters · Busting the myths · How donation actually works | Beginner |
+| 🟡 Intermediate | 4: How donation happens: the process · Consent: whose decision and how · The South African legal framework · Ethics of donation and end-of-life care | Intermediate |
+| 🔴 Advanced | 4: The transplant/donation coordinator's role · Having the donation conversation · Consent and end-of-life ethics, in depth · Public advocacy: equity, media, and community trust | Advanced |
 
 Stage numbering restarts in each Level, because the Certificate is per Level. A
-Certificate's title is the Level's name and nothing more. **In the database and in
-code a Stage is still a `module`** (`learn_modules`, `learn_complete_module`, the
+Certificate's title is the Level's name and nothing more. In the database and in code a
+Stage is still a `module` (`learn_modules`, `learn_complete_module`, the
 `/levels/[level]/modules/[module]` route): no stored key was renamed (#26), so the
 content files say Stage and the schema says `module`.
 
-**Learner flow:** welcome → introduction → first Baseline Sitting → Stage content,
-each Stage ending in its Stage Quiz → Certificate, once every Stage Quiz in the Level
-is passed → later Baseline Sittings, offered after each Level and never required.
-Stage content waits for the first Sitting. A Stage Quiz is five questions drawn from
-a bank of fifteen, and four right passes it. Passing it is what completes the Stage,
-and retaking it is unlimited. There is no Level-wide assessment.
+Learner flow: welcome → introduction → first Baseline Sitting → Stage content, each
+Stage ending in its Stage Quiz → Certificate, once every Stage Quiz in the Level is
+passed → later Baseline Sittings, offered after each Level and never required. Stage
+content waits for the first Sitting. A Stage Quiz is five questions drawn from a bank
+of fifteen, and four right passes it. Passing it is what completes the Stage, and
+retaking it is unlimited. There is no Level-wide assessment.
 
 Every Stage follows the same seven-part spine: *why this matters → learn → key
 takeaways → check your understanding → study guide → further reading → complete*.
@@ -121,50 +201,31 @@ takeaways → check your understanding → study guide → further reading → c
 
 ## Architecture
 
-Next.js 16.3.6 (App Router) · React 19 · TypeScript · Tailwind CSS v4 ·
-Supabase (Postgres) · hosted on **Vercel** — see [DEPLOY.md](DEPLOY.md).
+The app is the Vercel project `learn-save7-org`. It is a `next build` with no adapter,
+and every route is dynamic (server-rendered on demand). Next has a security floor:
+never go below 16.3.3, where the AVIF image-optimization RCE (GHSA-2xp9-vwfh-vxw4,
+CVSS 9.5) was fixed. Nothing caps Next on Vercel, so patches can be taken as they
+land. `docs/dependency-advisories.md` tracks the current advisories.
 
-The app is the Vercel project `learn-save7-org`, on a Hobby team named `Save7`. It
-answers at `https://learn.save7.org`, and has since 2026-10-07. It is a plain
-`next build` with no adapter, and every route is dynamic (server-rendered on
-demand). It ran on Cloudflare Workers and Cloudflare Pages before this; why it left
-is recorded in [HANDOVER.md](HANDOVER.md) §1. **Next is not pinned.** Nothing caps it
-on Vercel, so security patches can be taken as they land, but never go below 16.3.3:
-that release (and 15.5.24) is where the AVIF image-optimization RCE
-(GHSA-2xp9-vwfh-vxw4, CVSS 9.5, published 2026-09-08) was fixed. 16.3.6 carries no
-open critical or high advisory.
+**Why Supabase and not its own database.** The course was built on its own SQLite/D1
+database with its own password login, and the volunteer portal held a second,
+hard-coded copy of forty of its questions. Two stores meant two answers to "has this
+person passed", and a question corrected in one place stayed wrong in the other. The
+backend is now the Save7 Supabase project, the same one the OS and the volunteer portal
+use, so a volunteer has one identity across all three sites and their course progress
+shows up in the portal. D1, drizzle, `better-sqlite3`, bcrypt and the local seed are
+gone.
 
-**Why Supabase and not its own database.** The course was built on its own
-SQLite/D1 database with its own password login, and the volunteer portal held a
-second, hard-coded copy of forty of its questions. Two stores meant two answers to
-"has this person passed", and a question corrected in one place stayed wrong in the
-other. The backend is now the Save7 Supabase project — the same one the OS and the
-volunteer portal use — so a volunteer has one identity across all three sites and
-their course progress shows up in the portal.
+**How this app reads data.** There is no ORM. The app talks to Supabase over HTTPS with
+the anon key and the learner's own JWT, so every read is subject to the same row level
+security a browser would face; `authz.ts` is the second layer rather than the only one.
+A visitor who has not signed in reads as `anon`, which may see the Level and Stage
+catalogue and nothing else, so the landing page can show the Levels (save7-os 0131).
 
-**What that means for how this app reads data.** There is no ORM. The app talks to
-Supabase over HTTPS with the **anon key and the learner's own JWT**, so every read
-is subject to the same row level security a browser would face; `authz.ts` is the
-second layer rather than the only one. A service-role client would have made every
-query trivially allowed and turned an app-level mistake into a data leak. A visitor
-who has not signed in reads as `anon`, which may see the Level and Stage catalogue
-and nothing else, so the landing page can show the Levels (save7-os 0131).
-
-**Where the rules live.** Anything a client must not be able to assert is a
-security-definer function in the database, not code here:
-
-| Function | Why it is not in this repo |
-| --- | --- |
-| `learn_submit_attempt` | Grading needs the answer key, which has no read path |
-| `learn_grade_check` | Same, for the inline checks |
-| `learn_start_stage_quiz` | The draw of five questions from fifteen, so a refresh cannot re-roll for easier ones |
-| `learn_complete_module` | Records that a Stage was read, nothing more. Passing the Stage Quiz is what completes a Stage, and Level and course percentages are derived, not claimed |
-| `learn_submit_baseline_sitting` | A Sitting is marked from the bank, never from the payload, and written once |
-| `learn_issue_certificate` | The gate, every Stage Quiz in the Level passed, must be checked where it cannot be skipped |
-| `learn_verify_certificate` | A verifier has no account, so RLS cannot serve them |
-| `learn_claim_me` | `learners` has no insert policy, on purpose |
-| `learn_record_date_of_birth` | An under-18 date deletes the row it would be written to, and is never stored |
-| `learn_record_popia_consent` | Consent is written once, and never moved |
+**Where the rules live.** Anything a client must not be able to assert (marking, the
+Stage Quiz draw, issuing a Certificate, enrolment, the age and consent gates) is a
+security-definer function in the database, not code here. HANDOVER.md §1 lists them,
+with the migration that made each.
 
 ```
 src/
@@ -175,106 +236,114 @@ src/
     api/quiz/check   server-side grading for inline checks
     certificate/     public verification, its own bare layout for printing
   components/
-    lesson/          lesson body, Markdown renderer, Stage runner (`ModuleRunner`)
+    lesson/          lesson body, Markdown renderer, Stage runner (`ModuleRunner`), the film
     quiz/            Stage Quiz and Baseline runners
+    certificate/     the Certificate artwork and its embedded fonts
     ui/              design system primitives
   lib/
     auth.ts          Google sign-in via Supabase, sessions
     authz.ts         requireUser / requireAdmin
     course.ts        structure + progress reads
+    course-position.ts  where a Student stands in the course
     progress.ts      progress writes and events
+    progress-record.ts  the Progress Record, read through one SQL module (docs/adr/0001)
     quiz.ts          the quiz engine
     baseline.ts      Baseline Sittings, when one is due, and Improvement read off them
     certificates.ts  issuance and verification
+    films.ts         the registered films; media.ts says where they are served from
     admin/           the Admin's reads (data.ts) and the Growth Indicators (model.ts)
     supabase/        server + browser clients, one project config
   db/
     rows.ts          the shape of every row this app reads
 prisma/
-  content/           the course, as data — the authoring source of truth
+  content/           the course, as data: the authoring source of truth
     structure.ts     the Levels and Stages, and the lessons in each
     quiz-*.ts        the Stage Quiz banks, one file per Level
     questions-*.ts   the Baseline and the clinical gate banks
+  supabase/          a copy of each generated content migration
+content/             lesson prose, Markdown, one folder per Stage
 scripts/
   emit-supabase-content.ts   writes the course into a Supabase migration
+e2e/                 the browser suite and its local stack
 ```
 
-The `prisma/` directory name is historical — it holds the course content and
-nothing else. The schema and the content live as migrations in the `save7-os`
-repository, because they belong to the project that serves them.
+The `prisma/` directory name is historical: it holds the course content and nothing
+else. The schema and the content live as migrations in the `save7-os` repository,
+because they belong to the project that serves them.
 
 ### Content is data, not code
 
 A lesson's prose is Markdown in `content/<level>/<stage>/`.
-`scripts/emit-supabase-content.ts` writes it into `learn_lessons.body_markdown`,
-and `src/components/lesson/Markdown.tsx` renders it. Nothing a learner reads is
-hardcoded in React. The renderer is small and escape-first, because it is an XSS
-boundary. `content/README.md` lists what it accepts, tables included.
+`scripts/emit-supabase-content.ts` writes it into `learn_lessons.body_markdown`, and
+`src/components/lesson/Markdown.tsx` renders it. Nothing a learner reads is hardcoded
+in React. The renderer is small and escape-first, because it is an XSS boundary.
+`content/README.md` lists what it accepts, tables included. Questions and the reading
+list are TypeScript in `prisma/content/`.
 
-The prior build's interactive components (`OrganExplorer`, `MythFlip`,
-`ChapterVideo` and eight more), each fed by a JSON payload on its lesson row, were
-deleted in wayfinder #60. No lesson had used one since the prose moved to
-Markdown, and git keeps them.
+The prior build's interactive components (`OrganExplorer`, `MythFlip`, `ChapterVideo`
+and eight more), each fed by a JSON payload on its lesson row, were deleted in
+wayfinder #60. No lesson had used one since the prose moved to Markdown, and git keeps
+them.
 
 ### Assessment integrity
 
-- **Answer keys never reach the browser.** `toClientQuestion` in `src/lib/quiz.ts`
-  is the only path from a question row to the client, and it strips `isCorrect`.
-  All grading — including the formative inline checks — happens on the server.
-- **The Baseline is capped at four Sittings, and each is frozen.** A Sitting is the
-  same twenty questions, marked in one call and stored as its scores, never its
-  answers. A database CHECK and UNIQUE stop a fifth, and a client cannot write a
-  Sitting at all. A learner can therefore not keep sitting the paper until the
-  score looks good.
-- **Only the Baseline feeds reported improvement.** Stage Quiz retakes are
-  unlimited, because passing every Stage Quiz in a Level earns its Certificate. If
-  they counted, Save7's headline learning gain would drift upward forever and the
-  platform's central claim would be unfalsifiable.
-- **Multi-select requires an exact set match.** Partial credit would teach
-  learners to select everything.
-- **Improvement compares a learner's first Sitting with a later one.** Every
-  Sitting is the same paper, so the comparison is like for like without matching
-  individual questions, and there is no `pairKey`. It is reported overall and per
-  Level, and the count of learners behind each figure is always shown, so a thin
-  comparison looks thin.
+- **Answer keys never reach the browser.** `toClientQuestion` in `src/lib/quiz.ts` is
+  the only path from a question row to the client, and it strips `isCorrect`. All
+  grading, including the formative inline checks, happens on the server, and the key
+  itself is unreadable to every client role (HANDOVER.md §1).
+- **The Baseline is capped at four Sittings, and each is frozen.** A Sitting is the same
+  twenty questions, marked in one call and stored as its scores, never its answers. A
+  database CHECK and UNIQUE stop a fifth, and a client cannot write a Sitting at all. A
+  learner can therefore not keep sitting the paper until the score looks good.
+- **Only the Baseline feeds reported improvement.** Stage Quiz retakes are unlimited,
+  because passing every Stage Quiz in a Level earns its Certificate. If they counted,
+  Save7's headline learning gain would drift upward forever and the platform's central
+  claim would be unfalsifiable.
+- **Multi-select requires an exact set match.** Partial credit would teach learners to
+  select everything.
+- **Improvement compares a learner's first Sitting with a later one.** Every Sitting is
+  the same paper, so the comparison is like for like without matching individual
+  questions, and there is no `pairKey`. It is reported overall and per Level, and the
+  count of learners behind each figure is always shown, so a thin comparison looks
+  thin.
 
 ### Content governance
 
 Every Stage Quiz, Baseline and clinical gate question is registered in
-`learn_review_items` by the content generator (`scripts/emit-supabase-content.ts`),
-so **no question joins the course without joining the register**. A question whose
-`verifiedAgainst` names the document it was checked against is emitted as
-approved. One without stays in the register as needing verification until Save7
-decides at `/admin/content-review`, which records who decided and when.
+`learn_review_items` by the content generator, so no question joins the course without
+joining the register. A question whose `verifiedAgainst` names the document it was
+checked against is emitted as approved. One without stays in the register as needing
+verification until Save7 decides at `/admin/content-review`, which records who decided
+and when.
 
 Re-running the generator never overrides an approval or a rejection, and it never
 deletes. A reworded question gets a new register row, and the old one stays behind.
 
-**Two things the register does not cover.** Lesson prose is not registered: it
-names its sources in the text and in each Stage's further reading, and nothing in
-the app records a sign-off on it. And nothing learner-facing reads the register, so
-a question still needing verification reaches learners with no badge.
+Two things the register does not cover. Lesson prose is not registered: it names its
+sources in the text and in each Stage's further reading, and nothing in the app records
+a sign-off on it. And nothing learner-facing reads the register, so a question still
+needing verification reaches learners with no badge.
 
-**As of 7 October 2026**, read from production, all 205 registered questions are
-approved on a named source, and none yet carries a Save7 reviewer's name.
+As of 18 October 2026, read from production, all 205 registered questions are approved
+on a named source, and none yet carries a Save7 reviewer's name.
 
-Citations are real. No author, year, journal or identifier has been invented
-anywhere in this course.
+Citations are real. No author, year, journal or identifier has been invented anywhere
+in this course.
 
 ### Where the content comes from
 
 The base is the Source Corpus: the ten PDFs Save7 supplied, served from
-`/public/resources` so learners can open the reading rather than hit a paywall, and
-one film. The Stages also cite public law and professional guidance that is not in the
-corpus (below the table). **A Stage's own source list is its `further-reading.md`,
-and each Stage Quiz item names the document it was checked against in
-`verifiedAgainst`.** The table says where each corpus source is used, by Stage.
+`/public/resources` so learners can open the reading rather than hit a paywall, and one
+film. The Stages also cite public law and professional guidance that is not in the
+corpus (below the table). A Stage's own source list is its `further-reading.md`, and
+each Stage Quiz item names the document it was checked against in `verifiedAgainst`.
+The table says where each corpus source is used, by Stage.
 
 | Source | Used for |
 | --- | --- |
-| Save7, *Transplant Alchemy 101 — Study Guide* | Beginner Stages 2 and 3, for the family's role in consent (its Objective 2), cited beside de Jager et al. (2019). A tertiary document, so the primary sources lead |
+| Save7, *Transplant Alchemy 101: Study Guide* | Beginner Stages 2 and 3, for the family's role in consent (its Objective 2), cited beside de Jager et al. (2019). A tertiary document, so the primary sources lead |
 | Save7, *7 Lives in 7 Steps* | Not used as content: it is an ICU referral algorithm for hospital staff, and the Curriculum Spec excludes it. Beginner Stage 3 and Intermediate Stage 1 name it in Further Reading only to say what not to reach for |
-| Save7, *The Journey of a Gift* (6m59s) | Beginner Stage 3's film, shown at the top of the Stage with captions, a transcript and a note on the three places it contradicts the course (#61). Further Reading in all three Beginner Stages points to it too |
+| Save7, *The Journey of a Gift* (6m59s) | Beginner Stage 3's film, shown at the top of the Stage with captions and a transcript (#61). Further Reading in all three Beginner Stages points to it too |
 | Thomson et al. (2021), *SA Guidelines on the Determination of Death* | Intermediate Stage 1: the tests in *Determining death* come from it, and most of that Stage Quiz is checked against it |
 | SATCS *Red File* | Referral, consent and family-approach practice, donation routes, team roles and tissue donation. Every Stage cites it, most heavily Advanced Stages 2 and 4 |
 | *Excellence in Deceased Donation* manual (2025) | The reprints inside it that the course cites, among them the Western Cape circular H 84/2025, HPCSA Booklets 4 and 17, and the Australian best-practice guideline, which the Stage Quizzes mark as non-South African. Cited in Intermediate Stages 1 and 4 and Advanced Stages 1 to 3 |
@@ -283,146 +352,74 @@ and each Stage Quiz item names the document it was checked against in
 | Weill et al. (2015) | The clinical gate bank only. No Stage cites it |
 | Porrett et al. (2009) | In the corpus, but no Stage or question cites it |
 
-**Public law and guidance that is not in the corpus**, each named in the Stage that
-uses it: the National Health Act 61 of 2003 (Chapter 8) and its 2012 regulations, GN
-R180, which Stages in all three Levels cite; the HPCSA booklets, for Intermediate
-Stages 2 and 4 and Advanced Stage 3; and the SATS/SATCS five-year report, for Beginner
-Stages 1 and 2 (below).
+Public law and guidance that is not in the corpus, each named in the Stage that uses
+it: the National Health Act 61 of 2003 (Chapter 8) and its 2012 regulations, GN R180,
+which Stages in all three Levels cite; the HPCSA booklets, for Intermediate Stages 2
+and 4 and Advanced Stage 3; and the SATS/SATCS five-year report, for Beginner Stages 1
+and 2 (below).
 
-**The newest verified national figures are for 2021.** Beginner Stage 1 leads with
-the SATS/SATCS five-year report, 2017–2021 (published 2024). Its study guide keeps
-the Organ Donor Foundation's 2010–2019 decade totals only as dated background, and
-marks figures reported for 2024 as not independently verified. Every statistic
-carries its year, since an undated one quietly becomes a wrong one.
+The newest verified national figures are for 2021. Beginner Stage 1 leads with the
+SATS/SATCS five-year report, 2017 to 2021 (published 2024). Its study guide keeps the
+Organ Donor Foundation's 2010 to 2019 decade totals only as dated background, and marks
+figures reported for 2024 as not independently verified. Every statistic carries its
+year, since an undated one quietly becomes a wrong one.
 
-### FACTS — taught as FACTS's own, deliberately framed
+### FACTS: taught as FACTS's own, deliberately framed
 
-Advanced Stage 2, *Having the Donation Conversation*
-(`content/advanced/donation-conversation/`), teaches **FACTS**, the Family Approach to
-Consent for Transplant Strategy, and its eight steps as FACTS's own: planning,
-breaking bad news, a time-out break, assessing understanding and acceptance, the
-consent conversation, a second time-out break, the final family discussion, and
-follow-up, feedback and support.
+Advanced Stage 2, *Having the donation conversation*
+(`content/advanced/donation-conversation/`), teaches FACTS, the Family Approach to
+Consent for Transplant Strategy, and its eight steps as FACTS's own: planning, breaking
+bad news, a time-out break, assessing understanding and acceptance, the consent
+conversation, a second time-out break, the final family discussion, and follow-up,
+feedback and support.
 
-**Where each claim comes from.** The steps, the Do's and Don'ts, the two hard cases and
-the donor pause are from the *Wits Transplant Procurement Handbook* (Wilmans and de
-Jager, 2019). The handbook's download link no longer works, and its FACTS section is
-reproduced in the SATCS Red File, which is now in the Source Corpus
+Where each claim comes from. The steps, the Do's and Don'ts, the two hard cases and the
+donor pause are from the *Wits Transplant Procurement Handbook* (Wilmans and de Jager,
+2019). The handbook's download link no longer works, and its FACTS section is
+reproduced in the SATCS Red File, which is in the Source Corpus
 (`public/resources/satcs-red-file.pdf`, section 8.1). That is the file the previous
-build could not read, which is why it had to flag the steps as unverified. The
-acronym, the Wits origin, the adaptation of the UK NHS Blood and Transplant guidance
-and the intended audience of procurement coordinators are from de Jager et al.,
-*SAMJ* 2019;109(9). The consent-rate figure in that paper (25% to 73%, 35 of 48
-families) is one coordinator at one centre, compared before and after, and the lesson
-says so. Wayfinder #49 decided to teach the steps as FACTS's own, citing the Red File.
+build could not read, which is why it had to flag the steps as unverified. The acronym,
+the Wits origin, the adaptation of the UK NHS Blood and Transplant guidance and the
+intended audience of procurement coordinators are from de Jager et al., *SAMJ*
+2019;109(9). The consent-rate figure in that paper (25% to 73%, 35 of 48 families) is
+one coordinator at one centre, compared before and after, and the lesson says so.
+Wayfinder #49 decided to teach the steps as FACTS's own, citing the Red File.
 
-**The framing is a safety decision, not an editorial one.** FACTS is a clinical
-procurement strategy. The Stage teaches learners to understand *why* the professional
-conversation is structured as it is, and to apply the parts that fall to anyone near a
-family: refer early, keep donation out of the conversation until the family accepts
-the death, avoid the words that mislead. Its introduction says plainly that asking for
-consent belongs to the transplant coordinator working with the treating team, and that
-completing the course qualifies nobody to do it, and its key takeaways repeat that
-asking is the coordinator's job. The Stage Quiz is written so that no item treats the
-learner as the person who asks. A course completion must never read as authorisation
-to do a transplant coordinator's job.
+The framing is a safety decision, not an editorial one. FACTS is a clinical procurement
+strategy. The Stage teaches learners to understand *why* the professional conversation
+is structured as it is, and to apply the parts that fall to anyone near a family: refer
+early, keep donation out of the conversation until the family accepts the death, avoid
+the words that mislead. Its introduction says plainly that asking for consent belongs
+to the transplant coordinator working with the treating team, and that completing the
+course qualifies nobody to do it, and its key takeaways repeat that asking is the
+coordinator's job. The Stage Quiz is written so that no item treats the learner as the
+person who asks. A course completion must never read as authorisation to do a
+transplant coordinator's job.
 
-**The film is shown at the top of Beginner Stage 3, with its captions on.** *The
-Journey of a Gift* plays inside the Stage, with its transcript beside it and a note on
-the three places where it contradicts the course: over 65 tissue lives against up to
-fifty, a state pathologist against the Forensic Pathology Service, and a legal
-guarantee of no cost against no cost in practice. Wayfinder #58 decided that, because
-WCAG 2.x SC 1.2.2 requires captions on prerecorded video and a transcript alone does
-not meet it, and #61 built it. The captions are what is **said**. What the pictures
-show is not described, which SC 1.2.3 asks for, and nothing has decided that is not
-needed. Their timing came from speech recognition and has not yet been checked by
-someone listening. [MEDIA-HOSTING.md](MEDIA-HOSTING.md) says where to listen.
+### The film
 
----
-
-## Deploying
-
-**[DEPLOY.md](DEPLOY.md) is the guide** to the Vercel setup and the Supabase and
-Google settings that have to know the site's address.
-
-Five things are worth knowing before the first deploy:
-
-**There is no deploy command.** Vercel's Git integration builds every push: `main`
-is the production branch and publishes to `learn.save7.org`, and every other branch
-gets a preview URL. GitHub Actions (`build.yml`) only runs the gates: typecheck,
-lint and build. Vercel's Instant Rollback makes the previous production deployment
-available at the custom domain again. Configuration is environment variables in the
-Vercel project, set for Production and Preview, and **a changed variable takes effect
-only after a redeploy**. Two steps are still to do: `SITE_URL` and
-`NEXT_PUBLIC_SITE_URL` hold a placeholder (`https://learn-save7-org.vercel.app`) and
-must become `https://learn.save7.org`, and that address must also be added to
-Supabase's redirect URLs (the Google OAuth client's authorised origins were reported
-done by Gilbert but cannot be checked from outside Google). See
-[HANDOVER.md](HANDOVER.md) §6.
-
-**The film ships with the app.** The film, its poster and its captions are committed
-at `public/media/` under names that carry their content hash, and Vercel serves them
-from the same origin, the film as `video/mp4` with range requests. Supabase Storage
-remains the long-term home (#23). `npm run media:upload` puts the files there and
-proves how they are served, and the app moves over when `MEDIA_BASE_URL` is set in the
-Vercel project and the site is redeployed. [MEDIA-HOSTING.md](MEDIA-HOSTING.md) has
-the detail.
-
-**Hobby is for non-commercial use only, and the repository is public on purpose.**
-Nobody has confirmed that the course meets Hobby's condition. The repository is
-public because Hobby cannot deploy a private repository owned by a GitHub
-organization, and this one is owned by `Save7Lives`. It holds the quiz answer keys,
-so it has to be made private before launch, which needs Vercel Pro or moving the
-repository to a personal GitHub account. See [HANDOVER.md](HANDOVER.md) §6.
-
-**Content corrections are a migration now, not a button.** The old build had an
-admin route that re-seeded the course from the running app. Content is now applied
-by `supabase db push`, so a correction is `npm run content:emit` followed by a
-push — slower, and reviewable, which is the trade that was wanted.
-
-**The end-to-end suite** (`npm run e2e`, see *End-to-end tests* below) drives the learner
-journey and the Admin journeys against a private Postgres holding the real Learn schema.
-It is not run in CI, which has no Postgres, so run it before you merge.
+*The Journey of a Gift* plays at the top of Beginner Stage 3, with its captions on and
+its transcript beside it. Wayfinder #58 decided that, because WCAG 2.x SC 1.2.2 requires
+captions on prerecorded video and a transcript alone does not meet it, and #61 built
+it. The captions are what is said; their timing came from speech recognition and has
+not yet been checked by someone listening. The note on where the film and the course
+differ was taken off (#92), and on 2026-10-16 Save7 decided to keep the film as it is
+with no description of its pictures (#80). OPERATIONS.md, *The Stage 3 film*, has the
+files, hosting and caption detail.
 
 ---
 
-## What Save7 still needs to supply
+## Tests
 
-The Levels and Stages are written and in production: three Levels and eleven Stages.
-What remains for Save7 to supply or decide is below, and
-[DEPLOY.md](DEPLOY.md) (*Outstanding right now* and *Before you launch*) is the longer
-account. Build work is tracked in this repo's issues; [CONTEXT.md](CONTEXT.md) is the
-glossary and [CURRICULUM-ASSESSMENT-SPEC.md](CURRICULUM-ASSESSMENT-SPEC.md) the spec.
+### Unit tests
 
-| | |
-| --- | --- |
-| **Legal review** | Intermediate Stage 3 (*The South African Legal Framework*) and Advanced Stage 3 (*Consent and End-of-Life Ethics, In Depth*), against the National Health Act as currently in force. Nothing records that a lawyer has read them |
-| **Lesson prose sign-off** | No Stage's prose has one. Nothing registers prose or records who read it, so a sign-off has to happen outside the app. The law and the clinical criteria are the highest-risk prose: the determination of death in Intermediate Stage 1 and donor eligibility in Beginner Stage 2 |
-| **Question sign-off** | All 205 registered questions are approved on a named source by the content generator, and none by a person at Save7. Approving or rejecting an item at `/admin/content-review` is what puts a name against it |
-| **Refreshed statistics** | National figures newer than 2021, when SATS or the ODF publish them |
-| **Certificate wording** | Sign-off on the current text |
-| **Privacy notice details** | The responsible party's registered name and address, the information officer, an address for access and deletion requests, where the data is hosted, how long records are kept, and a legal review against POPIA. `/privacy` lists them |
-| **Live hostname settings** | `SITE_URL` and `NEXT_PUBLIC_SITE_URL` still hold a placeholder, and the Supabase redirect URL had not been added as of 7 October. The Google origin was reported done and cannot be checked from outside Google |
-| **Hosting plan** | Confirm the course meets Vercel Hobby's non-commercial condition, or fund Pro ($20 per developer seat per month). The repository must go private before launch, which needs Pro or a move to a personal GitHub account |
-| **A way to take the site down** | None exists on Vercel. The old holding page went with Cloudflare |
+`npm test` runs Vitest over the pure TypeScript in `src/lib/__tests__/` (the Admin
+model, the Course Position, the Progress Record, the Sitting labels). It needs no
+environment variables and no database: `server-only` is stubbed and the Supabase server
+client is mocked. The SQL half of the Progress Record's tests is
+`scripts/progress-record/`, which has its own README.
 
----
-
-## Deferred, by design
-
-Documented rather than half-built:
-
-- **"Explore Further" AI assistant** — retrieval-augmented over Save7-approved
-  sources only, with citations and a medical disclaimer. Never an open medical
-  chatbot. The resource metadata needed to build it is already in the schema.
-- **Full CMS authoring UI** — the data model already supports it; see *Content is
-  data, not code* above.
-- **Video engagement analytics** — the film now plays inside Stage 3 (wayfinder #61),
-  but nothing records that it was watched.
-
----
-
-## End-to-end tests
+### End-to-end tests
 
 ```bash
 npm run e2e          # headless; builds the app, starts everything, runs, stops everything
@@ -437,27 +434,31 @@ npm run e2e:headed   # the same with a visible browser
 - **Refusals, gating and the signed-out catalogue** (`refusals`, `consent-gating`,
   `signed-out`, `people`): the 18+ refusal through the register form, straight at the
   registration function and on the already-admitted path (with its terminal page),
-  consent and age gating in the app and in the database, what a visitor can and
-  cannot read (the Levels and Stages yes; Stage prose and answer keys no), and the
-  fixtures for each kind of person.
+  consent and age gating in the app and in the database, what a visitor can and cannot
+  read (the Levels and Stages yes; Stage prose and answer keys no), and the fixtures for
+  each kind of person.
 - **The Admin journeys** (`tests/admin/`): Overview figures, the Students filters and
   search, the drill-down, the Eligibility Rule (a new version each save, never empty),
   content review sign-off under the Admin's name, the Owner granting and revoking Admin,
   and the refusals for an ordinary Admin and for revoking the Owner.
 
 The Admin files read and change what the whole site shares (the cohort the Overview
-counts, the one Owner, the rule's versions), so they cannot run beside other tests. They
-are two more Playwright projects (`admin-cohort`, then `admin-governance`) that start
-after everything else has finished and run one test at a time. `admin-cohort` empties the
-Students first and arranges a small cohort it knows exactly. Run one on its own, without
-the others before it, with `npx playwright test --project=admin-cohort --no-deps`.
+counts, the one Owner, the rule's versions), so they cannot run beside other tests.
+They are two more Playwright projects (`admin-cohort`, then `admin-governance`) that
+start after everything else has finished and run one test at a time. `admin-cohort`
+empties the Students first and arranges a small cohort it knows exactly. Run one on its
+own, without the others before it, with
+`npx playwright test --project=admin-cohort --no-deps`.
 
-**It touches no production data.** The app is started with its Supabase URL pointed at
-a gateway on `localhost`, so the browser and the server only ever talk to your own
+It is not run in CI, which has no Postgres, so run it before you merge. Anything only
+the real host shows (Google sign-in, Vercel) is still a by-hand pass.
+
+It touches no production data. The app is started with its Supabase URL pointed at a
+gateway on `localhost`, so the browser and the server only ever talk to your own
 machine:
 
-- **A private Postgres 17** (Homebrew's, in `.e2e/`, loopback only, its own port)
-  holds the real Learn schema. The Save7 OS migrations are replayed onto stubs for the
+- **A private Postgres 17** (Homebrew's, in `.e2e/`, loopback only, its own port) holds
+  the real Learn schema. The Save7 OS migrations are replayed onto stubs for the
   Supabase pieces (`auth.users` and the API roles), so row level security, the marking
   functions and the sign-in triggers are the real ones. It is rebuilt only when a
   migration changes, and each run gets a fresh copy.
@@ -472,35 +473,43 @@ machine:
   if any environment variable names a hosted Supabase project.
 
 **Needs:** Node, Homebrew `postgresql@17` and `postgrest` (`brew install postgresql@17
-postgrest`), Playwright's Chromium (`npx playwright install chromium`), and a checkout of
-the Save7 OS repository, found at `../save7-os` or `~/Desktop/Save7 Course/save7-os`, or
-named by `SAVE7_OS_DIR`. A migration that needs an ops table the replay does not have
-stops the run with its file name: add its number to `SKIPPED` in `e2e/support/save7-os.ts`.
+postgrest`), Playwright's Chromium (`npx playwright install chromium`), and a checkout
+of the Save7 OS repository, found at `../save7-os` or `~/Desktop/Save7 Course/save7-os`,
+or named by `SAVE7_OS_DIR`. A migration that needs an ops table the replay does not have
+stops the run with its file name: add its number to `SKIPPED` in
+`e2e/support/save7-os.ts`.
 
 **Adding a journey:** a new file in `e2e/tests/` that imports `test` and `expect` from
 `e2e/fixtures.ts`. `e2e/support/people.ts` makes people (`newIdentity`,
 `arrangeRegisteredLearner`, `arrangeAdmin`, `chooseGoogleAccount`, `signInWithGoogle`,
 `openSignedIn` for a second person in the same test), each with an address of their own
 so tests can run in parallel. `newIdentity("x", { domain: "save7.org" })` is a staff
-member, whom the sign-in trigger admits without a registration. `e2e/support/learning.ts`
-arranges progress (`sitBaseline`, `takeStageQuiz`, `completeLevel`) through the
-database's own marking functions, as that Student, so it is real progress. `e2e/support/rest.ts`
-talks to the API as an anonymous visitor or as a signed-in person (`api`, `tokenFor`),
-for "the database refuses this" checks that a hand-written client would meet. The `quiz`
-fixture fills in a paper. The `db` fixture is a superuser connection for arranging state
-and for the answer key, which no browser can read. Use it to decide what to click, never
-to assert what a person sees. Assert only what a visitor, Student or Admin could see, or
-(for a refusal) what the API answers. A test that changes anything the whole site shares
-belongs in `tests/admin/`.
+member, whom the sign-in trigger admits without a registration.
+`e2e/support/learning.ts` arranges progress (`sitBaseline`, `takeStageQuiz`,
+`completeLevel`) through the database's own marking functions, as that Student, so it
+is real progress. `e2e/support/rest.ts` talks to the API as an anonymous visitor or as a
+signed-in person (`api`, `tokenFor`), for "the database refuses this" checks that a
+hand-written client would meet. The `quiz` fixture fills in a paper. The `db` fixture is
+a superuser connection for arranging state and for the answer key, which no browser can
+read. Use it to decide what to click, never to assert what a person sees. Assert only
+what a visitor, Student or Admin could see, or (for a refusal) what the API answers. A
+test that changes anything the whole site shares belongs in `tests/admin/`.
 
-**Signed-in accessibility audit.** `e2e/support/test-session.mjs` is the test-session helper
-`scripts/a11y/session.mjs` looks for. It arranges a Student (Baseline sat, one Stage
-passed) or an Admin in the end-to-end database and walks the app's own sign-in, so
-`npm run audit:a11y` can render the pages behind sign-in at 375 and 1024 px. It needs the
-end-to-end stack, so it is run locally and **not in CI**: the CI accessibility job has no
-Postgres or PostgREST, so it sets `A11Y_PUBLIC_ONLY=1`, which audits the public pages and
-skips each signed-in page by name with a line saying why. To audit the signed-in pages,
-run this from the repository root (Needs, below, applies):
+Ports can be moved with `E2E_PG_PORT`, `E2E_POSTGREST_PORT`, `E2E_GATEWAY_PORT` and
+`E2E_APP_PORT`. `E2E_REUSE_SERVERS=1` attaches to servers already running on those
+ports, which is faster while writing a test and is opt-in because a stale server could
+be pointed elsewhere. Traces and screenshots of a failure are in `.e2e/results/`.
+
+### Signed-in accessibility audit
+
+`e2e/support/test-session.mjs` is the test-session helper `scripts/a11y/session.mjs`
+looks for. It arranges a Student (Baseline sat, one Stage passed) or an Admin in the
+end-to-end database and walks the app's own sign-in, so `npm run audit:a11y` can render
+the pages behind sign-in at 375 and 1024 px. It needs the end-to-end stack, so it is
+run locally and not in CI: the CI accessibility job has no Postgres or PostgREST, so it
+sets `A11Y_PUBLIC_ONLY=1`, which audits the public pages and skips each signed-in page
+by name with a line saying why. To audit the signed-in pages, run this from the
+repository root (the end-to-end *Needs* above apply):
 
 ```bash
 # 1. the backend: Postgres, PostgREST and the gateway (leave it running)
@@ -523,13 +532,15 @@ being skipped, on purpose: a green audit must mean they were checked. The first 
 replays the migrations and takes about 40 seconds. Rebuild the app (step 2) after a code
 change before auditing: an old `next start` on port 3107 serves a stale build.
 
-**Proving the journey can fail (#28).** A green journey means something only if it goes
-red when the thing it checks breaks. The two deliberate breaks the suite was checked with
-are repeatable, and each should fail `learner-journey.spec.ts` at the step named:
+### Proving the journey can fail (#28)
 
-1. *The Certificate page.* In `src/app/certificate/[publicId]/page.tsx`, change the badge
-   text `✓ Valid certificate` to anything else (for example `✓ Genuine certificate`), then
-   run `npx playwright test learner-journey`. It fails at
+A green journey means something only if it goes red when the thing it checks breaks.
+The two deliberate breaks the suite was checked with are repeatable, and each should
+fail `learner-journey.spec.ts` at the step named:
+
+1. *The Certificate page.* In `src/app/certificate/[publicId]/page.tsx`, change the
+   badge text `✓ Valid certificate` to anything else (for example
+   `✓ Genuine certificate`), then run `npx playwright test learner-journey`. It fails at
    `getByText("Valid certificate")` in the "Certificate download" step. Revert the edit
    with `git checkout src/app/certificate`.
 2. *The pass mark.* Replay the schema with one extra migration that sets
@@ -550,39 +561,44 @@ are repeatable, and each should fail `learner-journey.spec.ts` at the step named
    step, because the Stage Quiz now asks for 1. The next normal run replays the real
    migrations again on its own (the template database is keyed by their hash).
 
-Ports can be moved with `E2E_PG_PORT`, `E2E_POSTGREST_PORT`, `E2E_GATEWAY_PORT` and
-`E2E_APP_PORT`. `E2E_REUSE_SERVERS=1` attaches to servers already running on those ports,
-which is faster while writing a test and is opt-in because a stale server could be
-pointed elsewhere. Traces and screenshots of a failure are in `.e2e/results/`.
+---
+
+## What Save7 still needs to supply
+
+The Levels and Stages are written and in production: three Levels and eleven Stages.
+What remains for Save7 to supply or decide:
+
+| | |
+| --- | --- |
+| **Legal review** | Intermediate Stage 3 (*The South African legal framework*) and Advanced Stage 3 (*Consent and end-of-life ethics, in depth*), against the National Health Act as currently in force. The brief said: *"Before publishing this information, verify legal claims against current authoritative South African sources."* Nothing records that a lawyer has read them |
+| **Lesson prose sign-off** | No Stage's prose has one. Nothing registers prose or records who read it, so a sign-off has to happen outside the app. The law and the clinical criteria are the highest-risk prose: the determination of death in Intermediate Stage 1 and donor eligibility in Beginner Stage 2 |
+| **Question sign-off** | All 205 registered questions are approved on a named source by the content generator, and none by a person at Save7. Approving or rejecting an item at `/admin/content-review` is what puts a name against it |
+| **Refreshed statistics** | National figures newer than 2021, when SATS or the ODF publish them. Newer verified figures would make Beginner Stage 1 land harder |
+| **Caption check** | Someone who can hear the film should spot-check the captions against playback, starting with the two moments OPERATIONS.md names (about 2:15 and 4:48) |
+| **Certificate wording** | Sign-off on the current text |
+| **Privacy notice details** | The responsible party's registered name and address, the information officer's name and contact details, an address for access and deletion requests, where the data is hosted and in which country, how long records are kept, and a legal review against POPIA. `/privacy` lists them |
+| **Hosting plan** | Confirm the course meets Vercel Hobby's non-commercial condition, or fund Pro ($20 per developer seat per month). The repository must go private before launch, which needs Pro or a move to a personal GitHub account |
+| **A way to take the site down** | None exists on Vercel. The old holding page went with Cloudflare |
+
+The course is launching publicly, which was Save7's decision, recorded here so the
+position is not ambiguous later. If reviewer-only access is wanted first, there is no
+recorded way to do it on Vercel. The earlier suggestion was Cloudflare Access in front
+of the Worker, and the course is no longer behind Cloudflare; no Vercel equivalent has
+been looked into, so it would need its own decision.
 
 ---
 
-## Verification
+## Deferred, by design
 
-The dated record is [DEPLOY.md](DEPLOY.md), *What has been verified, and what has not*;
-this is its summary, as of 7 October 2026.
+Documented rather than half-built:
 
-- **Gates.** `npm ci`, typecheck, lint and build run from a clean checkout on every
-  push to `main` and every pull request (`build.yml`), and the Build workflow passed
-  on `fc18150`, the last code commit.
-- **Answer keys.** `verify_learn_isolation()` passed against the live project on
-  2026-09-23, and `learn_choices` and `learn_questions` both denied a direct read.
-- **Production, unauthenticated.** `/`, `/login`, `/register` and `/privacy` answer
-  `200`, `/dashboard` and `/admin` redirect to sign-in, and the film serves as
-  `video/mp4` with range requests.
-- **The question register.** All 205 registered questions are approved on a named
-  source, none by a Save7 reviewer (read from production on 7 October 2026).
-- **The course in production.** Three Levels and eleven Stages (read from production
-  on 7 October 2026).
-
-**Not verified:** anything behind sign-in on the live site, Google sign-in on
-`learn.save7.org`, and marking against real data. The learner
-journey is covered by `npm run e2e` against a local database, not production.
-
-An earlier version of this section recorded a browser walkthrough of the previous
-build, its interactive components, and a contrast and responsive audit. It described
-an app that no longer exists, so it was replaced rather than kept as current, and git
-history keeps it.
+- **"Explore Further" AI assistant**: retrieval-augmented over Save7-approved sources
+  only, with citations and a medical disclaimer. Never an open medical chatbot. The
+  resource metadata needed to build it is already in the schema.
+- **Full CMS authoring UI**: the data model already supports it; see *Content is data,
+  not code* above.
+- **Video engagement analytics**: the film plays inside Stage 3 (wayfinder #61), but
+  nothing records that it was watched.
 
 ---
 
