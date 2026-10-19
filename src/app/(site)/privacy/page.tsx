@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Badge, Card, Display, Eyebrow } from "@/components/ui/primitives";
+import { Display, Eyebrow } from "@/components/ui/primitives";
 
 // Rendered per request, never prerendered: this route reads runtime configuration
 // (Supabase URL and key, SITE_URL) which Vercel supplies per environment. A
@@ -225,29 +225,6 @@ export default function PrivacyPage() {
           do not treat visiting the site, or ignoring a banner, as consent.
         </p>
       </section>
-
-      <Card className="mt-14 border-pink bg-pink-50 p-6">
-        <Badge tone="review">Pending Save7 review</Badge>
-        <h2 className="mt-3 font-bold text-navy">Before this course is published</h2>
-        <div className="prose-save7 mt-2 text-sm">
-          <p>
-            This page accurately describes what the application does, and it is written to
-            be understood rather than to be legally exhaustive. Save7 should complete it
-            before launch with:
-          </p>
-          <ul>
-            <li>the responsible party&apos;s registered name and address;</li>
-            <li>the information officer&apos;s name and contact details;</li>
-            <li>an email address for access, correction and deletion requests;</li>
-            <li>where the data is hosted, and in which country;</li>
-            <li>how long records are kept after a learner becomes inactive;</li>
-            <li>a legal review against POPIA as currently in force.</li>
-          </ul>
-          <p>
-            This notice is a factual description of the software, not legal advice.
-          </p>
-        </div>
-      </Card>
     </article>
   );
 }
