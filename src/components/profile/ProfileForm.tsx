@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/primitives";
 import { NAME_MAX } from "@/lib/constants";
-import type { ProfileFormState } from "@/app/(site)/profile/actions";
+import type { ProfileFormState } from "@/app/(site)/dashboard/actions";
 
 /**
  * Edit your own name.

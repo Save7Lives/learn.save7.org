@@ -15,7 +15,7 @@ export async function updateProfileAction(
   _prev: ProfileFormState,
   formData: FormData,
 ): Promise<ProfileFormState> {
-  const user = await requireUser("/profile");
+  const user = await requireUser("/dashboard");
 
   const result = await updateProfile(user.id, {
     firstName: String(formData.get("firstName") ?? ""),

@@ -23,7 +23,6 @@ export const PAGES = [
   { name: "Certificate verification (unknown ID)", path: "/certificate/UNKNOWN-ID", auth: "public" },
 
   { name: "Dashboard", path: "/dashboard", auth: "learner" },
-  { name: "Profile", path: "/profile", auth: "learner" },
   { name: "Course introduction", path: "/course/introduction", auth: "learner" },
   { name: "Baseline", path: "/assessment/pre", auth: "learner" },
   { name: "Level (Beginner)", path: "/levels/beginner", auth: "learner", vocabulary: true },
