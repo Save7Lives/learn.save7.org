@@ -22,7 +22,6 @@ const NAV_ITEM =
  */
 export async function SiteHeader({ className }: { className?: string }) {
   const session = await getSession();
-  const roleLabel = session?.adminRole === "owner" ? "Owner" : session?.role === "ADMIN" ? "Admin" : "Student";
 
   return (
     <header
@@ -48,7 +47,7 @@ export async function SiteHeader({ className }: { className?: string }) {
           {session ? (
             <>
               <Link href="/" className={NAV_ITEM}>
-                {roleLabel}
+                Learn
               </Link>
               {session.role === "ADMIN" ? (
                 <Link href="/admin" className={NAV_ITEM}>
