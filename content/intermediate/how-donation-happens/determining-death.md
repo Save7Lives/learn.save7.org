@@ -27,6 +27,19 @@ This is the distinction you will be asked to explain most often, and it is the o
 
 **So why is the heart still beating?** Because a ventilator is supplying the oxygen that a person who is brain dead can no longer take in for themselves, and with that oxygen the heart can go on beating for a time after death. The rise and fall of the chest is the ventilator's work too. What the family sees at the bedside is the machine, not a sign of life.
 
+:::compare
+title: A coma and brain death, side by side
+tab: A coma
+row: The brain | Badly injured, but it has not lost all of its function
+row: The brainstem | Still works. It controls breathing and the most basic reflexes
+row: Recovery | People do recover from comas
+tab: Brain death
+row: The brain | All brain function lost, completely and irreversibly
+row: The brainstem | No longer works. There is nothing left to recover
+row: Recovery | No documented case of anyone who met the preconditions and criteria ever regaining any brain function
+row: The heartbeat | A ventilator supplies the oxygen, so the heart can go on beating for a time after death
+:::
+
 ## Before any test begins
 
 The most common challenge to brain death is a fair one: *how do you know they aren't just deeply sedated, or very cold?* The answer is that nobody tests for brain death until those possibilities have been ruled out. Several things can make a living brain look, temporarily, as if it has stopped working. The guidelines require each of them to be excluded first:
@@ -38,6 +51,17 @@ The most common challenge to brain death is a fair one: *how do you know they ar
 - **Severe chemical imbalances in the blood must be corrected.** Some can dull or switch off brain responses on their own.
 
 This step is what makes the tests mean anything. If every condition that could *mimic* brain death has been ruled out, and the brain still shows no function, then the only remaining explanation is the injury itself, and the injury is one that cannot be undone.
+
+:::checklist
+title: The preconditions. Tick each one off.
+item: A known cause, capable of destroying the whole brain permanently
+item: Normal body temperature
+item: Adequate blood pressure
+item: Sedatives and other drugs that depress the brain excluded
+item: Severe chemical imbalances in the blood corrected
+pending: Nobody tests for brain death until every one of these is in place.
+done: Everything that could mimic brain death has been ruled out. The three-step test can begin.
+:::
 
 ## The three-step test
 
@@ -60,6 +84,19 @@ If even one of these reflexes is present, the brainstem is still working and the
 
 Together the three steps rule out every alternative. The preconditions exclude the conditions that could mimic death. The coma and brainstem tests show that no part of the brain is responding. The apnoea test shows that the one function the body cannot live without has gone. That is why a completed determination is final.
 
+:::steps
+title: The three-step test. Tap a step.
+step: Coma | The patient is completely unresponsive. Strong pressure produces no grimace and no movement of the face. Any response that comes from the brain rules out brain death.
+step: No brainstem reflexes | Each reflex tests a different set of nerves running through the brainstem. If even one is present, the patient is not brain dead. Tap a reflex.
+choice: Pupils | A bright light is shone into each eye, to see whether the pupils react.
+choice: Blink | The surface of the eye is touched, to see whether the eye blinks.
+choice: Grimace | Firm pressure just above the eye, to see whether the face grimaces.
+choice: Eye movement | Ice-cold water is run into each ear, which in a working brainstem makes the eyes move.
+choice: Gag | The back of the throat is touched, to see whether the patient gags.
+choice: Cough | The airway deep in the chest is stimulated, to see whether the patient coughs.
+step: The apnoea test | Under controlled conditions the patient is disconnected from the ventilator while oxygen continues to be supplied. If the body never tries to take a breath, the breathing centre in the brainstem has stopped working.
+:::
+
 ## Who makes the determination
 
 Brain death is determined by **at least two doctors**. At least one of them must have been practising for **five years or more** since registering, and **none of them may be involved in the transplant**. The guidelines recommend that they examine the patient together, and strongly advocate that the apnoea test be done once, by both doctors at the same time.
@@ -75,6 +112,16 @@ Death can only be determined this way in one of three situations: trying to rest
 Once the heart has stopped, the doctor observes the patient for at least **five minutes**, during which there must be a **continuous** absence of circulation and of breathing. At the end of that period the doctor confirms that the pupils do not react to light and that there is no movement in response to pressure above the eye. The time of death is the moment those criteria are met.
 
 **Why the wait exists.** A heart that has stopped can, very rarely, start again on its own in the first minutes. So the guideline sets five continuous minutes as the period that establishes the stopping is irreversible, and adds a rule: if circulation or breathing returns at any point, the five minutes start again from zero. The wait is there to make certain. It is not a countdown run for the transplant team's benefit. Without the reason the wait can look arbitrary, or worse, so knowing it is what lets you answer the question honestly.
+
+:::timer
+title: The five-minute wait, one second to a minute
+units: 5
+start: The heart has stopped. Start observing.
+tick: Minute {n}: still no circulation and no breathing.
+done: Five continuous minutes. The doctor now confirms that the pupils do not react to light and that there is no movement in response to pressure above the eye.
+reset: Circulation returns
+after-reset: If circulation or breathing returns at any point, the five minutes start again from zero.
+:::
 
 Two more rules close the gap people worry about. Once death has been confirmed, nothing may be done that could restore blood flow to the brain. And where organs are to be donated, a **second doctor** must also certify the death: as with brain death, at least one of the two must have more than five years' experience, and neither may be involved with the transplant team.
 

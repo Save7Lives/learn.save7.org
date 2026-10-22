@@ -617,3 +617,12 @@ body:has([data-reader]) .site-header {
     margin-top: 6px;
   }
 }
+
+/* --- Lesson sections ---------------------------------------------------------
+   LessonBody cuts a lesson into <section>s at its ## headings, one .lesson-prose
+   per run of prose. `.lesson-prose > :first-child` zeroes the top margin of each
+   run, which is right for a paragraph after an interactive block but would pull
+   every later section's heading up against the text above it. */
+.lesson-section + .lesson-section > .lesson-prose:first-child > h3:first-child {
+  margin-top: 1.9em;
+}
