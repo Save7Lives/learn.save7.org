@@ -45,6 +45,8 @@ export function StepRail({
   return (
     <nav
       aria-label="Steps in this Stage"
+      // LessonSections measures this to stick its section map just below it.
+      data-step-rail
       className="sticky top-0 z-30 border-b border-line bg-white"
     >
       {/* --- Phone: compact bar and the All steps list ------------------------ */}

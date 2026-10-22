@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import type { LessonKind } from "../../src/lib/constants";
 import { FILM_KEYS, isFilmKey, type FilmKey } from "../../src/lib/films";
+import { splitLessonBody } from "../../src/lib/lesson-widgets";
 import { hasTableLine, parseTable } from "../../src/lib/markdown-table";
 import { courseStructure, type LevelStructure, type StageSeed } from "./structure";
 
@@ -114,7 +115,26 @@ const UNRENDERABLE: Array<[string, RegExp]> = [
   ["emphasis nested inside bold", /\*\*[^*\n]*\*[^*\n]+\*[^*\n]*\*\*/],
 ];
 
-function assertRenderable(body: string, path: string): void {
+function assertRenderable(lessonBody: string, path: string): void {
+  // Interactive blocks are checked by the parser the renderer uses, and the prose
+  // around them by the rules below. A block the parser refuses would reach the
+  // learner as its raw key: value lines.
+  const segments = splitLessonBody(lessonBody);
+  for (const segment of segments) {
+    if (segment.kind === "invalid") {
+      throw new Error(
+        `${path}: contains an interactive block the app cannot draw (${JSON.stringify(segment.source.split("\n")[0])}): ${segment.error}. See content/README.md.`,
+      );
+    }
+  }
+  const body = segments.flatMap((s) => (s.kind === "markdown" ? [s.source] : [])).join("\n\n");
+  const stray = body.match(/^:::.*$/m);
+  if (stray) {
+    throw new Error(
+      `${path}: ${JSON.stringify(stray[0].slice(0, 40))} opens or closes no interactive block. A block is :::type on its own line, key: value lines, then ::: on its own line. See content/README.md.`,
+    );
+  }
+
   for (const [what, pattern] of UNRENDERABLE) {
     const match = body.match(pattern);
     if (match) {

@@ -93,6 +93,44 @@ per organ) becomes several screens of cards. Keep those as lists.
 `src/lib/markdown-table.ts` parses a table for both the loader and the renderer,
 so a table the generator accepts is a table on the page.
 
+### Interactive blocks
+
+A lesson can put a small interactive figure between its paragraphs. Each one is a
+block of its own: `:::type` on a line, then `key: value` lines, then `:::` on a
+line, with a blank line before and after.
+
+```
+:::compare
+title: A coma and brain death, side by side
+tab: A coma
+row: The brainstem | Still works
+tab: Brain death
+row: The brainstem | No longer works
+:::
+```
+
+| Type | What the reader does | Lines it takes |
+|---|---|---|
+| `compare` | Switches between two or more tabs of labelled rows | `title`, then `tab` with its `row: label \| text` lines under it |
+| `checklist` | Ticks items off, and the note under them changes once all are ticked | `title`, two or more `item`, one `pending`, one `done` |
+| `steps` | Taps a numbered step to open it, and taps a choice inside it | `title`, two or more `step: label \| text`, each with optional `choice: label \| text` lines under it |
+| `timer` | Starts a count of a few units, one a second, and can send it back to zero | `title`, `units` (1 to 20), `start`, `tick` (with `{n}`), `done`, `reset`, `after-reset` |
+
+- **The words are content.** Every word a block shows is in the lesson file, and
+  is held to the same rule as the prose around it: source it, or leave it out. The
+  blocks in Intermediate Stage 2's `determining-death.md` restate that lesson's own
+  sentences and add no claim of their own.
+- Text in a block is shown exactly as written, so Markdown in it would appear as
+  raw characters. The check refuses bold, code and links.
+- Nothing a learner does in a block is recorded or scored.
+- A lesson with three or more `##` headings also gets a map of its sections that
+  follows the reader, built from those headings. Nothing to write for it.
+
+`src/lib/lesson-widgets.ts` parses a block for the loader, `npm run content:check`
+and the renderer, so a block that passes the check is a block on the page. A new
+type means a parser case there and a component in
+`src/components/lesson/LessonWidget.tsx`.
+
 ## The seven-part spine
 
 Every Stage follows it, unchanged from the prior build:
