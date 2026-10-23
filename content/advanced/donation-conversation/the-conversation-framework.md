@@ -99,6 +99,18 @@ A thank-you letter follows. The coordinator balances what they share: enough to 
 
 **The principle:** the family is not a means to an organ. The relationship does not end when the answer is given.
 
+:::steps
+title: The eight steps of FACTS. Tap a step.
+step: Planning | Planning starts the moment a potential donor is referred. Most of a hard conversation's outcome is decided before it starts.
+step: Breaking bad news | The treating doctor leads and tells the family that their relative has died. Donation is not mentioned. The family must first understand, and then accept, that the death has happened.
+step: Time-out break | The family is given privacy and as much time with their relative as they need. The death and the donation are two separate conversations, with real time between them.
+step: Assessing understanding and acceptance | In a second meeting, the coordinator or trauma counsellor checks whether each key family member has understood and accepted the death. Having been told is not the same as understanding.
+step: The consent conversation | Only now does the coordinator raise donation. Donation is offered, not pushed.
+step: A second time-out break | The coordinator leaves the family alone to discuss it. A decision made in front of the person who asked for it is not a free one.
+step: Final family discussion | The family gives its decision. The aim is a decision the family is at peace with, not a yes.
+step: Follow-up, feedback and support | Support continues for families who declined as well as for those who consented. The relationship does not end when the answer is given.
+:::
+
 ## The Do's and Don'ts, and which are yours
 
 The handbook sums up the eight steps as a one-page list of Do's and Don'ts. Some of them belong only to the coordinator. Many belong to everyone who is near the family, and those are the ones this Stage asks you to apply.
@@ -123,6 +135,26 @@ The handbook sums up the eight steps as a one-page list of Do's and Don'ts. Some
 - **Don't** expect an answer immediately; give the family time alone.
 - **Do** explore a first refusal gently, obtain written consent, and follow up with the family and the referring hospital.
 
+:::compare
+title: Which Do's and Don'ts are yours? Tap a group.
+tab: Anyone on the treating side
+row: Referral | Do refer a potential donor to the transplant coordinator as early as possible, and involve them from the start.
+row: Treatment | Don't withdraw ventilation or stop treatment until the patient's donation potential has been assessed.
+row: Information | Don't give a family misleading information about their relative's condition.
+row: The words | Don't say "organ donation" or "transplant" to a family that has not yet accepted the death.
+row: Life support | Don't say "life support", or that the machines are keeping their relative alive. After brain death, there must be no doubt that the patient has died.
+row: Jargon | Don't use medical jargon when you explain.
+row: Two meetings | Don't give a family the diagnosis of death and raise donation in the same meeting.
+row: Support | Don't stop supporting the family, whatever they decide.
+tab: The coordinator, with the treating team
+row: Planning | Do plan the approach, introduce yourself by name as part of the team, and let the doctor break the news.
+row: Acceptance | Do confirm that every key family member understands and accepts the death before raising donation.
+row: Raising donation | Do raise donation with compassion and in positive terms, and answer questions knowledgeably.
+row: Language | Don't use negative, apologetic, manipulative or coercive language.
+row: Time | Don't expect an answer immediately; give the family time alone.
+row: After the answer | Do explore a first refusal gently, obtain written consent, and follow up with the family and the referring hospital.
+:::
+
 ## When it goes wrong: the two hard cases
 
 The handbook's authors describe two situations they meet repeatedly, even when every step has been followed.
@@ -136,6 +168,14 @@ That takes a weight off the family: they can consider donation without feeling t
 ### A family that disagrees
 
 South African families are often large, and they don't always agree. The handbook's advice is **not** to leave them to argue it out indefinitely, but to help them reach a decision. It says to explore the disagreement sensitively, especially where it comes from a misunderstanding. It also says to bring the conversation back to the person: this decision is about what *they* would have wanted, not about older conflicts in the family. The coordinator does not take sides.
+
+:::reveal
+title: When it goes wrong. Tap a card to see the response.
+card: A relative talks about life support, or the machines keeping their relative alive. | That is a sign they have not yet understood that brain death is final. The team corrects it gently and at once: the machine is supplying oxygen to the organs, and their relative has already died.
+card: "We can't be the ones to switch off the machine." | Their relative has already died, and the family does not have to make that decision. The machines will be switched off because their relative has died. They have been left on only to give the family time to say goodbye and to consider donation.
+card: The family is worried about what surgery will do to the body. | They can be told, truthfully, that their relative cannot feel anything, that they will be treated with care throughout, and that the body will not be disfigured.
+card: The family cannot agree. | Do not leave them to argue it out indefinitely. Help them reach a decision, explore the disagreement sensitively, and bring the conversation back to what the person would have wanted. The coordinator does not take sides.
+:::
 
 ## The donor pause
 

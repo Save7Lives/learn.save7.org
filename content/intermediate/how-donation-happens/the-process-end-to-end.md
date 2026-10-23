@@ -59,6 +59,18 @@ Organs are recovered in an operating theatre, as a surgical procedure performed 
 
 Organs are matched to recipients. Allocation is a matching process, not a queue in which the person who has waited longest goes first.
 
+:::steps
+title: The chain, in order. Tap a step.
+step: Identification | Identifying a possible donor is the treating team's responsibility, as part of ordinary end-of-life care. Nobody else is in the room to do it.
+step: Referral | The treating team contacts a transplant coordinator, before end-of-life matters are raised with the family. There is no legal duty to refer.
+step: Determination of death | By neurological criteria, or by circulatory criteria after treatment has been withdrawn. The doctors who determine it have nothing to do with any transplant.
+step: The family is told | The family is told that their relative has died, and is given time to understand and accept it. Donation is not raised in the same conversation.
+step: Consent and authorisation | Consent comes from the family, in an order set by law. Where the death was unnatural, the Forensic Pathology Service must also authorise what may be recovered, and the hospital gives its own written authorisation.
+step: Donor management | After brain death, care continues and it is active. It increases the number of organs that can be recovered and improves how well recipients do.
+step: Recovery | Organs are recovered in an operating theatre, with the same care and respect as any other operation. Afterwards the body is restored to its original appearance.
+step: Allocation | Organs are matched to recipients. It is a matching process, not a queue.
+:::
+
 ## Two organ pathways: DBD and DCD
 
 Most deceased organ donation follows one of two pathways. They differ at almost every step.
@@ -69,6 +81,23 @@ Most deceased organ donation follows one of two pathways. They differ at almost 
 
 Sometimes the heart does not stop within the time the organs can tolerate. The recovery team then stands down, the patient's palliative care continues with the treating team, and the family is told that donation was not possible. The Western Cape's 2025 donation policy, which sets out these steps, describes DCD as still relatively unfamiliar in South Africa, and most deceased organ donation here follows the DBD pathway.
 
+:::compare
+title: DBD and DCD, side by side
+tab: DBD
+row: The patient | On a ventilator
+row: Death | Determined by neurological criteria
+row: Blood supply | The ventilator keeps the heart beating, so the organs go on receiving blood after death
+row: Time | There is time for donor management and for recovery to be planned
+row: What can be considered | The heart, lungs, liver, kidneys and pancreas, as well as tissue
+tab: DCD
+row: The patient | The treating team has made an independent decision to withdraw life-sustaining treatment. Only then is donation considered
+row: Death | Treatment is withdrawn with two doctors on hand to certify death. Nothing is done to hasten the dying
+row: Blood supply | The organs are damaged quickly once they have no blood supply
+row: Time | Recovery has to begin as soon as possible once death has been determined
+row: What can be donated | Depends on how quickly recovery can follow
+row: If the heart does not stop in time | The recovery team stands down, palliative care continues with the treating team, and the family is told that donation was not possible
+:::
+
 ## Organs and tissue: two different pathways
 
 **Organs** have to keep working. They can only come from a DBD or DCD donor, in hospital, and must be transplanted within hours. They are not stored.
@@ -76,6 +105,21 @@ Sometimes the heart does not stop within the time the organs can tolerate. The r
 **Tissue**, such as corneas, bone, skin and heart valves, does not have to keep working in the same way. It can be donated irrespective of the manner of death, it can be recovered hours or even days after death, including after the body has been moved to a mortuary, and it does not need a ventilator at all. Tissue is processed and stored by a **tissue bank**, so it does not have to be matched to a recipient that day.
 
 That is why far more people can donate tissue than can donate organs.
+
+:::compare
+title: Organs and tissue. Tap to compare.
+tab: Organs
+row: Must it keep working? | Yes. Organs have to keep working
+row: Where from | Only from a DBD or DCD donor, in hospital
+row: Timing | Transplanted within hours
+row: Storage | Organs are not stored
+tab: Tissue
+row: Examples | Corneas, bone, skin and heart valves
+row: Must it keep working? | Not in the same way
+row: Where from | Can be donated irrespective of the manner of death, and does not need a ventilator at all
+row: Timing | Can be recovered hours or even days after death, including after the body has been moved to a mortuary
+row: Storage | Processed and stored by a tissue bank, so it does not have to be matched to a recipient that day
+:::
 
 ## Who's who
 

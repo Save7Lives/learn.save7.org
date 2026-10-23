@@ -59,6 +59,14 @@ The dead donor rule applies throughout: a patient becomes a donor only after dea
 - **Donor management:** the treating team, except for a consented brain-dead donor, whose management the transplant team may legally take over.
 - **Referral:** the whole team, as part of end-of-life care. No law requires it; professional practice does.
 
+:::reveal
+title: Who is responsible? Tap a card to check.
+card: Diagnosis, prognosis and the news of death | The primary treatment team.
+card: Raising donation and obtaining consent | The transplant coordinator, with the treating team present at the start.
+card: Donor management | The treating team, except for a consented brain-dead donor, whose management the transplant team may legally take over.
+card: Referral | The whole team, as part of end-of-life care. No law requires it; professional practice does.
+:::
+
 ## SATCS
 
 The **South African Transplant Coordinators Society**, founded on 30 June 2017 as a special interest group of the Southern African Transplantation Society. It works to a Code of Conduct, exists to educate, develop and support transplant coordinators, and produced the Organ and Tissue Donation Reference File (the Red File) for emergency departments and ICUs.

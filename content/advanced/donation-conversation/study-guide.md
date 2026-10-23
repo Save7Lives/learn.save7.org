@@ -48,6 +48,14 @@ A silent prayer or contemplation to honour the donor and their family, often use
 - Consented donations failed somewhat more often in the slower group, usually because the donor's condition deteriorated. Patience needs support and clinical care alongside it.
 - Not South African data. Illustrative only.
 
+:::reveal
+title: Han et al. 2017, read carefully. Tap a card to check.
+card: Did the slower families consent less often? | No. They consented 73% of the time (11 of 15), against 55% (51 of 92) for faster families. Not significant.
+card: Does the study show that delay improves consent? | No. A delayed decision was not inferior. It does not show that delay improves consent.
+card: So can a team simply wait? | Not on its own. Consented donations failed somewhat more often in the slower group, usually because the donor's condition deteriorated. Patience needs support and clinical care alongside it.
+card: Is it South African data? | No. One hospital in South Korea, 107 brain-dead potential donors. Illustrative only.
+:::
+
 ## Role boundaries
 
 - **Treating team:** breaks the news of death, stays for the start of the donation conversation, and avoids hopeful or misleading language.

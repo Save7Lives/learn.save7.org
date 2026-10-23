@@ -36,9 +36,28 @@ Three details are routinely got wrong:
 
 One more detail matters just as much. A person who said **no** while alive has given a "contrary direction", and the family's power to donate falls away. A clearly stated refusal is protected by the law too.
 
+:::reveal
+title: Details often got wrong. Tap each question.
+card: Is a partner included? | Yes. A partner is included, and ranks above every relative except a spouse.
+card: Can a child or sibling under 18 consent? | No. "Major" means adult, so a child or sibling under 18 cannot consent.
+card: Does the family decide as a group? | No. It is an order, not a committee. The Act does not hand the decision to the family as a group. It sets a priority.
+card: What if the person said no while alive? | That is a contrary direction, and the family's power to donate falls away. A clearly stated refusal is protected by the law too.
+:::
+
 And if none of the listed people can be found, the Act lets the Director-General of Health donate specific tissue, but only after every prescribed step to locate them has been taken.
 
 **Don't confuse this list with a different one.** The same Act has a separate order for who may consent to *treatment* on behalf of a living patient who cannot decide: spouse or partner, then parent, grandparent, adult child, brother or sister. That order applies while the patient is alive. After death, for donation, it is the section 62 order above.
+
+:::compare
+title: Two different lists. Tap to compare.
+tab: Donation after death
+row: The law | Section 62
+row: When | Only where the person made no donation, and gave no contrary direction while alive
+row: The order | Spouse, partner, major child, parent, guardian, major brother, major sister
+tab: Treatment while alive
+row: When | For a living patient who cannot decide
+row: The order | Spouse or partner, then parent, grandparent, adult child, brother or sister
+:::
 
 ## What registering does, and what it doesn't
 
@@ -54,6 +73,17 @@ So there are two halves, and both must be said together.
 **In law**, a donation made in one of the ways section 62 describes belongs to the person, and relatives have power to donate only in its absence. South African legal scholars, notably Slabbert and Venter, have written about the gap between that and what happens in hospitals, and treat it as a real weakness in how a donor's own choice is protected.
 
 **In practice**, hospitals approach the family in every case, and a family's refusal is respected.
+
+:::compare
+title: Two halves, said together
+tab: In law
+row: The person | A donation made in one of the ways section 62 describes belongs to the person
+row: The family | Relatives have power to donate only in its absence
+tab: In practice
+row: The family | Hospitals approach the family in every case
+row: A refusal | A family's refusal is respected
+row: The register | Registering does not mean that the organs will automatically be donated. Consent from the next of kin is always required
+:::
 
 Telling someone "your family can't override you" misdescribes what will actually happen. Telling them "registering is pointless" misdescribes the law, and throws away the most useful thing registration does: it tells your family what you wanted. When the family is asked, the real question is *"what would they have wanted?"* Only a family that has heard the answer can give it.
 
@@ -75,6 +105,16 @@ FACTS has eight steps. You do not need them by heart; Advanced Level works throu
 - the family's **decision is accepted**, and support continues afterwards, whatever they decided.
 
 **Dignity and non-coercion.** Nobody should be pressured, rushed or made to feel that one answer is expected. A family that says no has not failed, and nobody has failed them. A family that felt respected while declining is a better outcome than one that felt worked on.
+
+:::checklist
+title: What the approach protects. Tick each one.
+item: It is planned in advance: who will be there, where, and with an interpreter if one is needed
+item: The family is given time alone, after the news of death and again after donation is raised
+item: Someone checks what the family has understood, before donation is mentioned
+item: The family's decision is accepted, and support continues afterwards, whatever they decided
+pending: You do not need the eight steps of FACTS by heart. These are what they are built to protect.
+done: Nobody should be pressured, rushed or made to feel that one answer is expected.
+:::
 
 ## Informed consent, applied to donation
 
