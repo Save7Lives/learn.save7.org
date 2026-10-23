@@ -1,5 +1,4 @@
 import { getSession } from "@/lib/auth";
-import { whatsappCommunityUrl } from "@/lib/community";
 import { getPathwayForUser } from "@/lib/course";
 import { LandingView } from "@/components/course/LandingView";
 
@@ -19,7 +18,6 @@ export default async function HomePage() {
       currentLevelSlug={position.currentLevelSlug}
       signedIn={Boolean(session)}
       baselinePending={Boolean(session) && !position.contentOpen}
-      communityUrl={whatsappCommunityUrl()}
     />
   );
 }

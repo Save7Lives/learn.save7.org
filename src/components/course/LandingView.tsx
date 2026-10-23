@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ButtonLink, Display } from "@/components/ui/primitives";
 import type { LevelWithPosition } from "@/lib/course";
 import { ClosingBand } from "./ClosingBand";
-import { CommunityBand } from "./CommunityBand";
 import { CourseMap } from "./CourseMap";
 import { HowItWorks } from "./HowItWorks";
 import { LevelCard } from "./LevelCard";
@@ -17,7 +16,6 @@ export function LandingView({
   currentLevelSlug,
   signedIn,
   baselinePending,
-  communityUrl = null,
 }: {
   levels: LevelWithPosition[];
   /** The Level the Student is on, from their Course Position; null once all are complete. */
@@ -25,8 +23,6 @@ export function LandingView({
   signedIn: boolean;
   /** Signed in and the first Baseline Sitting not yet done. */
   baselinePending: boolean;
-  /** The WhatsApp community invite (T94); null hides the card. */
-  communityUrl?: string | null;
 }) {
   // Recommend the Level they are on, so the card that carries the pink CTA is always
   // the genuinely useful one. Once every Level is complete, the first.
@@ -134,8 +130,6 @@ export function LandingView({
           </ol>
         </div>
       </section>
-
-      {communityUrl ? <CommunityBand href={communityUrl} /> : null}
 
       {/* --- Closing band ---------------------------------------------------- */}
       <ClosingBand
