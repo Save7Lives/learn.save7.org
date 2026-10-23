@@ -67,6 +67,16 @@ The family's own preferences are not the test.
 
 **Process.** Consent is a continuing dialogue, and a signature is not proof of it. Verbal consent is followed by written consent. In McQuoid-Mason's reading, a consenting family may change its mind, but not once a recipient's operation is under way.
 
+:::checklist
+title: Four tests of a family's consent. Tick each one.
+item: Capacity. Presumed. Distress, or a decision you disagree with, is not incapacity.
+item: Information. Disclose what is material: what a reasonable person in the family's position would attach significance to.
+item: Voluntariness. Recommend, don't pressurise. Declare conflicts of interest.
+item: Process. Consent is a continuing dialogue, and a signature is not proof of it.
+pending: A signature is not proof of consent. Check each test.
+done: All four tests applied. Verbal consent is followed by written consent.
+:::
+
 ## Where end-of-life care meets donation
 
 - The Western Cape policy describes the family, before death, as surrogate decision-makers exploring whether the patient would have wished to donate.

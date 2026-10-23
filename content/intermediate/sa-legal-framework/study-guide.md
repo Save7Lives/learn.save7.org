@@ -61,3 +61,11 @@ level: intermediate
 - prohibit anyone offering a reward to a donor except as section 60 allows (draft reg 19).
 
 **The 2025 amendment that is not a donation development.** The March 2025 amendment to regulations under the Act changed the regulations on the surveillance and control of notifiable medical conditions (Government Notice 6064, Government Gazette 52391, 27 March 2025). It has nothing to do with donation.
+
+:::reveal
+title: Common errors. Tap each one for the correction.
+card: Neither doctor may be an intern | This claim does not appear in Regulation 9.
+card: Medical superintendent | Human Tissue Act language. Say: the medical practitioner in charge of clinical services, or a doctor they authorise.
+card: District surgeon or state pathologist | Not these. After an unnatural death, the Forensic Pathology Service must authorise what may be recovered.
+card: The 2025 amendment is a donation development | It changed the regulations on the surveillance and control of notifiable medical conditions. It has nothing to do with donation.
+:::

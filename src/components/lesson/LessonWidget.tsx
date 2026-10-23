@@ -18,6 +18,9 @@ import type {
  * ("Start", "Run again"). Nothing a learner does in a block is recorded or scored:
  * it is part of reading, and the Stage Quiz is what measures.
  *
+ * Keys are positions, not labels: a block's list is fixed once parsed, and two rows
+ * may share a label.
+ *
  * Selected states are a navy ring on teal-50, not a navy fill, and teal is only ever
  * teal-ink on white (#68).
  */
@@ -58,7 +61,7 @@ function Compare({ widget }: { widget: CompareWidget }) {
       <div role="tablist" aria-label={widget.title} className="mb-3 flex flex-wrap gap-2">
         {widget.tabs.map((t, i) => (
           <button
-            key={t.label}
+            key={i}
             type="button"
             role="tab"
             id={`${id}-tab-${i}`}
@@ -72,8 +75,8 @@ function Compare({ widget }: { widget: CompareWidget }) {
         ))}
       </div>
       <dl id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-tab-${tab}`} className="divide-y divide-line">
-        {widget.tabs[tab].rows.map(([label, text]) => (
-          <div key={label} className="grid gap-x-4 gap-y-0.5 py-2.5 text-[0.9375rem] leading-relaxed sm:grid-cols-[9rem_1fr]">
+        {widget.tabs[tab].rows.map(([label, text], i) => (
+          <div key={i} className="grid gap-x-4 gap-y-0.5 py-2.5 text-[0.9375rem] leading-relaxed sm:grid-cols-[9rem_1fr]">
             <dt className="font-medium text-navy">{label}</dt>
             <dd className="text-grey">{text}</dd>
           </div>
@@ -91,7 +94,7 @@ function Checklist({ widget }: { widget: ChecklistWidget }) {
     <Figure title={widget.title}>
       <ul className="space-y-1">
         {widget.items.map((item, i) => (
-          <li key={item}>
+          <li key={i}>
             <label
               htmlFor={`${id}-${i}`}
               className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 text-[0.9375rem] leading-snug text-grey hover:bg-teal-50"
@@ -129,7 +132,7 @@ function Steps({ widget }: { widget: StepsWidget }) {
     <Figure title={widget.title}>
       <ol className="m-0 list-none p-0">
         {widget.steps.map((step, i) => (
-          <li key={step.label}>
+          <li key={i}>
             <button
               type="button"
               aria-expanded={open === i}
@@ -156,7 +159,7 @@ function Steps({ widget }: { widget: StepsWidget }) {
                     <div className="mt-3 flex flex-wrap gap-2">
                       {step.choices.map(([label], j) => (
                         <button
-                          key={label}
+                          key={j}
                           type="button"
                           aria-pressed={choice === j}
                           onClick={() => setChoice(choice === j ? null : j)}
@@ -253,7 +256,7 @@ function Reveal({ widget }: { widget: RevealWidget }) {
     <Figure title={widget.title}>
       <ul className="m-0 list-none space-y-2 p-0">
         {widget.cards.map(([front, back], i) => (
-          <li key={front} className={cx("rounded-card border", shown.has(i) ? "border-navy" : "border-line-strong")}>
+          <li key={i} className={cx("rounded-card border", shown.has(i) ? "border-navy" : "border-line-strong")}>
             <button
               type="button"
               aria-expanded={shown.has(i)}

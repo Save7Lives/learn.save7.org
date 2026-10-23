@@ -60,6 +60,17 @@ Intermediate Level noted that when a patient cannot take part and has left no ad
 
 Notice what is not on the list: what the family would choose for themselves. In a best-interests decision the family's role is to tell the team **who the patient was**. Booklet 7 requires close family to be consulted, and the palliative care guidelines make the practitioner, in consultation with the family, responsible for the decision. Where there is serious disagreement about the patient's best interests, Booklet 7 asks for a clinical or ethical review independent of the team, and only then legal advice about going to court. That is a different job from the one a family does after death.
 
+:::checklist
+title: What practitioners weigh in a best-interests decision. Tick each one.
+item: The options that are clinically appropriate
+item: Any evidence of what the patient previously said they wanted, including an advance statement
+item: What the team knows of the patient's background, such as their culture, religion and work
+item: What people who know the patient say about the patient's values and preferences
+item: Where more than one option is reasonable, the one that least restricts the patient's future choices
+pending: Practitioners must weigh each of these.
+done: Notice what is not on the list: what the family would choose for themselves. In a best-interests decision the family's role is to tell the team who the patient was.
+:::
+
 ### Where end-of-life care meets donation
 
 The Western Cape policy treats donation as a normal part of end-of-life care. While the patient is still alive, it describes the family as **surrogate decision-makers** exploring whether the patient would have wished to donate. That fits the HPCSA's test, which counts a patient's known wishes among the things that matter.
@@ -85,6 +96,22 @@ The differences are small on the page and large in a family:
 So the person the team has been talking to all week about treatment may not be the person whose consent to donation the law recognises. Nobody should discover that in the middle of the donation conversation. It is one more thing to settle in planning, before the family meeting.
 
 None of this means a coordinator speaks only to the person at the top of the list. FACTS works with all the key family members, and a decision the family cannot live with is a bad outcome, whatever the law allows. But knowing whose consent the law actually recognises is part of getting consent right.
+
+:::compare
+title: The two lists, side by side. Tap a list.
+tab: Section 7 (treatment, while alive)
+row: The order | A written mandate or a person authorised by law, then spouse or partner, then parent, grandparent, adult child, brother or sister
+row: A written mandate | First on the list: a person the patient mandated in writing to consent on their behalf
+row: Parent and child | A parent comes ahead of an adult child
+row: Spouse and partner | Ranked together
+row: Grandparent and guardian | A grandparent appears. A guardian does not.
+tab: Section 62(2) (donation, after death)
+row: The order | Spouse, partner, major child, parent, guardian, major brother, major sister
+row: A written mandate | Has no place. The person a patient appointed to make their health decisions has no special standing over donation, unless they also rank first on the section 62 list.
+row: Parent and child | A major child comes ahead of a parent
+row: Spouse and partner | The spouse comes first
+row: Grandparent and guardian | A guardian appears. A grandparent does not.
+:::
 
 ### The person's own decision ends the question
 
@@ -118,6 +145,15 @@ The booklet says practitioners may recommend but must not pressurise, and must d
 ### Consent is a process, not a signature
 
 The booklet describes consent as a continuing dialogue, and says a signed form is not proof that informed consent was given or still stands. In donation, verbal consent is followed by written consent. And in the reading of Professor David McQuoid-Mason, writing on Chapter 8 in the *South African Medical Journal*, a family that consented may also change its mind, though not at the last moment, once a recipient's operation is under way.
+
+:::reveal
+title: Hard questions about valid consent. Tap a card.
+card: A relative is in deep distress. Does that mean they cannot decide? | No. A grieving relative is presumed capable of deciding. Distress is not incapacity, and neither is a decision the team disagrees with.
+card: A relative cannot take in or retain what they are told. What helps? | Time: information in manageable amounts, repeated, with time to reflect before and after deciding. That is what FACTS's time-out breaks and repeated steps provide.
+card: Is describing donation warmly a form of pressure? | No. Describing accurately and warmly what donation can do is legitimate. Guilt, pressure, apology or a hurried answer is not.
+card: The form is signed. Is consent settled? | Not by the signature. A signed form is not proof that informed consent was given or still stands. Consent is a continuing dialogue.
+card: Can a family that consented change its mind? | In the reading of Professor David McQuoid-Mason, it may, though not at the last moment, once a recipient's operation is under way.
+:::
 
 ## What this changes in practice
 
