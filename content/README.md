@@ -114,6 +114,7 @@ row: The brainstem | No longer works
 | `compare` | Switches between two or more tabs of labelled rows | `title`, then `tab` with its `row: label \| text` lines under it |
 | `checklist` | Ticks items off, and the note under them changes once all are ticked | `title`, two or more `item`, one `pending`, one `done` |
 | `steps` | Taps a numbered step to open it, and taps a choice inside it | `title`, two or more `step: label \| text`, each with optional `choice: label \| text` lines under it |
+| `reveal` | Taps a card to show what is on its back, such as the truth behind a myth | `title`, two or more `card: front \| back` |
 | `timer` | Starts a count of a few units, one a second, and can send it back to zero | `title`, `units` (1 to 20), `start`, `tick` (with `{n}`), `done`, `reset`, `after-reset` |
 
 - **The words are content.** Every word a block shows is in the lesson file, and

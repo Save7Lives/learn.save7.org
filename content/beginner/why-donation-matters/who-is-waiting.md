@@ -22,6 +22,16 @@ Donation is easy to think about in the abstract. It is much harder to ignore onc
 
 **Someone who cannot see.** A damaged or diseased cornea causes blindness that a corneal transplant can reverse. Poor eyesight in the donor makes no difference at all: a person who wore glasses their whole life can still restore someone else's sight.
 
+:::reveal
+title: Who is on the other end. Tap a card.
+card: Someone in end-stage kidney failure | Their kidneys can no longer filter their blood well enough to keep them alive, so a machine does it for them, several times a week, indefinitely. A transplant ends that.
+card: Someone with advanced lung disease | Breathing has become the hardest thing they do. A transplant gives them back air.
+card: Someone with end-stage heart failure | Their heart can no longer pump enough blood to get them across a room. Outcomes here are genuinely good.
+card: Someone with liver failure | For them a transplant is not an improvement in quality of life. It is life.
+card: Someone who has been badly burned | Donated skin is what keeps a severely burned patient alive while their own body tries to heal.
+card: Someone who cannot see | A damaged or diseased cornea causes blindness that a corneal transplant can reverse. A person who wore glasses their whole life can still restore someone else's sight.
+:::
+
 ## What one donor can do
 
 The published South African figures are the ones Save7 is named after:
@@ -31,6 +41,18 @@ The published South African figures are the ones Save7 is named after:
 Seven, because a single donor may provide two kidneys, a liver, a heart, two lungs and a pancreas. Fifty, because tissue (corneas, bone, ligaments, skin, heart valves) goes further and helps more people than the organs do. By volume, tissue is the largest part of what donation achieves.
 
 Those are the Organ Donor Foundation's published figures. You will sometimes see a larger tissue number quoted; this course uses fifty, because fifty is the figure that can be sourced.
+
+:::compare
+title: Seven and fifty. Tap to switch.
+tab: Seven: organs
+row: What a single donor may provide | Two kidneys, a liver, a heart, two lungs and a pancreas
+row: What it does | Can save seven lives
+row: Whose figure | The Organ Donor Foundation's published figure
+tab: Fifty: tissue
+row: What it covers | Corneas, bone, ligaments, skin, heart valves
+row: What it does | Can improve up to fifty more. Tissue goes further and helps more people than the organs do
+row: Whose figure | The Organ Donor Foundation's published figure. A larger number is sometimes quoted, but fifty is the figure that can be sourced
+:::
 
 ## How short is South Africa?
 
@@ -43,6 +65,19 @@ The most recent verified national data comes from the South African Transplant S
 - **Solid organ transplants performed:** 358 in 2017, down to **229** in 2021
 
 The donation rate fell by roughly **two thirds in five years**. Activity dropped during the COVID-19 pandemic and, on the report's own assessment, has not since recovered.
+
+:::compare
+title: South Africa in 2017 and in 2021. Tap a year.
+tab: 2017
+row: Deceased donors per million people | 1.60
+row: Consented deceased donors | 91
+row: Solid organ transplants performed | 358
+tab: 2021
+row: Deceased donors per million people | 0.48
+row: Consented deceased donors | 38
+row: Solid organ transplants performed | 229
+row: What changed | The donation rate fell by roughly two thirds in five years. Activity dropped during the COVID-19 pandemic and, on the report's own assessment, has not since recovered.
+:::
 
 **At the end of 2021, 2,586 people were on the national transplant waiting list**: 2,382 waiting for a kidney, 108 for a heart, 52 for a liver, 44 for lungs. That year, 189 of them died waiting.
 

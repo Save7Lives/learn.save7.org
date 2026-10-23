@@ -55,6 +55,16 @@ The Wits Transplant handbook adds the everyday version. When a coordinator tells
 
 None of this makes donation a secret. The Organ Donor Foundation's awareness work reaches millions of South Africans through television, radio, print and social media. The rules protect *people*, not the subject.
 
+:::reveal
+title: Telling a donation story. Tap a card.
+card: A post names nobody. Can it still break the rule? | Yes. The words "any fact" mean the rule is not only about names. "Possibly" means the test is not whether someone was identified, but whether they could be. The town, the date, the hospital and the cause of death may identify a donor to everyone who knows the family.
+card: A donor family agrees to their story being told. Does that cover the recipient? | No. A donor family's consent to their own story being told does not cover the recipient's side of it. For a recipient, consent must be in writing.
+card: When can the story be told? | Wait. A story told too soon can reach a family still in the first days of grief, or celebrate a transplant that later fails.
+card: A journalist asks about a particular donation. | Let the hospital speak about live cases. Media questions about a particular donation go through the hospital's public relations office and the coordinator.
+card: A donor family wants to go public. | That is their choice to make. Support it, and keep protecting the recipient.
+card: Does all this make donation a secret? | No. The rules protect people, not the subject.
+:::
+
 ## ULUNTU: a case study in culturally attuned advocacy
 
 ### What the sources say
@@ -76,6 +86,20 @@ None of this makes donation a secret. The Organ Donor Foundation's awareness wor
 
 Neither source is dated precisely enough to say whether the campaign is active today. The website's wording may be older than the site it now sits on, and no dated updates could be found. Treat ULUNTU as an approach the ODF has described, not as a programme with published results. The Source Corpus contains no campaign toolkit or evaluation, and this Stage deliberately stops at framing.
 
+:::compare
+title: ULUNTU in its two sources. Tap a source.
+tab: The Red File (newest references 2021)
+row: Its name | The Uluntu Project
+row: The word | Uluntu means community
+row: The problem | A fear-based understanding of donation, and a donor pool that is not representative of the South African population
+row: The method | Culturally similar and culturally sensitive messengers in under-resourced and vulnerable communities, visiting state hospitals, clinics and schools
+tab: The ODF website (read September 2026)
+row: Its name | The ULUNTU Awareness Campaign
+row: The word | The isiXhosa word uluntu, meaning both humanity and community
+row: The aim | A first step towards breaking through cultural barriers in order to increase donor consents
+row: The method | Information-gathering with transplant coordinators from feeder hospitals, then baseline surveys, then community participative methods, grassroots outreach and preventative education
+:::
+
 ### Why it is worth studying
 
 Read together, the two descriptions show a model of advocacy that differs from mass awareness in five ways.
@@ -93,6 +117,17 @@ Read together, the two descriptions show a model of advocacy that differs from m
 - **Does it aim at registration, at families' consent, or at both?**
 - **How would anyone know whether it worked?** For ULUNTU, the sources describe baseline surveys, but no results are available in them.
 - **Does it respect the answer?** Culturally attuned advocacy is about making sure people decide with the facts. It is not a way to get round a community's settled beliefs.
+
+:::checklist
+title: Questions to ask of any campaign. Tick each one.
+item: Who is it for, and who designed it with them?
+item: Who delivers the message, and would the audience trust them?
+item: Does it aim at registration, at families' consent, or at both?
+item: How would anyone know whether it worked?
+item: Does it respect the answer?
+pending: Ask each of these of any campaign, including this one.
+done: Culturally attuned advocacy is about making sure people decide with the facts. Judge it by whether it leaves people informed and free to decide, not by how many say yes.
+:::
 
 ## What this asks of you
 

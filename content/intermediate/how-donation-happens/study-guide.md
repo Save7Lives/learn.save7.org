@@ -28,6 +28,17 @@ Testing may only begin once all of these are established:
 
 Their purpose is to exclude every condition that could mimic brain death.
 
+:::checklist
+title: The preconditions. Tick each one.
+item: An established cause compatible with complete and irreversible loss of all brain function
+item: Normal body temperature
+item: Adequate blood pressure
+item: The effect of sedatives and other drugs that depress the brain excluded
+item: Severe metabolic, chemical and hormonal disturbances corrected
+pending: Testing may only begin once all of these are established.
+done: Every condition that could mimic brain death has been excluded. Testing may begin.
+:::
+
 ## Brain death: the three steps
 
 1. **Coma.** No response of the face to strong pressure, and no movement other than reflexes coming from the spinal cord.
