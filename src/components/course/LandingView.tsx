@@ -135,7 +135,7 @@ export function LandingView({
         </div>
       </section>
 
-      {communityUrl ? <CommunityBand href={communityUrl} /> : null}
+      {communityUrl ? <CommunityBand /> : null}
 
       {/* --- Closing band ---------------------------------------------------- */}
       <ClosingBand
