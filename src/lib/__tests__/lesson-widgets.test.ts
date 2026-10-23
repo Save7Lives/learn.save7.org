@@ -58,7 +58,20 @@ after-reset: Back to zero
     expect(segment.kind === "widget" && segment.widget).toMatchObject({ type: "timer", units: 5, tick: "Minute {n}" });
   });
 
+  it("reads reveal cards as front and back", () => {
+    const [segment] = splitLessonBody(`:::reveal
+title: Myth or fact?
+card: Front one | Back one
+card: Front two | Back two
+:::`);
+    expect(segment.kind === "widget" && segment.widget).toMatchObject({
+      type: "reveal",
+      cards: [["Front one", "Back one"], ["Front two", "Back two"]],
+    });
+  });
+
   it.each([
+    [":::reveal\ntitle: T\ncard: only | one\n:::", "at least two card"],
     [":::diagram\ntitle: X\n:::", "not a block the app can draw"],
     [":::compare\ntab: A\nrow: x | y\ntab: B\nrow: x | y\n:::", "exactly one title"],
     [":::compare\ntitle: T\ntab: A\nrow: x | y\n:::", "at least two tab"],

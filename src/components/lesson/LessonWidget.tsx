@@ -6,6 +6,7 @@ import type {
   ChecklistWidget,
   CompareWidget,
   LessonWidget,
+  RevealWidget,
   StepsWidget,
   TimerWidget,
 } from "@/lib/lesson-widgets";
@@ -30,6 +31,8 @@ export function LessonWidgetView({ widget }: { widget: LessonWidget }) {
       return <Steps widget={widget} />;
     case "timer":
       return <Timer widget={widget} />;
+    case "reveal":
+      return <Reveal widget={widget} />;
   }
 }
 
@@ -232,6 +235,45 @@ function Timer({ widget }: { widget: TimerWidget }) {
         </button>
       </div>
       {wasReset ? <p className="mt-3 text-[0.9375rem] leading-relaxed text-grey">{widget.afterReset}</p> : null}
+    </Figure>
+  );
+}
+
+function Reveal({ widget }: { widget: RevealWidget }) {
+  const [shown, setShown] = useState<ReadonlySet<number>>(new Set());
+  const id = useId();
+  const toggle = (i: number) =>
+    setShown((s) => {
+      const next = new Set(s);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  return (
+    <Figure title={widget.title}>
+      <ul className="m-0 list-none space-y-2 p-0">
+        {widget.cards.map(([front, back], i) => (
+          <li key={front} className={cx("rounded-card border", shown.has(i) ? "border-navy" : "border-line-strong")}>
+            <button
+              type="button"
+              aria-expanded={shown.has(i)}
+              aria-controls={`${id}-${i}`}
+              onClick={() => toggle(i)}
+              className="flex min-h-11 w-full items-center justify-between gap-3 rounded-card px-4 py-2.5 text-left text-[0.9375rem] font-medium leading-snug text-navy hover:bg-teal-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy"
+            >
+              {front}
+              <span aria-hidden="true" className="shrink-0 text-sm text-teal-ink">
+                {shown.has(i) ? "Hide" : "Show"}
+              </span>
+            </button>
+            {shown.has(i) ? (
+              <p id={`${id}-${i}`} className="m-0 rounded-b-card bg-teal-50 px-4 py-3 text-[0.9375rem] leading-relaxed text-navy">
+                {back}
+              </p>
+            ) : null}
+          </li>
+        ))}
+      </ul>
     </Figure>
   );
 }

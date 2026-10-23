@@ -65,9 +65,16 @@ export type TimerWidget = {
   afterReset: string;
 };
 
-export type LessonWidget = CompareWidget | ChecklistWidget | StepsWidget | TimerWidget;
+export type RevealWidget = {
+  type: "reveal";
+  title: string;
+  /** Each card shows its front until tapped, then its back as well. */
+  cards: Array<[string, string]>;
+};
 
-export const WIDGET_TYPES = ["compare", "checklist", "steps", "timer"] as const;
+export type LessonWidget = CompareWidget | ChecklistWidget | StepsWidget | TimerWidget | RevealWidget;
+
+export const WIDGET_TYPES = ["compare", "checklist", "steps", "timer", "reveal"] as const;
 
 export type LessonSegment =
   | { kind: "markdown"; source: string }
@@ -190,6 +197,19 @@ function parseWidget(type: string, inner: string): LessonWidget | { error: strin
     }
     if (steps.length < 2) return { error: ":::steps needs at least two step: lines" };
     return { type, title, steps };
+  }
+
+  if (type === "reveal") {
+    const stray = allowed(["title", "card"]);
+    if (stray) return { error: stray };
+    const cards: RevealWidget["cards"] = [];
+    for (const value of one("card")) {
+      const card = pair(value);
+      if (!card) return { error: `card ${JSON.stringify(value.slice(0, 40))} needs a front | back` };
+      cards.push(card);
+    }
+    if (cards.length < 2) return { error: ":::reveal needs at least two card: lines" };
+    return { type, title, cards };
   }
 
   // timer
