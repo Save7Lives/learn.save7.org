@@ -40,6 +40,7 @@ export function save7OsDir(): string {
  */
 const SKIPPED = new Set([
   "0099", "0100", "0102", "0103", "0104", "0105", "0106", "0107", "0108", "0123", "0124", "0125",
+  "0140", "0141", "0142", "0143",
 ]);
 
 export function learnMigrations(): { name: string; sql: string }[] {
