@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { type IconName } from "@/components/ui/icons";
 import { ButtonLink, Display, NumberPill } from "@/components/ui/primitives";
+import { Reveal } from "@/components/motion/parts";
 import type { LevelWithPosition } from "@/lib/course";
 import { ClosingBand } from "./ClosingBand";
 import { IconCircle } from "./IconCircle";
 import { CourseMap } from "./CourseMap";
-import { LevelCard } from "./LevelCard";
+import { LEVEL_CARD_MOTION, LevelCard } from "./LevelCard";
 import { Lede, PublicHero } from "./PublicHero";
 
 const H2 =
@@ -139,14 +140,15 @@ export function IntroductionView({
           </p>
           <CourseMap levels={levels} recommendedSlug={recommendedSlug} />
           <div className="mt-[1.375rem] grid gap-5 min-[1000px]:grid-cols-3">
-            {levels.map((level) => (
-              <LevelCard
-                key={level.slug}
-                level={level}
-                position={level.position}
-                signedIn={signedIn}
-                recommended={level.slug === recommendedSlug}
-              />
+            {levels.map((level, i) => (
+              <Reveal key={level.slug} delay={i * 0.08} className={LEVEL_CARD_MOTION}>
+                <LevelCard
+                  level={level}
+                  position={level.position}
+                  signedIn={signedIn}
+                  recommended={level.slug === recommendedSlug}
+                />
+              </Reveal>
             ))}
           </div>
         </div>

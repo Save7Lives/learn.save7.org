@@ -7,6 +7,9 @@ import { HeroDecoration } from "./HeroDecoration";
  * circle pair behind it. No navy surface. The copy is held to 58% of the width on
  * desktop so no text ever sits on a blob, and runs full width on a phone, where the
  * big blob and the pair are hidden.
+ *
+ * The eyebrow, the title and the rest rise in one after another. That is CSS, so it
+ * plays on first paint, before any JavaScript.
  */
 export function PublicHero({
   eyebrow,
@@ -22,11 +25,14 @@ export function PublicHero({
       <HeroDecoration />
       <div className="relative z-10 mx-auto max-w-[73.75rem] px-[1.125rem] min-[760px]:px-6">
         <div className="max-w-none min-[760px]:max-w-[min(620px,58%)]">
-          <Eyebrow className="text-pink">{eyebrow}</Eyebrow>
-          <Display as="h1" className="mb-[1.375rem] mt-3.5 text-display text-navy">
+          <Eyebrow className="animate-rise text-pink">{eyebrow}</Eyebrow>
+          <Display
+            as="h1"
+            className="animate-rise mb-[1.375rem] mt-3.5 text-display text-navy [animation-delay:90ms]"
+          >
             {title}
           </Display>
-          {children}
+          <div className="animate-rise [animation-delay:180ms]">{children}</div>
         </div>
       </div>
     </section>

@@ -11,6 +11,14 @@ import {
 import type { LevelPosition } from "@/lib/course-position";
 
 /**
+ * The wrapper a public page puts round each card: it fills its grid cell, so the
+ * three cards stay the same height, and it lifts on hover or focus with a slight
+ * overshoot. Not on the card itself, which Admin also draws, standing still.
+ */
+export const LEVEL_CARD_MOTION =
+  "grid transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-safe:hover:-translate-y-1 motion-safe:focus-within:-translate-y-1";
+
+/**
  * A level card.
  *
  * The point of the three-tier structure is that Beginner never feels like an

@@ -7,6 +7,7 @@ import { StatusPill } from "@/components/portal/Portal";
 import { IconCircle } from "@/components/course/IconCircle";
 import { QuizRunner } from "@/components/quiz/QuizRunner";
 import { MarkedChoice, ScenarioBox, type MarkedState } from "@/components/quiz/QuizParts";
+import { CountUp, FlipIn, HeartBurst, Settle } from "@/components/motion/parts";
 import { STAGE_QUIZ_SIZE } from "@/lib/constants";
 import type { AttemptResult, GradedAnswer, StageQuizState } from "@/lib/quiz";
 import type { StageQuizOutcome, StageQuizPaper } from "@/app/(site)/levels/actions";
@@ -27,7 +28,13 @@ import type { StageQuizOutcome, StageQuizPaper } from "@/app/(site)/levels/actio
 type View =
   | { kind: "status" }
   | { kind: "paper"; paper: StageQuizPaper }
-  | { kind: "result"; result: AttemptResult; certificatePublicId: string | null };
+  | {
+      kind: "result";
+      result: AttemptResult;
+      certificatePublicId: string | null;
+      /** Just submitted, rather than an old attempt reopened: only this celebrates. */
+      fresh: boolean;
+    };
 
 export type StageQuizProps = {
   stageSlug: string;
@@ -85,7 +92,7 @@ export function StageQuiz({
     startTransition(async () => {
       const result = await onReview(attemptId);
       if ("error" in result) setError(result.error);
-      else setView({ kind: "result", result, certificatePublicId: null });
+      else setView({ kind: "result", result, certificatePublicId: null, fresh: false });
     });
   }
 
@@ -106,7 +113,12 @@ export function StageQuiz({
       },
       openAttemptId: null,
     }));
-    setView({ kind: "result", result, certificatePublicId: outcome.certificatePublicId });
+    setView({
+      kind: "result",
+      result,
+      certificatePublicId: outcome.certificatePublicId,
+      fresh: true,
+    });
   }
 
   return (
@@ -130,6 +142,7 @@ export function StageQuiz({
         <Result
           result={view.result}
           certificatePublicId={view.certificatePublicId}
+          fresh={view.fresh}
           certificateTitle={certificateTitle}
           passMarkPct={passMarkPct}
           everPassed={state?.passedAt != null}
@@ -292,6 +305,7 @@ function Fact({
 function Result({
   result,
   certificatePublicId,
+  fresh,
   certificateTitle,
   passMarkPct,
   everPassed,
@@ -301,6 +315,7 @@ function Result({
 }: {
   result: AttemptResult;
   certificatePublicId: string | null;
+  fresh: boolean;
   certificateTitle: string;
   passMarkPct: number;
   everPassed: boolean;
@@ -329,7 +344,10 @@ function Result({
             </StatusPill>
           )}
           <p className="t-display mt-2 text-navy">
-            {result.scoreRaw}{" "}
+            <span className="relative inline-block">
+              {passed && fresh ? <HeartBurst delay={0.7} radius={64} /> : null}
+              {fresh ? <CountUp value={result.scoreRaw} /> : result.scoreRaw}
+            </span>{" "}
             <span className="font-sans text-base font-medium tracking-normal text-grey">
               of {result.scoreMax}
             </span>
@@ -344,22 +362,24 @@ function Result({
         </div>
 
         {certificatePublicId ? (
-          <Card className="mt-[18px] border-pink-line bg-pink-50 p-5">
-            <div className="flex items-start gap-3.5">
-              <IconCircle name="award" tone="pink" />
-              <div>
-                <h4 className="t-h4 mb-1 text-navy">
-                  You&apos;ve earned the &ldquo;{certificateTitle}&rdquo; certificate
-                </h4>
-                <p className="mb-3 text-sm text-grey">
-                  That was the last Stage Quiz in this Level.
-                </p>
-                <ButtonLink href={`/certificate/${certificatePublicId}`}>
-                  View my certificate
-                </ButtonLink>
+          <FlipIn delay={fresh ? 0.9 : 0}>
+            <Card className="mt-[18px] border-pink-line bg-pink-50 p-5">
+              <div className="flex items-start gap-3.5">
+                <IconCircle name="award" tone="pink" />
+                <div>
+                  <h4 className="t-h4 mb-1 text-navy">
+                    You&apos;ve earned the &ldquo;{certificateTitle}&rdquo; certificate
+                  </h4>
+                  <p className="mb-3 text-sm text-grey">
+                    That was the last Stage Quiz in this Level.
+                  </p>
+                  <ButtonLink href={`/certificate/${certificatePublicId}`}>
+                    View my certificate
+                  </ButtonLink>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </FlipIn>
         ) : null}
 
         <div className="mt-[18px] flex flex-wrap items-center gap-3">
@@ -394,6 +414,11 @@ function stateOf(choice: GradedAnswer["choices"][number]): MarkedState {
   return choice.wasSelected ? "yours-not-correct" : "not-chosen";
 }
 
+/** Only the learner's own choices move: a shake for a wrong one, a pop for a right one. */
+function settleTone(state: MarkedState): "ok" | "bad" | null {
+  return state === "yours-correct" ? "ok" : state === "yours-not-correct" ? "bad" : null;
+}
+
 /** One question as marked: the choices in their six states, then the explanation. */
 function MarkedQuestion({ answer, index }: { answer: GradedAnswer; index: number }) {
   const multi = answer.choices.filter((c) => c.isCorrect).length > 1;
@@ -418,7 +443,9 @@ function MarkedQuestion({ answer, index }: { answer: GradedAnswer; index: number
       <ul className="mt-[18px] grid gap-2.5">
         {answer.choices.map((choice, i) => (
           <li key={choice.id}>
-            <MarkedChoice index={i} text={choice.text} state={stateOf(choice)} multi={multi} />
+            <Settle tone={settleTone(stateOf(choice))} delay={0.1}>
+              <MarkedChoice index={i} text={choice.text} state={stateOf(choice)} multi={multi} />
+            </Settle>
             {/* Per-choice feedback on what they chose: why a tempting wrong
                 answer is tempting teaches more than a bare "incorrect". */}
             {choice.wasSelected && choice.feedback ? (

@@ -517,6 +517,47 @@ body:has([data-reader]) .site-header {
   animation: save7-pulse-ring 1.8s ease-out infinite;
 }
 
+/* The hero's circle pair drifts round each other, slowly enough to read as
+   breathing rather than as something to watch. */
+@keyframes save7-drift-a {
+  50% {
+    transform: translate(-10px, 12px);
+  }
+}
+@keyframes save7-drift-b {
+  50% {
+    transform: translate(12px, -8px);
+  }
+}
+.animate-drift-a {
+  animation: save7-drift-a 20s ease-in-out infinite;
+}
+.animate-drift-b {
+  animation: save7-drift-b 20s ease-in-out infinite;
+}
+
+/* The certificate unfolds towards the reader on screen. Pure CSS so it plays
+   before any JavaScript, and never in print (below). */
+@keyframes save7-unfold {
+  from {
+    opacity: 0;
+    transform: perspective(1200px) rotateX(-14deg) translateY(24px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-unfold {
+  transform-origin: 50% 0;
+  animation: save7-unfold 0.9s 0.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media print {
+  .animate-unfold {
+    animation: none;
+  }
+}
+
 /* --- Film captions (#61) ------------------------------------------------- */
 
 /* Browsers size captions at a share of the video's height, which in a phone's

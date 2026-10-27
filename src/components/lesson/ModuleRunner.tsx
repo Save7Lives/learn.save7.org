@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { AnimatePresence, m } from "motion/react";
 import { Button, cx } from "@/components/ui/primitives";
 import { Icon } from "@/components/ui/icons";
 import { LESSON_KIND_LABELS, type LessonKind } from "@/lib/constants";
@@ -76,6 +77,9 @@ export function ModuleRunner({
 }) {
   const startIndex = Math.min(Math.max(initialLessonIndex, 0), lessons.length - 1);
   const [index, setIndex] = useState(startIndex);
+  // Which way the learner last moved, so a step slides in from the side they are
+  // heading towards: Continue from the right, Back from the left.
+  const [direction, setDirection] = useState(1);
   // The steps the learner has been to, for the rail's checks. Resuming at step 5
   // means steps 1 to 4 were read on the way.
   const [visited, setVisited] = useState<ReadonlySet<number>>(
@@ -107,6 +111,7 @@ export function ModuleRunner({
   }, [lesson, moduleSlug, onViewLesson]);
 
   function go(nextIndex: number) {
+    setDirection(nextIndex >= index ? 1 : -1);
     setIndex(nextIndex);
     setVisited((prev) => new Set(prev).add(nextIndex));
     // Move focus to the new step's heading so keyboard and screen reader users
@@ -191,11 +196,29 @@ export function ModuleRunner({
 
         {/* --- Step content --------------------------------------------------- */}
         <div className="mx-auto max-w-[680px] px-5 pb-10 pt-7 sm:px-8">
-          <h2 ref={headingRef} tabIndex={-1} className="t-h2 mb-5 mt-1.5 text-navy outline-none">
-            {heading}
-          </h2>
+          {/* The leaving step pops out of the flow while the new one slides in, so
+              the new heading is mounted (and focusable) at once. Clipped sideways
+              so the slide never makes the page scroll horizontally; `clip`, not
+              `hidden`, so the section map inside can still stick. */}
+          <div className="relative overflow-x-clip">
+            <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+              <m.div
+                key={index}
+                custom={direction}
+                variants={STEP_VARIANTS}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ type: "spring", stiffness: 380, damping: 34 }}
+              >
+                <h2 ref={headingRef} tabIndex={-1} className="t-h2 mb-5 mt-1.5 text-navy outline-none">
+                  {heading}
+                </h2>
 
-          <div className="animate-rise">{lesson.content}</div>
+                {lesson.content}
+              </m.div>
+            </AnimatePresence>
+          </div>
 
           {/* --- Step navigation: inline after the content, not docked -------- */}
           <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-line pt-[22px]">
@@ -259,6 +282,12 @@ export function ModuleRunner({
     </StepNavContext.Provider>
   );
 }
+
+const STEP_VARIANTS = {
+  enter: (direction: number) => ({ x: direction * 48, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (direction: number) => ({ x: direction * -48, opacity: 0, transition: { duration: 0.15 } }),
+};
 
 /**
  * Whether an error is Next's own control flow rather than a real failure.

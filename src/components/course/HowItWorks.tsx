@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Icon } from "@/components/ui/icons";
 import { PortalCard } from "@/components/portal/Portal";
+import { Reveal } from "@/components/motion/parts";
 import { Display, NumberPill } from "@/components/ui/primitives";
 
 /** Four cards, in the order a learner meets them. Wording is the introduction's own. */
@@ -27,7 +28,8 @@ const STEPS = [
  * "How the course works" on the landing page (#73), replacing "What's included" and
  * the certificate strip. The full list of eight stays on the introduction.
  * Numbered pills alternate pink and teal by position, on a dotted line; two across
- * below 1000px, one on a phone.
+ * below 1000px, one on a phone. Scrolled to, the cards rise one after another and
+ * each number pops in just behind its card.
  */
 export function HowItWorks() {
   return (
@@ -46,8 +48,10 @@ export function HowItWorks() {
 
         <ol className="mt-[2.125rem] grid list-none gap-5 p-0 min-[1000px]:grid-cols-4 min-[760px]:grid-cols-2">
           {STEPS.map((step, i) => (
-            <li
+            <Reveal
+              as="li"
               key={step.title}
+              delay={i * 0.12}
               className={
                 "relative flex flex-col " +
                 // The dotted line runs pill to pill, on the four-across layout only.
@@ -56,16 +60,16 @@ export function HowItWorks() {
                   : "")
               }
             >
-              <span className="relative mb-3.5 self-center">
+              <Reveal as="span" from="pop" delay={i * 0.12 + 0.15} className="relative mb-3.5 self-center">
                 <NumberPill n={i + 1} tone={i % 2 === 0 ? "pink" : "teal"} />
-              </span>
+              </Reveal>
               <PortalCard plain className="flex-1 rounded-[1.25rem] p-[1.375rem]">
                 <h3 className="font-display text-lg font-bold leading-tight text-navy">
                   {step.title}
                 </h3>
                 <p className="mt-1.5 text-[0.9375rem] text-grey">{step.body}</p>
               </PortalCard>
-            </li>
+            </Reveal>
           ))}
         </ol>
 

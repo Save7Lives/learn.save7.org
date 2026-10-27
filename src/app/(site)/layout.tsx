@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { MotionProvider } from "@/components/motion/MotionProvider";
 
 /**
  * Shell for every public and learner-facing page.
@@ -13,7 +14,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
     <div className="flex min-h-dvh flex-col">
       <SiteHeader />
       <main id="main" className="flex-1">
-        {children}
+        <MotionProvider>{children}</MotionProvider>
       </main>
       <SiteFooter />
     </div>

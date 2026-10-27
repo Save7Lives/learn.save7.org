@@ -95,7 +95,7 @@ export default async function CertificatePage(
         </p>
       </div>
 
-      <div className="print-sheet mt-8 overflow-hidden rounded-card border border-line bg-white shadow-sm">
+      <div className="print-sheet animate-unfold mt-8 overflow-hidden rounded-card border border-line bg-white shadow-sm">
         <CertificateSheet
           learnerName={cert.learnerName}
           levelTitle={cert.levelTitle}
