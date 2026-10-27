@@ -233,14 +233,14 @@ if (emitCourse) {
       const film = films.get(lesson.slug);
       if (film) counts.films++;
       out.push(`insert into learn_lessons (
-  slug, module_slug, position, title, kind, body_markdown, component_key, payload
+  slug, module_slug, position, title, kind, body_markdown, component_key
 ) values (
   ${q(lesson.slug)}, ${q(stage.slug)}, ${lessonIndex}, ${q(lesson.title)}, ${q(lesson.kind)},
-  ${q(bodies.get(lesson.slug))}, ${q(film)}, NULL
+  ${q(bodies.get(lesson.slug))}, ${q(film)}
 ) on conflict (module_slug, slug) do update set
   position = excluded.position, title = excluded.title, kind = excluded.kind,
   body_markdown = excluded.body_markdown, component_key = excluded.component_key,
-  payload = excluded.payload, updated_at = now();
+  updated_at = now();
 `);
     }
   }
@@ -302,19 +302,19 @@ function emitQuestion(
 ) {
   out.push(`insert into learn_questions (
   authoring_key, scope, kind, gate, level_slug, module_slug, prompt, scenario,
-  explanation, topic_tag, difficulty, pair_key, position
+  explanation, topic_tag, difficulty, position
 ) values (
   ${q(key)}, ${q(fields.scope)}, ${q(fields.kind)}, ${q(fields.gate)},
   ${q(fields.levelSlug)}, ${q(fields.moduleSlug)}, ${q(fields.prompt)},
   ${q(fields.scenario)}, ${q(fields.explanation)}, ${q(fields.topicTag)},
-  ${fields.difficulty}, NULL, ${fields.position}
+  ${fields.difficulty}, ${fields.position}
 ) on conflict (authoring_key) do update set
   scope = excluded.scope, kind = excluded.kind, gate = excluded.gate,
   level_slug = excluded.level_slug, module_slug = excluded.module_slug,
   prompt = excluded.prompt, scenario = excluded.scenario,
   explanation = excluded.explanation, topic_tag = excluded.topic_tag,
-  difficulty = excluded.difficulty, pair_key = excluded.pair_key,
-  position = excluded.position, updated_at = now();
+  difficulty = excluded.difficulty, position = excluded.position,
+  updated_at = now();
 `);
 
   for (const c of choices) {
@@ -539,15 +539,12 @@ if (emitCourse) {
 
   /* component_key carries one thing: the registry key of the film a lesson opens
      with (src/lib/films.ts, #61). The app resolves it through that registry, so a
-     key outside it is a value nothing can render, and a payload is a pattern #58
-     walked away from. */
+     key outside it is a value nothing can render. */
   select count(*) into n from learn_lessons where component_key is not null;
   if n <> ${counts.films} then raise exception 'expected ${counts.films} lesson(s) with a film, found %', n; end if;
   select count(*) into n from learn_lessons
    where component_key is not null and component_key not in (${filmKeyList});
   if n <> 0 then raise exception '% lesson(s) name a film that is not registered', n; end if;
-  select count(*) into n from learn_lessons where payload is not null;
-  if n <> 0 then raise exception '% lesson(s) carry a payload', n; end if;
 
   /* Fifteen per Stage, per the Blueprint — and no POST item outside a finished
      Stage, since a level-keyed POST attempt marks every POST row in its level. */

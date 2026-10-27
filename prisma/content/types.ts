@@ -62,7 +62,11 @@ export type QuestionSeed = {
   explanation: string;
   topicTag: string;
   difficulty?: 1 | 2 | 3;
-  /** Links a POST item to its PRE counterpart so improvement is measured fairly. */
+  /**
+   * Dead. Only the prior build's `questions.ts`, which nothing imports, still sets
+   * it, and the emitter ignores it: `learn_questions.pair_key` was dropped in
+   * save7-os 0145. Improvement is Sitting over Sitting (#26/#41).
+   */
   pairKey?: string;
   /** The source the keyed answer and explanation were checked against. */
   verifiedAgainst?: VerifiedAgainst;

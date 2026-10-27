@@ -122,7 +122,8 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   reads are in `data.ts`. A Student's "last active" is the newest `learn_events` row, since
   `learners.last_seen_at` is stamped only at enrolment. The Eligibility Rule is only ever
   inserted.
-- `pairKey` and `learn_questions.pair_key` are dead: the emitter writes `NULL` and nothing reads it.
+- `learn_questions.pair_key` and `learn_lessons.payload` were dropped in save7-os 0145. `pairKey`
+  survives only in the prior build's `prisma/content/questions.ts`, which nothing imports.
 
 ## Platform gotchas
 

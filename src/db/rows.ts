@@ -93,7 +93,6 @@ export type QuestionRow = {
   explanation: string;
   topic_tag: string;
   difficulty: number;
-  pair_key: string | null;
   position: number;
 };
 
