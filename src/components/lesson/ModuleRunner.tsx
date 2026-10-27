@@ -5,8 +5,8 @@ import Link from "next/link";
 import { Button, cx } from "@/components/ui/primitives";
 import { Icon } from "@/components/ui/icons";
 import { LESSON_KIND_LABELS, type LessonKind } from "@/lib/constants";
-import { StageHeader, type RunnerStage } from "@/components/lesson/StageHeader";
-import { StepRail } from "@/components/lesson/StepRail";
+import { StageHeader } from "@/components/lesson/StageHeader";
+import { StepRail, type RunnerStage } from "@/components/lesson/StepRail";
 import { StepNavContext } from "@/components/lesson/StepNav";
 
 export type RunnerLesson = {
@@ -173,8 +173,6 @@ export function ModuleRunner({
           coreQuestion={coreQuestion}
           estMinutes={estMinutes}
           stepCount={lessons.length}
-          stages={stages}
-          currentSlug={moduleSlug}
         />
 
         <StepRail
@@ -185,6 +183,10 @@ export function ModuleRunner({
           index={index}
           visited={visited}
           onSelect={go}
+          levelSlug={levelSlug}
+          levelTitle={levelTitle}
+          stages={stages}
+          currentSlug={moduleSlug}
         />
 
         {/* --- Step content --------------------------------------------------- */}

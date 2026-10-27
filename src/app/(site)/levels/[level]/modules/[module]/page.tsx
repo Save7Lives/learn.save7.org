@@ -55,8 +55,8 @@ export default async function ModulePage(
   const isRead = stagePosition?.read ?? false;
   const isPassed = stagePosition?.state === "PASSED";
 
-  // The CHECK step is this Stage's quiz, and the Stage stepper draws every Stage's
-  // dot from its quiz. Only where the learner stands is read here, for all the
+  // The CHECK step is this Stage's quiz, and the step rail draws every Stage's
+  // block from its quiz. Only where the learner stands is read here, for all the
   // Level's Stages at once; the paper is drawn when they open it, so visiting a
   // Stage never starts an attempt.
   const quizStates = await getStageQuizStates(siblings.map((s) => s.slug));
