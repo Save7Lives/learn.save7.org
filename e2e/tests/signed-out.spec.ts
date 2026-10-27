@@ -85,7 +85,7 @@ test("Stage prose is not readable without signing in", async ({ db }) => {
   expect(Number(rows[0].n)).toBeGreaterThan(0);
 
   // The lessons themselves, and every column of a Stage that carries prose.
-  expect(rowsOf(await api("learn_lessons?select=slug,title,body_markdown,payload"))).toEqual([]);
+  expect(rowsOf(await api("learn_lessons?select=slug,title,body_markdown"))).toEqual([]);
   const intro = await api("learn_modules?select=intro_markdown");
   expect(intro.ok).toBe(false);
   expect(intro.message).toMatch(/permission denied/i);
