@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { m } from "motion/react";
 import { Icon } from "@/components/ui/icons";
 import { RailStepper, type RailState } from "@/components/portal/Portal";
 import { cx } from "@/components/ui/primitives";
@@ -112,10 +113,20 @@ export function StepRail({
                         title={step.label}
                         onClick={() => onSelect(i)}
                         className={cx(
-                          "h-2 flex-1 first:rounded-l-full last:rounded-r-full",
-                          i === index ? "bg-navy" : visited.has(i) ? "bg-teal" : "bg-line",
+                          "relative h-2 flex-1 transition-colors duration-300 first:rounded-l-full last:rounded-r-full",
+                          visited.has(i) ? "bg-teal" : "bg-line",
                         )}
-                      />
+                      >
+                        {/* One navy marker that springs from segment to segment,
+                            so the eye follows the move instead of hunting for it. */}
+                        {i === index ? (
+                          <m.span
+                            layoutId="step-rail-current"
+                            transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                            className="absolute inset-0 rounded-[inherit] bg-navy"
+                          />
+                        ) : null}
+                      </button>
                     ))}
                   </div>
                   <span className="mt-1 block truncate text-[0.6875rem] font-medium text-navy">
