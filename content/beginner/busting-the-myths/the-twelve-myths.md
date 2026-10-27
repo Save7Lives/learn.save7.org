@@ -34,6 +34,14 @@ Say it as practice, not as law. You may hear that "the National Health Act says 
 
 **Why it persists.** Organ trafficking is real in parts of the world, and it is reported vividly. People reasonably ask whether it happens here. The answer is that the law treats it as a crime and allocation is regulated, not left to the market.
 
+:::reveal
+title: Myths 1 to 4. Tap a card to see what is true.
+card: If I'm a registered donor, doctors won't try as hard to save me. | The doctors caring for you and the team that would recover organs are separate. Death is certified by at least two doctors, and none of them may take part in the transplant. Every effort in that room is aimed at keeping you alive.
+card: Donation will disfigure the body. | Recovery is a surgical procedure, and the body is restored afterwards. Great care is taken to preserve the donor's appearance, and an open-casket funeral remains possible.
+card: My family will be billed for it. | The family does not pay for the donation. The hospital or the tissue bank carries the costs from the point consent is given. Say it as practice, not as law. The family still pays for care before death, as for any hospital stay.
+card: Organs are bought and sold. | Trading in human tissue is a criminal offence in South Africa. Organs are allocated according to prescribed rules, not to whoever can pay.
+:::
+
 ## 5. "My religion forbids donation."
 
 **What is true.** Most religions support organ and tissue donation, as consistent with the preservation of life, and donation takes place from every community and culture in South Africa. In hospital, a faith representative or chaplain can be included to support a family through the decision.
@@ -67,6 +75,14 @@ The law and the practice pull in different directions here, and both halves are 
 So neither "your family can't override you" nor "registering is pointless" is accurate. The first is wrong about what will happen; the second is wrong about the law, and it throws away the most useful thing registering does: telling your family what you wanted.
 
 **Why it persists.** People assume a family decision, once made, stays made. But a family meeting that decision again in acute grief is a different family from the one that agreed calmly over dinner. That is why the conversation is worth having more than once.
+
+:::reveal
+title: Myths 5 to 8. Tap a card to see what is true.
+card: My religion forbids donation. | Most religions support organ and tissue donation. Positions differ between and within traditions, so the person best placed to say what a faith permits is someone inside it.
+card: I'm too old, too unhealthy, or I wear glasses. | There is no strict upper age limit. Whether a particular organ or tissue can be used is assessed at the time of death, organ by organ. Age and health are assessed. They are just not automatic exclusions. Glasses make no difference to corneal donation.
+card: Registering is enough. | Registering records what you want. In South African practice, the family is approached in every case, and a family's refusal is respected. Register, and then tell your family.
+card: If my family agreed once, donation will go ahead. | Agreement can still change at the bedside. On the face of the National Health Act, a donation a person validly made stands. In practice, hospitals approach the family every time and respect a refusal.
+:::
 
 ## 9. "South Africa's shortage isn't really that bad."
 
@@ -115,6 +131,17 @@ Why are the rules for tissue stricter than for organs, when you might expect the
 
 **Screening is the safety.** Every potential living donor in South Africa goes through a full medical assessment, blood-group and tissue typing, and a social-work assessment, with a psychological evaluation where needed to check that the decision is informed and free of pressure. Donor and recipient are counselled separately. Most people who come forward are turned away: at one Johannesburg hospital, over more than thirty years, **fewer than a quarter of the people assessed went on to donate.** A donor can withdraw at any point, right up to the anaesthetic.
 
+:::checklist
+title: What every potential living donor goes through. Tick each one.
+item: A full medical assessment
+item: Blood-group and tissue typing
+item: A social-work assessment
+item: A psychological evaluation where needed, to check the decision is informed and free of pressure
+item: Separate counselling for donor and recipient
+pending: Screening is the safety. It is what makes living donation acceptably safe.
+done: Most people who come forward are turned away. And a donor can withdraw at any point, right up to the anaesthetic.
+:::
+
 **Kidney.** South African transplant clinicians describe the operation to donors as safe and low-risk, while being clear it is not risk-free. The numbers behind that come from large foreign registries, since South Africa has no national living-donor register:
 
 - 📌 Death from the operation is rare: historically about 3 in every 10,000 donors, and under 1 in 10,000 in the most recent decade of US data.
@@ -130,3 +157,11 @@ Living donation is not a fringe practice here. In 2021, South Africa performed 5
 **What not to say.** Not "it's completely safe", and not "it's dangerous". Also avoid claiming either that donation shortens a donor's life or that it doesn't: the long-term studies genuinely disagree, and this course does not pretend otherwise.
 
 **Why it persists.** Living donation is often mentioned and its risks are rarely explained. Even the Organ Donor Foundation's own FAQ describes living donation without a word on donor safety. Silence about risk makes people suspect the worst. The honest answer is the reassuring one: small, real risks, explained in full, taken on only by carefully screened people who chose it for themselves.
+
+:::reveal
+title: Myths 9 to 12. Tap a card to see what is true.
+card: South Africa's shortage isn't really that bad. | It is severe, and it has got worse. The deceased-donation rate fell from 1.60 to 0.48 per million people between 2017 and 2021. At the end of 2021, 2,586 people were on the national waiting list.
+card: Tissue donation needs a perfect body, it's too late once someone has died, and it rules out funeral rites. | None of the three. Far more people can donate tissue than organs. Tissue can be recovered several hours, and even days, after death. An open-casket funeral is possible, and the funeral is not delayed.
+card: I've had cancer, or a serious illness, so I can't donate. | It is not an automatic exclusion. Nothing is decided in advance: which organs and tissue can be used is established at the time of death. With cancer, the answer depends on what is being donated.
+card: Living donation is unsafe for the donor. | Not risk-free, and not reckless either. It is major surgery on a healthy person, made acceptably safe by how carefully donors are chosen. Donating part of a liver carries more risk than donating a kidney.
+:::

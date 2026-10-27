@@ -25,6 +25,14 @@ The decision belongs to the patient's own care:
 
 Why insist on that order? Because the moment the prospect of donation influences whether, or when, treatment is withdrawn, the patient stops being cared for as a person and starts being managed as a source of organs. The treating team's duty is to this patient alone. Keeping the withdrawal decision first, separate, and made for the patient's own reasons is what protects that duty, and it is also what makes it honest to tell a family that donation had nothing to do with it.
 
+:::steps
+title: Withdrawal first, then donation. Tap a step.
+step: The patient's own care | Treatment that can no longer benefit the patient may be withheld or withdrawn. The decision should ideally be made by the senior practitioner responsible for the patient, after consulting colleagues and taking into account the views of the patient or those close to them.
+step: An independent decision | The treating team decides to withdraw treatment, in line with palliative care, for the patient's own reasons. The team should never act in haste.
+step: Only then, donation | Donation is considered only after that independent decision. Nothing is done to hasten the dying.
+step: If the heart does not stop in time | Donation stands down and palliative care simply continues. Withdrawing treatment does not end the duty of care.
+:::
+
 ## The family at the end of life
 
 **Accommodation.** After brain death has been determined, a family may ask for more time before the ventilator is switched off. The South African guidelines on the determination of death call this **accommodation**: a period of continued support that allows the family to come to terms with the death. The guidelines treat it as reasonable, with limits. It should be brief and finite, the family should be told the timeframe in advance, and ordinarily it should not go beyond a day.
@@ -38,6 +46,14 @@ The guidelines are also candid about where accommodation ends. It is ethically a
 - Where a family asks for treatment the team considers futile, Booklet 7 says they must be given the reasons, and told they may move the patient to another institution that will provide it. Where serious disagreement remains, it should go to a **clinical or ethical review independent of the team**, and if that fails, to legal advice on whether a court should decide.
 
 None of this is about winning an argument with a grieving family. It is about making sure that a decision this final is one they can trust.
+
+:::reveal
+title: When a family asks for more. Tap each question.
+card: Can the family have more time after brain death? | Yes, with limits. Accommodation should be brief and finite, the family should be told the timeframe in advance, and ordinarily it should not go beyond a day.
+card: When may support stop? | Once the family has been properly counselled about the death and the option of donation has been explored. Even during accommodation, support should stop if the bed is needed for a living patient and no other bed is available.
+card: Can the family get a second opinion? | Yes. Another clinician in the hospital can give a second opinion on a brain-death determination, where that may help the family accept the death. Booklet 7 says patients and families have the right to seek one.
+card: What if the family asks for treatment the team considers futile? | They must be given the reasons, and told they may move the patient to another institution that will provide it. Serious disagreement should go to a clinical or ethical review independent of the team.
+:::
 
 **Dignity in dying.** Booklet 7's stated purpose includes making sure that **patients can die with dignity** and that their families are properly involved in their care. It asks for conversations that are calm, honest, respectful and compassionate, without medical jargon. It asks practitioners to respect cultural practices around death and dying where they are known, and to explain the circumstances of a death to the family afterwards. In DCD, the Western Cape policy allows treatment to be withdrawn where the family can be present, if they wish to be. Donation, when it happens, happens inside a good death. It never replaces one.
 
@@ -56,6 +72,20 @@ It is tempting to assume opt-out would solve South Africa's shortage. The eviden
 
 **What would help, then?** The same answer runs through all of it: the chain. In Johannesburg, the Wits transplant procurement model raised deceased donor numbers by targeting the two points where potential donations were being lost, referral and family consent. Trained coordinators, hospitals that refer every potential donor, families who have heard their relative's wishes, and public understanding: that is where the evidence points, whatever the consent model.
 
+:::compare
+title: Opt-in and opt-out. Tap to compare.
+tab: Opt-in
+row: How it works | Donation needs explicit consent, from the person or their family
+row: Where | South Africa
+tab: Opt-out
+row: How it works | Everyone is treated as willing to donate unless they recorded an objection. Also called presumed or deemed consent
+row: Soft opt-out | Most opt-out systems are soft, which means the family is still consulted
+row: Does it raise donation? | The evidence says it is not that simple. A 2021 South African review found little difference between the two systems when either is used in isolation
+tab: What would help
+row: The chain | Trained coordinators, hospitals that refer every potential donor, families who have heard their relative's wishes, and public understanding
+row: Whatever the model | That is where the evidence points, whatever the consent model
+:::
+
 ## Scarcity and fairness
 
 **The gap.** At the end of 2021, **2,586 people** were on South Africa's national transplant waiting list. That year, **229 solid organ transplants** were performed, and **189 people died waiting**. These are the most recent verified national figures, from the joint SATS/SATCS report to the World Health Organization's Global Observatory. Every allocation decision is made inside that gap.
@@ -66,6 +96,17 @@ Fairness therefore has two sides:
 
 - **Who is asked.** No community should be left out of the offer to donate. The Western Cape policy says a family's ethnic, cultural or spiritual background must never be used as a reason not to raise donation. Skipping the conversation on an assumption is itself a form of exclusion.
 - **Who receives.** Booklet 7 forbids practitioners to let their views about a patient's age, disability, race, culture, beliefs, sexuality, gender, lifestyle or social and economic status prejudice the treatment they offer. The draft transplant regulations of September 2026 would add an explicit rule that allocation may not take a deceased donor's race, religion, culture or similar characteristics into account. They are not yet law.
+
+:::compare
+title: Fairness has two sides. Tap each one.
+tab: Who is asked
+row: The principle | No community should be left out of the offer to donate
+row: Western Cape policy | A family's ethnic, cultural or spiritual background must never be used as a reason not to raise donation
+row: Why it matters | Skipping the conversation on an assumption is itself a form of exclusion
+tab: Who receives
+row: Booklet 7 | Practitioners may not let their views about a patient's age, disability, race, culture, beliefs, sexuality, gender, lifestyle or social and economic status prejudice the treatment they offer
+row: The draft regulations | Would add an explicit rule that allocation may not take a deceased donor's race, religion, culture or similar characteristics into account. They are not yet law
+:::
 
 **Donors who are less than ideal.** Scarcity also shapes which organs are used. The SATCS Red File records that, to address the shortage, extended selection criteria are sometimes applied, and people with conditions such as high blood pressure, diabetes or HIV can be considered as donors, with **each organ assessed individually** for whether it can be transplanted. It reports that such donors have shown excellent outcomes, with a significant survival benefit over no transplant. The ethical weight falls on honesty with recipients: an organ that is less than ideal can still be far better than waiting, and the recipient's team is responsible for weighing that and explaining it.
 

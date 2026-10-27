@@ -438,6 +438,14 @@ body:has([data-reader]) .site-header {
   border-radius: 4px;
 }
 
+/* An element focused only by script (tabindex="-1", such as a step heading the
+   runner moves focus to) is a landing point, not a control, so it gets no ring.
+   This has to live here: a Tailwind outline-none sits in a layer and loses to
+   the unlayered rule above. */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
 /* Navy surfaces invert the focus ring so it stays visible on dark backgrounds. */
 .on-navy *:focus-visible {
   outline-color: var(--color-white);

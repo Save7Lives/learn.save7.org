@@ -68,3 +68,19 @@ Each myth, and the fear usually underneath it:
 - *Tissue myths*: organ-donation facts applied where they don't fit
 - *A medical history excludes you*: the same quiet self-exclusion as age
 - *Living donation is unsafe*: risks that are rarely explained, so people assume the worst
+
+:::reveal
+title: Test yourself. What fear sits under each myth? Tap a card.
+card: Less effort from doctors | Being abandoned while unable to speak for yourself
+card: Disfigurement | Dignity, and the body of someone loved
+card: Being billed | Money, at a moment of shock
+card: Organ trade | Exploitation, reported vividly elsewhere
+card: Religion | Inherited assumptions, rarely checked
+card: Too old or unwell | Quiet self-exclusion nobody hears about
+card: Registering is enough | A form that feels like a completed act
+card: Earlier agreement holds | Assuming a calm decision survives acute grief
+card: Shortage isn't severe | A problem nobody sees
+card: Tissue myths | Organ-donation facts applied where they don't fit
+card: A medical history excludes you | The same quiet self-exclusion as age
+card: Living donation is unsafe | Risks that are rarely explained, so people assume the worst
+:::

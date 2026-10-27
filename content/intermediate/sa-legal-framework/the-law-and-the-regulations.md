@@ -33,6 +33,15 @@ Some donation material adds that neither doctor may be an intern. The regulation
 
 **The one exception.** Where the tissue is **eye tissue**, death is deemed established by the issuing of an ordinary death certificate by a doctor. Corneal donation does not need the two-practitioner procedure, which is part of why it is so much simpler to arrange than organ donation.
 
+:::checklist
+title: Regulation 9. Tick each requirement.
+item: At least two medical practitioners, not exactly two
+item: One of them has practised for at least five years after registration
+item: None of them may transplant the tissue removed from that person, or take part in the transplant
+pending: The regulation requires all three. It does not say that neither doctor may be an intern.
+done: That is the rule. The one exception is eye tissue, where death is deemed established by the issuing of an ordinary death certificate by a doctor.
+:::
+
 ## Who else must say yes
 
 Consent comes from the person or their family under **section 62**, as Stage 2 set out. Two further authorisations can be required.
@@ -40,6 +49,21 @@ Consent comes from the person or their family under **section 62**, as Stage 2 s
 **The hospital.** Recovery needs written authorisation from the **medical practitioner in charge of clinical services** at the hospital, or a doctor they authorise. *Medical superintendent* is language from the repealed Human Tissue Act. It still circulates in donation material and it is out of date.
 
 **The Forensic Pathology Service, after an unnatural death.** Where a death is unnatural, such as a road accident, a post-mortem is needed to determine the cause of death, and the Forensic Pathology Service must authorise what may be recovered without compromising that examination. Family consent alone is not enough. Donation is still possible; it involves one more authority saying yes. Older material names the *district surgeon* or *state pathologist*. That office no longer performs this function, and using those terms in public dates the speaker.
+
+:::compare
+title: Consent and two authorisations. Tap each one.
+tab: Consent
+row: Who | The person or their family, under section 62
+tab: The hospital
+row: Who | The medical practitioner in charge of clinical services, or a doctor they authorise
+row: How | Written authorisation is needed for recovery
+row: Out of date | Medical superintendent, which is language from the repealed Human Tissue Act
+tab: After an unnatural death
+row: Who | The Forensic Pathology Service
+row: Why | A post-mortem is needed to determine the cause of death. The service authorises what may be recovered without compromising that examination
+row: Family consent | Not enough on its own. Donation is still possible; it involves one more authority saying yes
+row: Out of date | District surgeon or state pathologist. That office no longer performs this function
+:::
 
 ## What the law prohibits
 
@@ -55,6 +79,13 @@ Consent comes from the person or their family under **section 62**, as Stage 2 s
 
 **Referral.** There is **no legal duty to refer** a potential donor. Everything after the referral is tightly regulated; whether it happens at all is not.
 
+:::reveal
+title: What the law does not say. Tap each question.
+card: Does the donation cost the family anything? | No. The donor's medical aid, estate and next of kin are not responsible for medical costs incurred once the donor has been declared brain dead and consent has been given, nor for any costs of tissue donation. The family remains responsible for the care the patient received before death.
+card: Is that written in the law? | No. It is practice, not statute. Neither the Act nor the 2012 regulations allocate the costs of donation. Say it as practice.
+card: Must a doctor refer a potential donor? | There is no legal duty to refer. Everything after the referral is tightly regulated; whether it happens at all is not.
+:::
+
 ## Recent developments
 
 **A Ministerial Advisory Committee, October 2024.** On 4 October 2024 the Minister of Health established the **Ministerial Advisory Committee on Organ Transplantation** (Government Notice 5360), under the Act's power to appoint advisory committees. Its mandate is to advise the Minister on all matters related to organ transplantation. Its listed functions include advising on transplants involving unrelated donors and non-citizens, proposing which units may perform transplants, monitoring unethical behaviour, and reviewing transplant units' annual reports. The notice frames it partly as a safeguard against organ trafficking and the abuse of potential donors. Its nine members are a Department of Health representative, a bioethicist and seven nephrologists, appointed for five-year terms.
@@ -69,5 +100,21 @@ Consent comes from the person or their family under **section 62**, as Stage 2 s
 - make whoever recovers the organs responsible for restoring the appearance of the donor's body.
 
 When you mention them, say "draft regulations published for comment in September 2026". Do not say "the law now requires". Check whether they have been finalised before relying on any of them.
+
+:::compare
+title: Today, and in the draft. Tap to compare.
+tab: Today
+row: Referral | There is no legal duty to refer a potential donor
+row: Allocation | Section 61 requires organs from deceased donors to be used and allocated only as prescribed
+row: Unrelated living donors | The need for the Minister's approval is followed in practice
+tab: The draft, not yet law
+row: Status | Published for comment in September 2026. Check whether it has been finalised before relying on it
+row: Referral | Hospitals that carry out donation would designate staff who must identify and refer potential donors
+row: Records | Every referral, donation and transplant would be recorded, and reported to the national Department of Health
+row: Transplant units | Would need to be licensed
+row: Allocation | Could not take into account a deceased donor's race, religion, culture, language, gender, sexual orientation, disability or any other aspect of their life that has no bearing on the organ itself
+row: Unrelated living donors | The need for the Minister's approval would be written down
+row: The donor's body | Whoever recovers the organs would be responsible for restoring its appearance
+:::
 
 **A correction worth knowing.** Some donation material describes a 2025 amendment to the regulations as a donation development. The 2025 amendment it points to changed the regulations on notifiable medical conditions, which govern disease surveillance, not donation. The genuine recent developments are the two above.

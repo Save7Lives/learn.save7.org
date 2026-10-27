@@ -40,6 +40,14 @@ A **recipient's** identity may not be published unless:
 - Time passes before public relations work, to protect grieving families and to avoid celebrating a transplant that may fail.
 - Coordinators arrange anonymous thank-you letters. Families are told enough to answer their questions, never enough to identify a recipient.
 
+:::reveal
+title: Privacy and publicity. Tap a card to check.
+card: What does Regulation 24 forbid? | Publishing or making known any fact through which the identity of a deceased person whose body or tissue was donated, the donor, a living person from whom tissue was removed, or the person who consented to that removal may possibly be established, unless consent was given.
+card: When may a recipient's identity be published? | When a living recipient consented in writing, or a recipient who has died consented in writing beforehand, or never objected and a listed close relative consents in writing.
+card: May a hospital publicise donor details? | No. Hospitals do not publicise donor details; a family may choose to.
+card: Why does time pass before public relations work? | To protect grieving families and to avoid celebrating a transplant that may fail.
+:::
+
 ## ULUNTU, from two sources
 
 **Red File (newest references 2021).** The Uluntu Project: education in under-resourced and vulnerable communities (townships, informal settlements and, when funding allows, rural areas) by culturally similar and culturally sensitive messengers, including in hospitals, clinics and schools. It starts from the fact that the donor pool is not representative of the South African population and that fear and missing information lead to automatic refusals.

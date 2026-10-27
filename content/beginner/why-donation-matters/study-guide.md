@@ -18,6 +18,19 @@ Organ and tissue transplantation is required by patients with end-stage organ fa
 
 Tissue transplants restore sight (corneas), restore mobility and relieve pain (bone and ligaments), keep severely burned patients alive (skin), and repair heart function, including in children born with heart defects (heart valves).
 
+:::reveal
+title: Test yourself. Who needs it? Tap a card.
+card: Kidney | End-stage renal disease, where the kidneys can no longer filter the blood well enough to sustain life
+card: Liver | Cirrhosis past the point of recovery, liver cancer, or acute liver failure
+card: Heart | End-stage heart failure, where the heart cannot pump enough blood to sustain ordinary activity
+card: Lungs | Advanced lung disease such as COPD or cystic fibrosis
+card: Pancreas | Diabetes that insulin can no longer manage well, often alongside kidney failure
+card: Corneas | Restore sight
+card: Bone and ligaments | Restore mobility and relieve pain
+card: Skin | Keeps severely burned patients alive
+card: Heart valves | Repair heart function, including in children born with heart defects
+:::
+
 ## The impact of one donor
 
 One donor can save **seven** lives through organ donation and improve up to **fifty** more through tissue donation. These are the figures published by the Organ Donor Foundation, and the origin of Save7's name.

@@ -15,6 +15,21 @@ Two related roles are easy to confuse with it:
 - **The tissue donation coordinator** handles tissue-only donation: corneas, skin, bone, tendons and heart valves. They receive specialist communication training of their own and can usually be reached around the clock. When a patient is going to be an organ donor, the transplant coordinator raises tissue donation with the family as well, and then refers the donor to a tissue coordinator to arrange the recovery.
 - **The donation support physician** is a critical care doctor the policy lets teams call in to help manage a consented donor. They are a resource for the team, not a replacement for the coordinator.
 
+:::compare
+title: The coordinator and two related roles. Tap a role.
+tab: Transplant coordinator
+row: Who they are | A SNOD, a specialist nurse in organ donation
+row: Other names | The Wits Transplant handbook says procurement coordinator, because their work is on the donor side
+row: Tissue | Raises tissue donation with an organ donor's family as well, then refers the donor to a tissue coordinator to arrange the recovery
+tab: Tissue donation coordinator
+row: What they handle | Tissue-only donation: corneas, skin, bone, tendons and heart valves
+row: Training | Specialist communication training of their own
+row: Availability | Can usually be reached around the clock
+tab: Donation support physician
+row: Who they are | A critical care doctor the policy lets teams call in to help manage a consented donor
+row: Their role | A resource for the team, not a replacement for the coordinator
+:::
+
 📌 Australia's national guideline calls the equivalent role a *Donation Specialist Nurse*, and the evidence it cites shows why the role exists. In "challenging" conversations, where the patient had not registered and staff rather than the family raised donation, families consented 54% of the time when a Donation Specialist was involved, against 33% with other trained staff and 28% with untrained staff. Those are Australian figures and not a South African result. The South African sources make the same point without numbers: the Red File states that trained coordinators are "more likely to get consent from the family", and the Western Cape policy says the consent rate reflects *both* the coordinator and the treating team.
 
 ## Brought in before the family is told
@@ -47,6 +62,15 @@ South Africa's national strategy work uses a shared vocabulary for how a patient
 5. **Utilised donor.** At least one organ transplanted, by the recipients' transplant teams.
 
 Every step is a place where a donation can be lost. The coordinator's work starts at the second step and runs to the end. A donation lost at the first step is lost on the ward before anyone calls, which is why the triggers matter so much. Beneath the whole pathway sits the **dead donor rule**: a patient may become a donor only after death, and recovering organs must never be what causes it.
+
+:::steps
+title: The donor pathway. Tap a step.
+step: Possible donor | A patient at the end of life, supported in a way that allows donation to be an option. The treating team must identify and refer them. A donation lost here is lost on the ward before anyone calls.
+step: Potential donor | Identified and referred in time. The transplant team must formally assess them. The coordinator's work starts here and runs to the end.
+step: Eligible donor | Assessed as meeting the medical criteria. Consent must be obtained after a planned approach, by the treating team and the transplant team together.
+step: Actual donor | Consent given and recovery undertaken, by the recovery team.
+step: Utilised donor | At least one organ transplanted, by the recipients' transplant teams.
+:::
 
 ## The duty chain, end to end
 
@@ -93,6 +117,18 @@ The coordinator reviews the cases that worked and the ones that didn't:
 - a medical manager's refusal of a donation is reviewed at those meetings too
 - a hospital organ and tissue donation committee oversees the policy, and in the Western Cape a provincial committee reports on it annually
 - because donation after circulatory death is still unfamiliar, the coordinator leads training and a debrief after **every** case
+
+:::checklist
+title: The duty chain, end to end. Tick each duty.
+item: Screening. Assess whether donation is feasible, and check the donor register and the priority list.
+item: Planning. Plan the approach with the people who will be in the room: who says what, when, where and in which language.
+item: The conversation. Lead the conversation in which donation is raised, and obtain consent wherever possible.
+item: Authorisation and logistics. After family consent, secure the rest, and be present throughout the recovery operation.
+item: Aftercare. Support the family after theatre, including a family that declined.
+item: Audit. Review the cases that worked and the ones that didn't.
+pending: Each is a separate responsibility, and the last three are the ones people tend to forget.
+done: That is the whole chain. The coordinator's responsibility to the family does not end in theatre.
+:::
 
 ## The professional body: SATCS
 
