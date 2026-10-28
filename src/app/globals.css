@@ -536,6 +536,53 @@ body:has([data-reader]) .site-header {
   animation: save7-drift-b 20s ease-in-out infinite;
 }
 
+/* The landing page (prototype D). The steps of "How the course works" stick a
+   little below one another as the page scrolls, ending as a pile. Not motion, so it
+   holds for reduced motion too. */
+.step-stack > li {
+  position: sticky;
+  top: calc(5.5rem + var(--i) * 0.75rem);
+}
+
+/* The Level route's teal line fills the dotted one as the section scrolls past, and
+   each question's tick draws in. Both are tied to the scroll, which only some browsers
+   can do; everywhere else, and for reduced motion, the dotted line simply stays dotted
+   and the ticks are drawn. The global reduced-motion rule above shortens durations,
+   which a scroll timeline ignores, so these say so themselves. */
+.route-fill {
+  visibility: hidden;
+}
+@keyframes save7-fill-down {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes save7-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .route-fill {
+      visibility: visible;
+      transform-origin: top;
+      animation: save7-fill-down linear both;
+      animation-timeline: view();
+      animation-range: entry 30% exit 60%;
+    }
+    .tick-draw path {
+      stroke-dasharray: 1;
+      animation: save7-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 45%;
+    }
+  }
+}
+
 /* The certificate unfolds towards the reader on screen. Pure CSS so it plays
    before any JavaScript, and never in print (below). */
 @keyframes save7-unfold {

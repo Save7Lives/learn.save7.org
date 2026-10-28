@@ -1,10 +1,10 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { Icon } from "@/components/ui/icons";
-import { PortalCard } from "@/components/portal/Portal";
-import { Reveal } from "@/components/motion/parts";
-import { Display, NumberPill } from "@/components/ui/primitives";
+import { Display } from "@/components/ui/primitives";
+import { StepGlyph } from "./CourseArt";
 
-/** Four cards, in the order a learner meets them. Wording is the introduction's own. */
+/** Four steps, in the order a learner meets them. Wording is the introduction's own. */
 const STEPS = [
   {
     title: "A baseline assessment",
@@ -25,62 +25,54 @@ const STEPS = [
 ];
 
 /**
- * "How the course works" on the landing page (#73), replacing "What's included" and
- * the certificate strip. The full list of eight stays on the introduction.
- * Numbered pills alternate pink and teal by position, on a dotted line; two across
- * below 1000px, one on a phone. Scrolled to, the cards rise one after another and
- * each number pops in just behind its card.
+ * "How the course works" on the landing page, as a stack (prototype D): each step is a
+ * card that sticks a little below the one before as the page scrolls, so the four
+ * arrive one at a time and end as a neat pile (globals.css, `.step-stack`). On desktop
+ * the heading stays beside them. The full list of eight stays on the introduction.
  */
 export function HowItWorks() {
   return (
-    <section id="how" className="pt-14 min-[760px]:pt-[4.75rem]">
-      <div className="mx-auto max-w-[73.75rem] px-[1.125rem] min-[760px]:px-6">
-        <Display as="h2" className="mb-3 text-[1.5rem] font-bold leading-[1.22] tracking-tight text-navy min-[760px]:text-[1.75rem]">
-          How the course works
-        </Display>
-        {/* Placeholder wording until the copy is signed off (#86). */}
-        <p className="mb-2 max-w-[68ch] text-[1.0625rem] leading-[1.7] text-grey">
-          Four things happen in the same order every time, so you always know where you are.{" "}
-          <Link href="/course/introduction" className="text-teal-ink underline underline-offset-2">
-            Read the full course introduction
-          </Link>
-        </p>
+    <section id="how" className="pb-20 min-[760px]:pb-28">
+      <div className="mx-auto grid max-w-[73.75rem] gap-8 px-[1.125rem] min-[760px]:px-6 min-[900px]:grid-cols-[0.8fr_1.2fr] min-[900px]:gap-14">
+        <div className="min-[900px]:sticky min-[900px]:top-24 min-[900px]:self-start">
+          <Display as="h2" className="text-[1.75rem] font-extrabold leading-[1.1] tracking-tight text-navy min-[760px]:text-[2.75rem]">
+            How the course works
+          </Display>
+          {/* Placeholder wording until the copy is signed off (#86). */}
+          <p className="mt-4 text-[1.0625rem] leading-[1.7] text-grey">
+            Four things happen in the same order every time, so you always know where you are.{" "}
+            <Link href="/course/introduction" className="text-teal-ink underline underline-offset-4">
+              Read the full course introduction
+            </Link>
+          </p>
+          <p className="mt-6 flex items-start gap-3 text-[0.9375rem] text-grey">
+            <Icon name="refresh" className="mt-0.5 size-5 shrink-0 text-teal-ink" />
+            <span>
+              <strong className="font-medium text-navy">The same baseline, again.</strong> After each
+              level you finish, so you can see what changed. It is optional, and it never affects a
+              certificate.
+            </span>
+          </p>
+        </div>
 
-        <ol className="mt-[2.125rem] grid list-none gap-5 p-0 min-[1000px]:grid-cols-4 min-[760px]:grid-cols-2">
+        <ol className="step-stack grid list-none gap-5 p-0">
           {STEPS.map((step, i) => (
-            <Reveal
-              as="li"
+            <li
               key={step.title}
-              delay={i * 0.12}
-              className={
-                "relative flex flex-col " +
-                // The dotted line runs pill to pill, on the four-across layout only.
-                (i > 0
-                  ? "min-[1000px]:before:absolute min-[1000px]:before:left-[calc(-50%+4px)] min-[1000px]:before:right-[calc(50%+24px)] min-[1000px]:before:top-[15px] min-[1000px]:before:border-t-[3px] min-[1000px]:before:border-dotted min-[1000px]:before:border-line-strong min-[1000px]:before:content-['']"
-                  : "")
-              }
+              style={{ "--i": i } as CSSProperties}
+              className="flex min-h-[13rem] gap-5 rounded-[1.75rem] border border-line bg-white p-6 shadow-[0_10px_30px_-12px_rgba(12,23,59,0.18)] min-[760px]:p-8"
             >
-              <Reveal as="span" from="pop" delay={i * 0.12 + 0.15} className="relative mb-3.5 self-center">
-                <NumberPill n={i + 1} tone={i % 2 === 0 ? "pink" : "teal"} />
-              </Reveal>
-              <PortalCard plain className="flex-1 rounded-[1.25rem] p-[1.375rem]">
-                <h3 className="font-display text-lg font-bold leading-tight text-navy">
-                  {step.title}
-                </h3>
-                <p className="mt-1.5 text-[0.9375rem] text-grey">{step.body}</p>
-              </PortalCard>
-            </Reveal>
+              <span className="grid size-16 shrink-0 place-items-center rounded-2xl border border-teal-line bg-teal-50">
+                <StepGlyph index={i} className="size-9" />
+              </span>
+              <div>
+                <p className="font-display text-sm font-bold text-teal-ink">Step {i + 1} of 4</p>
+                <h3 className="mt-1 font-display text-2xl font-bold leading-tight text-navy">{step.title}</h3>
+                <p className="mt-2 text-grey">{step.body}</p>
+              </div>
+            </li>
           ))}
         </ol>
-
-        <p className="mt-[1.375rem] flex max-w-[72ch] items-start gap-2.5 text-[0.9375rem] text-grey">
-          <Icon name="clock" className="mt-0.5 size-5 shrink-0 text-teal-ink" />
-          <span>
-            <strong className="font-medium text-navy">The same baseline, again.</strong> After
-            each level you finish, so you can see what changed. It is optional, and it never
-            affects a certificate.
-          </span>
-        </p>
       </div>
     </section>
   );
