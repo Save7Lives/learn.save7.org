@@ -1,3 +1,6 @@
+import type { CSSProperties } from "react";
+import { cx } from "@/components/ui/primitives";
+
 /**
  * The landing page's drawings, made only from the brand's own shapes: circles, the
  * dotted connector, the heart. Every one is decorative (aria-hidden) and carries no
@@ -10,8 +13,14 @@ const HEART = "M12 20.5s-8.5-5-8.5-11A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8.5 2.5c0
 
 /**
  * One gift, seven lives (the footer's line): a pink heart linked to seven circles.
- * The circles drift slowly while the page sits still (globals.css), alternating
- * between the hero pair's two drifts so neighbours never move together.
+ *
+ * On the landing page it gathers and then beats (prototypes A and B on
+ * zubayr-prototypes-hero, globals.css `.gift-*`): the seven circles fly in from far
+ * outside, the lines shoot out from the heart, and the heart lands with a beat. After
+ * that the heart beats softly and sends out a ripple every five seconds, the whole
+ * constellation turns very slowly, and each circle drifts, alternating between the
+ * hero pair's two drifts so neighbours never move together. The SVG overflows its box
+ * so nothing is clipped on the way in.
  */
 export function GiftCircles({ className }: { className?: string }) {
   const R = 150;
@@ -25,22 +34,32 @@ export function GiftCircles({ className }: { className?: string }) {
     { r: 20, fill: "fill-teal" },
   ].map((n, i) => {
     const a = (i / 7) * Math.PI * 2 - Math.PI / 2;
-    return { ...n, i, x: 200 + R * Math.cos(a), y: 200 + R * Math.sin(a) };
+    const ux = Math.cos(a);
+    const uy = Math.sin(a);
+    return { ...n, i, ux, uy, x: 200 + R * ux, y: 200 + R * uy };
   });
+  // Each circle's place in the order and the direction it flies in from.
+  const flight = (n: { i: number; ux: number; uy: number }) =>
+    ({ "--i": n.i, "--ux": n.ux.toFixed(3), "--uy": n.uy.toFixed(3) }) as CSSProperties;
 
   return (
-    <svg viewBox="0 0 400 400" aria-hidden="true" className={className}>
-      <circle cx="200" cy="200" r={R} fill="none" className="stroke-line-strong" strokeWidth="2" strokeDasharray="2 9" strokeLinecap="round" />
-      {nodes.map((n) => (
-        <line key={`l${n.i}`} x1="200" y1="200" x2={n.x} y2={n.y} className="stroke-amber" strokeWidth="3" strokeLinecap="round" strokeDasharray="0.5 10" />
-      ))}
-      <circle cx="200" cy="200" r="78" className="fill-pink" />
-      <path transform="translate(162 164) scale(3.2)" d={HEART} className="fill-white" />
-      {nodes.map((n) => (
-        <g key={n.i} className={n.i % 2 ? "animate-drift-b" : "animate-drift-a"}>
-          <circle cx={n.x} cy={n.y} r={n.r} className={n.fill} strokeWidth="5" />
-        </g>
-      ))}
+    <svg viewBox="0 0 400 400" aria-hidden="true" className={cx("overflow-visible", className)}>
+      <circle cx="200" cy="200" r="78" fill="none" className="gift-ripple stroke-pink" strokeWidth="4" />
+      <g className="gift-orbit">
+        <circle cx="200" cy="200" r={R} fill="none" className="gift-ring stroke-line-strong" strokeWidth="2" strokeDasharray="2 9" strokeLinecap="round" />
+        {nodes.map((n) => (
+          <line key={`l${n.i}`} x1="200" y1="200" x2={n.x} y2={n.y} style={flight(n)} className="gift-line stroke-amber" strokeWidth="3" strokeLinecap="round" strokeDasharray="0.5 10" />
+        ))}
+        {nodes.map((n) => (
+          <g key={n.i} className={n.i % 2 ? "animate-drift-b" : "animate-drift-a"}>
+            <circle cx={n.x} cy={n.y} r={n.r} style={flight(n)} className={cx("gift-node", n.fill)} strokeWidth="5" />
+          </g>
+        ))}
+      </g>
+      <g className="gift-heart">
+        <circle cx="200" cy="200" r="78" className="fill-pink" />
+        <path transform="translate(162 164) scale(3.2)" d={HEART} className="fill-white" />
+      </g>
     </svg>
   );
 }

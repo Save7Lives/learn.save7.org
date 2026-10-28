@@ -536,6 +536,144 @@ body:has([data-reader]) .site-header {
   animation: save7-drift-b 20s ease-in-out infinite;
 }
 
+/* The landing hero gathers, then beats (LandingHero, GiftCircles). The seven circles
+   fly in from far outside along their own line (--ux, --uy), spinning, one after
+   another (--i); the lines shoot out from the heart; the heart lands with a beat; the
+   title's two words rise out of a blur (--w); the rest rises (--rise). Afterwards the
+   heart beats softly with a ripple every five seconds and the constellation turns
+   once every two minutes. Everything has a delay, so for reduced motion none of it
+   runs at all, rather than letting the global rule shorten durations and leave
+   things waiting unseen. */
+.gift-heart,
+.gift-node {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.gift-orbit,
+.gift-ring,
+.gift-line,
+.gift-ripple {
+  transform-box: view-box;
+  transform-origin: 200px 200px;
+}
+.gift-ripple {
+  opacity: 0;
+}
+@keyframes save7-gift-ring {
+  from {
+    opacity: 0;
+    transform: scale(0.5) rotate(-140deg);
+  }
+}
+@keyframes save7-gift-land {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+  72% {
+    transform: scale(0.9);
+  }
+  86% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes save7-gift-line {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+@keyframes save7-gift-fly {
+  from {
+    opacity: 0;
+    transform: translate(calc(var(--ux) * 320px), calc(var(--uy) * 320px)) scale(0.2) rotate(-180deg);
+  }
+}
+@keyframes save7-gift-word {
+  from {
+    opacity: 0;
+    transform: translateY(70%) scale(0.9);
+    filter: blur(14px);
+  }
+}
+@keyframes save7-gift-rise {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+}
+@keyframes save7-gift-beat {
+  0%,
+  30%,
+  100% {
+    transform: scale(1);
+  }
+  8% {
+    transform: scale(1.1);
+  }
+  16% {
+    transform: scale(0.97);
+  }
+  22% {
+    transform: scale(1.06);
+  }
+}
+@keyframes save7-gift-ripple {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  30%,
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+@keyframes save7-gift-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .gift-ring {
+    animation: save7-gift-ring 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .gift-heart {
+    animation:
+      save7-gift-land 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both,
+      save7-gift-beat 5s ease-in-out 2.6s infinite;
+  }
+  /* The ripple leaves on the heart's first, stronger beat of each five seconds. */
+  .gift-ripple {
+    animation: save7-gift-ripple 5s cubic-bezier(0.16, 1, 0.3, 1) 2.6s infinite;
+  }
+  .gift-line {
+    animation: save7-gift-line 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(0.55s + var(--i) * 0.07s);
+  }
+  .gift-node {
+    animation: save7-gift-fly 1.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: calc(0.3s + var(--i) * 0.09s);
+  }
+  .gift-orbit {
+    animation: save7-gift-turn 120s linear 2.4s infinite;
+  }
+  .gift-word {
+    animation: save7-gift-word 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(0.9s + var(--w) * 0.18s);
+  }
+  .gift-rise {
+    animation: save7-gift-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--rise) both;
+  }
+}
+
 /* The landing page (prototype D). The steps of "How the course works" stick a
    little below one another as the page scrolls, ending as a pile. Not motion, so it
    holds for reduced motion too. */
