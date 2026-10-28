@@ -2,15 +2,17 @@ import Link from "next/link";
 import { ButtonLink, Display } from "@/components/ui/primitives";
 import { Reveal } from "@/components/motion/parts";
 import type { LevelWithPosition } from "@/lib/course";
-import { ClosingBand } from "./ClosingBand";
-import { CourseMap } from "./CourseMap";
+import { ClosingCard } from "./ClosingBand";
 import { HowItWorks } from "./HowItWorks";
-import { LEVEL_CARD_MOTION, LevelCard } from "./LevelCard";
-import { HeroQuote, Lede, PublicHero } from "./PublicHero";
+import { LandingHero } from "./LandingHero";
+import { LevelRoute } from "./LevelRoute";
 
 /**
- * The landing page (#73). Takes plain data so the page stays a thin loader and every
- * state (signed out, a new Student, mid-course) can be rendered without a session.
+ * The landing page (#73), redesigned as prototype D on zubayr-prototypes-ui: a centred
+ * hero with the gift drawing, the Levels as one route, the four steps as a stack, the
+ * ten questions as a checklist, and a centred closing card. Same sections, same order,
+ * same words. Takes plain data so the page stays a thin loader and every state
+ * (signed out, a new Student, mid-course) can be rendered without a session.
  */
 export function LandingView({
   levels,
@@ -25,33 +27,28 @@ export function LandingView({
   /** Signed in and the first Baseline Sitting not yet done. */
   baselinePending: boolean;
 }) {
-  // Recommend the Level they are on, so the card that carries the pink CTA is always
+  // Recommend the Level they are on, so the Level that carries the pink CTA is always
   // the genuinely useful one. Once every Level is complete, the first.
   const recommendedSlug = currentLevelSlug ?? levels[0]?.slug;
 
   return (
     <>
-      {/* --- Hero: light, on the white page (#73) --------------------------- */}
-      <PublicHero
-        eyebrow="Organ Donation and Transplantation Awareness Course"
-        title={
+      <LandingHero
+        lede={
           <>
-            Save7 <span className="text-pink">Learn</span>
+            Some people join Save7 already understanding the transplant landscape in
+            South Africa. Others have never been exposed to the organ donation crisis.
+            What everyone has in common is a passion for educating others.
+          </>
+        }
+        quote={
+          <>
+            Whether it is for an awareness campaign or a private conversation with family
+            and friends, the most important part is simply starting the conversation.
           </>
         }
       >
-        <Lede>
-          Some people join Save7 already understanding the transplant landscape in
-          South Africa. Others have never been exposed to the organ donation crisis.
-          What everyone has in common is a passion for educating others.
-        </Lede>
-
-        <HeroQuote>
-          Whether it is for an awareness campaign or a private conversation with family
-          and friends, the most important part is simply starting the conversation.
-        </HeroQuote>
-
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="mt-8 flex w-full flex-col items-stretch gap-3 min-[480px]:w-auto min-[480px]:flex-row min-[480px]:justify-center">
           <ButtonLink href={signedIn ? "#levels" : "/register"} size="lg" variant="primary">
             {signedIn ? "Choose your level" : "Start the course"}
           </ButtonLink>
@@ -61,21 +58,20 @@ export function LandingView({
         </div>
 
         {baselinePending ? (
-          <p className="mt-[1.125rem] max-w-[56ch] text-sm text-grey">
+          <p className="mt-[1.125rem] max-w-[52ch] text-sm text-grey">
             Before your first Stage we&apos;ll ask you 20 quick questions. After each
             level you can answer the same 20 again, so you can see how much you&apos;ve
             learned.
           </p>
         ) : null}
-      </PublicHero>
+      </LandingHero>
 
-      {/* --- Level chooser: the course map, then the cards ------------------- */}
-      <section id="levels" className="scroll-mt-20 pt-14 min-[760px]:pt-[4.75rem]">
-        <div className="mx-auto max-w-[73.75rem] px-[1.125rem] min-[760px]:px-6">
-          <Display as="h2" className="mb-3 text-[1.5rem] font-bold leading-[1.22] tracking-tight text-navy min-[760px]:text-[1.75rem]">
-            Choose your learning level
-          </Display>
-          <p className="mb-2 max-w-[68ch] text-[1.0625rem] leading-[1.7] text-grey">
+      <LevelRoute
+        levels={levels}
+        recommendedSlug={recommendedSlug}
+        signedIn={signedIn}
+        intro={
+          <p>
             We recommend completing the levels in order, but you can choose where you
             begin based on what you already know.{" "}
             <strong className="font-medium text-navy">
@@ -83,33 +79,18 @@ export function LandingView({
             </strong>{" "}
             You are not expected to finish all three to be an informed advocate.
           </p>
-
-          <CourseMap levels={levels} recommendedSlug={recommendedSlug} />
-
-          <div className="mt-[1.375rem] grid gap-5 min-[1000px]:grid-cols-3">
-            {levels.map((level, i) => (
-              <Reveal key={level.slug} delay={i * 0.08} className={LEVEL_CARD_MOTION}>
-                <LevelCard
-                  level={level}
-                  position={level.position}
-                  signedIn={signedIn}
-                  recommended={level.slug === recommendedSlug}
-                />
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+        }
+      />
 
       <HowItWorks />
 
-      {/* --- The ten questions ---------------------------------------------- */}
-      <section className="pt-14 min-[760px]:pt-[4.75rem]">
+      {/* --- The ten questions, as a checklist whose ticks draw in ------------ */}
+      <section className="pb-20 min-[760px]:pb-28">
         <div className="mx-auto max-w-[73.75rem] px-[1.125rem] min-[760px]:px-6">
-          <Display as="h2" className="text-[1.5rem] font-bold leading-[1.22] tracking-tight text-navy min-[760px]:text-[1.75rem]">
+          <Display as="h2" className="text-[1.75rem] font-extrabold leading-[1.1] tracking-tight text-navy min-[760px]:text-[2.75rem]">
             By the end, you&apos;ll be able to answer
           </Display>
-          <ol className="mt-[1.875rem] grid list-none gap-x-10 p-0 min-[760px]:grid-cols-2">
+          <ul className="mt-8 grid list-none gap-x-10 p-0 min-[760px]:grid-cols-2">
             {[
               "Who needs organs?",
               "Why are organs being lost?",
@@ -121,20 +102,20 @@ export function LandingView({
               "Who decides, and how is consent given?",
               "How do I talk about donation?",
               "How can I become part of the solution?",
-            ].map((q, i) => (
-              <li key={q} className="flex items-baseline gap-4 border-b border-line py-3.5 font-medium">
-                <span className="min-w-[2.375rem] font-display text-2xl leading-none text-pink">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <span>{q}</span>
-              </li>
+            ].map((q) => (
+              <Reveal as="li" key={q} className="flex items-center gap-4 border-b border-line py-4 text-lg font-medium text-navy">
+                <svg viewBox="0 0 28 28" aria-hidden="true" className="tick-draw size-7 shrink-0">
+                  <circle cx="14" cy="14" r="13" className="fill-teal-50 stroke-teal-line" strokeWidth="1" />
+                  <path d="m8.5 14.5 3.5 3.5 7.5-8" pathLength={1} fill="none" className="stroke-teal-ink" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {q}
+              </Reveal>
             ))}
-          </ol>
+          </ul>
         </div>
       </section>
 
-      {/* --- Closing band ---------------------------------------------------- */}
-      <ClosingBand
+      <ClosingCard
         text={
           signedIn ? (
             "Pick up wherever you left off."
@@ -151,7 +132,7 @@ export function LandingView({
         <ButtonLink href={signedIn ? "#levels" : "/register"} size="lg">
           {signedIn ? "Choose your level" : "Create your account"}
         </ButtonLink>
-      </ClosingBand>
+      </ClosingCard>
     </>
   );
 }
