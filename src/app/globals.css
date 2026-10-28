@@ -710,7 +710,8 @@ body:has([data-reader]) .site-header {
       transform-origin: top;
       animation: save7-fill-down linear both;
       animation-timeline: view();
-      animation-range: entry 30% exit 60%;
+      /* The tip stays at the middle of the screen: it starts there and ends there. */
+      animation-range: cover 50vh cover calc(100% - 50vh);
     }
     .tick-draw path {
       stroke-dasharray: 1;

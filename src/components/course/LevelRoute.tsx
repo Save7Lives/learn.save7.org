@@ -49,7 +49,7 @@ export function LevelRoute({
   return (
     <section id="levels" className="scroll-mt-32 pb-20 min-[760px]:pb-28">
       <div className="relative mx-auto max-w-[64rem] px-3 min-[760px]:px-6">
-        <span aria-hidden="true" className={cx("absolute bottom-[4.5rem] top-6 border-l-[3px] border-dotted border-line-strong", LINE_X)} />
+        <span aria-hidden="true" className={cx("absolute bottom-[4.5rem] top-6 -ml-[1.5px] border-l-[3px] border-dotted border-line-strong", LINE_X)} />
         <span aria-hidden="true" className={cx("route-fill absolute bottom-[4.5rem] top-6 -ml-[1.5px] w-[3px] rounded-full bg-teal", LINE_X)} />
 
         <div className={ROW}>
