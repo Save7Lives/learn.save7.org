@@ -1015,3 +1015,167 @@ body:has([data-reader]) .site-header {
 .reader-back:hover {
   color: var(--color-navy);
 }
+
+/* --- My progress (ProgressRegister) --------------------------------------------
+   Sections arrive once, top to bottom, 50ms apart: opacity and a short rise, under
+   300ms on a strong ease-out. Bars grow from the left by scale, never by width, so
+   nothing is laid out again. Hover only where there is a pointer to hover with. */
+.my-progress > * {
+  animation: mp-rise 280ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.my-progress > :nth-child(2) { animation-delay: 50ms; }
+.my-progress > :nth-child(3) { animation-delay: 100ms; }
+.my-progress > :nth-child(4) { animation-delay: 150ms; }
+.my-progress > :nth-child(5) { animation-delay: 200ms; }
+.my-progress > :nth-child(n + 6) { animation-delay: 250ms; }
+@keyframes mp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes mp-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+.mp-eyebrow {
+  font: 700 0.75rem/1.3 var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-grey);
+}
+.mp-press {
+  transition:
+    transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 160ms ease;
+}
+.mp-press:active {
+  transform: scale(0.97);
+}
+
+/* Rows between hairlines: the Levels and the certificates. */
+.mp-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--color-line);
+}
+.mp-rows > li {
+  border-bottom: 1px solid var(--color-line);
+}
+.mp-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  margin: 0 -10px;
+  padding: 16px 10px;
+  border-radius: 14px;
+  transition:
+    transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 160ms ease;
+}
+.mp-row:active {
+  transform: scale(0.985);
+}
+.mp-row-title {
+  display: block;
+  font: 700 1.0625rem/1.35 var(--font-display);
+  color: var(--color-navy);
+}
+.mp-row-arrow {
+  color: var(--color-line-strong);
+  transition:
+    transform 200ms cubic-bezier(0.23, 1, 0.32, 1),
+    color 160ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .mp-row:hover {
+    background: var(--color-teal-50);
+  }
+  .mp-row:hover .mp-row-arrow {
+    color: var(--color-navy);
+    transform: translateX(3px);
+  }
+}
+
+/* A Level's Stages passed: teal fill on a line track. */
+.mp-bar {
+  display: block;
+  height: 6px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: var(--color-line);
+  overflow: hidden;
+}
+.mp-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-teal);
+  transform-origin: left center;
+  animation: mp-grow 400ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation-delay: calc(var(--i, 0) * 50ms + 150ms);
+}
+
+/* What you've learned so far: the shift in large figures, and paired bars per
+   Level. The first-baseline bar lands before the latest, so the change reads as
+   movement; it plays once, on arrival. */
+.mp-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+  font: 800 3.5rem/1 var(--font-display);
+  letter-spacing: -0.03em;
+  color: var(--color-navy);
+  font-variant-numeric: tabular-nums;
+}
+@media (width >= 40rem) {
+  .mp-hero {
+    font-size: 5rem;
+  }
+}
+.mp-hero-arrow {
+  width: 0.5em;
+  height: 0.5em;
+  stroke-width: 2.5;
+  color: var(--color-pink);
+}
+.mp-pairbar {
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-line);
+  overflow: hidden;
+}
+.mp-pairbar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-teal);
+  transform-origin: left center;
+  animation: mp-grow 600ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation-delay: calc(var(--i, 0) * 60ms + 380ms);
+}
+.mp-pairbar.is-before > span {
+  background: var(--color-line-strong);
+  animation-delay: calc(var(--i, 0) * 60ms + 200ms);
+}
+
+/* Reduced motion keeps the fade and drops the movement: the bars are simply there. */
+@media (prefers-reduced-motion: reduce) {
+  .my-progress > * {
+    animation-name: mp-fade;
+  }
+  .mp-bar > span,
+  .mp-pairbar > span {
+    animation: none;
+  }
+  @keyframes mp-fade {
+    from {
+      opacity: 0;
+    }
+  }
+}
