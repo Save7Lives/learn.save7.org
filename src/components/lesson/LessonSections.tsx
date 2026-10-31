@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { RailStepper } from "@/components/portal/Portal";
+import { useStepRailHeight } from "@/components/lesson/StepRail";
 
 export type LessonSection = {
   /** The section's `##` heading as plain text, or null for prose before the first one. */
@@ -28,17 +29,8 @@ export function LessonSections({ sections }: { sections: LessonSection[] }) {
   const titled = sections.filter((s) => s.title !== null).length;
   const showMap = titled >= MAP_MIN_SECTIONS;
   const [active, setActive] = useState(0);
-  const [railHeight, setRailHeight] = useState(0);
+  const railHeight = useStepRailHeight(showMap);
   const refs = useRef<Array<HTMLElement | null>>([]);
-
-  useEffect(() => {
-    if (!showMap) return;
-    const rail = document.querySelector<HTMLElement>("[data-step-rail]");
-    if (!rail) return;
-    const observer = new ResizeObserver(() => setRailHeight(rail.offsetHeight));
-    observer.observe(rail);
-    return () => observer.disconnect();
-  }, [showMap]);
 
   useEffect(() => {
     if (!showMap) return;

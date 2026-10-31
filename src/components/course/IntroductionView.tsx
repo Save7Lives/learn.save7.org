@@ -1,18 +1,17 @@
 import Link from "next/link";
-import { type IconName } from "@/components/ui/icons";
-import { ButtonLink, Display, NumberPill } from "@/components/ui/primitives";
+import type { ReactNode } from "react";
+import { Icon, type IconName } from "@/components/ui/icons";
+import { ButtonLink, Display, cx } from "@/components/ui/primitives";
 import { Reveal } from "@/components/motion/parts";
 import type { LevelWithPosition } from "@/lib/course";
-import { ClosingBand } from "./ClosingBand";
-import { IconCircle } from "./IconCircle";
-import { CourseMap } from "./CourseMap";
-import { LEVEL_CARD_MOTION, LevelCard } from "./LevelCard";
-import { Lede, PublicHero } from "./PublicHero";
+import { ClosingCard } from "./ClosingBand";
+import { QuoteMark } from "./CourseArt";
+import { LevelRoute } from "./LevelRoute";
 
-const H2 =
-  "text-[1.5rem] font-bold leading-[1.22] tracking-tight text-navy min-[760px]:text-[1.75rem]";
+/** The landing page's section heading, so the two pages read as one site. */
+const H2 = "text-[1.75rem] font-extrabold leading-[1.1] tracking-tight text-navy min-[760px]:text-[2.75rem]";
 const WRAP = "mx-auto max-w-[73.75rem] px-[1.125rem] min-[760px]:px-6";
-const SECTION = "pt-14 min-[760px]:pt-[4.75rem]";
+const SECTION = "pb-20 min-[760px]:pb-28";
 
 /** What the course includes, with the icon for each. Wording as the introduction has always had it. */
 const INCLUDES: Array<[title: string, body: string, icon: IconName]> = [
@@ -67,8 +66,33 @@ const STAGE_STEPS: Array<[title: string, body: string]> = [
   ],
 ];
 
+/**
+ * A section with its heading beside the content on a wide screen, where the heading
+ * stays in view while the content scrolls (the landing page's "How the course works").
+ * Stacked on a phone.
+ */
+function Beside({ title, lede, children }: { title: string; lede?: ReactNode; children: ReactNode }) {
+  return (
+    <section className={SECTION}>
+      <div className={cx(WRAP, "grid gap-8 min-[900px]:grid-cols-[0.8fr_1.2fr] min-[900px]:gap-14")}>
+        <div className="min-[900px]:sticky min-[900px]:top-24 min-[900px]:self-start">
+          <Display as="h2" className={H2}>
+            {title}
+          </Display>
+          {lede ? <p className="mt-4 text-[1.0625rem] leading-[1.7] text-grey">{lede}</p> : null}
+        </div>
+        <div>{children}</div>
+      </div>
+    </section>
+  );
+}
 
-/** The course introduction (#73). Takes plain data so every state can be rendered without a session. */
+/**
+ * The course introduction (#73), in the landing page's design (prototype D): a centred
+ * hero, headings beside their content on a wide screen, the Levels as the same route,
+ * and the same centred closing card. Same sections, same order, same words. Takes
+ * plain data so every state can be rendered without a session.
+ */
 export function IntroductionView({
   levels,
   currentLevelSlug,
@@ -85,135 +109,128 @@ export function IntroductionView({
 
   return (
     <article>
-      {/* --- Hero: the same treatment as the landing page ------------------ */}
-      <PublicHero eyebrow="Course introduction" title="Before you begin">
-        <Lede>
-          Some people join Save7 already understanding the transplant landscape in South
-          Africa. Others have never been exposed to the organ donation crisis. What
-          everyone has in common is a passion for educating others about organ donation
-          and transplantation.
-        </Lede>
-        <Lede className="mb-0">
-          This course gives you the knowledge to speak about it confidently.
-        </Lede>
-      </PublicHero>
-
-      {/* --- Philosophy ---------------------------------------------------- */}
-      <section className={SECTION}>
-        <div className={WRAP}>
-          <div className="max-w-[47.5rem]">
-            <Display as="h2" className={H2}>
-              The Save7 position
-            </Display>
-            <blockquote className="mt-[1.125rem] rounded-r-[0.875rem] border-l-4 border-teal bg-teal-50 px-5 py-4 text-[1.0625rem] font-medium leading-[1.6] text-navy">
-              Whether it is for awareness campaigns or a private conversation with family
-              and friends, the most important part is simply starting the conversation.
-            </blockquote>
-            <div className="prose-save7 mt-6">
-              <p>
-                That is worth taking literally. The goal of this course is not to turn you
-                into a clinician, and it is not to teach you to win arguments. It is to make
-                you someone people are willing to talk to about organ donation, and who
-                knows enough to be useful when they do.
-              </p>
-              <p>
-                A great deal follows from that. You will spend more time on how to respond
-                to a frightened family member than on transplant immunology. And you will
-                learn that someone who decides <em>against</em> donation but tells their
-                family clearly is a success, not a failure.
-              </p>
-            </div>
-          </div>
+      {/* --- Hero: centred like the landing page's, under the hero pair of circles.
+          The title's words rise in one after the other, then the rest (globals.css,
+          `.gift-word` and `.gift-rise`), sooner than on the landing page because
+          there is no drawing to wait for. */}
+      <section className={cx(WRAP, "flex flex-col items-center pb-16 pt-10 text-center min-[760px]:pb-24 min-[760px]:pt-14")}>
+        <div aria-hidden="true" className="gift-rise relative h-14 w-20 [--rise:0s]">
+          <i className="absolute right-0 top-0 size-12 rounded-full bg-teal" />
+          <i className="absolute bottom-0 left-0 size-7 rounded-full bg-pink" />
+        </div>
+        <Display as="h1" className="mt-6 text-hero text-navy">
+          <span className="sr-only">Before you begin</span>
+          <span aria-hidden="true">
+            <span className="gift-word inline-block [animation-delay:0.1s]">Before you</span>{" "}
+            <span className="gift-word inline-block text-pink [animation-delay:0.28s]">begin</span>
+          </span>
+        </Display>
+        <div className="gift-rise flex flex-col items-center [--rise:0.55s]">
+          <p className="mt-6 max-w-[52ch] text-lg leading-[1.7] text-grey">
+            Some people join Save7 already understanding the transplant landscape in South
+            Africa. Others have never been exposed to the organ donation crisis. What
+            everyone has in common is a passion for educating others about organ donation
+            and transplantation.
+          </p>
+          <p className="mt-4 max-w-[52ch] text-lg font-medium leading-[1.7] text-navy">
+            This course gives you the knowledge to speak about it confidently.
+          </p>
         </div>
       </section>
 
-      {/* --- Three levels: the course map, then the cards ------------------- */}
-      <section id="levels" className={`${SECTION} scroll-mt-20`}>
-        <div className={WRAP}>
-          <Display as="h2" className={`mb-3 ${H2}`}>
-            Three levels, three achievements
-          </Display>
-          <p className="mb-2 max-w-[68ch] text-[1.0625rem] leading-[1.7] text-grey">
+      {/* --- Philosophy: the quote in the landing hero's treatment ------------ */}
+      <Beside title="The Save7 position">
+        <figure className="flex flex-col gap-3">
+          <QuoteMark className="h-6 w-8" />
+          <blockquote className="text-[1.1875rem] font-medium leading-[1.55] text-navy min-[760px]:text-[1.375rem]">
+            Whether it is for awareness campaigns or a private conversation with family
+            and friends, the most important part is simply starting the conversation.
+          </blockquote>
+        </figure>
+        <div className="prose-save7 mt-6">
+          <p>
+            That is worth taking literally. The goal of this course is not to turn you
+            into a clinician, and it is not to teach you to win arguments. It is to make
+            you someone people are willing to talk to about organ donation, and who
+            knows enough to be useful when they do.
+          </p>
+          <p>
+            A great deal follows from that. You will spend more time on how to respond
+            to a frightened family member than on transplant immunology. And you will
+            learn that someone who decides <em>against</em> donation but tells their
+            family clearly is a success, not a failure.
+          </p>
+        </div>
+      </Beside>
+
+      {/* --- Three levels: the landing page's route, which is the course map -- */}
+      <LevelRoute
+        title="Three levels, three achievements"
+        levels={levels}
+        recommendedSlug={recommendedSlug}
+        signedIn={signedIn}
+        intro={
+          <p>
             The course is a pathway, not a single block. We recommend the levels in order,
             but you can start wherever suits what you already know, and stopping after any
             level is a complete outcome, not an abandoned one.
           </p>
-          <CourseMap levels={levels} recommendedSlug={recommendedSlug} />
-          <div className="mt-[1.375rem] grid gap-5 min-[1000px]:grid-cols-3">
-            {levels.map((level, i) => (
-              <Reveal key={level.slug} delay={i * 0.08} className={LEVEL_CARD_MOTION}>
-                <LevelCard
-                  level={level}
-                  position={level.position}
-                  signedIn={signedIn}
-                  recommended={level.slug === recommendedSlug}
-                />
+        }
+      />
+
+      {/* --- What's included: rows, like the landing page's checklist --------- */}
+      <Beside title="What the course includes">
+        <ul className="m-0 list-none border-t border-line p-0">
+          {INCLUDES.map(([title, body, icon]) => (
+            <Reveal as="li" key={title} className="flex items-start gap-4 border-b border-line py-5">
+              <span className="grid size-12 shrink-0 place-items-center rounded-2xl border border-teal-line bg-teal-50 text-teal-ink">
+                <Icon name={icon} className="size-6 stroke-[1.75]" />
+              </span>
+              <div>
+                <h3 className="font-display text-lg font-bold leading-tight text-navy">{title}</h3>
+                <p className="mt-1 text-grey">{body}</p>
+              </div>
+            </Reveal>
+          ))}
+        </ul>
+      </Beside>
+
+      {/* --- How each Stage works: stops on a dotted line, like the route ----- */}
+      <Beside
+        title="How each Stage works"
+        lede="Every Stage follows the same shape, so you always know where you are."
+      >
+        <ol className="m-0 list-none p-0">
+          {STAGE_STEPS.map(([title, body], i) => (
+            <li
+              key={title}
+              className={cx(
+                "relative grid grid-cols-[2.25rem_1fr] gap-x-4 pb-6",
+                i < STAGE_STEPS.length - 1 &&
+                  "before:absolute before:bottom-1 before:left-[1.0625rem] before:top-11 before:border-l-[3px] before:border-dotted before:border-line-strong before:content-['']",
+              )}
+            >
+              <Reveal
+                as="span"
+                from="pop"
+                className="relative z-10 grid size-9 place-items-center rounded-full bg-teal font-display text-sm font-bold text-navy"
+              >
+                {i + 1}
               </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+              <div className="pt-1">
+                <h3 className="font-display text-lg font-bold leading-tight text-navy">{title}</h3>
+                <p className="mt-1 text-grey">{body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </Beside>
 
-      {/* --- What's included ----------------------------------------------- */}
-      <section className={SECTION}>
-        <div className={WRAP}>
-          <Display as="h2" className={H2}>
-            What the course includes
-          </Display>
-          <ul className="mt-[1.875rem] grid list-none gap-x-8 gap-y-[1.625rem] p-0 min-[760px]:grid-cols-2">
-            {INCLUDES.map(([title, body, icon], i) => (
-              <li key={title} className="flex items-start gap-3.5">
-                <IconCircle name={icon} tone={i % 2 ? "teal" : "pink"} />
-                <div>
-                  <h3 className="font-display text-lg font-bold leading-tight text-navy">
-                    {title}
-                  </h3>
-                  <p className="mt-1 text-[0.9375rem] text-grey">{body}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* --- How each Stage works ------------------------------------------ */}
-      <section className={SECTION}>
-        <div className={WRAP}>
-          <div className="max-w-[47.5rem]">
-            <Display as="h2" className={H2}>
-              How each Stage works
-            </Display>
-            <p className="mt-3 max-w-[68ch] text-[1.0625rem] leading-[1.7] text-grey">
-              Every Stage follows the same shape, so you always know where you are.
-            </p>
-            <ol className="mt-[1.625rem] list-none p-0">
-              {STAGE_STEPS.map(([title, body], i) => (
-                <li
-                  key={title}
-                  className={
-                    "relative grid grid-cols-[2rem_1fr] gap-x-[1.125rem] pb-[1.375rem] " +
-                    (i < STAGE_STEPS.length - 1
-                      ? "before:absolute before:bottom-1.5 before:left-[15px] before:top-[38px] before:border-l-[3px] before:border-dotted before:border-line-strong before:content-['']"
-                      : "")
-                  }
-                >
-                  <NumberPill n={i + 1} tone={i % 2 ? "teal" : "pink"} />
-                  <div>
-                    <div className="pt-1 font-bold">{title}</div>
-                    <p className="mt-0.5 text-grey">{body}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
-      </section>
-
-      {/* --- Next step ----------------------------------------------------- */}
+      {/* --- Next step: the landing page's centred card ----------------------- */}
       {signedIn ? (
         baselineCompleted ? (
-          <ClosingBand text="You have already completed the baseline assessment. Pick up wherever you left off.">
-            <div className="flex flex-wrap gap-3">
+          <ClosingCard text="You have already completed the baseline assessment. Pick up wherever you left off.">
+            <div className="flex flex-wrap justify-center gap-3">
               <ButtonLink href="/dashboard" size="lg">
                 Go to my progress
               </ButtonLink>
@@ -221,17 +238,17 @@ export function IntroductionView({
                 Choose a level
               </ButtonLink>
             </div>
-          </ClosingBand>
+          </ClosingCard>
         ) : (
-          <ClosingBand text="Start with the baseline assessment. Twenty questions, no pass mark, and it is what makes your knowledge improvement measurable. The levels open as soon as it's done.">
+          <ClosingCard text="Start with the baseline assessment. Twenty questions, no pass mark, and it is what makes your knowledge improvement measurable. The levels open as soon as it's done.">
             <ButtonLink href="/assessment/pre" size="lg">
               Start the baseline assessment
             </ButtonLink>
-          </ClosingBand>
+          </ClosingCard>
         )
       ) : (
-        <ClosingBand text="Create an account so your progress, scores and certificate can be saved. It takes a name and an email.">
-          <div className="flex flex-wrap gap-3">
+        <ClosingCard text="Create an account so your progress, scores and certificate can be saved. It takes a name and an email.">
+          <div className="flex flex-wrap justify-center gap-3">
             <ButtonLink href="/register" size="lg">
               Create your account
             </ButtonLink>
@@ -239,16 +256,14 @@ export function IntroductionView({
               Sign in
             </ButtonLink>
           </div>
-        </ClosingBand>
+        </ClosingCard>
       )}
 
-      <div className={`${WRAP} pt-6`}>
-        <p className="text-sm text-grey">
-          <Link href="/privacy" className="underline">
-            What we do with your information
-          </Link>
-        </p>
-      </div>
+      <p className={cx(WRAP, "-mt-12 pb-10 text-center text-sm text-grey min-[760px]:-mt-20")}>
+        <Link href="/privacy" className="underline underline-offset-2">
+          What we do with your information
+        </Link>
+      </p>
     </article>
   );
 }

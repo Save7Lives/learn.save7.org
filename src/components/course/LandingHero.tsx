@@ -5,7 +5,7 @@ import { GiftCircles, QuoteMark } from "./CourseArt";
 /**
  * The landing page's hero (prototype D): centred on the white page, with the gift
  * drawing as its focal point and no blobs. The course's full name sits under the title
- * rather than above it as an eyebrow. The introduction keeps PublicHero.
+ * rather than above it as an eyebrow.
  *
  * It arrives with the drawing gathering in (GiftCircles), then the two words of the
  * title rise out of a blur one after the other, then the rest rises (prototype A,
