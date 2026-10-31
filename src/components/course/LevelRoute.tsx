@@ -23,7 +23,7 @@ function Stop({ className, children }: { className: string; children: ReactNode 
 }
 
 /**
- * The Level chooser on the landing page, drawn as a route (prototype D, chosen on
+ * The Level chooser on the landing page and the course introduction, drawn as a route (prototype D, chosen on
  * zubayr-prototypes-ui). One dotted line runs from the section heading through every
  * Stage of every Level to the Advanced certificate, so the section is the course map
  * and no separate map is drawn. A teal line fills it as the section scrolls past
@@ -39,12 +39,15 @@ export function LevelRoute({
   recommendedSlug,
   signedIn,
   intro,
+  title = "Choose your learning level",
 }: {
   levels: LevelWithPosition[];
   /** The Level the page recommends: the Student's current Level, else the first. */
   recommendedSlug: string | undefined;
   signedIn: boolean;
   intro: ReactNode;
+  /** The section heading. The course introduction names it for what the route shows. */
+  title?: string;
 }) {
   return (
     <section id="levels" className="scroll-mt-32 pb-20 min-[760px]:pb-28">
@@ -58,7 +61,7 @@ export function LevelRoute({
           </Stop>
           <div>
             <Display as="h2" className="text-[1.75rem] font-extrabold leading-[1.1] tracking-tight text-navy min-[760px]:text-[2.75rem]">
-              Choose your learning level
+              {title}
             </Display>
             <div className="mt-4 max-w-[60ch] text-[1.0625rem] leading-[1.7] text-grey">{intro}</div>
           </div>

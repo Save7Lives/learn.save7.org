@@ -7,7 +7,7 @@ import { Button, cx } from "@/components/ui/primitives";
 import { Icon } from "@/components/ui/icons";
 import { LESSON_KIND_LABELS, type LessonKind } from "@/lib/constants";
 import { StageHeader } from "@/components/lesson/StageHeader";
-import { StepRail, type RunnerStage } from "@/components/lesson/StepRail";
+import { StepList, StepRail, type RunnerStage } from "@/components/lesson/StepRail";
 import { StepNavContext } from "@/components/lesson/StepNav";
 
 export type RunnerLesson = {
@@ -163,6 +163,10 @@ export function ModuleRunner({
   // content migration to retitle every Stage's COMPLETE lesson.
   const heading = isFinishStep ? "Finish this Stage" : lesson.title;
   const backLabel = `Back to ${levelTitle} Level`;
+  const railSteps = lessons.map((step) => ({
+    id: step.id,
+    label: LESSON_KIND_LABELS[step.kind as LessonKind] ?? step.title,
+  }));
 
   return (
     // data-reader switches the site header off its sticky position (globals.css),
@@ -181,10 +185,7 @@ export function ModuleRunner({
         />
 
         <StepRail
-          steps={lessons.map((step) => ({
-            id: step.id,
-            label: LESSON_KIND_LABELS[step.kind as LessonKind] ?? step.title,
-          }))}
+          steps={railSteps}
           index={index}
           visited={visited}
           onSelect={go}
@@ -196,28 +197,35 @@ export function ModuleRunner({
 
         {/* --- Step content --------------------------------------------------- */}
         <div className="mx-auto max-w-[680px] px-5 pb-10 pt-7 sm:px-8">
-          {/* The leaving step pops out of the flow while the new one slides in, so
-              the new heading is mounted (and focusable) at once. Clipped sideways
-              so the slide never makes the page scroll horizontally; `clip`, not
-              `hidden`, so the section map inside can still stick. */}
-          <div className="relative overflow-x-clip">
-            <AnimatePresence mode="popLayout" initial={false} custom={direction}>
-              <m.div
-                key={index}
-                custom={direction}
-                variants={STEP_VARIANTS}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ type: "spring", stiffness: 380, damping: 34 }}
-              >
-                <h2 ref={headingRef} tabIndex={-1} className="t-h2 mb-5 mt-1.5 text-navy outline-none">
-                  {heading}
-                </h2>
+          <div className="relative">
+            {/* On a wide screen, the Stage's steps beside the column (StepList). */}
+            <StepList steps={railSteps} index={index} visited={visited} onSelect={go} />
+            {/* The leaving step pops out of the flow while the new one slides in, so
+                the new heading is mounted (and focusable) at once. Clipped sideways
+                so the slide never makes the page scroll horizontally; `clip`, not
+                `hidden`, so the section map inside can still stick. From xl the clip
+                box reaches into the right gutter (3rem + 14rem), where LessonSections
+                puts its section map; clipped at the column edge, the map was never
+                seen. */}
+            <div className="relative overflow-x-clip xl:-mr-[17rem] xl:pr-[17rem]">
+              <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+                <m.div
+                  key={index}
+                  custom={direction}
+                  variants={STEP_VARIANTS}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ type: "spring", stiffness: 380, damping: 34 }}
+                >
+                  <h2 ref={headingRef} tabIndex={-1} className="t-h2 mb-5 mt-1.5 text-navy outline-none">
+                    {heading}
+                  </h2>
 
-                {lesson.content}
-              </m.div>
-            </AnimatePresence>
+                  {lesson.content}
+                </m.div>
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* --- Step navigation: inline after the content, not docked -------- */}

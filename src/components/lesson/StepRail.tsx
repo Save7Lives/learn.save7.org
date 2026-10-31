@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { m } from "motion/react";
 import { Icon } from "@/components/ui/icons";
@@ -21,6 +21,23 @@ export type RunnerStage = {
   passed: boolean;
 };
 
+/**
+ * The step rail's height, for anything that sticks just below it. It changes with
+ * the screen and with the "All steps" list, so it is measured rather than assumed.
+ */
+export function useStepRailHeight(enabled = true) {
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    if (!enabled) return;
+    const rail = document.querySelector<HTMLElement>("[data-step-rail]");
+    if (!rail) return;
+    const observer = new ResizeObserver(() => setHeight(rail.offsetHeight));
+    observer.observe(rail);
+    return () => observer.disconnect();
+  }, [enabled]);
+  return height;
+}
+
 /** The current Stage's share of the line: wide enough to cut into its steps. */
 const CURRENT_STAGE_FLEX = "flex-[2.4]";
 
@@ -38,7 +55,8 @@ const CURRENT_STAGE_FLEX = "flex-[2.4]";
  * "All steps" opens the vertical dotted rail stepper My Progress uses for a Level's
  * Stages, which is how a keyboard or a screen reader moves between steps; the step
  * segments take a tap or a click as a shortcut and are hidden from both. Each other
- * Stage's block is a link to that Stage.
+ * Stage's block is a link to that Stage. On a wide screen the same list stays open
+ * beside the column instead (StepList), so the button is not drawn there.
  */
 export function StepRail({
   steps,
@@ -88,7 +106,7 @@ export function StepRail({
             aria-expanded={open}
             aria-controls="step-list"
             onClick={() => setOpen((o) => !o)}
-            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[10px] px-2.5 text-sm font-medium text-teal-ink underline underline-offset-4"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[10px] px-2.5 text-sm font-medium text-teal-ink underline underline-offset-4 xl:hidden"
           >
             All steps
             <Icon
@@ -129,7 +147,7 @@ export function StepRail({
                       </button>
                     ))}
                   </div>
-                  <span className="mt-1 block truncate text-[0.6875rem] font-medium text-navy">
+                  <span className="mt-1 block truncate text-xs font-medium text-navy">
                     {label}
                     <span className="sr-only">
                       , {stage.title}, you are here{stage.passed ? ", quiz passed" : ""}
@@ -154,7 +172,7 @@ export function StepRail({
                   />
                   <span
                     aria-hidden="true"
-                    className="mt-1 block truncate text-[0.6875rem] text-grey group-hover:text-navy"
+                    className="mt-1 block truncate text-xs text-grey group-hover:text-navy"
                   >
                     {label}
                   </span>
@@ -165,7 +183,7 @@ export function StepRail({
         </ol>
 
         {open ? (
-          <div id="step-list">
+          <div id="step-list" className="xl:hidden">
             <RailStepper
               label="All steps in this Stage"
               steps={steps.map((step, i) => ({
@@ -181,6 +199,42 @@ export function StepRail({
             />
           </div>
         ) : null}
+      </div>
+    </nav>
+  );
+}
+
+/**
+ * The Stage's steps, kept open beside the column on a wide screen (xl and up), where
+ * there is room for what "All steps" hides on a phone. It sits in the gutter left of
+ * the column and sticks below the step rail; LessonSections' section map mirrors it
+ * on the right.
+ */
+export function StepList({
+  steps,
+  index,
+  visited,
+  onSelect,
+}: {
+  steps: RailStep[];
+  index: number;
+  visited: ReadonlySet<number>;
+  onSelect: (index: number) => void;
+}) {
+  const railHeight = useStepRailHeight();
+  return (
+    <nav aria-label="All steps" className="absolute inset-y-0 right-full mr-12 hidden w-56 xl:block">
+      <div className="sticky" style={{ top: railHeight + 24 }}>
+        <RailStepper
+          label="All steps in this Stage"
+          steps={steps.map((step, i) => ({
+            key: step.id,
+            title: step.label,
+            state: i === index ? "current" : visited.has(i) ? "passed" : "todo",
+            status: i === index ? "You are here" : visited.has(i) ? "Read" : "Not read yet",
+            onSelect: () => onSelect(i),
+          }))}
+        />
       </div>
     </nav>
   );

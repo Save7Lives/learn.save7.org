@@ -242,7 +242,9 @@ function Status({
         </p>
       )}
 
-      <ul className="mb-1.5 mt-4 flex flex-wrap gap-2 sm:grid sm:grid-cols-3 sm:gap-2.5">
+      {/* Pills that wrap, at every width: three equal tiles squeezed "Retry as often as
+          you like" onto three lines in the reading column. */}
+      <ul className="mb-1.5 mt-4 flex flex-wrap gap-2 sm:gap-2.5">
         <Fact icon="list">{STAGE_QUIZ_SIZE} questions</Fact>
         <Fact icon="target">{need} right to pass</Fact>
         <Fact icon="refresh">Retry as often as you like</Fact>
@@ -288,12 +290,12 @@ function Fact({
   children: React.ReactNode;
 }) {
   return (
-    <li className="flex items-center gap-2 rounded-pill border border-teal-line bg-teal-50 py-1.5 pl-1.5 pr-3 text-sm font-medium text-navy sm:gap-3 sm:rounded-[14px] sm:px-3 sm:py-2.5 sm:text-[0.9375rem]">
+    <li className="flex items-center gap-2 rounded-pill border border-teal-line bg-teal-50 py-1.5 pl-1.5 pr-3 text-sm font-medium text-navy sm:pr-4 sm:text-[0.9375rem]">
       <span
         aria-hidden="true"
-        className="grid size-7 shrink-0 place-items-center rounded-full bg-teal-100 text-teal-ink sm:size-10"
+        className="grid size-7 shrink-0 place-items-center rounded-full bg-teal-100 text-teal-ink sm:size-8"
       >
-        <Icon name={icon} className="size-4 shrink-0 stroke-[2.25] sm:size-5 sm:stroke-[1.75]" />
+        <Icon name={icon} className="size-4 shrink-0 stroke-[2.25]" />
       </span>
       {children}
     </li>

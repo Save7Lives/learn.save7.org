@@ -254,7 +254,8 @@ function Reveal({ widget }: { widget: RevealWidget }) {
     });
   return (
     <Figure title={widget.title}>
-      <ul className="m-0 list-none space-y-2 p-0">
+      {/* Two columns from sm: nine full-width rows was a long stack for one game. */}
+      <ul className="m-0 grid list-none items-start gap-2 p-0 sm:grid-cols-2">
         {widget.cards.map(([front, back], i) => (
           <li key={i} className={cx("rounded-card border", shown.has(i) ? "border-navy" : "border-line-strong")}>
             <button

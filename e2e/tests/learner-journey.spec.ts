@@ -33,6 +33,8 @@ async function openStageQuiz(page: Page, stage: string, readAllSteps: boolean) {
       await page.getByRole("button", { name: "Continue", exact: true }).click();
     }
   } else {
+    // The step list sits behind "All steps" below xl (the suite runs at 1024 px).
+    await steps.getByRole("button", { name: "All steps" }).click();
     await steps.getByText("Check", { exact: true }).first().click();
   }
   await expect(page.getByRole("region", { name: "Stage Quiz" })).toBeVisible();
@@ -126,7 +128,8 @@ test("a learner registers, sits the Baseline, completes a Level and is verified"
 
   await page.goto("/dashboard");
   await expect(page.getByText("3 of 11 Stages passed").first()).toBeVisible();
-  await expect(page.getByText(publicId)).toBeVisible();
+  // On the Level's card and under Your certificates.
+  await expect(page.getByText(publicId).first()).toBeVisible();
 
   // ── Certificate download ──────────────────────────────────────────────────
   await page.goto(`/certificate/${publicId}`);
