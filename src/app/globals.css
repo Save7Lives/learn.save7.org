@@ -60,6 +60,16 @@
 :root {
   --background: var(--color-white);
   --foreground: var(--color-navy);
+  /* Elevation without a structural border (better-ui): a 1px ring, lift, then
+     ambient depth. Borders stay on dividers, inputs and selected states. */
+  --shadow-border:
+    0px 0px 0px 1px oklch(0 0 0 / 0.06),
+    0px 1px 2px -1px oklch(0 0 0 / 0.06),
+    0px 2px 4px 0px oklch(0 0 0 / 0.04);
+  --shadow-border-hover:
+    0px 0px 0px 1px oklch(0 0 0 / 0.08),
+    0px 1px 2px -1px oklch(0 0 0 / 0.08),
+    0px 2px 4px 0px oklch(0 0 0 / 0.06);
 }
 
 /* The platform is committed to a single light identity. The brand kit defines
@@ -912,17 +922,28 @@ body:has([data-reader]) .site-header {
   font: 600 0.9375rem/1.4 var(--font-display);
   color: var(--color-grey);
 }
-.reader-step {
-  animation: reader-in 240ms cubic-bezier(0.23, 1, 0.32, 1) both;
+/* A step arrives in semantic chunks (title, lede, body), 100ms apart: opacity,
+   4px of blur and 12px of rise over 300ms. Reduced motion keeps only the fade. */
+.reader-step > * {
+  animation: reader-fade 300ms ease-out both;
+}
+.reader-step > :nth-child(2) { animation-delay: 100ms; }
+.reader-step > :nth-child(n + 3) { animation-delay: 200ms; }
+@media (prefers-reduced-motion: no-preference) {
+  .reader-step > * {
+    animation-name: reader-in;
+  }
 }
 @keyframes reader-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    filter: blur(4px);
+    transform: translateY(12px);
   }
-  to {
-    opacity: 1;
-    transform: none;
+}
+@keyframes reader-fade {
+  from {
+    opacity: 0;
   }
 }
 .reader-title {
@@ -969,12 +990,17 @@ body:has([data-reader]) .site-header {
   text-align: left;
   color: var(--color-navy);
   transition:
-    border-color 160ms ease-out,
-    background-color 160ms ease-out,
-    transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+    border-color 150ms ease-out,
+    background-color 150ms ease-out,
+    scale 150ms ease-out;
+  -webkit-tap-highlight-color: transparent;
 }
-.reader-next:active {
-  transform: scale(0.985);
+/* A full-width card presses less than a button's 0.96: at 660px wide, 0.96 is a
+   26px jump. Deliberate, and the same for every row-sized surface. */
+@media (prefers-reduced-motion: no-preference) {
+  .reader-next:active {
+    scale: 0.985;
+  }
 }
 .reader-next > svg {
   color: var(--color-pink);
@@ -1012,8 +1038,10 @@ body:has([data-reader]) .site-header {
   font-weight: 500;
   color: var(--color-grey);
 }
-.reader-back:hover {
-  color: var(--color-navy);
+@media (hover: hover) {
+  .reader-back:hover {
+    color: var(--color-navy);
+  }
 }
 
 /* --- My progress (ProgressRegister) --------------------------------------------
@@ -1047,11 +1075,14 @@ body:has([data-reader]) .site-header {
 }
 .mp-press {
   transition:
-    transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
-    background-color 160ms ease;
+    scale 150ms ease-out,
+    background-color 150ms ease-out;
+  -webkit-tap-highlight-color: transparent;
 }
-.mp-press:active {
-  transform: scale(0.97);
+@media (prefers-reduced-motion: no-preference) {
+  .mp-press:not(:disabled):active {
+    scale: 0.96;
+  }
 }
 
 /* Rows between hairlines: the Levels and the certificates. */
@@ -1073,11 +1104,14 @@ body:has([data-reader]) .site-header {
   padding: 16px 10px;
   border-radius: 14px;
   transition:
-    transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
-    background-color 160ms ease;
+    scale 150ms ease-out,
+    background-color 150ms ease-out;
+  -webkit-tap-highlight-color: transparent;
 }
-.mp-row:active {
-  transform: scale(0.985);
+@media (prefers-reduced-motion: no-preference) {
+  .mp-row:active {
+    scale: 0.985;
+  }
 }
 .mp-row-title {
   display: block;

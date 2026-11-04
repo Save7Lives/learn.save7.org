@@ -17,6 +17,9 @@ const LETTERS = ["A", "B", "C", "D", "E", "F"];
 const PILL =
   "grid size-[30px] shrink-0 place-items-center border-[1.5px] font-(family-name:--font-display) text-[0.8125rem] font-bold leading-none";
 
+const SWAP =
+  "[grid-area:1/1] grid place-items-center transition-[opacity,filter,scale] duration-300 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:scale-100 motion-reduce:blur-[0px]";
+
 // --- Progress ----------------------------------------------------------------
 
 /**
@@ -132,15 +135,19 @@ export function QuizChoice({
         className={cx(
           PILL,
           "-mt-px border-line-strong bg-white text-navy",
+          "transition-[background-color,border-color,color] duration-150 ease-out",
           "group-has-[:checked]:border-navy group-has-[:checked]:bg-navy group-has-[:checked]:text-white",
           multi ? "rounded-[9px]" : "rounded-full",
         )}
       >
-        <span className="group-has-[:checked]:hidden">{LETTERS[index]}</span>
-        <Icon
-          name="check"
-          className="hidden size-4 shrink-0 stroke-[2.25] group-has-[:checked]:block"
-        />
+        {/* Letter and check share one grid cell and cross-fade (better-ui): scale
+            0.25 to 1, blur 4px to 0, 300ms. Reduced motion keeps only the fade. */}
+        <span className={cx(SWAP, "group-has-[:checked]:scale-[0.25] group-has-[:checked]:opacity-0 group-has-[:checked]:blur-[4px]")}>
+          {LETTERS[index]}
+        </span>
+        <span className={cx(SWAP, "scale-[0.25] opacity-0 blur-[4px] group-has-[:checked]:scale-100 group-has-[:checked]:opacity-100 group-has-[:checked]:blur-[0px]")}>
+          <Icon name="check" className="size-4 shrink-0 stroke-[3]" />
+        </span>
       </span>
       <span className="min-w-0 flex-1 text-navy">{text}</span>
     </label>

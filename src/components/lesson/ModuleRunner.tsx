@@ -180,7 +180,7 @@ export function ModuleRunner({
               href={`/levels/${levelSlug}`}
               className="-ml-1 inline-flex min-h-11 items-center gap-1.5 px-1 text-[0.9375rem] font-medium text-teal-ink hover:text-navy"
             >
-              <Icon name="arrow-left" className="size-4 shrink-0 stroke-[2.25]" />
+              <Icon name="arrow-left" className="size-4 shrink-0 stroke-[3]" />
               {levelTitle} Level
             </Link>
             <StepMenu steps={railSteps} index={index} visited={visited} onSelect={go} />
@@ -223,7 +223,7 @@ export function ModuleRunner({
                   <span className="reader-next-eyebrow">Up next</span>
                   <span className="reader-next-title">{nextName}</span>
                 </span>
-                <Icon name="arrow" className="size-5 shrink-0 stroke-[2.25]" />
+                <Icon name="arrow" className="size-5 shrink-0 stroke-[3]" />
               </button>
             ) : isRead ? (
               <div className="flex flex-wrap items-center gap-3">
@@ -245,7 +245,7 @@ export function ModuleRunner({
 
             {index > 0 ? (
               <button type="button" className="reader-back" onClick={() => go(index - 1)}>
-                <Icon name="arrow-left" className="size-4 shrink-0 stroke-[2.25]" />
+                <Icon name="arrow-left" className="size-4 shrink-0 stroke-[3]" />
                 Back to {railSteps[index - 1].label}
               </button>
             ) : null}
