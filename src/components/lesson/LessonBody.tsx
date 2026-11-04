@@ -37,7 +37,7 @@ type LessonBodyProps = {
  *
  * The prose may carry interactive blocks between its paragraphs (`:::compare` and
  * the rest, `src/lib/lesson-widgets.ts`), and is cut into sections at its `##`
- * headings so that a long lesson gets a map of them (`LessonSections`).
+ * headings so that a long lesson's parts are numbered (`LessonSections`).
  *
  * A lesson may also open with a film (`filmKey`, a registry key from the lesson's
  * `video:` front matter), shown above everything else. Beginner Stage 3's intro

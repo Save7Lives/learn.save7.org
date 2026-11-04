@@ -55,12 +55,10 @@ export default async function ModulePage(
   const isRead = stagePosition?.read ?? false;
   const isPassed = stagePosition?.state === "PASSED";
 
-  // The CHECK step is this Stage's quiz, and the step rail draws every Stage's
-  // block from its quiz. Only where the learner stands is read here, for all the
-  // Level's Stages at once; the paper is drawn when they open it, so visiting a
-  // Stage never starts an attempt.
-  const quizStates = await getStageQuizStates(siblings.map((s) => s.slug));
-  const quizState = quizStates.get(mod.id) ?? null;
+  // The CHECK step is this Stage's quiz. Only where the learner stands is read
+  // here; the paper is drawn when they open it, so visiting a Stage never starts
+  // an attempt.
+  const quizState = (await getStageQuizStates([mod.id])).get(mod.id) ?? null;
   const stageQuiz = (
     <StageQuiz
       stageSlug={mod.id}
@@ -72,12 +70,6 @@ export default async function ModulePage(
       onReview={readStageQuizAction}
     />
   );
-
-  const stages = siblings.map((s) => ({
-    slug: s.slug,
-    title: s.title,
-    passed: quizStates.get(s.slug)?.passedAt != null,
-  }));
 
   const currentIndex = siblings.findIndex((s) => s.slug === moduleSlug);
   const nextSibling = siblings[currentIndex + 1] ?? null;
@@ -121,7 +113,7 @@ export default async function ModulePage(
       moduleSlug={moduleSlug}
       stageTitle={mod.title}
       stageNumber={currentIndex + 1}
-      stages={stages}
+      stageCount={siblings.length}
       coreQuestion={mod.coreQuestion}
       levelTitle={level.title}
       estMinutes={mod.estMinutes}

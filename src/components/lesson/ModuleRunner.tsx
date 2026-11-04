@@ -2,12 +2,10 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { AnimatePresence, m } from "motion/react";
-import { Button, cx } from "@/components/ui/primitives";
+import { Button } from "@/components/ui/primitives";
 import { Icon } from "@/components/ui/icons";
 import { LESSON_KIND_LABELS, type LessonKind } from "@/lib/constants";
-import { StageHeader } from "@/components/lesson/StageHeader";
-import { StepList, StepRail, type RunnerStage } from "@/components/lesson/StepRail";
+import { StepMenu } from "@/components/lesson/StepMenu";
 import { StepNavContext } from "@/components/lesson/StepNav";
 
 export type RunnerLesson = {
@@ -40,7 +38,7 @@ export function ModuleRunner({
   moduleSlug,
   stageTitle,
   stageNumber,
-  stages,
+  stageCount,
   coreQuestion,
   levelTitle,
   estMinutes,
@@ -56,8 +54,8 @@ export function ModuleRunner({
   moduleSlug: string;
   stageTitle: string;
   stageNumber: number;
-  /** Every Stage in the Level, in order, with whether its quiz is passed. */
-  stages: RunnerStage[];
+  /** How many Stages the Level has. */
+  stageCount: number;
   coreQuestion: string;
   /** The Level's name without the word Level: "Beginner". */
   levelTitle: string;
@@ -77,10 +75,7 @@ export function ModuleRunner({
 }) {
   const startIndex = Math.min(Math.max(initialLessonIndex, 0), lessons.length - 1);
   const [index, setIndex] = useState(startIndex);
-  // Which way the learner last moved, so a step slides in from the side they are
-  // heading towards: Continue from the right, Back from the left.
-  const [direction, setDirection] = useState(1);
-  // The steps the learner has been to, for the rail's checks. Resuming at step 5
+  // The steps the learner has been to, for the step list's checks. Resuming at step 5
   // means steps 1 to 4 were read on the way.
   const [visited, setVisited] = useState<ReadonlySet<number>>(
     () => new Set(Array.from({ length: startIndex + 1 }, (_, i) => i)),
@@ -111,7 +106,6 @@ export function ModuleRunner({
   }, [lesson, moduleSlug, onViewLesson]);
 
   function go(nextIndex: number) {
-    setDirection(nextIndex >= index ? 1 : -1);
     setIndex(nextIndex);
     setVisited((prev) => new Set(prev).add(nextIndex));
     // Move focus to the new step's heading so keyboard and screen reader users
@@ -158,88 +152,81 @@ export function ModuleRunner({
       if (target >= 0) go(target);
     },
   };
-  const isFinishStep = lesson.kind === "COMPLETE";
   // The Finish step's heading comes from its kind, so it says "Stage" without a
   // content migration to retitle every Stage's COMPLETE lesson.
-  const heading = isFinishStep ? "Finish this Stage" : lesson.title;
+  const heading = lesson.kind === "COMPLETE" ? "Finish this Stage" : lesson.title;
   const backLabel = `Back to ${levelTitle} Level`;
   const railSteps = lessons.map((step) => ({
     id: step.id,
     label: LESSON_KIND_LABELS[step.kind as LessonKind] ?? step.title,
   }));
+  const next = lessons[index + 1];
+  // The card leading to the Finish step says "Finish", not "Finish this Stage": the
+  // button on that step is the one that finishes.
+  const nextName = next ? (next.kind === "COMPLETE" ? railSteps[index + 1].label : next.title) : null;
 
   return (
     // data-reader switches the site header off its sticky position (globals.css),
-    // so the step rail is the only thing that sticks.
+    // so the hairline of progress is the only thing that sticks.
     <StepNavContext.Provider value={stepNav}>
       <div data-reader>
-        <StageHeader
-          levelSlug={levelSlug}
-          levelTitle={levelTitle}
-          stageNumber={stageNumber}
-          stageCount={stages.length}
-          stageTitle={stageTitle}
-          coreQuestion={coreQuestion}
-          estMinutes={estMinutes}
-          stepCount={lessons.length}
-        />
+        <div className="reader-progress" aria-hidden="true">
+          <span style={{ transform: `scaleX(${(index + 1) / lessons.length})` }} />
+        </div>
 
-        <StepRail
-          steps={railSteps}
-          index={index}
-          visited={visited}
-          onSelect={go}
-          levelSlug={levelSlug}
-          levelTitle={levelTitle}
-          stages={stages}
-          currentSlug={moduleSlug}
-        />
+        <div className="mx-auto max-w-[660px] px-5 pb-16 pt-5 sm:px-8 sm:pt-8">
+          <div className="flex items-center justify-between gap-4">
+            <Link
+              href={`/levels/${levelSlug}`}
+              className="-ml-1 inline-flex min-h-11 items-center gap-1.5 px-1 text-[0.9375rem] font-medium text-teal-ink hover:text-navy"
+            >
+              <Icon name="arrow-left" className="size-4 shrink-0 stroke-[3]" />
+              {levelTitle} Level
+            </Link>
+            <StepMenu steps={railSteps} index={index} visited={visited} onSelect={go} />
+          </div>
 
-        {/* --- Step content --------------------------------------------------- */}
-        <div className="mx-auto max-w-[680px] px-5 pb-10 pt-7 sm:px-8">
-          <div className="relative">
-            {/* On a wide screen, the Stage's steps beside the column (StepList). */}
-            <StepList steps={railSteps} index={index} visited={visited} onSelect={go} />
-            {/* The leaving step pops out of the flow while the new one slides in, so
-                the new heading is mounted (and focusable) at once. Clipped sideways
-                so the slide never makes the page scroll horizontally; `clip`, not
-                `hidden`, so the section map inside can still stick. From xl the clip
-                box reaches into the right gutter (3rem + 14rem), where LessonSections
-                puts its section map; clipped at the column edge, the map was never
-                seen. */}
-            <div className="relative overflow-x-clip xl:-mr-[17rem] xl:pr-[17rem]">
-              <AnimatePresence mode="popLayout" initial={false} custom={direction}>
-                <m.div
-                  key={index}
-                  custom={direction}
-                  variants={STEP_VARIANTS}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{ type: "spring", stiffness: 380, damping: 34 }}
-                >
-                  <h2 ref={headingRef} tabIndex={-1} className="t-h2 mb-5 mt-1.5 text-navy outline-none">
-                    {heading}
-                  </h2>
+          <h1 className="reader-stage">
+            Stage {stageNumber} of {stageCount}: {stageTitle}
+          </h1>
 
-                  {lesson.content}
-                </m.div>
-              </AnimatePresence>
-            </div>
+          {/* Keyed, so each step rises in as the learner arrives at it. */}
+          <div key={index} className="reader-step">
+            <h2 ref={headingRef} tabIndex={-1} className="reader-title outline-none">
+              {heading}
+            </h2>
+
+            {index === 0 ? (
+              <>
+                <p className="reader-lede">{coreQuestion}</p>
+                <p className="mt-3 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-sm text-grey">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Icon name="clock" className="size-4 shrink-0 stroke-[2.25]" />
+                    About {estMinutes} minutes
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Icon name="list" className="size-4 shrink-0 stroke-[2.25]" />
+                    {lessons.length} steps
+                  </span>
+                </p>
+              </>
+            ) : null}
+
+            <div className="mt-9">{lesson.content}</div>
           </div>
 
           {/* --- Step navigation: inline after the content, not docked -------- */}
-          <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-line pt-[22px]">
-            {index > 0 ? (
-              <Button variant="outline" onClick={() => go(index - 1)}>
-                Back
-              </Button>
-            ) : null}
-
-            {!isLastStep ? (
-              <Button onClick={() => go(index + 1)}>Continue</Button>
+          <div className="mt-16 grid gap-2">
+            {next ? (
+              <button type="button" className="reader-next" onClick={() => go(index + 1)}>
+                <span>
+                  <span className="reader-next-eyebrow">Up next</span>
+                  <span className="reader-next-title">{nextName}</span>
+                </span>
+                <Icon name="arrow" className="size-5 shrink-0 stroke-[3]" />
+              </button>
             ) : isRead ? (
-              <>
+              <div className="flex flex-wrap items-center gap-3">
                 <Button variant="navy" onClick={finish} disabled={pending}>
                   {pending ? "Saving…" : nextStageTitle ? "Next Stage" : backLabel}
                 </Button>
@@ -249,24 +236,19 @@ export function ModuleRunner({
                     You&apos;ve already finished this Stage
                   </p>
                 ) : null}
-              </>
+              </div>
             ) : (
-              <Button onClick={finish} disabled={pending}>
+              <Button onClick={finish} disabled={pending} className="justify-self-start">
                 {pending ? "Saving…" : "Finish this Stage"}
               </Button>
             )}
 
-            {isLastStep && isRead && !nextStageTitle ? null : (
-              <Link
-                href={`/levels/${levelSlug}`}
-                className={cx(
-                  "inline-flex min-h-11 basis-full items-center px-2 text-base font-medium text-teal-ink underline underline-offset-4 hover:text-navy",
-                  "sm:ml-auto sm:basis-auto",
-                )}
-              >
-                {backLabel}
-              </Link>
-            )}
+            {index > 0 ? (
+              <button type="button" className="reader-back" onClick={() => go(index - 1)}>
+                <Icon name="arrow-left" className="size-4 shrink-0 stroke-[3]" />
+                Back to {railSteps[index - 1].label}
+              </button>
+            ) : null}
           </div>
 
           {/* aria-live so a failed save is announced, not just drawn. */}
@@ -290,12 +272,6 @@ export function ModuleRunner({
     </StepNavContext.Provider>
   );
 }
-
-const STEP_VARIANTS = {
-  enter: (direction: number) => ({ x: direction * 48, opacity: 0 }),
-  center: { x: 0, opacity: 1 },
-  exit: (direction: number) => ({ x: direction * -48, opacity: 0, transition: { duration: 0.15 } }),
-};
 
 /**
  * Whether an error is Next's own control flow rather than a real failure.
