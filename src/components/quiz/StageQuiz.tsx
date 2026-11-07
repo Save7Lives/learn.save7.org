@@ -21,8 +21,9 @@ import type { StageQuizOutcome, StageQuizPaper } from "@/app/(site)/levels/actio
  * database's (0113); this is the three screens around them — where you stand, the
  * paper, and the marked paper with its explanations.
  *
- * It gates nothing on the page. Moving to the next step works whether or not the
- * quiz has been passed; what it gates is the Level's Certificate.
+ * It gates nothing on the page. It is the Stage's last step, and finishing the Stage
+ * works whether or not the quiz has been passed; what it gates is the Level's
+ * Certificate.
  */
 
 type View =
@@ -45,6 +46,11 @@ export type StageQuizProps = {
   /** This Level's Stages in order, with whether each quiz is passed. */
   stages: StageStop[];
   initialState: StageQuizState | null;
+  /**
+   * What closes the step under the quiz: the end of the Stage and its sources. Hidden
+   * while a paper is open, so the questions are the only thing on the page.
+   */
+  after?: React.ReactNode;
   onStart: (stageSlug: string) => Promise<StageQuizPaper | { error: string }>;
   onSubmit: (attemptId: string, payload: string) => Promise<StageQuizOutcome | { error: string }>;
   onReview: (attemptId: string) => Promise<AttemptResult | { error: string }>;
@@ -62,6 +68,7 @@ export function StageQuiz({
   levelTitle,
   stages,
   initialState,
+  after,
   onStart,
   onSubmit,
   onReview,
@@ -177,6 +184,8 @@ export function StageQuiz({
           </p>
         ) : null}
       </div>
+
+      {view.kind === "paper" ? null : after}
     </div>
   );
 }
@@ -263,8 +272,8 @@ function Status({
         <p className="mt-3 text-sm text-grey">
           Passing every Stage Quiz in this Level earns the{" "}
           <span className="font-medium text-navy">&ldquo;{certificateTitle}&rdquo;</span>{" "}
-          certificate. It doesn&apos;t hold you back: you can carry on to the next step whenever you
-          like.
+          certificate. It doesn&apos;t hold you back: you can finish this Stage and move on whenever
+          you like.
         </p>
       ) : null}
 

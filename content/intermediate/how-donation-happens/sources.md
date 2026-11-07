@@ -1,7 +1,7 @@
 ---
-slug: complete
-title: Sources
-kind: COMPLETE
+slug: check
+title: Stage Quiz
+kind: CHECK
 stage: how-donation-happens
 level: intermediate
 ---

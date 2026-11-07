@@ -4,10 +4,7 @@ import { Markdown } from "@/components/lesson/Markdown";
 import { LessonSections, type LessonSection } from "@/components/lesson/LessonSections";
 import { LessonWidgetView } from "@/components/lesson/LessonWidget";
 import { splitLessonBody } from "@/lib/lesson-widgets";
-import {
-  ModuleComplete,
-  type ModuleCompleteContext,
-} from "@/components/lesson/ModuleComplete";
+import { StageEnd, type StageEndContext } from "@/components/lesson/StageEnd";
 
 export type LessonRow = {
   id: string;
@@ -21,19 +18,23 @@ export type LessonRow = {
 
 type LessonBodyProps = {
   lesson: LessonRow;
-  /** The CHECK step's Stage Quiz, built by the Stage page, which holds the learner's state. */
-  stageQuiz?: React.ReactNode;
-  /** Only needed by the COMPLETE step, which is generated from module data. */
-  moduleContext?: ModuleCompleteContext;
+  /**
+   * The CHECK step's Stage Quiz, built by the Stage page, which holds the learner's
+   * state. It is handed the end of the Stage to show under itself whenever the
+   * learner is not mid-paper.
+   */
+  stageQuiz?: (stageEnd: React.ReactNode) => React.ReactNode;
+  /** The CHECK step's end of the Stage, generated from the Stage's own data. */
+  stageEnd?: StageEndContext;
 };
 
 /**
  * Renders one lesson.
  *
  * A lesson is its Markdown prose (content/<level>/<stage>/*.md, emitted into
- * `learn_lessons.body_markdown`). Two kinds add something the Stage page builds:
- * CHECK is the Stage Quiz (#57), and COMPLETE is generated from the Stage's own
- * data.
+ * `learn_lessons.body_markdown`). CHECK adds what the Stage page builds: the Stage
+ * Quiz (#57), then the end of the Stage (`StageEnd`), whose Markdown is the Stage's
+ * sources list.
  *
  * The prose may carry interactive blocks between its paragraphs (`:::compare` and
  * the rest, `src/lib/lesson-widgets.ts`), and is cut into sections at its `##`
@@ -58,7 +59,7 @@ export function LessonBody(props: LessonBodyProps) {
   );
 }
 
-function LessonContent({ lesson, stageQuiz, moduleContext }: LessonBodyProps) {
+function LessonContent({ lesson, stageQuiz, stageEnd }: LessonBodyProps) {
   // Key takeaways is the one kind with its own look, so it is applied here by kind
   // and the lesson's Markdown stays a plain list (globals.css, .takeaways).
   const prose = lesson.bodyMarkdown ? (
@@ -71,42 +72,13 @@ function LessonContent({ lesson, stageQuiz, moduleContext }: LessonBodyProps) {
   ) : null;
 
   if (lesson.kind === "CHECK") {
-    return <Wrapped prose={prose}>{stageQuiz ?? null}</Wrapped>;
-  }
-
-  if (lesson.kind === "COMPLETE") {
-    return (
-      // The Finish step's Markdown is the Stage's sources list, so it goes last,
-      // after the mark and the summary, rather than above them.
-      <Wrapped prose={null}>
-        {moduleContext ? (
-          <ModuleComplete context={moduleContext} sources={prose} />
-        ) : (
-          // Should not happen: the module page always supplies this. Renders
-          // nothing rather than an "awaiting content" box, which would wrongly
-          // suggest a gap in the course material.
-          null
-        )}
-      </Wrapped>
-    );
+    // The step's Markdown is the Stage's sources list, so it goes last, under the
+    // quiz and the end of the Stage, rather than above them.
+    const end = stageEnd ? <StageEnd context={stageEnd} sources={prose} /> : prose;
+    return stageQuiz ? stageQuiz(end) : end;
   }
 
   return prose ?? <AwaitingContent />;
-}
-
-function Wrapped({
-  prose,
-  children,
-}: {
-  prose: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <>
-      {prose ? <div className="mb-8">{prose}</div> : null}
-      {children}
-    </>
-  );
 }
 
 /**

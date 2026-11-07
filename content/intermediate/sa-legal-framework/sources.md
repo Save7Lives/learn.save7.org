@@ -1,7 +1,7 @@
 ---
-slug: complete
-title: Sources
-kind: COMPLETE
+slug: check
+title: Stage Quiz
+kind: CHECK
 stage: sa-legal-framework
 level: intermediate
 ---

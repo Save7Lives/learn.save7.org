@@ -8,7 +8,6 @@ import { Icon } from "@/components/ui/icons";
 import { LESSON_KIND_LABELS, type LessonKind } from "@/lib/constants";
 import { StageHeader } from "@/components/lesson/StageHeader";
 import { StepList, StepRail, type RunnerStage } from "@/components/lesson/StepRail";
-import { StepNavContext } from "@/components/lesson/StepNav";
 
 export type RunnerLesson = {
   id: string;
@@ -152,16 +151,6 @@ export function ModuleRunner({
 
   if (!lesson) return null;
 
-  const stepNav = {
-    goToKind: (kind: string) => {
-      const target = lessons.findIndex((l) => l.kind === kind);
-      if (target >= 0) go(target);
-    },
-  };
-  const isFinishStep = lesson.kind === "COMPLETE";
-  // The Finish step's heading comes from its kind, so it says "Stage" without a
-  // content migration to retitle every Stage's COMPLETE lesson.
-  const heading = isFinishStep ? "Finish this Stage" : lesson.title;
   const backLabel = `Back to ${levelTitle} Level`;
   const railSteps = lessons.map((step) => ({
     id: step.id,
@@ -171,123 +160,121 @@ export function ModuleRunner({
   return (
     // data-reader switches the site header off its sticky position (globals.css),
     // so the step rail is the only thing that sticks.
-    <StepNavContext.Provider value={stepNav}>
-      <div data-reader>
-        <StageHeader
-          levelSlug={levelSlug}
-          levelTitle={levelTitle}
-          stageNumber={stageNumber}
-          stageCount={stages.length}
-          stageTitle={stageTitle}
-          coreQuestion={coreQuestion}
-          estMinutes={estMinutes}
-          stepCount={lessons.length}
-        />
+    <div data-reader>
+      <StageHeader
+        levelSlug={levelSlug}
+        levelTitle={levelTitle}
+        stageNumber={stageNumber}
+        stageCount={stages.length}
+        stageTitle={stageTitle}
+        coreQuestion={coreQuestion}
+        estMinutes={estMinutes}
+        stepCount={lessons.length}
+      />
 
-        <StepRail
-          steps={railSteps}
-          index={index}
-          visited={visited}
-          onSelect={go}
-          levelSlug={levelSlug}
-          levelTitle={levelTitle}
-          stages={stages}
-          currentSlug={moduleSlug}
-        />
+      <StepRail
+        steps={railSteps}
+        index={index}
+        visited={visited}
+        onSelect={go}
+        levelSlug={levelSlug}
+        levelTitle={levelTitle}
+        stages={stages}
+        currentSlug={moduleSlug}
+      />
 
-        {/* --- Step content --------------------------------------------------- */}
-        <div className="mx-auto max-w-[680px] px-5 pb-10 pt-7 sm:px-8">
-          <div className="relative">
-            {/* On a wide screen, the Stage's steps beside the column (StepList). */}
-            <StepList steps={railSteps} index={index} visited={visited} onSelect={go} />
-            {/* The leaving step pops out of the flow while the new one slides in, so
-                the new heading is mounted (and focusable) at once. Clipped sideways
-                so the slide never makes the page scroll horizontally; `clip`, not
-                `hidden`, so the section map inside can still stick. From xl the clip
-                box reaches into the right gutter (3rem + 14rem), where LessonSections
-                puts its section map; clipped at the column edge, the map was never
-                seen. */}
-            <div className="relative overflow-x-clip xl:-mr-[17rem] xl:pr-[17rem]">
-              <AnimatePresence mode="popLayout" initial={false} custom={direction}>
-                <m.div
-                  key={index}
-                  custom={direction}
-                  variants={STEP_VARIANTS}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{ type: "spring", stiffness: 380, damping: 34 }}
-                >
-                  <h2 ref={headingRef} tabIndex={-1} className="t-h2 mb-5 mt-1.5 text-navy outline-none">
-                    {heading}
-                  </h2>
-
-                  {lesson.content}
-                </m.div>
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* --- Step navigation: inline after the content, not docked -------- */}
-          <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-line pt-[22px]">
-            {index > 0 ? (
-              <Button variant="outline" onClick={() => go(index - 1)}>
-                Back
-              </Button>
-            ) : null}
-
-            {!isLastStep ? (
-              <Button onClick={() => go(index + 1)}>Continue</Button>
-            ) : isRead ? (
-              <>
-                <Button variant="navy" onClick={finish} disabled={pending}>
-                  {pending ? "Saving…" : nextStageTitle ? "Next Stage" : backLabel}
-                </Button>
-                {isPassed ? (
-                  <p className="inline-flex items-center gap-1.5 text-sm font-medium text-correct">
-                    <Icon name="check-circle" className="size-4 shrink-0 stroke-[2.25]" />
-                    You&apos;ve already finished this Stage
-                  </p>
-                ) : null}
-              </>
-            ) : (
-              <Button onClick={finish} disabled={pending}>
-                {pending ? "Saving…" : "Finish this Stage"}
-              </Button>
-            )}
-
-            {isLastStep && isRead && !nextStageTitle ? null : (
-              <Link
-                href={`/levels/${levelSlug}`}
-                className={cx(
-                  "inline-flex min-h-11 basis-full items-center px-2 text-base font-medium text-teal-ink underline underline-offset-4 hover:text-navy",
-                  "sm:ml-auto sm:basis-auto",
-                )}
+      {/* --- Step content --------------------------------------------------- */}
+      <div className="mx-auto max-w-[680px] px-5 pb-10 pt-7 sm:px-8">
+        <div className="relative">
+          {/* On a wide screen, the Stage's steps beside the column (StepList). */}
+          <StepList steps={railSteps} index={index} visited={visited} onSelect={go} />
+          {/* The leaving step pops out of the flow while the new one slides in, so
+              the new heading is mounted (and focusable) at once. Clipped sideways
+              so the slide never makes the page scroll horizontally; `clip`, not
+              `hidden`, so the section map inside can still stick. From xl the clip
+              box reaches into the right gutter (3rem + 14rem), where LessonSections
+              puts its section map; clipped at the column edge, the map was never
+              seen. */}
+          <div className="relative overflow-x-clip xl:-mr-[17rem] xl:pr-[17rem]">
+            <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+              <m.div
+                key={index}
+                custom={direction}
+                variants={STEP_VARIANTS}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ type: "spring", stiffness: 380, damping: 34 }}
               >
-                {backLabel}
-              </Link>
-            )}
-          </div>
+                <h2 ref={headingRef} tabIndex={-1} className="t-h2 mb-5 mt-1.5 text-navy outline-none">
+                  {lesson.title}
+                </h2>
 
-          {/* aria-live so a failed save is announced, not just drawn. */}
-          <div aria-live="polite">
-            {saveError ? (
-              <p className="mt-4 rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-medium text-incorrect">
-                {saveError}
-              </p>
-            ) : null}
+                {lesson.content}
+              </m.div>
+            </AnimatePresence>
           </div>
+        </div>
 
-          {isLastStep && !isRead ? (
-            <p className="mt-4 text-sm text-grey">
-              {nextStageTitle
-                ? `Finishing takes you on to "${nextStageTitle}".`
-                : `This is the last Stage in the Level.`}
+        {/* --- Step navigation: inline after the content, not docked -------- */}
+        <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-line pt-[22px]">
+          {index > 0 ? (
+            <Button variant="outline" onClick={() => go(index - 1)}>
+              Back
+            </Button>
+          ) : null}
+
+          {!isLastStep ? (
+            <Button onClick={() => go(index + 1)}>Continue</Button>
+          ) : isRead ? (
+            <>
+              <Button variant="navy" onClick={finish} disabled={pending}>
+                {pending ? "Saving…" : nextStageTitle ? "Next Stage" : backLabel}
+              </Button>
+              {isPassed ? (
+                <p className="inline-flex items-center gap-1.5 text-sm font-medium text-correct">
+                  <Icon name="check-circle" className="size-4 shrink-0 stroke-[2.25]" />
+                  You&apos;ve already finished this Stage
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <Button onClick={finish} disabled={pending}>
+              {pending ? "Saving…" : "Finish this Stage"}
+            </Button>
+          )}
+
+          {isLastStep && isRead && !nextStageTitle ? null : (
+            <Link
+              href={`/levels/${levelSlug}`}
+              className={cx(
+                "inline-flex min-h-11 basis-full items-center px-2 text-base font-medium text-teal-ink underline underline-offset-4 hover:text-navy",
+                "sm:ml-auto sm:basis-auto",
+              )}
+            >
+              {backLabel}
+            </Link>
+          )}
+        </div>
+
+        {/* aria-live so a failed save is announced, not just drawn. */}
+        <div aria-live="polite">
+          {saveError ? (
+            <p className="mt-4 rounded-xl border border-pink-line bg-pink-50 px-4 py-3 text-sm font-medium text-incorrect">
+              {saveError}
             </p>
           ) : null}
         </div>
+
+        {isLastStep && !isRead ? (
+          <p className="mt-4 text-sm text-grey">
+            {nextStageTitle
+              ? `Finishing takes you on to "${nextStageTitle}".`
+              : `This is the last Stage in the Level.`}
+          </p>
+        ) : null}
       </div>
-    </StepNavContext.Provider>
+    </div>
   );
 }
 

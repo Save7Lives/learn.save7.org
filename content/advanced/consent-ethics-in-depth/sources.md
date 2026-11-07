@@ -1,7 +1,7 @@
 ---
-slug: complete
-title: Sources
-kind: COMPLETE
+slug: check
+title: Stage Quiz
+kind: CHECK
 stage: consent-ethics-in-depth
 level: advanced
 ---

@@ -156,7 +156,7 @@ them. There is no reseed endpoint any more — content arrives as reviewable SQL
   happened to leave `.next` behind, which is how this reached CI unnoticed. Do not
   reduce the script back to bare `tsc`.
 - **A lesson slug is unique only within its Stage** (`module` in the schema). `intro`,
-  `check` and `complete` each occur once per Stage, eleven times over. Anything
+  `takeaways` and `check` each occur once per Stage, eleven times over. Anything
   identifying a lesson needs the Stage too — that is why `viewLessonAction` takes
   both.
 - **No `src/proxy.ts` / middleware.** Every protected page does its own session

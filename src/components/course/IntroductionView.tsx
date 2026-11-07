@@ -27,7 +27,7 @@ const INCLUDES: Array<[title: string, body: string, icon: IconName]> = [
   ],
   [
     "Sources for every Stage",
-    "The laws, guidelines and studies each Stage draws on, listed when you finish it, for anyone who wants to read further.",
+    "The laws, guidelines and studies each Stage draws on, listed at its end, for anyone who wants to read further.",
     "search",
   ],
   [
@@ -56,10 +56,9 @@ const STAGE_STEPS: Array<[title: string, body: string]> = [
   ["Why this matters", "A short explanation of why the topic is worth your time."],
   ["Learn", "The main lesson, in plain language."],
   ["Key takeaways", "The points worth remembering, in one list."],
-  ["Stage Quiz", "Five questions, with explanations once you submit."],
   [
-    "Finish",
-    "Your Stage Quiz mark and the sources the Stage used. Marking it done records that you have read the Stage, so you can stop and pick up later. Only passing its Stage Quiz counts towards your certificate.",
+    "Stage Quiz",
+    "Five questions, with explanations once you submit, then the sources the Stage used. Finishing records that you have read the Stage, so you can stop and pick up later. Only passing its Stage Quiz counts towards your certificate.",
   ],
 ];
 
