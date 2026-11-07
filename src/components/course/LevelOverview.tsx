@@ -214,7 +214,7 @@ export function LevelOverview({
               ) : (
                 <p className="max-w-[60ch] text-grey">
                   Pass the Stage Quiz in each of the {progress.stagesTotal} Stages to earn it. Each
-                  one is the &ldquo;Check your understanding&rdquo; step of its Stage: {toGo} to go.
+                  one is the Stage Quiz step of its Stage: {toGo} to go.
                 </p>
               )}
             </PortalCard>

@@ -23,7 +23,10 @@ const AWARD_ID = /^S7-\d{4}-[A-Z]-\d{6}$/;
 /** Open a Stage from the Level page and move to its quiz step. */
 async function openStageQuiz(page: Page, stage: string, readAllSteps: boolean) {
   await page.goto("/dashboard");
-  await page.getByRole("link", { name: new RegExp(stage) }).first().click();
+  // My progress shows the next Stage as a card whose link reads "Start" or
+  // "Continue", and every other Stage as a link named for it.
+  const card = page.getByRole("region", { name: stage }).getByRole("link");
+  await card.or(page.getByRole("link", { name: new RegExp(stage) })).first().click();
   await expect(page.getByRole("heading", { name: stage, level: 1 })).toBeVisible();
 
   const steps = page.getByRole("navigation", { name: "Steps in this Stage" });
@@ -33,9 +36,9 @@ async function openStageQuiz(page: Page, stage: string, readAllSteps: boolean) {
       await page.getByRole("button", { name: /^Up next/ }).click();
     }
   } else {
-    // The step list opens from "Step N of 7", whose name also says "all steps".
+    // The step list opens from "Step N of 5", whose name also says "all steps".
     await steps.getByRole("button", { name: /all steps/i }).click();
-    await steps.getByText("Check", { exact: true }).first().click();
+    await steps.getByText("Stage Quiz", { exact: true }).first().click();
   }
   await expect(page.getByRole("region", { name: "Stage Quiz" })).toBeVisible();
 }

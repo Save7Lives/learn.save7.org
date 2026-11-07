@@ -10,7 +10,7 @@ level: advanced
 
 Picture a patient in ICU with a catastrophic brain injury. Before the story ends, their family is likely to be involved in two decisions.
 
-**The first is made while the patient is alive:** what treatment they should have now that they cannot decide for themselves, including whether life-sustaining treatment should continue. It is a decision about a living person's care. It is governed by informed consent, section 7 of the National Health Act, and the HPCSA's guidance.
+**The first is made while the patient is alive:** what treatment they should have now that they cannot decide for themselves, including whether life-sustaining treatment should continue. It is a decision about a living person's care. It is governed by informed consent, sections 6 to 8 of the National Health Act (section 7 says who decides), and the HPCSA's guidance.
 
 **The second is made after death:** whether to donate. It is a decision about what happens to a person's body once they have died. It is governed by section 62 of the Act.
 
@@ -27,7 +27,7 @@ The Act starts from the rule that no health service is provided without the pati
 3. otherwise, the patient's **spouse or partner**
 4. and, in the absence of a spouse or partner, a **parent, grandparent, adult child, or brother or sister**, "in the specific order as listed"
 
-Section 8 adds a duty that is easy to forget. Whoever consents for the patient must, where possible, consult the patient first. And the HPCSA's informed-consent guidance (Booklet 4) says that where capacity is in doubt, or a dispute about the patient's best interests can't be resolved, practitioners should consult experienced colleagues and, if needed, seek a court's ruling.
+Section 8 adds a duty that is easy to forget. Whoever consents for the patient must, where possible, consult the patient first. And the HPCSA's informed-consent guidance (Booklet 4, *Seeking patients' informed consent*, revised December 2021) says that where capacity is in doubt, or a dispute about the patient's best interests can't be resolved, practitioners should consult experienced colleagues and, if needed, seek a court's ruling.
 
 ### Advance directives: what they are, and what they aren't
 
@@ -50,7 +50,7 @@ So an advance directive carries real professional and ethical weight, and it is 
 
 ### The best-interests test
 
-Intermediate Level noted that when a patient cannot take part and has left no advance directive, the decision about treatment is taken in the patient's **best interests**. The HPCSA spells out what that means. Practitioners must weigh:
+Intermediate Level noted that when a patient cannot take part and has left no advance directive, the decision about treatment is taken in the patient's **best interests**. The test applies to a patient who cannot decide and has no applicable directive or appointed decision-maker. The HPCSA spells out what that means. Practitioners must weigh:
 
 - the options that are clinically appropriate
 - any evidence of what the patient previously said they wanted, including an advance statement
@@ -85,6 +85,8 @@ After death, section 7 no longer applies and section 62(2) takes over:
 
 - **Section 7 (treatment, while alive):** a written mandate or a person authorised by law, then spouse *or* partner, then parent, grandparent, adult child, brother or sister.
 - **Section 62(2) (donation, after death):** spouse, partner, major child, parent, guardian, major brother, major sister.
+
+If nobody on the section 62 list can be found after the prescribed steps, the Director-General may donate specific tissue.
 
 The differences are small on the page and large in a family:
 

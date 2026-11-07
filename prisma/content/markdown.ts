@@ -15,9 +15,9 @@ import { courseStructure, type LevelStructure, type StageSeed } from "./structur
  * place to review. What stayed in TypeScript is what the compiler can actually
  * check — question banks, interactive payloads, `verifiedAgainst` sign-offs.
  *
- * The split is by *kind*, not by file: INTRO, PRIMARY, TAKEAWAYS, STUDY_GUIDE
- * and FURTHER_READING carry prose and name a `bodyPath`. CHECK carries a
- * question bank and COMPLETE is a shell, so neither names one.
+ * The split is by *kind*, not by file: INTRO, PRIMARY and TAKEAWAYS carry prose
+ * and name a `bodyPath`. CHECK carries a question bank and names none. COMPLETE
+ * names the Stage's `sources.md`, the sources list the Finish step shows last.
  */
 
 /** A lesson's front matter, as the authoring files declare it. */

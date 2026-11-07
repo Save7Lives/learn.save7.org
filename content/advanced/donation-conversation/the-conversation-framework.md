@@ -39,7 +39,7 @@ The meeting itself is held in a private room away from the bedside, never as a c
 
 The **treating doctor leads** and tells the family that their relative has died. For brain death the handbook's phrase is the whole point: *brain death is death*. The doctor must leave no doubt and no room for false hope, which in practice means a warning that bad news is coming, plain language instead of medical terms, pauses, and scans or diagrams to show the extent of the injury. Some families are offered the chance to see the brainstem death tests at the bedside. Some accept and some decline, and both are fine.
 
-Two things are deliberately absent from this meeting. Donation is **not mentioned**, unless the family raises it themselves. And the coordinator is introduced **by name only**, as part of the team that supports families, never as "the transplant coordinator". At this point the family is not ready for donation, and avoiding the words is a form of respect.
+Two things are deliberately absent from this meeting. Donation is **not mentioned**, unless the family raises it themselves, and even then the handbook treats moving straight to the consent conversation as the exception, not the rule. And the coordinator is introduced **by name only**, as part of the team that supports families, never as "the transplant coordinator". At this point the family is not ready for donation, and avoiding the words is a form of respect.
 
 If a family member says "life support", or talks about the machines keeping their relative alive, that is a sign they have not yet understood that brain death is final. The team corrects it gently and at once: the machine is supplying oxygen to the organs, and their relative has already died.
 
@@ -47,9 +47,11 @@ If a family member says "life support", or talks about the machines keeping thei
 
 ### Step 3: Time-out break
 
-The family is given privacy and as much time with their relative as they need. The handbook calls this break **decoupling**, and warns that people routinely underestimate how long a family needs to accept a death.
+The family is given privacy and as much time with their relative as they need. The handbook calls this break **decoupling**, and warns that people routinely underestimate how long a family needs to accept a death. The break lets every family member reach the same understanding, contact others and spend time with their relative.
 
 The treating team has a job during the break too: it must not undo Step 2. Staff who talk as if there is still hope confuse a family that is trying to accept the death, which is why this belongs in the planning, before it happens.
+
+The Western Cape policy writes the separation in as best practice: prognosis discussions are kept apart from any request for consent.
 
 **The principle:** the death and the donation are two separate conversations, with real time between them.
 
@@ -63,7 +65,7 @@ A relative who says *it's just her body in that bed now* has usually accepted th
 
 ### Step 5: The consent conversation
 
-Only now does the coordinator raise donation. The handbook's advice is to approach it as though none of the family knows anything about it, and to explain what donation involves, what happens between consent and recovery, and when and where recovery takes place. Then the coordinator listens, because concerns that go unheard at this stage tend to come back later as the reasons for a refusal.
+Only now does the coordinator raise donation. The treating team stays for the start of this conversation. The handbook's advice is to approach it as though none of the family knows anything about it, and to explain what donation involves, what happens between consent and recovery, and when and where recovery takes place. Then the coordinator listens, because concerns that go unheard at this stage tend to come back later as the reasons for a refusal.
 
 The checklist is specific:
 
@@ -134,6 +136,8 @@ The handbook sums up the eight steps as a one-page list of Do's and Don'ts. Some
 - **Don't** use negative, apologetic, manipulative or coercive language.
 - **Don't** expect an answer immediately; give the family time alone.
 - **Do** explore a first refusal gently, obtain written consent, and follow up with the family and the referring hospital.
+
+Tissue-only donation has its own route, usually through a tissue donation coordinator.
 
 :::compare
 title: Which Do's and Don'ts are yours? Tap a group.

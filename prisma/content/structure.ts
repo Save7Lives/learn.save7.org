@@ -15,7 +15,7 @@ import type { LevelTier, LessonKind } from "../../src/lib/constants";
  * only.
  *
  * **Slugs are permanent.** Lesson identity is `(module_slug, slug)`, not `slug`
- * alone — `intro`, `takeaways`, `study-guide` and the rest recur once per Stage
+ * alone — `intro`, `takeaways`, `check`, `complete` and the rest recur once per Stage
  * by design. Reading a lesson slug as globally unique is what once collapsed 97
  * lessons into 26 rows.
  *
@@ -24,7 +24,7 @@ import type { LevelTier, LessonKind } from "../../src/lib/constants";
  * resolves. What stays in TypeScript is what benefits from being type-checked —
  * question banks, interactive payloads, and `verifiedAgainst` sign-offs — where
  * a silent error is expensive. CHECK lessons carry a question bank rather than
- * prose; COMPLETE is a shell.
+ * prose; COMPLETE names the Stage's sources.md, the list its Finish step ends on.
  */
 
 export type StageLessonSeed = {
@@ -92,10 +92,8 @@ export const beginnerLevel: LevelStructure = {
         { slug: "intro", title: "Why this matters", kind: "INTRO", bodyPath: "content/beginner/why-donation-matters/intro.md" },
         { slug: "who-is-waiting", title: "Who is waiting", kind: "PRIMARY", bodyPath: "content/beginner/why-donation-matters/who-is-waiting.md" },
         { slug: "takeaways", title: "Key takeaways", kind: "TAKEAWAYS", bodyPath: "content/beginner/why-donation-matters/takeaways.md" },
-        { slug: "check", title: "Check your understanding", kind: "CHECK" },
-        { slug: "study-guide", title: "Study guide", kind: "STUDY_GUIDE", bodyPath: "content/beginner/why-donation-matters/study-guide.md" },
-        { slug: "further-reading", title: "Further reading", kind: "FURTHER_READING", bodyPath: "content/beginner/why-donation-matters/further-reading.md" },
-        { slug: "complete", title: "Complete Stage", kind: "COMPLETE" },
+        { slug: "check", title: "Stage Quiz", kind: "CHECK" },
+        { slug: "complete", title: "Complete Stage", kind: "COMPLETE", bodyPath: "content/beginner/why-donation-matters/sources.md" },
       ],
     },
     {
@@ -108,10 +106,8 @@ export const beginnerLevel: LevelStructure = {
         { slug: "intro", title: "Why this matters", kind: "INTRO", bodyPath: "content/beginner/busting-the-myths/intro.md" },
         { slug: "the-twelve-myths", title: "The twelve myths", kind: "PRIMARY", bodyPath: "content/beginner/busting-the-myths/the-twelve-myths.md" },
         { slug: "takeaways", title: "Key takeaways", kind: "TAKEAWAYS", bodyPath: "content/beginner/busting-the-myths/takeaways.md" },
-        { slug: "check", title: "Check your understanding", kind: "CHECK" },
-        { slug: "study-guide", title: "Study guide", kind: "STUDY_GUIDE", bodyPath: "content/beginner/busting-the-myths/study-guide.md" },
-        { slug: "further-reading", title: "Further reading", kind: "FURTHER_READING", bodyPath: "content/beginner/busting-the-myths/further-reading.md" },
-        { slug: "complete", title: "Complete Stage", kind: "COMPLETE" },
+        { slug: "check", title: "Stage Quiz", kind: "CHECK" },
+        { slug: "complete", title: "Complete Stage", kind: "COMPLETE", bodyPath: "content/beginner/busting-the-myths/sources.md" },
       ],
     },
     {
@@ -124,10 +120,8 @@ export const beginnerLevel: LevelStructure = {
         { slug: "intro", title: "Why this matters", kind: "INTRO", bodyPath: "content/beginner/how-donation-works/intro.md" },
         { slug: "routes-to-donation", title: "Routes to donation", kind: "PRIMARY", bodyPath: "content/beginner/how-donation-works/routes-to-donation.md" },
         { slug: "takeaways", title: "Key takeaways", kind: "TAKEAWAYS", bodyPath: "content/beginner/how-donation-works/takeaways.md" },
-        { slug: "check", title: "Check your understanding", kind: "CHECK" },
-        { slug: "study-guide", title: "Study guide", kind: "STUDY_GUIDE", bodyPath: "content/beginner/how-donation-works/study-guide.md" },
-        { slug: "further-reading", title: "Further reading", kind: "FURTHER_READING", bodyPath: "content/beginner/how-donation-works/further-reading.md" },
-        { slug: "complete", title: "Complete Stage", kind: "COMPLETE" },
+        { slug: "check", title: "Stage Quiz", kind: "CHECK" },
+        { slug: "complete", title: "Complete Stage", kind: "COMPLETE", bodyPath: "content/beginner/how-donation-works/sources.md" },
       ],
     },
   ],
@@ -157,10 +151,8 @@ export const intermediateLevel: LevelStructure = {
         { slug: "determining-death", title: "Determining death", kind: "PRIMARY", bodyPath: "content/intermediate/how-donation-happens/determining-death.md" },
         { slug: "the-process-end-to-end", title: "The process end to end", kind: "PRIMARY", bodyPath: "content/intermediate/how-donation-happens/the-process-end-to-end.md" },
         { slug: "takeaways", title: "Key takeaways", kind: "TAKEAWAYS", bodyPath: "content/intermediate/how-donation-happens/takeaways.md" },
-        { slug: "check", title: "Check your understanding", kind: "CHECK" },
-        { slug: "study-guide", title: "Study guide", kind: "STUDY_GUIDE", bodyPath: "content/intermediate/how-donation-happens/study-guide.md" },
-        { slug: "further-reading", title: "Further reading", kind: "FURTHER_READING", bodyPath: "content/intermediate/how-donation-happens/further-reading.md" },
-        { slug: "complete", title: "Complete Stage", kind: "COMPLETE" },
+        { slug: "check", title: "Stage Quiz", kind: "CHECK" },
+        { slug: "complete", title: "Complete Stage", kind: "COMPLETE", bodyPath: "content/intermediate/how-donation-happens/sources.md" },
       ],
     },
     {
@@ -173,10 +165,8 @@ export const intermediateLevel: LevelStructure = {
         { slug: "intro", title: "Why this matters", kind: "INTRO", bodyPath: "content/intermediate/consent-whose-decision/intro.md" },
         { slug: "who-decides", title: "Who decides", kind: "PRIMARY", bodyPath: "content/intermediate/consent-whose-decision/who-decides.md" },
         { slug: "takeaways", title: "Key takeaways", kind: "TAKEAWAYS", bodyPath: "content/intermediate/consent-whose-decision/takeaways.md" },
-        { slug: "check", title: "Check your understanding", kind: "CHECK" },
-        { slug: "study-guide", title: "Study guide", kind: "STUDY_GUIDE", bodyPath: "content/intermediate/consent-whose-decision/study-guide.md" },
-        { slug: "further-reading", title: "Further reading", kind: "FURTHER_READING", bodyPath: "content/intermediate/consent-whose-decision/further-reading.md" },
-        { slug: "complete", title: "Complete Stage", kind: "COMPLETE" },
+        { slug: "check", title: "Stage Quiz", kind: "CHECK" },
+        { slug: "complete", title: "Complete Stage", kind: "COMPLETE", bodyPath: "content/intermediate/consent-whose-decision/sources.md" },
       ],
     },
     {
@@ -189,10 +179,8 @@ export const intermediateLevel: LevelStructure = {
         { slug: "intro", title: "Why this matters", kind: "INTRO", bodyPath: "content/intermediate/sa-legal-framework/intro.md" },
         { slug: "the-law-and-the-regulations", title: "The law and the regulations", kind: "PRIMARY", bodyPath: "content/intermediate/sa-legal-framework/the-law-and-the-regulations.md" },
         { slug: "takeaways", title: "Key takeaways", kind: "TAKEAWAYS", bodyPath: "content/intermediate/sa-legal-framework/takeaways.md" },
-        { slug: "check", title: "Check your understanding", kind: "CHECK" },
-        { slug: "study-guide", title: "Study guide", kind: "STUDY_GUIDE", bodyPath: "content/intermediate/sa-legal-framework/study-guide.md" },
-        { slug: "further-reading", title: "Further reading", kind: "FURTHER_READING", bodyPath: "content/intermediate/sa-legal-framework/further-reading.md" },
-        { slug: "complete", title: "Complete Stage", kind: "COMPLETE" },
+        { slug: "check", title: "Stage Quiz", kind: "CHECK" },
+        { slug: "complete", title: "Complete Stage", kind: "COMPLETE", bodyPath: "content/intermediate/sa-legal-framework/sources.md" },
       ],
     },
     {
@@ -205,10 +193,8 @@ export const intermediateLevel: LevelStructure = {
         { slug: "intro", title: "Why this matters", kind: "INTRO", bodyPath: "content/intermediate/ethics-and-end-of-life/intro.md" },
         { slug: "ethics-in-practice", title: "Ethics in practice", kind: "PRIMARY", bodyPath: "content/intermediate/ethics-and-end-of-life/ethics-in-practice.md" },
         { slug: "takeaways", title: "Key takeaways", kind: "TAKEAWAYS", bodyPath: "content/intermediate/ethics-and-end-of-life/takeaways.md" },
-        { slug: "check", title: "Check your understanding", kind: "CHECK" },
-        { slug: "study-guide", title: "Study guide", kind: "STUDY_GUIDE", bodyPath: "content/intermediate/ethics-and-end-of-life/study-guide.md" },
-        { slug: "further-reading", title: "Further reading", kind: "FURTHER_READING", bodyPath: "content/intermediate/ethics-and-end-of-life/further-reading.md" },
-        { slug: "complete", title: "Complete Stage", kind: "COMPLETE" },
+        { slug: "check", title: "Stage Quiz", kind: "CHECK" },
+        { slug: "complete", title: "Complete Stage", kind: "COMPLETE", bodyPath: "content/intermediate/ethics-and-end-of-life/sources.md" },
       ],
     },
   ],
@@ -237,10 +223,8 @@ export const advancedLevel: LevelStructure = {
         { slug: "intro", title: "Why this matters", kind: "INTRO", bodyPath: "content/advanced/coordinator-role/intro.md" },
         { slug: "the-coordinator-role", title: "The coordinator role", kind: "PRIMARY", bodyPath: "content/advanced/coordinator-role/the-coordinator-role.md" },
         { slug: "takeaways", title: "Key takeaways", kind: "TAKEAWAYS", bodyPath: "content/advanced/coordinator-role/takeaways.md" },
-        { slug: "check", title: "Check your understanding", kind: "CHECK" },
-        { slug: "study-guide", title: "Study guide", kind: "STUDY_GUIDE", bodyPath: "content/advanced/coordinator-role/study-guide.md" },
-        { slug: "further-reading", title: "Further reading", kind: "FURTHER_READING", bodyPath: "content/advanced/coordinator-role/further-reading.md" },
-        { slug: "complete", title: "Complete Stage", kind: "COMPLETE" },
+        { slug: "check", title: "Stage Quiz", kind: "CHECK" },
+        { slug: "complete", title: "Complete Stage", kind: "COMPLETE", bodyPath: "content/advanced/coordinator-role/sources.md" },
       ],
     },
     {
@@ -253,10 +237,8 @@ export const advancedLevel: LevelStructure = {
         { slug: "intro", title: "Why this matters", kind: "INTRO", bodyPath: "content/advanced/donation-conversation/intro.md" },
         { slug: "the-conversation-framework", title: "The conversation framework", kind: "PRIMARY", bodyPath: "content/advanced/donation-conversation/the-conversation-framework.md" },
         { slug: "takeaways", title: "Key takeaways", kind: "TAKEAWAYS", bodyPath: "content/advanced/donation-conversation/takeaways.md" },
-        { slug: "check", title: "Check your understanding", kind: "CHECK" },
-        { slug: "study-guide", title: "Study guide", kind: "STUDY_GUIDE", bodyPath: "content/advanced/donation-conversation/study-guide.md" },
-        { slug: "further-reading", title: "Further reading", kind: "FURTHER_READING", bodyPath: "content/advanced/donation-conversation/further-reading.md" },
-        { slug: "complete", title: "Complete Stage", kind: "COMPLETE" },
+        { slug: "check", title: "Stage Quiz", kind: "CHECK" },
+        { slug: "complete", title: "Complete Stage", kind: "COMPLETE", bodyPath: "content/advanced/donation-conversation/sources.md" },
       ],
     },
     {
@@ -269,10 +251,8 @@ export const advancedLevel: LevelStructure = {
         { slug: "intro", title: "Why this matters", kind: "INTRO", bodyPath: "content/advanced/consent-ethics-in-depth/intro.md" },
         { slug: "consent-at-depth", title: "Consent at depth", kind: "PRIMARY", bodyPath: "content/advanced/consent-ethics-in-depth/consent-at-depth.md" },
         { slug: "takeaways", title: "Key takeaways", kind: "TAKEAWAYS", bodyPath: "content/advanced/consent-ethics-in-depth/takeaways.md" },
-        { slug: "check", title: "Check your understanding", kind: "CHECK" },
-        { slug: "study-guide", title: "Study guide", kind: "STUDY_GUIDE", bodyPath: "content/advanced/consent-ethics-in-depth/study-guide.md" },
-        { slug: "further-reading", title: "Further reading", kind: "FURTHER_READING", bodyPath: "content/advanced/consent-ethics-in-depth/further-reading.md" },
-        { slug: "complete", title: "Complete Stage", kind: "COMPLETE" },
+        { slug: "check", title: "Stage Quiz", kind: "CHECK" },
+        { slug: "complete", title: "Complete Stage", kind: "COMPLETE", bodyPath: "content/advanced/consent-ethics-in-depth/sources.md" },
       ],
     },
     {
@@ -285,10 +265,8 @@ export const advancedLevel: LevelStructure = {
         { slug: "intro", title: "Why this matters", kind: "INTRO", bodyPath: "content/advanced/public-advocacy/intro.md" },
         { slug: "advocacy-in-public", title: "Advocacy in public", kind: "PRIMARY", bodyPath: "content/advanced/public-advocacy/advocacy-in-public.md" },
         { slug: "takeaways", title: "Key takeaways", kind: "TAKEAWAYS", bodyPath: "content/advanced/public-advocacy/takeaways.md" },
-        { slug: "check", title: "Check your understanding", kind: "CHECK" },
-        { slug: "study-guide", title: "Study guide", kind: "STUDY_GUIDE", bodyPath: "content/advanced/public-advocacy/study-guide.md" },
-        { slug: "further-reading", title: "Further reading", kind: "FURTHER_READING", bodyPath: "content/advanced/public-advocacy/further-reading.md" },
-        { slug: "complete", title: "Complete Stage", kind: "COMPLETE" },
+        { slug: "check", title: "Stage Quiz", kind: "CHECK" },
+        { slug: "complete", title: "Complete Stage", kind: "COMPLETE", bodyPath: "content/advanced/public-advocacy/sources.md" },
       ],
     },
   ],

@@ -8,14 +8,14 @@ level: intermediate
 
 ## Two levels: the Act and its regulations
 
-The governing law is **Chapter 8 of the National Health Act 61 of 2003**. It replaced the Human Tissue Act of 1983, which was repealed.
+The governing law is **Chapter 8 of the National Health Act 61 of 2003**, gazetted on 23 July 2004. It replaced the Human Tissue Act 65 of 1983, which was repealed.
 
-Much of the operational detail does not sit in the Act itself. It sits one level down, in the **regulations** made under it: chiefly the *Regulations regarding the general control of human bodies, tissue, blood, blood products and gametes*, published as Government Notice R180 on 2 March 2012. Citing "Chapter 8" for a rule that actually lives in the regulations is a common and avoidable error.
+Much of the operational detail does not sit in the Act itself. It sits one level down, in the **regulations** made under it: chiefly the *Regulations regarding the general control of human bodies, tissue, blood, blood products and gametes*, published as Government Notice R180 on 2 March 2012, in Government Gazette 35099. Citing "Chapter 8" for a rule that actually lives in the regulations is a common and avoidable error.
 
 Two definitions in the Act are worth knowing exactly:
 
 - **"Death" means brain death.** That is the Act's own definition in section 1. Donation after circulatory death is nonetheless practised in South Africa, under provincial policy and the national determination-of-death guidelines, and a 2024 article in the *South African Journal of Bioethics and Law* argues that it is lawful and consistent with Chapter 8. If someone quotes section 1 at you, that is the answer: the question has been asked, and addressed.
-- **"Tissue" includes an organ.** So wherever the Act speaks of tissue, it includes kidneys, livers, hearts and lungs.
+- **"Tissue" includes an organ.** The definition covers flesh, bone, a gland, an organ, skin, bone marrow or body fluid, but excludes blood and gametes. So wherever the Act speaks of tissue, it includes kidneys, livers, hearts and lungs.
 
 ## Establishing death: Regulation 9
 
@@ -67,11 +67,11 @@ row: Out of date | District surgeon or state pathologist. That office no longer 
 
 ## What the law prohibits
 
-**Trade and reward.** Under **section 60**, it is an offence for a donor to receive any financial or other reward for a donation, except reimbursement of reasonable costs incurred to provide it, and an offence to sell or trade in tissue except as Chapter 8 provides. The penalty is a fine, imprisonment of up to five years, or both. This applies to living donors exactly as it does after death.
+**Trade and reward.** Under **section 60(4)**, it is an offence for a donor to receive any financial or other reward for a donation, except reimbursement of reasonable costs incurred to provide it, and an offence to sell or trade in tissue except as Chapter 8 provides. The penalty, under section 60(5), is a fine, imprisonment of up to five years, or both. This applies to living donors exactly as it does after death.
 
 **Transplants for non-citizens.** Under **section 61(3)**, an organ may not be transplanted into a person who is not a South African citizen or permanent resident without the Minister's written authorisation. It answers a question advocates are often asked in a suspicious tone: South African organs cannot simply go to foreign patients who can pay.
 
-**Allocation by the rules.** Section 61 also requires organs from deceased donors to be used and allocated only as prescribed, not at any one clinician's discretion.
+**Allocation by the rules.** Section 61(1) and (2) also require organs from deceased donors to be used and allocated only as prescribed, not at any one clinician's discretion.
 
 ## What the law does not say
 
@@ -88,16 +88,17 @@ card: Must a doctor refer a potential donor? | There is no legal duty to refer. 
 
 ## Recent developments
 
-**A Ministerial Advisory Committee, October 2024.** On 4 October 2024 the Minister of Health established the **Ministerial Advisory Committee on Organ Transplantation** (Government Notice 5360), under the Act's power to appoint advisory committees. Its mandate is to advise the Minister on all matters related to organ transplantation. Its listed functions include advising on transplants involving unrelated donors and non-citizens, proposing which units may perform transplants, monitoring unethical behaviour, and reviewing transplant units' annual reports. The notice frames it partly as a safeguard against organ trafficking and the abuse of potential donors. Its nine members are a Department of Health representative, a bioethicist and seven nephrologists, appointed for five-year terms.
+**A Ministerial Advisory Committee, October 2024.** On 4 October 2024 the Minister of Health established the **Ministerial Advisory Committee on Organ Transplantation** (Government Notice 5360, Government Gazette 51352), under the Act's power to appoint advisory committees in section 91. Its mandate is to advise the Minister on all matters related to organ transplantation. Its listed functions include advising on the need for transplant facilities, advising on transplants involving unrelated donors, recipients and non-South African citizens, proposing which units may perform transplants, monitoring unethical behaviour, working on the cost of transplantation, and appraising transplant units' annual reports. The notice frames it partly as a safeguard against organ trafficking and the abuse of potential donors. Its nine members are a Department of Health representative, a bioethicist and seven nephrologists, appointed for five-year terms.
 
-**Draft transplant regulations, September 2026.** On 4 September 2026 the Department of Health published draft Regulations on Organ Transplantation (Government Notice 7879) for public comment, with comments due within three months. **They are a draft and not yet law.** As published, they would among other things:
+**Draft transplant regulations, September 2026.** On 4 September 2026 the Department of Health published draft Regulations on Organ Transplantation (Government Notice 7879, Government Gazette 55299) for public comment, with comments due within three months. **They are a draft and not yet law.** As published, they would among other things:
 
-- require hospitals that carry out donation to designate staff who must **identify and refer potential donors**, which would create the referral duty that does not exist today;
-- require every referral, donation and transplant to be recorded, and reported to the national Department of Health;
-- require **licensing** of transplant units;
-- prohibit organ allocation from taking into account a deceased donor's **race, religion, culture, language, gender, sexual orientation, disability** or any other aspect of their life that has no bearing on the organ itself;
-- write down the requirement, followed in practice today, that a living donor who is not biologically related to the recipient needs the **Minister's approval**;
-- make whoever recovers the organs responsible for restoring the appearance of the donor's body.
+- require hospitals that carry out donation to designate staff who must **identify and refer potential donors**, which would create the referral duty that does not exist today (draft regulation 3(4));
+- require registers of every referral, donation and transplant, and regular reports to the national Department of Health (draft regulations 6, 8 and 15);
+- require **licensing** of transplant units (draft regulation 9);
+- prohibit organ allocation from taking into account a deceased donor's **race, religion, culture, language, gender, sexual orientation, disability** or any other aspect of their life that has no bearing on the organ itself (draft regulation 15(1));
+- write down the requirement, followed in practice today, that a living donor who is not biologically related to the recipient needs the **Minister's approval** (draft regulations 10 and 11);
+- make whoever recovers the organs responsible for restoring the appearance of the donor's body (draft regulation 14);
+- prohibit anyone from offering a reward to a donor except as section 60 allows (draft regulation 19).
 
 When you mention them, say "draft regulations published for comment in September 2026". Do not say "the law now requires". Check whether they have been finalised before relying on any of them.
 
@@ -117,4 +118,4 @@ row: Unrelated living donors | The need for the Minister's approval would be wri
 row: The donor's body | Whoever recovers the organs would be responsible for restoring its appearance
 :::
 
-**A correction worth knowing.** Some donation material describes a 2025 amendment to the regulations as a donation development. The 2025 amendment it points to changed the regulations on notifiable medical conditions, which govern disease surveillance, not donation. The genuine recent developments are the two above.
+**A correction worth knowing.** Some donation material describes a 2025 amendment to the regulations as a donation development. The March 2025 amendment it points to (Government Notice 6064, Government Gazette 52391, 27 March 2025) changed the regulations on the surveillance and control of notifiable medical conditions, which govern disease surveillance, not donation. The genuine recent developments are the two above.

@@ -25,10 +25,9 @@ const INCLUDES: Array<[title: string, body: string, icon: IconName]> = [
     "Once you submit a Stage Quiz, every question comes with an explanation, including an explanation of why a tempting wrong answer is tempting.",
     "quiz",
   ],
-  ["Study material", "A written summary of each Stage, to come back to.", "file"],
   [
-    "Optional deeper reading",
-    "The laws, guidelines and studies each Stage draws on, for anyone who wants them. The course is complete without opening a single one.",
+    "Sources for every Stage",
+    "The laws, guidelines and studies each Stage draws on, listed when you finish it, for anyone who wants to read further.",
     "search",
   ],
   [
@@ -57,12 +56,10 @@ const STAGE_STEPS: Array<[title: string, body: string]> = [
   ["Why this matters", "A short explanation of why the topic is worth your time."],
   ["Learn", "The main lesson, in plain language."],
   ["Key takeaways", "The points worth remembering, in one list."],
-  ["Check your understanding", "The Stage Quiz, five questions with explanations once you submit."],
-  ["Study guide", "The written summary."],
-  ["Further reading", "Optional, always."],
+  ["Stage Quiz", "Five questions, with explanations once you submit."],
   [
-    "Complete Stage",
-    "Marking it done records that you have read the Stage, so you can stop and pick up later. Only passing its Stage Quiz counts towards your certificate.",
+    "Finish",
+    "Your Stage Quiz mark and the sources the Stage used. Marking it done records that you have read the Stage, so you can stop and pick up later. Only passing its Stage Quiz counts towards your certificate.",
   ],
 ];
 
