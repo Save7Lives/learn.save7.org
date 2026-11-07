@@ -136,16 +136,18 @@ type means a parser case there and a component in
 
 Every Stage follows them:
 
-`INTRO → PRIMARY (one or two) → TAKEAWAYS → CHECK → COMPLETE`
+`INTRO → PRIMARY (one or two) → TAKEAWAYS → CHECK`
 
-CHECK is the Stage Quiz and carries no prose. COMPLETE is the finish step: the page
-builds the learner's mark and the summary, and the Stage's `sources.md` (slug
-`complete`) supplies the list of every document the Stage relies on, shown last as
+CHECK is the Stage Quiz and the Stage's last step. Its questions are in
+`prisma/content/quiz-*.ts`. Under the quiz the page builds the end of the Stage (the
+question it opened with, and what finishing records), and the Stage's `sources.md`
+(slug `check`) supplies the list of every document the Stage relies on, shown last as
 "Sources for this Stage". It is a plain bulleted list of citations with no heading.
 A source a lesson relies on belongs in that list; a fact belongs in the lesson.
 
-The study guide and further reading steps were retired (save7-os 0146). Do not bring
-back a step that restates the lesson.
+The study guide and further reading steps were retired (save7-os 0146), and the
+separate finish step was folded into the Stage Quiz (save7-os 0148). Do not bring back
+a step that restates the lesson.
 
 ## Drafting briefs
 

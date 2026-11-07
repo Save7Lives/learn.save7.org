@@ -16,8 +16,9 @@ import { courseStructure, type LevelStructure, type StageSeed } from "./structur
  * check — question banks, interactive payloads, `verifiedAgainst` sign-offs.
  *
  * The split is by *kind*, not by file: INTRO, PRIMARY and TAKEAWAYS carry prose
- * and name a `bodyPath`. CHECK carries a question bank and names none. COMPLETE
- * names the Stage's `sources.md`, the sources list the Finish step shows last.
+ * and name a `bodyPath`. CHECK, the Stage Quiz and the Stage's last step, carries
+ * its question bank in TypeScript and names the Stage's `sources.md`, the sources
+ * list the step shows last.
  */
 
 /** A lesson's front matter, as the authoring files declare it. */

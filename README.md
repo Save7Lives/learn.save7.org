@@ -194,11 +194,12 @@ content waits for the first Sitting. A Stage Quiz is five questions drawn from a
 of fifteen, and four right passes it. Passing it is what completes the Stage, and
 retaking it is unlimited. There is no Level-wide assessment.
 
-Every Stage follows the same five steps: *why this matters → learn → key takeaways →
-Stage Quiz → finish*. The finish step shows the learner's latest Stage Quiz mark and
-then every source the Stage used (its `sources.md`). The study guide and further
-reading steps were retired in save7-os 0146: what only the study guide said moved into
-the Learn lesson.
+Every Stage follows the same four steps: *why this matters → learn → key takeaways →
+Stage Quiz*. The Stage Quiz step ends the Stage: under the quiz come the question the
+Stage opened with, every source the Stage used (its `sources.md`) and the button that
+finishes it. The study guide and further reading steps were retired in save7-os 0146
+(what only the study guide said moved into the Learn lesson), and the separate finish
+step was folded into the Stage Quiz in save7-os 0148.
 
 ---
 
@@ -338,7 +339,7 @@ in this course.
 The base is the Source Corpus: the ten PDFs Save7 supplied, served from
 `/public/resources` so learners can open the reading rather than hit a paywall, and one
 film. The Stages also cite public law and professional guidance that is not in the
-corpus (below the table). A Stage's own source list is its `sources.md`, shown on its finish step, and
+corpus (below the table). A Stage's own source list is its `sources.md`, shown at the end of its Stage Quiz step, and
 each Stage Quiz item names the document it was checked against in `verifiedAgainst`.
 The table says where each corpus source is used, by Stage.
 

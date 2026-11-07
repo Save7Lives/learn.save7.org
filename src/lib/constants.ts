@@ -18,13 +18,16 @@ export type AdminRole = (typeof ADMIN_ROLES)[number];
 export const LEVEL_TIERS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const;
 export type LevelTier = (typeof LEVEL_TIERS)[number];
 
-/** The steps every Stage follows, ending in its Stage Quiz and Finish. Order is data, not code. */
+/**
+ * The steps every Stage follows, ending in its Stage Quiz. Order is data, not code.
+ * There was a separate Finish step (COMPLETE) after the quiz; it was folded into the
+ * quiz step, and save7-os 0148 deletes its rows.
+ */
 export const LESSON_KINDS = [
   "INTRO",
   "PRIMARY",
   "TAKEAWAYS",
   "CHECK",
-  "COMPLETE",
 ] as const;
 export type LessonKind = (typeof LESSON_KINDS)[number];
 
@@ -33,7 +36,6 @@ export const LESSON_KIND_LABELS: Record<LessonKind, string> = {
   PRIMARY: "Learn",
   TAKEAWAYS: "Key takeaways",
   CHECK: "Stage Quiz",
-  COMPLETE: "Finish",
 };
 
 export const RESOURCE_TYPES = [

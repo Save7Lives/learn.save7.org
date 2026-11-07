@@ -55,20 +55,19 @@ export default async function ModulePage(
   const isRead = stagePosition?.read ?? false;
   const isPassed = stagePosition?.state === "PASSED";
 
-  // The CHECK step is this Stage's quiz, and the step rail draws every Stage's
-  // block from its quiz. Only where the learner stands is read here, for all the
+  // The CHECK step is this Stage's quiz and its last step, and the step rail draws
+  // every Stage's block from its quiz. Only where the learner stands is read here, for all the
   // Level's Stages at once; the paper is drawn when they open it, so visiting a
   // Stage never starts an attempt.
   const quizStates = await getStageQuizStates(siblings.map((s) => s.slug));
   const quizState = quizStates.get(mod.id) ?? null;
-  // The Level's Stages: the step rail, and the route drawn when the quiz is marked
-  // and on the Finish step once it is passed.
+  // The Level's Stages: the step rail, and the route drawn when the quiz is marked.
   const stages = siblings.map((s) => ({
     slug: s.slug,
     title: s.title,
     passed: quizStates.get(s.slug)?.passedAt != null,
   }));
-  const stageQuiz = (
+  const stageQuiz = (stageEnd: React.ReactNode) => (
     <StageQuiz
       stageSlug={mod.id}
       passMarkPct={level.passMarkPct}
@@ -76,6 +75,7 @@ export default async function ModulePage(
       levelTitle={level.title}
       stages={stages}
       initialState={quizState}
+      after={stageEnd}
       onStart={startStageQuizAction}
       onSubmit={submitStageQuizAction}
       onReview={readStageQuizAction}
@@ -85,24 +85,10 @@ export default async function ModulePage(
   const currentIndex = siblings.findIndex((s) => s.slug === moduleSlug);
   const nextSibling = siblings[currentIndex + 1] ?? null;
 
-  // The Finish step is generated from the Stage's own data rather than authored
-  // per Stage, so it can never drift from the content above it.
-  const moduleContext = {
-    stageTitle: mod.title,
-    coreQuestion: mod.coreQuestion,
-    nextStageTitle: nextSibling?.title ?? null,
-    levelTitle: level.title,
-    levelSlug,
-    isLastInLevel: nextSibling === null,
-    certificateTitle: level.certificateTitle,
-    alreadyRead: isRead,
-    quizPassed: quizState?.passedAt != null,
-    latestMark: quizState?.latest
-      ? { scoreRaw: quizState.latest.scoreRaw, scoreMax: quizState.latest.scoreMax }
-      : null,
-    stages,
-    stageSlug: moduleSlug,
-  };
+  // The end of the Stage, under its quiz, is generated from the Stage's own data
+  // rather than authored per Stage, so it can never drift from the content above it.
+  // Where finishing leads is the runner's, under its button.
+  const stageEnd = { coreQuestion: mod.coreQuestion, alreadyRead: isRead };
 
   const lessons: RunnerLesson[] = mod.lessons.map((lesson) => ({
     id: lesson.id,
@@ -113,14 +99,18 @@ export default async function ModulePage(
       <LessonBody
         lesson={lesson}
         stageQuiz={lesson.kind === "CHECK" ? stageQuiz : undefined}
-        moduleContext={lesson.kind === "COMPLETE" ? moduleContext : undefined}
+        stageEnd={lesson.kind === "CHECK" ? stageEnd : undefined}
       />
     ),
   }));
 
-  // Resume where they left off.
+  // Resume where they left off. A learner last seen on the old Finish step (slug
+  // `complete`, folded into the Stage Quiz step) resumes at the quiz, which is now
+  // where the Stage ends.
   const lastLesson = stagePosition?.lastLessonSlug ?? null;
-  const lastIndex = lastLesson ? mod.lessons.findIndex((l) => l.id === lastLesson) : 0;
+  const resumeSlug =
+    lastLesson === "complete" ? mod.lessons.find((l) => l.kind === "CHECK")?.id : lastLesson;
+  const lastIndex = resumeSlug ? mod.lessons.findIndex((l) => l.id === resumeSlug) : 0;
 
   return (
     <ModuleRunner

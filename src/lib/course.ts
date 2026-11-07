@@ -230,6 +230,10 @@ export async function getModule(levelSlug: string, moduleSlug: string) {
       .from("learn_lessons")
       .select("slug, module_slug, position, title, kind, body_markdown, component_key")
       .eq("module_slug", moduleSlug)
+      // The old Finish step, folded into the Stage Quiz step. save7-os 0148 deletes
+      // these rows; until it runs this keeps the Stage at its four steps, so the code
+      // can deploy before or after the migration.
+      .neq("kind", "COMPLETE")
       .order("position"),
 
     // Sibling modules, for prev/next navigation within the level.
