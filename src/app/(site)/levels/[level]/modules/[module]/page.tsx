@@ -61,23 +61,24 @@ export default async function ModulePage(
   // Stage never starts an attempt.
   const quizStates = await getStageQuizStates(siblings.map((s) => s.slug));
   const quizState = quizStates.get(mod.id) ?? null;
+  const stages = siblings.map((s) => ({
+    slug: s.slug,
+    title: s.title,
+    passed: quizStates.get(s.slug)?.passedAt != null,
+  }));
   const stageQuiz = (
     <StageQuiz
       stageSlug={mod.id}
       passMarkPct={level.passMarkPct}
       certificateTitle={level.certificateTitle}
+      levelTitle={level.title}
+      stages={stages}
       initialState={quizState}
       onStart={startStageQuizAction}
       onSubmit={submitStageQuizAction}
       onReview={readStageQuizAction}
     />
   );
-
-  const stages = siblings.map((s) => ({
-    slug: s.slug,
-    title: s.title,
-    passed: quizStates.get(s.slug)?.passedAt != null,
-  }));
 
   const currentIndex = siblings.findIndex((s) => s.slug === moduleSlug);
   const nextSibling = siblings[currentIndex + 1] ?? null;
@@ -94,6 +95,8 @@ export default async function ModulePage(
     certificateTitle: level.certificateTitle,
     alreadyRead: isRead,
     quizPassed: quizState?.passedAt != null,
+    stages,
+    stageSlug: moduleSlug,
   };
 
   const lessons: RunnerLesson[] = mod.lessons.map((lesson) => ({

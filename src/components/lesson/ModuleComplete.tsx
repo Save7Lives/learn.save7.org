@@ -2,6 +2,7 @@ import { Card, Eyebrow } from "@/components/ui/primitives";
 import { StatusPill } from "@/components/portal/Portal";
 import { IconCircle } from "@/components/course/IconCircle";
 import { GoToStepLink } from "@/components/lesson/StepNav";
+import { StageRoute, type StageStop } from "@/components/moments/parts";
 
 export type ModuleCompleteContext = {
   stageTitle: string;
@@ -17,6 +18,9 @@ export type ModuleCompleteContext = {
   alreadyRead: boolean;
   /** Whether this Stage's quiz has been passed — what the Certificate counts. */
   quizPassed: boolean;
+  /** This Level's Stages in order, with whether each quiz is passed. */
+  stages: StageStop[];
+  stageSlug: string;
 };
 
 /**
@@ -36,8 +40,8 @@ export type ModuleCompleteContext = {
  * that matters for this course.
  *
  * Finishing records that the Stage was *read*. A Stage counts as complete when its
- * Stage Quiz is passed (Progress Record, CONTEXT.md), and the pink card says so
- * rather than let "finish" imply it.
+ * Stage Quiz is passed (Progress Record, CONTEXT.md). Until then the pink card says so
+ * rather than let "finish" imply it; once passed, the Level's route takes its place.
  */
 export function ModuleComplete({ context }: { context: ModuleCompleteContext }) {
   const {
@@ -48,6 +52,8 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
     certificateTitle,
     alreadyRead,
     quizPassed,
+    stages,
+    stageSlug,
   } = context;
 
   return (
@@ -73,44 +79,50 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
             : "Finishing records that you have read it, so you can stop here and pick up later without losing your place."}
         </p>
 
-        <Card className="mt-[18px] border-pink-line bg-pink-50 p-5">
-          <div className="flex items-start gap-3.5">
-            <IconCircle name="award" tone="pink" />
-            <div>
-              <h4 className="t-h4 mb-1 text-navy">
-                {quizPassed
-                  ? "You've passed this Stage's quiz, so it counts as complete"
-                  : "A Stage counts as complete when you pass its quiz"}
-              </h4>
-              <p className="text-sm text-grey">
-                {quizPassed
-                  ? "Passing every Stage Quiz in "
-                  : "The Stage Quiz is in the Check step. Passing every Stage Quiz in "}
-                {levelTitle} Level earns the{" "}
-                <span className="font-medium text-navy">&ldquo;{certificateTitle}&rdquo;</span>{" "}
-                certificate.
-              </p>
-              {quizPassed ? null : (
-                <div className="mt-1.5">
-                  <GoToStepLink kind="CHECK">Go to the Stage Quiz</GoToStepLink>
+        {/* Once passed, the Level's route shows where this Stage leaves the learner:
+            its own stop ticked, the next one marked, the certificate at the end. */}
+        {quizPassed ? (
+          <StageRoute
+            stages={stages}
+            currentSlug={stageSlug}
+            certificateTitle={certificateTitle}
+            certificateEarned={stages.every((s) => s.passed)}
+            celebrate={false}
+          />
+        ) : (
+          <>
+            <Card className="mt-[18px] border-pink-line bg-pink-50 p-5">
+              <div className="flex items-start gap-3.5">
+                <IconCircle name="award" tone="pink" />
+                <div>
+                  <h4 className="t-h4 mb-1 text-navy">A Stage counts as complete when you pass its quiz</h4>
+                  <p className="text-sm text-grey">
+                    The Stage Quiz is in the Check step. Passing every Stage Quiz in {levelTitle} Level
+                    earns the{" "}
+                    <span className="font-medium text-navy">&ldquo;{certificateTitle}&rdquo;</span>{" "}
+                    certificate.
+                  </p>
+                  <div className="mt-1.5">
+                    <GoToStepLink kind="CHECK">Go to the Stage Quiz</GoToStepLink>
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-        </Card>
+              </div>
+            </Card>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          {isLastInLevel ? (
-            <StatusPill tone="progress" icon="flag">
-              Last Stage in {levelTitle} Level
-            </StatusPill>
-          ) : null}
-          {!isLastInLevel && nextStageTitle ? (
-            <p className="text-sm text-grey">
-              Next up: <span className="font-medium text-navy">{nextStageTitle}</span>.
-            </p>
-          ) : null}
-        </div>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {isLastInLevel ? (
+                <StatusPill tone="progress" icon="flag">
+                  Last Stage in {levelTitle} Level
+                </StatusPill>
+              ) : null}
+              {!isLastInLevel && nextStageTitle ? (
+                <p className="text-sm text-grey">
+                  Next up: <span className="font-medium text-navy">{nextStageTitle}</span>.
+                </p>
+              ) : null}
+            </div>
+          </>
+        )}
       </section>
     </div>
   );
