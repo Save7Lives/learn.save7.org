@@ -31,13 +31,13 @@ async function openStageQuiz(page: Page, stage: string, readAllSteps: boolean) {
 
   const steps = page.getByRole("navigation", { name: "Steps in this Stage" });
   if (readAllSteps) {
-    // Read it the way a person does: the next step, step after step, until the quiz.
+    // Read it the way a person does: Continue, step after step, until the quiz.
     while (!(await page.getByRole("button", { name: "Start the quiz" }).isVisible())) {
-      await page.getByRole("button", { name: /^Up next/ }).click();
+      await page.getByRole("button", { name: "Continue", exact: true }).click();
     }
   } else {
-    // The step list opens from "Step N of 5", whose name also says "all steps".
-    await steps.getByRole("button", { name: /all steps/i }).click();
+    // The step list sits behind "All steps" below xl (the suite runs at 1024 px).
+    await steps.getByRole("button", { name: "All steps" }).click();
     await steps.getByText("Stage Quiz", { exact: true }).first().click();
   }
   await expect(page.getByRole("region", { name: "Stage Quiz" })).toBeVisible();
@@ -105,7 +105,7 @@ test("a learner registers, sits the Baseline, completes a Level and is verified"
   await expect(stageQuiz.getByText("You have passed this Stage")).toBeVisible();
   // Finish the Stage: the last step of the spine.
   while (!(await page.getByRole("button", { name: "Finish this Stage" }).isVisible())) {
-    await page.getByRole("button", { name: /^Up next/ }).click();
+    await page.getByRole("button", { name: "Continue", exact: true }).click();
   }
   await page.getByRole("button", { name: "Finish this Stage" }).click();
   // Finishing carries the Student on to the next Stage.
