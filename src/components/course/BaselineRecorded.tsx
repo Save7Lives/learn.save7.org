@@ -1,8 +1,8 @@
-import { MAX_SITTINGS, type BaselineState } from "@/lib/baseline";
+import { MAX_SITTINGS, sittingLabel, type BaselineState } from "@/lib/baseline";
+import { ImprovementRoute } from "@/components/moments/parts";
 import { BaselineLevelRows, SittingStepper } from "@/components/course/BaselineLevelRows";
 import { ButtonLink, Card, Eyebrow } from "@/components/ui/primitives";
 import { HeroArt } from "@/components/ui/HeroArt";
-import { StatusPill } from "@/components/portal/Portal";
 
 /**
  * The Baseline's results screen, given a learner's Sittings and the Level to
@@ -20,7 +20,6 @@ export function BaselineRecorded({
   const latest = baseline.sittings[baseline.sittings.length - 1];
   const first = baseline.first!;
   const isFirst = latest.sittingNo === 1;
-  const change = latest.totalPct - first.totalPct;
 
   return (
     <div className="relative overflow-hidden pb-14 pt-[132px] sm:pt-14">
@@ -41,16 +40,12 @@ export function BaselineRecorded({
           <p className="mt-2 text-sm text-grey">
             {latest.totalScore} of {latest.totalMax} questions
           </p>
+          {/* Improvement: the first Sitting and this one as two stops on the route. */}
           {isFirst ? null : (
-            <p className="mt-3">
-              <StatusPill
-                tone={change >= 0 ? "done" : "progress"}
-                icon={change >= 0 ? "check" : "info"}
-              >
-                {change >= 0 ? "+" : "\u2212"}
-                {Math.abs(change)} points since your first sitting ({first.totalPct}%)
-              </StatusPill>
-            </p>
+            <ImprovementRoute
+              first={{ label: sittingLabel(baseline, first), pct: first.totalPct }}
+              latest={{ label: sittingLabel(baseline, latest), pct: latest.totalPct }}
+            />
           )}
 
           {isFirst ? null : (
