@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Button, ButtonLink, Card, Eyebrow } from "@/components/ui/primitives";
+import { Button, Eyebrow } from "@/components/ui/primitives";
 import { Icon } from "@/components/ui/icons";
 import { StatusPill } from "@/components/portal/Portal";
-import { IconCircle } from "@/components/course/IconCircle";
 import { QuizRunner } from "@/components/quiz/QuizRunner";
 import { MarkedChoice, ScenarioBox, type MarkedState } from "@/components/quiz/QuizParts";
-import { CountUp, FlipIn, HeartBurst, Settle } from "@/components/motion/parts";
+import { CountUp, Settle } from "@/components/motion/parts";
+import { AnswerRoute, CertificateEarned, StageRoute, type AnswerMark, type StageStop } from "@/components/moments/parts";
 import { STAGE_QUIZ_SIZE } from "@/lib/constants";
 import type { AttemptResult, GradedAnswer, StageQuizState } from "@/lib/quiz";
 import type { StageQuizOutcome, StageQuizPaper } from "@/app/(site)/levels/actions";
@@ -40,6 +40,10 @@ export type StageQuizProps = {
   stageSlug: string;
   passMarkPct: number;
   certificateTitle: string;
+  /** The Level's name without the word Level: "Beginner". */
+  levelTitle: string;
+  /** This Level's Stages in order, with whether each quiz is passed. */
+  stages: StageStop[];
   initialState: StageQuizState | null;
   onStart: (stageSlug: string) => Promise<StageQuizPaper | { error: string }>;
   onSubmit: (attemptId: string, payload: string) => Promise<StageQuizOutcome | { error: string }>;
@@ -55,6 +59,8 @@ export function StageQuiz({
   stageSlug,
   passMarkPct,
   certificateTitle,
+  levelTitle,
+  stages,
   initialState,
   onStart,
   onSubmit,
@@ -144,6 +150,9 @@ export function StageQuiz({
           certificatePublicId={view.certificatePublicId}
           fresh={view.fresh}
           certificateTitle={certificateTitle}
+          levelTitle={levelTitle}
+          stageSlug={stageSlug}
+          stages={stages}
           passMarkPct={passMarkPct}
           everPassed={state?.passedAt != null}
           pending={pending}
@@ -309,6 +318,9 @@ function Result({
   certificatePublicId,
   fresh,
   certificateTitle,
+  levelTitle,
+  stageSlug,
+  stages,
   passMarkPct,
   everPassed,
   pending,
@@ -319,6 +331,9 @@ function Result({
   certificatePublicId: string | null;
   fresh: boolean;
   certificateTitle: string;
+  levelTitle: string;
+  stageSlug: string;
+  stages: StageStop[];
   passMarkPct: number;
   everPassed: boolean;
   pending: boolean;
@@ -327,6 +342,8 @@ function Result({
 }) {
   const passed = result.passed === true;
   const need = needed(passMarkPct, result.scoreMax || STAGE_QUIZ_SIZE);
+  // The page read the Level before this attempt, so a pass just made is added here.
+  const route = stages.map((s) => (s.slug === stageSlug && passed ? { ...s, passed: true } : s));
 
   return (
     <div>
@@ -346,10 +363,7 @@ function Result({
             </StatusPill>
           )}
           <p className="t-display mt-2 text-navy">
-            <span className="relative inline-block">
-              {passed && fresh ? <HeartBurst delay={0.7} radius={64} /> : null}
-              {fresh ? <CountUp value={result.scoreRaw} /> : result.scoreRaw}
-            </span>{" "}
+            {fresh ? <CountUp value={result.scoreRaw} /> : result.scoreRaw}{" "}
             <span className="font-sans text-base font-medium tracking-normal text-grey">
               of {result.scoreMax}
             </span>
@@ -363,25 +377,26 @@ function Result({
           </p>
         </div>
 
+        {/* Each answer as a stop on one line, then, on a pass, the Level's route with
+            this Stage's stop turning to a tick. */}
+        <AnswerRoute marks={result.answers.map(markOf)} />
+        {passed ? (
+          <StageRoute
+            stages={route}
+            currentSlug={stageSlug}
+            certificateTitle={certificateTitle}
+            certificateEarned={route.every((s) => s.passed)}
+            celebrate={fresh}
+          />
+        ) : null}
+
         {certificatePublicId ? (
-          <FlipIn delay={fresh ? 0.9 : 0}>
-            <Card className="mt-[18px] border-pink-line bg-pink-50 p-5">
-              <div className="flex items-start gap-3.5">
-                <IconCircle name="award" tone="pink" />
-                <div>
-                  <h4 className="t-h4 mb-1 text-navy">
-                    You&apos;ve earned the &ldquo;{certificateTitle}&rdquo; certificate
-                  </h4>
-                  <p className="mb-3 text-sm text-grey">
-                    That was the last Stage Quiz in this Level.
-                  </p>
-                  <ButtonLink href={`/certificate/${certificatePublicId}`}>
-                    View my certificate
-                  </ButtonLink>
-                </div>
-              </div>
-            </Card>
-          </FlipIn>
+          <CertificateEarned
+            certificateTitle={certificateTitle}
+            levelTitle={levelTitle}
+            publicId={certificatePublicId}
+            fresh={fresh}
+          />
         ) : null}
 
         <div className="mt-[18px] flex flex-wrap items-center gap-3">
@@ -411,6 +426,11 @@ function Result({
   );
 }
 
+function markOf(answer: GradedAnswer): AnswerMark {
+  if (answer.isCorrect) return "correct";
+  return answer.selectedChoiceIds.length === 0 ? "unanswered" : "wrong";
+}
+
 function stateOf(choice: GradedAnswer["choices"][number]): MarkedState {
   if (choice.isCorrect) return choice.wasSelected ? "yours-correct" : "correct-missed";
   return choice.wasSelected ? "yours-not-correct" : "not-chosen";
@@ -427,7 +447,7 @@ function MarkedQuestion({ answer, index }: { answer: GradedAnswer; index: number
   const unanswered = answer.selectedChoiceIds.length === 0;
 
   return (
-    <li className="rounded-[18px] border border-line px-4 py-[18px]">
+    <li id={`answer-${index + 1}`} className="scroll-mt-24 rounded-[18px] border border-line px-4 py-[18px]">
       <div className="flex items-baseline gap-3">
         <span
           aria-hidden="true"
