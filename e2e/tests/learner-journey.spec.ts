@@ -99,7 +99,7 @@ test("a learner registers, sits the Baseline, completes a Level and is verified"
   await expect(page.getByText("Passed", { exact: true }).first()).toBeVisible();
   await expect(page.getByText(/5\s+of 5/)).toBeVisible();
   // Not the last Stage Quiz in the Level, so no Certificate yet.
-  await expect(page.getByText(/You.ve earned the/)).toHaveCount(0);
+  await expect(page.getByText(/You finished Beginner/)).toHaveCount(0);
 
   await page.getByRole("button", { name: "Done" }).click();
   await expect(stageQuiz.getByText("You have passed this Stage")).toBeVisible();
@@ -116,14 +116,14 @@ test("a learner registers, sits the Baseline, completes a Level and is verified"
   await page.getByRole("button", { name: "Start the quiz" }).click();
   await quiz.complete(page, "correct", "Submit the quiz");
   await expect(page.getByText("Passed", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText(/You.ve earned the/)).toHaveCount(0);
+  await expect(page.getByText(/You finished Beginner/)).toHaveCount(0);
 
   await openStageQuiz(page, STAGES[2], false);
   await page.getByRole("button", { name: "Start the quiz" }).click();
   await quiz.complete(page, "correct", "Submit the quiz");
 
   // ── Level completion ──────────────────────────────────────────────────────
-  await expect(page.getByText(/You.ve earned the/)).toBeVisible();
+  await expect(page.getByText(/You finished Beginner/)).toBeVisible();
   await page.getByRole("link", { name: "View my certificate" }).click();
   await expect(page).toHaveURL(/\/certificate\/S7-/);
   const publicId = page.url().split("/").pop()!;
