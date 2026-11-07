@@ -44,9 +44,10 @@ const pill =
 const chosen = "border-navy bg-teal-50";
 const unchosen = "border-line-strong bg-white hover:bg-teal-50";
 
+/** A block sits between two hairlines in the reading column, not in a box of its own. */
 function Figure({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <figure className="my-7 rounded-card border border-line bg-white p-4 sm:p-5">
+    <figure className="my-9 border-y border-line py-6">
       <figcaption className="mb-3 font-display text-[0.9375rem] font-bold text-navy">{title}</figcaption>
       {children}
     </figure>
@@ -254,7 +255,8 @@ function Reveal({ widget }: { widget: RevealWidget }) {
     });
   return (
     <Figure title={widget.title}>
-      <ul className="m-0 list-none space-y-2 p-0">
+      {/* Two columns from sm: nine full-width rows was a long stack for one game. */}
+      <ul className="m-0 grid list-none items-start gap-2 p-0 sm:grid-cols-2">
         {widget.cards.map(([front, back], i) => (
           <li key={i} className={cx("rounded-card border", shown.has(i) ? "border-navy" : "border-line-strong")}>
             <button

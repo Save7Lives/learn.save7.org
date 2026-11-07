@@ -16,7 +16,10 @@ export function cx(...parts: Array<string | false | null | undefined>): string {
 // --- Buttons ---------------------------------------------------------------
 
 const BUTTON_BASE =
-  "inline-flex items-center justify-center gap-2 rounded-full font-medium transition " +
+  "inline-flex items-center justify-center gap-2 rounded-full font-medium " +
+  // Name what changes, never all; a press settles to 0.96 over 150ms (better-ui).
+  "transition-[background-color,border-color,color,scale] duration-150 ease-out " +
+  "[-webkit-tap-highlight-color:transparent] " +
   // 44px minimum touch target: a significant share of learners are on a phone.
   "min-h-11 px-6 py-2.5 disabled:opacity-50 disabled:pointer-events-none";
 
@@ -50,6 +53,7 @@ export function Button({
     <button
       className={cx(
         BUTTON_BASE,
+        "motion-safe:enabled:active:scale-[0.96]",
         BUTTON_VARIANTS[variant],
         size === "sm" && "text-sm px-4",
         size === "lg" && "text-lg px-8 min-h-13",
@@ -70,6 +74,7 @@ export function ButtonLink({
     <Link
       className={cx(
         BUTTON_BASE,
+        "motion-safe:active:scale-[0.96]",
         BUTTON_VARIANTS[variant],
         size === "sm" && "text-sm px-4",
         size === "lg" && "text-lg px-8 min-h-13",
@@ -94,7 +99,9 @@ export function Card({
   return (
     <As
       className={cx(
-        "rounded-card border border-line bg-white shadow-[0_1px_2px_rgba(17,17,17,0.04)]",
+        // Depth from a layered shadow, not a border; the transparent border keeps an
+        // edge in forced-colors mode, which drops every box-shadow.
+        "rounded-card border border-transparent bg-white shadow-(--shadow-border)",
         className,
       )}
     >

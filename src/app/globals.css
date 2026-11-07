@@ -60,6 +60,16 @@
 :root {
   --background: var(--color-white);
   --foreground: var(--color-navy);
+  /* Elevation without a structural border (better-ui): a 1px ring, lift, then
+     ambient depth. Borders stay on dividers, inputs and selected states. */
+  --shadow-border:
+    0px 0px 0px 1px oklch(0 0 0 / 0.06),
+    0px 1px 2px -1px oklch(0 0 0 / 0.06),
+    0px 2px 4px 0px oklch(0 0 0 / 0.04);
+  --shadow-border-hover:
+    0px 0px 0px 1px oklch(0 0 0 / 0.08),
+    0px 1px 2px -1px oklch(0 0 0 / 0.08),
+    0px 2px 4px 0px oklch(0 0 0 / 0.06);
 }
 
 /* The platform is committed to a single light identity. The brand kit defines
@@ -189,14 +199,14 @@ body {
   text-underline-offset: 2px;
 }
 
-/* --- Lesson prose (#74) -----------------------------------------------------
-   Lexend 18/31.5 in grey on plain white, about 62 characters wide. Emphasis is
-   navy at 500, never bold. Markdown.tsx emits a lesson's ## as <h3> and ### as
-   <h4>: the Stage title is the page's H1 and the step's title its H2. */
+/* --- Lesson prose (#74, set as an article since the Quiet reader) ----------
+   Lexend 19/34 in grey on plain white; the reader's 660px column keeps it near
+   62 characters. Emphasis is navy at 500, never bold. Markdown.tsx emits a
+   lesson's ## as <h3> and ### as <h4>: the Stage title is the page's H1 and the
+   step's title its H2. */
 .lesson-prose {
-  max-width: 62ch;
-  font-size: 1.125rem;
-  line-height: 1.75;
+  font-size: 1.1875rem;
+  line-height: 1.8;
   color: var(--color-grey);
 }
 .lesson-prose > :first-child {
@@ -204,6 +214,7 @@ body {
 }
 .lesson-prose p {
   margin: 0 0 1.1em;
+  text-wrap: pretty;
 }
 .lesson-prose strong {
   color: var(--color-navy);
@@ -216,9 +227,12 @@ body {
   font-weight: 700;
 }
 .lesson-prose h3 {
-  font-size: 1.125rem;
-  line-height: 1.5rem;
-  margin: 1.9em 0 0.6em;
+  position: relative;
+  font-size: 1.3125rem;
+  line-height: 1.75rem;
+  letter-spacing: -0.01em;
+  margin: 1.9em 0 0.75em;
+  text-wrap: balance;
 }
 .lesson-prose h4 {
   font-size: 1rem;
@@ -277,17 +291,16 @@ body {
   color: var(--color-navy);
   font: 700 0.875rem/1 var(--font-display);
 }
-/* A quotation is a teal-50 card with a 5px teal-ink bar. */
+/* A quotation is a pull quote: larger navy type behind a 3px teal rule. Teal is
+   a fill here, never text. */
 .lesson-prose blockquote {
-  margin: 1.4em 0;
-  padding: 16px 18px;
-  background: var(--color-teal-50);
-  border: 1px solid var(--color-teal-line);
-  border-left: 5px solid var(--color-teal-ink);
-  border-radius: 0 14px 14px 0;
+  margin: 1.6em 0;
+  padding: 4px 0 4px 22px;
+  border-left: 3px solid var(--color-teal);
   color: var(--color-navy);
-  font-size: 1.0625rem;
-  line-height: 1.6;
+  font-size: 1.3125rem;
+  line-height: 1.55;
+  text-wrap: pretty;
 }
 
 /* The Key takeaways step: each bullet is a teal-50 row with an outline check in a
@@ -412,8 +425,8 @@ body {
 
 @media (width >= 40rem) {
   .lesson-prose h3 {
-    font-size: 1.375rem;
-    line-height: 1.75rem;
+    font-size: 1.5rem;
+    line-height: 1.9rem;
   }
   .lesson-prose h4 {
     font-size: 1.125rem;
@@ -421,7 +434,8 @@ body {
   }
 }
 
-/* The site header scrolls away in the reader and only the step rail sticks (#74).
+/* The site header scrolls away in the reader and only its hairline of progress
+   sticks.
    The header is shared by every page and is sticky in the layout, so the reader
    turns that off for itself: the runner's root carries data-reader. */
 body:has([data-reader]) .site-header {
@@ -536,6 +550,144 @@ body:has([data-reader]) .site-header {
   animation: save7-drift-b 20s ease-in-out infinite;
 }
 
+/* The landing hero gathers, then beats (LandingHero, GiftCircles). The seven circles
+   fly in from far outside along their own line (--ux, --uy), spinning, one after
+   another (--i); the lines shoot out from the heart; the heart lands with a beat; the
+   title's two words rise out of a blur (--w); the rest rises (--rise). Afterwards the
+   heart beats softly with a ripple every five seconds and the constellation turns
+   once every two minutes. Everything has a delay, so for reduced motion none of it
+   runs at all, rather than letting the global rule shorten durations and leave
+   things waiting unseen. */
+.gift-heart,
+.gift-node {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.gift-orbit,
+.gift-ring,
+.gift-line,
+.gift-ripple {
+  transform-box: view-box;
+  transform-origin: 200px 200px;
+}
+.gift-ripple {
+  opacity: 0;
+}
+@keyframes save7-gift-ring {
+  from {
+    opacity: 0;
+    transform: scale(0.5) rotate(-140deg);
+  }
+}
+@keyframes save7-gift-land {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+  72% {
+    transform: scale(0.9);
+  }
+  86% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes save7-gift-line {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+@keyframes save7-gift-fly {
+  from {
+    opacity: 0;
+    transform: translate(calc(var(--ux) * 320px), calc(var(--uy) * 320px)) scale(0.2) rotate(-180deg);
+  }
+}
+@keyframes save7-gift-word {
+  from {
+    opacity: 0;
+    transform: translateY(70%) scale(0.9);
+    filter: blur(14px);
+  }
+}
+@keyframes save7-gift-rise {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+}
+@keyframes save7-gift-beat {
+  0%,
+  30%,
+  100% {
+    transform: scale(1);
+  }
+  8% {
+    transform: scale(1.1);
+  }
+  16% {
+    transform: scale(0.97);
+  }
+  22% {
+    transform: scale(1.06);
+  }
+}
+@keyframes save7-gift-ripple {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  30%,
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+@keyframes save7-gift-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .gift-ring {
+    animation: save7-gift-ring 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .gift-heart {
+    animation:
+      save7-gift-land 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both,
+      save7-gift-beat 5s ease-in-out 2.6s infinite;
+  }
+  /* The ripple leaves on the heart's first, stronger beat of each five seconds. */
+  .gift-ripple {
+    animation: save7-gift-ripple 5s cubic-bezier(0.16, 1, 0.3, 1) 2.6s infinite;
+  }
+  .gift-line {
+    animation: save7-gift-line 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(0.55s + var(--i) * 0.07s);
+  }
+  .gift-node {
+    animation: save7-gift-fly 1.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: calc(0.3s + var(--i) * 0.09s);
+  }
+  .gift-orbit {
+    animation: save7-gift-turn 120s linear 2.4s infinite;
+  }
+  .gift-word {
+    animation: save7-gift-word 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(0.9s + var(--w) * 0.18s);
+  }
+  .gift-rise {
+    animation: save7-gift-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--rise) both;
+  }
+}
+
 /* The landing page (prototype D). The steps of "How the course works" stick a
    little below one another as the page scrolls, ending as a pile. Not motion, so it
    holds for reduced motion too. */
@@ -572,7 +724,8 @@ body:has([data-reader]) .site-header {
       transform-origin: top;
       animation: save7-fill-down linear both;
       animation-timeline: view();
-      animation-range: entry 30% exit 60%;
+      /* The tip stays at the middle of the screen: it starts there and ends there. */
+      animation-range: cover 50vh cover calc(100% - 50vh);
     }
     .tick-draw path {
       stroke-dasharray: 1;
@@ -717,8 +870,346 @@ body:has([data-reader]) .site-header {
 /* --- Lesson sections ---------------------------------------------------------
    LessonBody cuts a lesson into <section>s at its ## headings, one .lesson-prose
    per run of prose. `.lesson-prose > :first-child` zeroes the top margin of each
-   run, which is right for a paragraph after an interactive block but would pull
-   every later section's heading up against the text above it. */
-.lesson-section + .lesson-section > .lesson-prose:first-child > h3:first-child {
-  margin-top: 1.9em;
+   run, so the gap between parts is the section's own. With two headings or more
+   (LessonSections' .is-numbered) each heading is numbered 01, 02 ... in teal-ink
+   above it, and in the margin beside it from 64rem. */
+.lesson-section + .lesson-section {
+  margin-top: 3.5rem;
+}
+.lesson-sections.is-numbered {
+  counter-reset: lesson-part;
+}
+.lesson-sections.is-numbered .lesson-section > .lesson-prose:first-child > h3:first-child {
+  counter-increment: lesson-part;
+}
+.lesson-sections.is-numbered .lesson-section > .lesson-prose:first-child > h3:first-child::before {
+  content: counter(lesson-part, decimal-leading-zero);
+  display: block;
+  margin-bottom: 6px;
+  font: 600 0.8125rem/1 var(--font-display);
+  letter-spacing: 0.08em;
+  color: var(--color-teal-ink);
+  font-variant-numeric: tabular-nums;
+}
+@media (width >= 64rem) {
+  .lesson-sections.is-numbered .lesson-section > .lesson-prose:first-child > h3:first-child::before {
+    position: absolute;
+    left: -56px;
+    top: 0.55em;
+    margin: 0;
+  }
+}
+
+/* --- The reader (ModuleRunner) ------------------------------------------------
+   Quiet: one teal hairline of progress, the Stage named once in small type, a
+   large step title, and the next step offered by name at the end. */
+.reader-progress {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: 3px;
+  background: var(--color-line);
+}
+.reader-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--color-teal);
+  transform-origin: left center;
+  transition: transform 400ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.reader-stage {
+  margin-top: 28px;
+  font: 600 0.9375rem/1.4 var(--font-display);
+  color: var(--color-grey);
+}
+/* A step arrives in semantic chunks (title, lede, body), 100ms apart: opacity,
+   4px of blur and 12px of rise over 300ms. Reduced motion keeps only the fade. */
+.reader-step > * {
+  animation: reader-fade 300ms ease-out both;
+}
+.reader-step > :nth-child(2) { animation-delay: 100ms; }
+.reader-step > :nth-child(n + 3) { animation-delay: 200ms; }
+@media (prefers-reduced-motion: no-preference) {
+  .reader-step > * {
+    animation-name: reader-in;
+  }
+}
+@keyframes reader-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(12px);
+  }
+}
+@keyframes reader-fade {
+  from {
+    opacity: 0;
+  }
+}
+.reader-title {
+  margin-top: 6px;
+  font: 800 2.25rem/1.08 var(--font-display);
+  letter-spacing: -0.025em;
+  color: var(--color-navy);
+  text-wrap: balance;
+}
+@media (width >= 40rem) {
+  .reader-title {
+    font-size: 3rem;
+  }
+}
+.reader-lede {
+  margin-top: 16px;
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: var(--color-navy);
+  text-wrap: pretty;
+}
+.reader-menu {
+  box-shadow: 0 12px 32px -12px rgb(12 23 59 / 0.25);
+  transform-origin: top right;
+  animation: reader-menu-in 160ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+@keyframes reader-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-4px);
+  }
+}
+/* "Up next": the next step by name, the one thing to do at the end of a step. */
+.reader-next {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 88px;
+  padding: 18px 22px;
+  border: 1px solid var(--color-line);
+  border-radius: 20px;
+  text-align: left;
+  color: var(--color-navy);
+  transition:
+    border-color 150ms ease-out,
+    background-color 150ms ease-out,
+    scale 150ms ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+/* A full-width card presses less than a button's 0.96: at 660px wide, 0.96 is a
+   26px jump. Deliberate, and the same for every row-sized surface. */
+@media (prefers-reduced-motion: no-preference) {
+  .reader-next:active {
+    scale: 0.985;
+  }
+}
+.reader-next > svg {
+  color: var(--color-pink);
+  transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (hover: hover) {
+  .reader-next:hover {
+    border-color: var(--color-navy);
+    background: var(--color-teal-50);
+  }
+  .reader-next:hover > svg {
+    transform: translateX(3px);
+  }
+}
+.reader-next-eyebrow {
+  display: block;
+  font: 700 0.75rem/1.3 var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-grey);
+}
+.reader-next-title {
+  display: block;
+  margin-top: 4px;
+  font: 700 1.25rem/1.3 var(--font-display);
+}
+.reader-back {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 4px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-grey);
+}
+@media (hover: hover) {
+  .reader-back:hover {
+    color: var(--color-navy);
+  }
+}
+
+/* --- My progress (ProgressRegister) --------------------------------------------
+   Sections arrive once, top to bottom, 50ms apart: opacity and a short rise, under
+   300ms on a strong ease-out. Bars grow from the left by scale, never by width, so
+   nothing is laid out again. Hover only where there is a pointer to hover with. */
+.my-progress > * {
+  animation: mp-rise 280ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.my-progress > :nth-child(2) { animation-delay: 50ms; }
+.my-progress > :nth-child(3) { animation-delay: 100ms; }
+.my-progress > :nth-child(4) { animation-delay: 150ms; }
+.my-progress > :nth-child(5) { animation-delay: 200ms; }
+.my-progress > :nth-child(n + 6) { animation-delay: 250ms; }
+@keyframes mp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes mp-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+.mp-eyebrow {
+  font: 700 0.75rem/1.3 var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-grey);
+}
+.mp-press {
+  transition:
+    scale 150ms ease-out,
+    background-color 150ms ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mp-press:not(:disabled):active {
+    scale: 0.96;
+  }
+}
+
+/* Rows between hairlines: the Levels and the certificates. */
+.mp-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--color-line);
+}
+.mp-rows > li {
+  border-bottom: 1px solid var(--color-line);
+}
+.mp-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  margin: 0 -10px;
+  padding: 16px 10px;
+  border-radius: 14px;
+  transition:
+    scale 150ms ease-out,
+    background-color 150ms ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mp-row:active {
+    scale: 0.985;
+  }
+}
+.mp-row-title {
+  display: block;
+  font: 700 1.0625rem/1.35 var(--font-display);
+  color: var(--color-navy);
+}
+.mp-row-arrow {
+  color: var(--color-line-strong);
+  transition:
+    transform 200ms cubic-bezier(0.23, 1, 0.32, 1),
+    color 160ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .mp-row:hover {
+    background: var(--color-teal-50);
+  }
+  .mp-row:hover .mp-row-arrow {
+    color: var(--color-navy);
+    transform: translateX(3px);
+  }
+}
+
+/* A Level's Stages passed: teal fill on a line track. */
+.mp-bar {
+  display: block;
+  height: 6px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: var(--color-line);
+  overflow: hidden;
+}
+.mp-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-teal);
+  transform-origin: left center;
+  animation: mp-grow 400ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation-delay: calc(var(--i, 0) * 50ms + 150ms);
+}
+
+/* What you've learned so far: the shift in large figures, and paired bars per
+   Level. The first-baseline bar lands before the latest, so the change reads as
+   movement; it plays once, on arrival. */
+.mp-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+  font: 800 3.5rem/1 var(--font-display);
+  letter-spacing: -0.03em;
+  color: var(--color-navy);
+  font-variant-numeric: tabular-nums;
+}
+@media (width >= 40rem) {
+  .mp-hero {
+    font-size: 5rem;
+  }
+}
+.mp-hero-arrow {
+  width: 0.5em;
+  height: 0.5em;
+  stroke-width: 2.5;
+  color: var(--color-pink);
+}
+.mp-pairbar {
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-line);
+  overflow: hidden;
+}
+.mp-pairbar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-teal);
+  transform-origin: left center;
+  animation: mp-grow 600ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation-delay: calc(var(--i, 0) * 60ms + 380ms);
+}
+.mp-pairbar.is-before > span {
+  background: var(--color-line-strong);
+  animation-delay: calc(var(--i, 0) * 60ms + 200ms);
+}
+
+/* Reduced motion keeps the fade and drops the movement: the bars are simply there. */
+@media (prefers-reduced-motion: reduce) {
+  .my-progress > * {
+    animation-name: mp-fade;
+  }
+  .mp-bar > span,
+  .mp-pairbar > span {
+    animation: none;
+  }
+  @keyframes mp-fade {
+    from {
+      opacity: 0;
+    }
+  }
 }

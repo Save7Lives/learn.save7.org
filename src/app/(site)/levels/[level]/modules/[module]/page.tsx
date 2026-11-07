@@ -49,22 +49,21 @@ export default async function ModulePage(
   // Where the Student stands on this Stage, from their Course Position. Read is the
   // Read Mark and only decides where they resume; passed is the Stage Quiz, and only
   // that is "finished".
-  const stagePosition = levels
-    .find((l) => l.slug === levelSlug)
-    ?.modules.find((m) => m.slug === moduleSlug)?.position;
+  const levelStages = levels.find((l) => l.slug === levelSlug)?.modules ?? [];
+  const stagePosition = levelStages.find((m) => m.slug === moduleSlug)?.position;
   const isRead = stagePosition?.read ?? false;
   const isPassed = stagePosition?.state === "PASSED";
 
-  // The CHECK step is this Stage's quiz, and the step rail draws every Stage's
-  // block from its quiz. Only where the learner stands is read here, for all the
-  // Level's Stages at once; the paper is drawn when they open it, so visiting a
-  // Stage never starts an attempt.
-  const quizStates = await getStageQuizStates(siblings.map((s) => s.slug));
-  const quizState = quizStates.get(mod.id) ?? null;
-  const stages = siblings.map((s) => ({
-    slug: s.slug,
-    title: s.title,
-    passed: quizStates.get(s.slug)?.passedAt != null,
+  // The CHECK step is this Stage's quiz. Only where the learner stands is read
+  // here; the paper is drawn when they open it, so visiting a Stage never starts
+  // an attempt.
+  const quizState = (await getStageQuizStates([mod.id])).get(mod.id) ?? null;
+  // The Level's route, drawn when the quiz is marked and on the Finish step once
+  // it is passed.
+  const stages = levelStages.map((m) => ({
+    slug: m.slug,
+    title: m.title,
+    passed: m.position.state === "PASSED",
   }));
   const stageQuiz = (
     <StageQuiz
@@ -124,7 +123,7 @@ export default async function ModulePage(
       moduleSlug={moduleSlug}
       stageTitle={mod.title}
       stageNumber={currentIndex + 1}
-      stages={stages}
+      stageCount={siblings.length}
       coreQuestion={mod.coreQuestion}
       levelTitle={level.title}
       estMinutes={mod.estMinutes}
