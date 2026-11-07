@@ -76,9 +76,11 @@ function LessonContent({ lesson, stageQuiz, moduleContext }: LessonBodyProps) {
 
   if (lesson.kind === "COMPLETE") {
     return (
-      <Wrapped prose={prose}>
+      // The Finish step's Markdown is the Stage's sources list, so it goes last,
+      // after the mark and the summary, rather than above them.
+      <Wrapped prose={null}>
         {moduleContext ? (
-          <ModuleComplete context={moduleContext} />
+          <ModuleComplete context={moduleContext} sources={prose} />
         ) : (
           // Should not happen: the module page always supplies this. Renders
           // nothing rather than an "awaiting content" box, which would wrongly

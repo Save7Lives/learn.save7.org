@@ -17,6 +17,8 @@ export type ModuleCompleteContext = {
   alreadyRead: boolean;
   /** Whether this Stage's quiz has been passed — what the Certificate counts. */
   quizPassed: boolean;
+  /** The learner's most recent marked Stage Quiz attempt, or null before the first. */
+  latestMark: { scoreRaw: number; scoreMax: number } | null;
 };
 
 /**
@@ -26,10 +28,11 @@ export type ModuleCompleteContext = {
  * scrolling, and this is it: the question the Stage opened with, then a deliberate
  * action (the button lives in the runner's footer, immediately below).
  *
- * Everything here is derived from the Stage's own data — its core question and its
- * position in the Level. Nothing is authored per Stage. That means it cannot drift
- * out of sync with the content, and it adds nothing to Save7's review queue, which
- * a thirteenth hand-written summary would.
+ * Everything above the sources is derived from the Stage's own data: its core
+ * question, its position in the Level and the learner's latest Stage Quiz mark.
+ * The one authored part is the sources list, the Stage's `sources.md`, which
+ * names every document the Stage relies on (it replaced the study guide and the
+ * further reading step).
  *
  * Closing the loop on the opening question is also the pedagogically useful moment:
  * the learner is asked whether they could now answer it, which is the only test
@@ -39,7 +42,14 @@ export type ModuleCompleteContext = {
  * Stage Quiz is passed (Progress Record, CONTEXT.md), and the pink card says so
  * rather than let "finish" imply it.
  */
-export function ModuleComplete({ context }: { context: ModuleCompleteContext }) {
+export function ModuleComplete({
+  context,
+  sources,
+}: {
+  context: ModuleCompleteContext;
+  /** The Stage's sources list (its `sources.md`), rendered last. */
+  sources?: React.ReactNode;
+}) {
   const {
     coreQuestion,
     nextStageTitle,
@@ -48,6 +58,7 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
     certificateTitle,
     alreadyRead,
     quizPassed,
+    latestMark,
   } = context;
 
   return (
@@ -85,11 +96,19 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
               <p className="text-sm text-grey">
                 {quizPassed
                   ? "Passing every Stage Quiz in "
-                  : "The Stage Quiz is in the Check step. Passing every Stage Quiz in "}
+                  : "The Stage Quiz is the step before this one. Passing every Stage Quiz in "}
                 {levelTitle} Level earns the{" "}
                 <span className="font-medium text-navy">&ldquo;{certificateTitle}&rdquo;</span>{" "}
                 certificate.
               </p>
+              {latestMark ? (
+                <p className="mt-2 text-sm text-grey">
+                  Your latest mark:{" "}
+                  <span className="font-bold text-navy">
+                    {latestMark.scoreRaw} out of {latestMark.scoreMax}
+                  </span>
+                </p>
+              ) : null}
               {quizPassed ? null : (
                 <div className="mt-1.5">
                   <GoToStepLink kind="CHECK">Go to the Stage Quiz</GoToStepLink>
@@ -112,6 +131,13 @@ export function ModuleComplete({ context }: { context: ModuleCompleteContext }) 
           ) : null}
         </div>
       </section>
+
+      {sources ? (
+        <section className="mt-9 border-t border-line pt-6">
+          <h3 className="t-h3 text-navy">Sources for this Stage</h3>
+          <div className="mt-3">{sources}</div>
+        </section>
+      ) : null}
     </div>
   );
 }

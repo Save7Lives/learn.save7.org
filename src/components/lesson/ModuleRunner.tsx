@@ -20,7 +20,7 @@ export type RunnerLesson = {
 /**
  * The lesson runner.
  *
- * One step at a time through the Stage's seven-part spine. A single long
+ * One step at a time through the Stage's steps. A single long
  * scrolling page was the alternative and it was worse on both counts that matter
  * here: on a phone it becomes an intimidating wall, and it makes "where am I?"
  * unanswerable.

@@ -194,8 +194,11 @@ content waits for the first Sitting. A Stage Quiz is five questions drawn from a
 of fifteen, and four right passes it. Passing it is what completes the Stage, and
 retaking it is unlimited. There is no Level-wide assessment.
 
-Every Stage follows the same seven-part spine: *why this matters → learn → key
-takeaways → check your understanding → study guide → further reading → complete*.
+Every Stage follows the same five steps: *why this matters → learn → key takeaways →
+Stage Quiz → finish*. The finish step shows the learner's latest Stage Quiz mark and
+then every source the Stage used (its `sources.md`). The study guide and further
+reading steps were retired in save7-os 0146: what only the study guide said moved into
+the Learn lesson.
 
 ---
 
@@ -320,7 +323,7 @@ Re-running the generator never overrides an approval or a rejection, and it neve
 deletes. A reworded question gets a new register row, and the old one stays behind.
 
 Two things the register does not cover. Lesson prose is not registered: it names its
-sources in the text and in each Stage's further reading, and nothing in the app records
+sources in the text and in each Stage's `sources.md`, and nothing in the app records
 a sign-off on it. And nothing learner-facing reads the register, so a question still
 needing verification reaches learners with no badge.
 
@@ -335,15 +338,15 @@ in this course.
 The base is the Source Corpus: the ten PDFs Save7 supplied, served from
 `/public/resources` so learners can open the reading rather than hit a paywall, and one
 film. The Stages also cite public law and professional guidance that is not in the
-corpus (below the table). A Stage's own source list is its `further-reading.md`, and
+corpus (below the table). A Stage's own source list is its `sources.md`, shown on its finish step, and
 each Stage Quiz item names the document it was checked against in `verifiedAgainst`.
 The table says where each corpus source is used, by Stage.
 
 | Source | Used for |
 | --- | --- |
 | Save7, *Transplant Alchemy 101: Study Guide* | Beginner Stages 2 and 3, for the family's role in consent (its Objective 2), cited beside de Jager et al. (2019). A tertiary document, so the primary sources lead |
-| Save7, *7 Lives in 7 Steps* | Not used as content: it is an ICU referral algorithm for hospital staff, and the Curriculum Spec excludes it. Beginner Stage 3 and Intermediate Stage 1 name it in Further Reading only to say what not to reach for |
-| Save7, *The Journey of a Gift* (6m59s) | Beginner Stage 3's film, shown at the top of the Stage with captions and a transcript (#61). Further Reading in all three Beginner Stages points to it too |
+| Save7, *7 Lives in 7 Steps* | Not used as content: it is an ICU referral algorithm for hospital staff, and the Curriculum Spec excludes it. No Stage cites it |
+| Save7, *The Journey of a Gift* (6m59s) | Beginner Stage 3's film, shown at the top of the Stage with captions and a transcript (#61) |
 | Thomson et al. (2021), *SA Guidelines on the Determination of Death* | Intermediate Stage 1: the tests in *Determining death* come from it, and most of that Stage Quiz is checked against it |
 | SATCS *Red File* | Referral, consent and family-approach practice, donation routes, team roles and tissue donation. Every Stage cites it, most heavily Advanced Stages 2 and 4 |
 | *Excellence in Deceased Donation* manual (2025) | The reprints inside it that the course cites, among them the Western Cape circular H 84/2025, HPCSA Booklets 4 and 17, and the Australian best-practice guideline, which the Stage Quizzes mark as non-South African. Cited in Intermediate Stages 1 and 4 and Advanced Stages 1 to 3 |

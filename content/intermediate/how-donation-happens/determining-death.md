@@ -15,6 +15,12 @@ South Africa recognises two ways of determining that someone has died:
 
 These are not two kinds of death, and neither is a stage on the way to dying. They are two routes to establishing the same fact: the capacity for consciousness and the capacity to breathe have both been lost, irreversibly. Which route applies depends on the circumstances, and in particular on whether a ventilator is involved.
 
+Three terms are worth knowing:
+
+- **Brain death**, or death by neurological criteria, is the preferred term, rather than *brain-stem death*.
+- **Circulatory death**, or death by circulatory criteria, is preferred over *cardiac* or *cardiorespiratory death*.
+- **Somatic support** is the continued management of the body and organs, other than the brain, after brain death has been confirmed.
+
 The tests in this lesson come from the *South African guidelines on the determination of death*, written for the Critical Care Society of Southern Africa and published in 2021 in the peer-reviewed *Southern African Journal of Critical Care*. It is South African guidance, written for South African hospitals, and the guideline itself says that, provided every precondition is met, death can be determined with complete certainty.
 
 ## Brain death is not a coma
@@ -84,6 +90,8 @@ If even one of these reflexes is present, the brainstem is still working and the
 
 Together the three steps rule out every alternative. The preconditions exclude the conditions that could mimic death. The coma and brainstem tests show that no part of the brain is responding. The apnoea test shows that the one function the body cannot live without has gone. That is why a completed determination is final.
 
+The SATCS Red File's bedside summary also includes an atropine test. The guideline does not require it, and it is not a fourth step. This Stage also leaves out the clinical values and thresholds, the additional tests used when a clinical examination cannot be completed, and the special provisions for children, pregnancy and patients on heart-lung machines.
+
 :::steps
 title: The three-step test. Tap a step.
 step: Coma | The patient is completely unresponsive. Strong pressure produces no grimace and no movement of the face. Any response that comes from the brain rules out brain death.
@@ -99,7 +107,7 @@ step: The apnoea test | Under controlled conditions the patient is disconnected 
 
 ## Who makes the determination
 
-Brain death is determined by **at least two doctors**. At least one of them must have been practising for **five years or more** since registering, and **none of them may be involved in the transplant**. The guidelines recommend that they examine the patient together, and strongly advocate that the apnoea test be done once, by both doctors at the same time.
+Brain death is determined by **at least two doctors**. At least one of them must have been practising for **five years or more** since registering, and **none of them may be involved in the transplant**. The legal source of that rule is Regulation 9 of the 2012 regulations under the National Health Act, covered in Stage 3. The guidelines recommend that they examine the patient together, and strongly advocate that the apnoea test be done once, by both doctors at the same time.
 
 The time of death is the time at which the determination is complete, with every required test done. It is not the moment the ventilator is later switched off, and it is not the moment donation is discussed.
 

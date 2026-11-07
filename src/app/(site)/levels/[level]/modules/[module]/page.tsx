@@ -86,6 +86,9 @@ export default async function ModulePage(
     certificateTitle: level.certificateTitle,
     alreadyRead: isRead,
     quizPassed: quizState?.passedAt != null,
+    latestMark: quizState?.latest
+      ? { scoreRaw: quizState.latest.scoreRaw, scoreMax: quizState.latest.scoreMax }
+      : null,
   };
 
   const lessons: RunnerLesson[] = mod.lessons.map((lesson) => ({

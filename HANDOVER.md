@@ -136,8 +136,8 @@ Never introduce one here.
 
 Each of these was a real failure, not a hypothetical.
 
-**Lesson slugs are unique only within a Stage.** `intro`, `check`, `complete`,
-`study-guide` and `further-reading` each occur once per Stage, eleven times over. 0091
+**Lesson slugs are unique only within a Stage.** `intro`, `takeaways`, `check` and
+`complete` each occur once per Stage, eleven times over. 0091
 made `slug` the primary key, so the first load, the previous build's 97 lessons,
 upserted into 26 rows and 0094's probe raised `expected 97 lessons, found 26`. The key
 is now `(module_slug, slug)`. Anything identifying a lesson needs the Stage too, which is

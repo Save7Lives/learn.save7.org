@@ -8,17 +8,19 @@ level: intermediate
 
 ## What the law says
 
+South Africa uses an explicit-consent, **opt-in** model. There is no presumed consent. Stage 4 covers the debate about changing it.
+
 Consent to donation after death is governed by **section 62 of the National Health Act 61 of 2003**. It works in two layers, and the order matters.
 
-**First, the person themselves.** Anyone competent to make a will may donate their body, or specified tissue, to be used after their death, in one of three ways:
+**First, the person themselves (section 62(1)).** Anyone competent to make a will may donate their body, or specified tissue, to be used after their death, in one of three ways:
 
 - in their **will**;
 - in a **document** signed by them and by at least two competent witnesses; or
 - in an **oral statement** made in the presence of at least two competent witnesses.
 
-A donation made this way can be revoked the same way it was made, or, if it was in a will or document, by deliberately destroying that document.
+A donation made this way can be revoked the same way it was made, or, if it was in a will or document, by deliberately destroying that document. That is section 65 of the Act.
 
-**Second, the family, but only in the absence of the first.** Where the person made no such donation, and gave no contrary direction while alive, the Act allows these people to donate, **in the specific order mentioned**:
+**Second, the family, but only in the absence of the first (section 62(2)).** Where the person made no such donation, and gave no contrary direction while alive, the Act allows these people to donate, **in the specific order mentioned**:
 
 1. spouse
 2. partner
@@ -44,9 +46,9 @@ card: Does the family decide as a group? | No. It is an order, not a committee. 
 card: What if the person said no while alive? | That is a contrary direction, and the family's power to donate falls away. A clearly stated refusal is protected by the law too.
 :::
 
-And if none of the listed people can be found, the Act lets the Director-General of Health donate specific tissue, but only after every prescribed step to locate them has been taken.
+And if none of the listed people can be found, the Act lets the Director-General of Health donate specific tissue, but only after every prescribed step to locate them has been taken (section 62(3)).
 
-**Don't confuse this list with a different one.** The same Act has a separate order for who may consent to *treatment* on behalf of a living patient who cannot decide: spouse or partner, then parent, grandparent, adult child, brother or sister. That order applies while the patient is alive. After death, for donation, it is the section 62 order above.
+**Don't confuse this list with a different one.** The same Act has a separate order, in section 7, for who may consent to *treatment* on behalf of a living patient who cannot decide: spouse or partner, then parent, grandparent, adult child, brother or sister. That order applies while the patient is alive. After death, for donation, it is the section 62 order above.
 
 :::compare
 title: Two different lists. Tap to compare.
@@ -55,6 +57,7 @@ row: The law | Section 62
 row: When | Only where the person made no donation, and gave no contrary direction while alive
 row: The order | Spouse, partner, major child, parent, guardian, major brother, major sister
 tab: Treatment while alive
+row: The law | Section 7
 row: When | For a living patient who cannot decide
 row: The order | Spouse or partner, then parent, grandparent, adult child, brother or sister
 :::
@@ -68,9 +71,11 @@ But it does not decide the matter on its own, and the organisations closest to t
 - The SATCS Red File, the coordinators' reference, states that registering as a donor **does not mean that the donor's organs will automatically be donated** at the time of death, and that consent from the next of kin is always required.
 - The Southern African Transplantation Society's national strategy roadmap describes the ODF register as **an expression of an individual's intent to donate**, and notes that families are approached for consent in every case where there is a potential donor.
 
+The 2012 regulations under the Act say a doctor *may* act on a will or document that donates tissue, if it appears valid on its face. They do not say a doctor must.
+
 So there are two halves, and both must be said together.
 
-**In law**, a donation made in one of the ways section 62 describes belongs to the person, and relatives have power to donate only in its absence. South African legal scholars, notably Slabbert and Venter, have written about the gap between that and what happens in hospitals, and treat it as a real weakness in how a donor's own choice is protected.
+**In law**, a donation made in one of the ways section 62 describes belongs to the person, and relatives have power to donate only in its absence. South African legal scholars, notably Slabbert and Venter (*De Jure*, 2019), have written about the gap between that and what happens in hospitals, and treat it as a real weakness in how a donor's own choice is protected.
 
 **In practice**, hospitals approach the family in every case, and a family's refusal is respected.
 
@@ -97,7 +102,7 @@ Stage 1 showed where this conversation sits in the process. Here is how it is me
 
 **It is planned, and it is unhurried.** Transplant coordinators in South Africa use a structured approach called **FACTS**, the Family Approach to Consent for Transplant Strategy, developed by Wits Transplant. 📌 It is an adaptation of the UK's NHS Blood and Transplant strategy for approaching the families of potential donors, modified for South African hospitals. It is not taken from the Australian material that appears in some donation training manuals.
 
-FACTS has eight steps. You do not need them by heart; Advanced Level works through them. What matters here is what they are built to protect:
+FACTS has eight steps: planning; breaking bad news; a time-out; assessing understanding and acceptance of the loss; the consent conversation; a second time-out; a final family discussion; and follow-up, feedback and support. You do not need them by heart; Advanced Level works through them. What matters here is what they are built to protect:
 
 - the approach is **planned** in advance: who will be there, where, and with an **interpreter** if one is needed;
 - the family is given **time alone**, twice: once after the news of death, and again after donation is raised;

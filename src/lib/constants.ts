@@ -18,14 +18,12 @@ export type AdminRole = (typeof ADMIN_ROLES)[number];
 export const LEVEL_TIERS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const;
 export type LevelTier = (typeof LEVEL_TIERS)[number];
 
-/** The seven-part spine every Stage follows. Order is data, not code. */
+/** The steps every Stage follows, ending in its Stage Quiz and Finish. Order is data, not code. */
 export const LESSON_KINDS = [
   "INTRO",
   "PRIMARY",
   "TAKEAWAYS",
   "CHECK",
-  "STUDY_GUIDE",
-  "FURTHER_READING",
   "COMPLETE",
 ] as const;
 export type LessonKind = (typeof LESSON_KINDS)[number];
@@ -34,9 +32,7 @@ export const LESSON_KIND_LABELS: Record<LessonKind, string> = {
   INTRO: "Why this matters",
   PRIMARY: "Learn",
   TAKEAWAYS: "Key takeaways",
-  CHECK: "Check",
-  STUDY_GUIDE: "Study guide",
-  FURTHER_READING: "Further reading",
+  CHECK: "Stage Quiz",
   COMPLETE: "Finish",
 };
 

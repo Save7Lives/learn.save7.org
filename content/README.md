@@ -28,7 +28,7 @@ in `prisma/content/markdown.ts` enforces both.
 ---
 slug: intro           # must match structure.ts
 title: Why this matters
-kind: INTRO           # INTRO | PRIMARY | TAKEAWAYS | STUDY_GUIDE | FURTHER_READING
+kind: INTRO           # INTRO | PRIMARY | TAKEAWAYS | COMPLETE (sources.md only)
 stage: why-donation-matters
 level: beginner
 ---
@@ -132,11 +132,20 @@ and the renderer, so a block that passes the check is a block on the page. A new
 type means a parser case there and a component in
 `src/components/lesson/LessonWidget.tsx`.
 
-## The seven-part spine
+## The Stage's steps
 
-Every Stage follows it, unchanged from the prior build:
+Every Stage follows them:
 
-`INTRO → PRIMARY (one or two) → TAKEAWAYS → CHECK → STUDY_GUIDE → FURTHER_READING → COMPLETE`
+`INTRO → PRIMARY (one or two) → TAKEAWAYS → CHECK → COMPLETE`
+
+CHECK is the Stage Quiz and carries no prose. COMPLETE is the finish step: the page
+builds the learner's mark and the summary, and the Stage's `sources.md` (slug
+`complete`) supplies the list of every document the Stage relies on, shown last as
+"Sources for this Stage". It is a plain bulleted list of citations with no heading.
+A source a lesson relies on belongs in that list; a fact belongs in the lesson.
+
+The study guide and further reading steps were retired (save7-os 0146). Do not bring
+back a step that restates the lesson.
 
 ## Drafting briefs
 
@@ -150,7 +159,7 @@ one in a finished lesson is still noise.
 ## Two things that have bitten before
 
 - **Lesson identity is `(stage, slug)`, never `slug` alone.** `intro`,
-  `takeaways`, `study-guide` and the rest recur once per Stage by design.
+  `takeaways`, `complete` and the rest recur once per Stage by design.
   Treating a lesson slug as globally unique once collapsed 97 lessons into 26
   rows.
 - **Never delete and reinsert a question.** A reinserted row inherits every

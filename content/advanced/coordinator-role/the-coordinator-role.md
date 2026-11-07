@@ -40,6 +40,8 @@ Everything else in this Stage depends on timing. Intermediate Level named the th
 2. there is a catastrophic brain injury with the deepest level of unconsciousness (a Glasgow Coma Scale of 4 or less), not explained by sedation
 3. the team intends to discuss with the family withdrawing life-sustaining treatment, after which death is expected
 
+Tissue is different. Most people who die are potential tissue donors, and the Red File asks that every death be referred to a tissue donation coordinator.
+
 What matters at this Level is the order, and what the order protects. The Western Cape policy is explicit: the first discussion with the coordinator **should happen before end-of-life care is raised with the family at all.** It gives four reasons:
 
 - **It prevents premature conversations.** Nobody mentions donation to a family whose relative turns out not to be a candidate.
@@ -86,7 +88,7 @@ Before anyone meets the family, the approach is planned with the people who will
 
 ### 3. The conversation
 
-The treating team keeps its own job. The Red File is clear that the primary treatment team remains responsible for giving the family the diagnosis and prognosis. The coordinator leads the conversation in which donation is raised, and consent is obtained by the coordinator wherever possible. The Western Cape policy asks the treating team to stay for the first part of that meeting, so they can correct any misunderstanding left over from earlier conversations. Stage 2 covers how the conversation is actually conducted.
+The treating team keeps its own job. The Red File is clear that the primary treatment team remains responsible for giving the family the diagnosis and prognosis, and the news of death is theirs to give too. The coordinator leads the conversation in which donation is raised, and consent is obtained by the coordinator wherever possible. The Western Cape policy asks the treating team to stay for the first part of that meeting, so they can correct any misunderstanding left over from earlier conversations. Stage 2 covers how the conversation is actually conducted.
 
 ### 4. Authorisation and logistics
 
