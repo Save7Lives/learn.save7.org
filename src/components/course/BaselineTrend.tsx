@@ -72,7 +72,7 @@ function LegendGlyph({ index }: { index: number }) {
   );
 }
 
-/** Greedy word wrap at an estimated 7.4px a character (13px Lexend; the 12.5px status fits inside it). */
+/** Greedy word wrap at an estimated 7.4px a character (13px Lexend). */
 function wrap(text: string, maxPx: number): string[] {
   const perLine = Math.max(8, Math.floor(maxPx / 7.4));
   const lines: string[] = [];
@@ -102,11 +102,7 @@ function Chart({ data, width }: { data: TrendData; width: number }) {
 
   const labels = data.slots.map((s, i) => (narrow ? [`Sitting ${i + 1}`] : wrap(s.name, spacing - 10)));
   const labelLines = Math.max(...labels.map((l) => l.length));
-  // The status wraps too: on a phone "After another Level" is wider than the gap
-  // between two Sittings, and unwrapped it ran into its neighbour's.
-  const statuses = data.slots.map((s) => wrap(s.status, spacing - 6));
-  const statusLines = Math.max(...statuses.map((l) => l.length));
-  const bottom = 38 + (labelLines + statusLines - 1) * LINE_H + 22;
+  const bottom = 38 + labelLines * LINE_H + 22;
   const ph = H - m.t - bottom;
 
   const X = (i: number) => m.l + (pw * i) / 3;
@@ -212,11 +208,7 @@ function Chart({ data, width }: { data: TrendData; width: number }) {
             y={y0 + 38 + labelLines * LINE_H + 1}
             textAnchor="middle"
           >
-            {statuses[i].map((line, li) => (
-              <tspan key={li} x={X(i)} dy={li === 0 ? 0 : LINE_H}>
-                {line}
-              </tspan>
-            ))}
+            {s.status}
           </text>
         </g>
       ))}
